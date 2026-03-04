@@ -1,4 +1,4 @@
-# Plan: S1-T4 — Activar 2FA Obligatorio
+# Plan: S1-T4 — Implementar 2FA Obligatorio (Con DX Optimizada)
 
 **Ticket:** S1-T4
 **Tipo:** feat
@@ -12,7 +12,9 @@
 
 Jetstream incluye soporte nativo de 2FA (TOTP) mediante el feature `TwoFactorAuthentication`. Por defecto, 2FA es **opcional**. Este ticket lo hace **obligatorio**: cualquier usuario que no tenga 2FA configurado es redirigido a la pantalla de configuración antes de acceder a cualquier ruta protegida.
 
-Jetstream genera el middleware `EnsureUserHasTwoFactorEnabled` pero no lo activa por defecto — es necesario crearlo y registrarlo.
+Sin embargo, para no afectar la experiencia de desarrollo (DX), esta restricción se **desactivará automáticamente** en los entornos `local` y `testing`. Esto evita que los desarrolladores tengan que configurar 2FA cada vez que hacen un `migrate:fresh` o corren las pruebas automatizadas (tests).
+
+Jetstream genera un esqueleto para el middleware `EnsureUserHasTwoFactorEnabled` pero no lo activa por defecto — es necesario crearlo y registrarlo con los "Escape Hatches" necesarios.
 
 ---
 
@@ -40,9 +42,9 @@ Abrir `config/jetstream.php` y confirmar que `TwoFactorAuthentication` está en 
 ],
 ```
 
-Si `twoFactorAuthentication` no está, agregarlo.
+Si `TwoFactorAuthentication` no está implementado de esta manera, agregarlo o asegurarse de configurarlo así.
 
-### 2. Crear el middleware de 2FA obligatorio
+### 2. Crear el middleware de 2FA obligatorio con "Escape Hatches"
 
 ```bash
 sail artisan make:middleware RequireTwoFactorAuthentication
@@ -66,21 +68,39 @@ class RequireTwoFactorAuthentication
     {
         $user = $request->user();
 
+        // 1. Si no hay usuario, seguir.
         if (! $user) {
             return $next($request);
         }
 
-        // Si 2FA no está habilitado para este usuario, redirigir a configuración
+        // 2. ESCAPE HATCH para desarrollo y pruebas
+        // Permite trabajar ágilmente en local/testing sin configurar 2FA cada vez.
+        // En producción (APP_ENV=production), esta condición será false y se ejecutará la validación.
+        if (app()->environment(['local', 'testing'])) {
+            return $next($request);
+        }
+
+        // 3. Validación de 2FA
         if (Features::enabled(Features::twoFactorAuthentication())
             && ! $user->hasEnabledTwoFactorAuthentication()
         ) {
-            // Evitar loop de redirección: permitir acceso a las rutas de perfil/2FA
-            if ($request->routeIs('profile.*') || $request->routeIs('two-factor.*')) {
+            // Permitir rutas necesarias para configurar el 2FA y para salir (Logout)
+            // Fortify/Jetstream usan rutas como 'profile.show', 'user-two-factor.*', etc.
+            // IMPORTANTE: 'logout' debe estar permitido para no atrapar al usuario en un bucle.
+            $allowedRoutes = [
+                'profile.show',
+                'user-profile-information.update',
+                'user-two-factor.enable',
+                'user-two-factor.confirm',
+                'logout'
+            ];
+            
+            if ($request->routeIs($allowedRoutes)) {
                 return $next($request);
             }
 
             return redirect()->route('profile.show')
-                ->with('flash.banner', 'Debes activar la autenticación de dos factores para continuar.')
+                ->with('flash.banner', 'Por seguridad, debes activar la autenticación de dos factores para acceder al sistema.')
                 ->with('flash.bannerStyle', 'warning');
         }
 
@@ -101,50 +121,47 @@ En Laravel 12, los middlewares se registran en `bootstrap/app.php`. Abrir ese ar
 })
 ```
 
-> **Alternativa:** Si se prefiere aplicarlo solo a rutas específicas, asignarlo como middleware de grupo en `routes/web.php`:
-> ```php
-> Route::middleware(['auth:sanctum', 'require.2fa'])->group(function () { ... });
-> ```
+### 4. Preparar Factories para Tests (Futuro)
 
-### 4. Registrar el alias del middleware (opcional)
+Aunque el middleware se salta automáticamente en `testing`, es una buena práctica y requerimiento futuro crear un estado en el `UserFactory` para simular un 2FA activo en tests específicos de seguridad en próximos sprints.
 
-En `bootstrap/app.php`, dentro de `withMiddleware`:
+En `database/factories/UserFactory.php`:
 
 ```php
-$middleware->alias([
-    'require.2fa' => \App\Http\Middleware\RequireTwoFactorAuthentication::class,
-]);
+public function withTwoFactor()
+{
+    return $this->state(function (array $attributes) {
+        return [
+            'two_factor_secret' => encrypt('test-secret'),
+            'two_factor_confirmed_at' => now(),
+        ];
+    });
+}
 ```
 
-### 5. Verificar el flujo completo
+### 5. Verificar el flujo completo de forma Manual
 
-1. Registrar un usuario nuevo en `http://localhost/register`
-2. Intentar acceder al dashboard — debe redirigir a `/user/profile` con mensaje de advertencia
-3. En el perfil, activar 2FA:
+1. Cambiar `.env` a `APP_ENV=local`. Verificar que puedes navegar por rutas protegidas (como `/dashboard`) sin problemas y sin tener 2FA activado.
+2. Cambiar `.env` a `APP_ENV=production` (o entorno simulado restando `local` del check). Intentar acceder al dashboard sin 2FA — debe redirigir a `/user/profile` con el mensaje de advertencia.
+3. Verificar que la ruta `logout` funciona correctamente incluso sin 2FA.
+4. En el perfil, activar 2FA:
    - Click en "Enable Two Factor Authentication"
-   - Escanear el código QR con Google Authenticator o similar
+   - Escanear el código QR con Google Authenticator o Authy
    - Confirmar con un código válido
-4. Después de activar 2FA, el acceso al dashboard debe funcionar normalmente
-
-### 6. Verificar que las rutas de perfil no crean loop de redirección
-
-Acceder directamente a `http://localhost/user/profile` sin 2FA configurado — debe cargar sin redirecciones infinitas.
+5. Después de activar 2FA, el acceso al dashboard debe funcionar sin restricciones.
 
 ---
 
 ## Criterios de aceptación
 
-- [ ] Middleware `RequireTwoFactorAuthentication` creado y registrado
-- [ ] Usuario sin 2FA configurado es redirigido a `/user/profile` con mensaje de aviso
-- [ ] Usuario no puede acceder a ninguna ruta protegida sin 2FA activo
-- [ ] Flujo de activación de 2FA funcional (QR + confirmación + códigos de respaldo)
-- [ ] Rutas de perfil y configuración de 2FA no generan redirecciones en loop
+- [ ] Middleware `RequireTwoFactorAuthentication` creado y registrado.
+- [ ] **Middleware omitido automáticamente en entornos `local` y `testing` (DX Optimization).**
+- [ ] **Ruta `logout` accesible para usuarios sin 2FA (evita trampa de usuario en un bucle).**
+- [ ] En entorno simulado de producción, un usuario sin 2FA es redirigido a la configuración de su perfil.
+- [ ] Flujo de activación de QR funcional (QR + confirmación + códigos de respaldo generados).
 
 ---
 
-## Notas
+## Notas para el equipo
 
-- Jetstream almacena el secreto 2FA en `users.two_factor_secret` (encrypted) y los códigos de respaldo en `users.two_factor_recovery_codes`
-- El método `$user->hasEnabledTwoFactorAuthentication()` es provisto por el trait `TwoFactorAuthenticatable` de Fortify — disponible en el modelo User después de S1-T1
-- Para desarrollo local, se puede usar la app **Google Authenticator**, **Authy** o **1Password** para escanear el QR
-- En entornos de prueba (`APP_ENV=testing`), evaluar si se quiere omitir este middleware para facilitar los tests automatizados — agregar condición `if (app()->environment('testing')) return $next($request);`
+> "Implementamos la restricción ahora para cumplir con la arquitectura de seguridad, pero añadimos un bypass local (`app()->environment(['local', 'testing'])`) para no afectar la velocidad de desarrollo. **Ojo:** Asegurarse de que en el ambiente de Staging/Producción el bypass no se active por dejar variables de desarrollo habilitadas (verificar `APP_ENV`)."

@@ -4,7 +4,7 @@
 **Tipo:** feat
 **Rama:** `feat/S1-T5-middleware-multi-ur`
 **Sprint:** 1 — Identidad y Aislamiento
-**Depende de:** S1-T1, S1-T3, S1-T7 (tabla `programa_team` debe existir)
+**Depende de:** S1-T1, S1-T3
 
 ---
 
@@ -16,23 +16,79 @@ El sistema soporta programas **transversales**: un mismo programa puede tener m�
 2. **UR Coadyuvante** — es una UR que participa en el programa pero solo es responsable de Componentes/Actividades específicos. Tiene lectura del programa completo, pero escritura solo en sus `mir_niveles` asignados (identificados por `mir_niveles.team_id`).
 3. **Sin relación** — acceso denegado (403).
 
-El middleware consulta la tabla `programa_team` (creada en S1-T7) para determinar el rol de la UR activa del usuario en el programa solicitado.
+El middleware consulta la tabla `programa_team` para determinar el rol de la UR activa del usuario en el programa solicitado.
 
-> **Nota:** Este middleware se implementa en este ticket pero **no puede probarse completamente** hasta que existan programas reales (Sprint 3+). En Sprint 1 se valida la estructura y los tests unitarios con mocks.
+> **Importante:** Aunque la lógica completa de programas pertenece al Sprint 3, aquí en el Sprint 1 necesitamos crear la estructura mínima (stubs) para la tabla `programa_team` y el modelo `ProgramaPresupuestario`. Esto evita dependencias circulares inexistentes (compilar código que busca clases que no existen) y permite probar el middleware de inmediato. Además, utilizaremos el sistema de **Policies** de Laravel y el objeto `attributes` del Request para seguir las mejores prácticas arquitectónicas.
 
 ---
 
 ## Pre-requisitos
 
 - S1-T1 completado (Jetstream con Teams — `$user->currentTeam` disponible)
-- S1-T3 completado (rol `admin` puede saltarse restricciones)
-- S1-T7 completado (tabla `programa_team` con columna `rol`)
+- S1-T3 completado (roles y permisos, especialmente rol `admin`)
 
 ---
 
 ## Pasos
 
-### 1. Crear el middleware
+### 1. Crear migración "Stub" para la relación programa_team
+
+Esta migración es necesaria para que el middleware pueda consultar la base de datos. Aunque los programas se detallen en el Sprint 3, la relación de acceso se usará ahora.
+
+```bash
+sail artisan make:migration create_programa_team_table
+```
+
+Editar la migración generada:
+
+```php
+Schema::create('programa_team', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('programa_presupuestario_id')->constrained()->cascadeOnDelete();
+    $table->foreignId('team_id')->constrained()->cascadeOnDelete();
+    $table->enum('rol', ['coordinadora', 'coadyuvante'])->default('coadyuvante');
+    $table->timestamps();
+
+    $table->unique(['programa_presupuestario_id', 'team_id'], 'pt_programa_team_unique'); // Una UR solo tiene un rol por programa
+});
+```
+
+### 2. Crear modelo ProgramaPresupuestario (Stub)
+
+Necesario para que el middleware pueda tipar la variable `$programa` al resolverse desde las rutas.
+
+```bash
+sail artisan make:model ProgramaPresupuestario
+```
+
+Editar `app/Models/ProgramaPresupuestario.php`:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class ProgramaPresupuestario extends Model
+{
+    // Campos mínimos para las pruebas
+    protected $fillable = ['nombre', 'clave'];
+
+    // Relación clave para el middleware de aislamiento
+    public function equipos()
+    {
+        // En un futuro se puede tipar usando BelongsToMany
+        return $this->belongsToMany(Team::class, 'programa_team')
+                    ->withPivot('rol')
+                    ->withTimestamps();
+    }
+}
+```
+
+### 3. Crear el Middleware de Aislamiento Multi-UR
+
+Creamos el middleware con "puertas traseras" para el rol `admin` y una validación estricta utilizando `$request->attributes` en lugar de `merge`. Esto evita contaminar los Form Requests ("input data") de la aplicación.
 
 ```bash
 sail artisan make:middleware AislamientoMultiUR
@@ -56,30 +112,26 @@ class AislamientoMultiUR
     {
         $user = $request->user();
 
-        if (! $user) {
+        // 1. Si no hay usuario o es Admin, pasar (Admin tiene pase real)
+        if (! $user || $user->hasRole('admin')) {
             return $next($request);
         }
 
-        // Admin accede a todo sin restricción
-        if ($user->hasRole('admin')) {
-            return $next($request);
-        }
-
-        // Obtener el programa de la ruta actual (si aplica)
+        // 2. Obtener el programa de la ruta (Route Model Binding o ID directo)
         $programa = $request->route('programa');
 
-        // Si la ruta no involucra un programa específico, continuar
+        // Si la ruta no es de un programa, ignorar este middleware
         if (! $programa instanceof ProgramaPresupuestario) {
             return $next($request);
         }
 
+        // 3. Validar Team Activo
         $teamActivo = $user->currentTeam;
-
         if (! $teamActivo) {
-            abort(403, 'No tienes un equipo activo.');
+            abort(403, 'No tienes una Unidad Responsable activa asignada.');
         }
 
-        // Buscar el rol del team activo en este programa
+        // 4. Consultar relación en la BD (Optimizado)
         $pivote = $programa->equipos()
             ->where('team_id', $teamActivo->id)
             ->first();
@@ -88,15 +140,15 @@ class AislamientoMultiUR
             abort(403, 'Tu Unidad Responsable no tiene acceso a este programa.');
         }
 
-        // Almacenar el rol en el request para uso en controladores
-        $request->merge(['ur_rol_en_programa' => $pivote->pivot->rol]);
+        // 5. Inyectar rol en el request para uso en Controladores/Policies (Mejor práctica)
+        $request->attributes->set('ur_rol_en_programa', $pivote->pivot->rol);
 
         return $next($request);
     }
 }
 ```
 
-### 2. Registrar alias del middleware
+### 4. Registrar alias del middleware
 
 En `bootstrap/app.php`:
 
@@ -106,76 +158,50 @@ $middleware->alias([
 ]);
 ```
 
-### 3. Agregar la relación en el modelo ProgramaPresupuestario
+### 5. Definir autorización temporal / Policy (Mejora Arquitectónica)
 
-> Este paso anticipa S3-T1. Al crear el modelo `ProgramaPresupuestario`, debe incluir:
+En lugar de crear un "Helper", utilizaremos el flujo natural de automatización de Laravel para que, en un futuro, uses `$user->can('update', $nivel)` o `$user->can('view', $programa)`.
 
-```php
-// En app/Models/ProgramaPresupuestario.php (se crea en S3-T1)
-public function equipos(): BelongsToMany
-{
-    return $this->belongsToMany(Team::class, 'programa_team')
-                ->withPivot('rol')
-                ->withTimestamps();
-}
-```
-
-### 4. Crear helper para verificar permisos de escritura en niveles
-
-Crear `app/Helpers/UrPermissions.php`:
+Por el momento, aseguraremos que el Administrador siempre pase cualquier condición de Gate/Policy.
+Edita el `AppServiceProvider` en `app/Providers/AppServiceProvider.php`:
 
 ```php
-<?php
+use Illuminate\Support\Facades\Gate;
 
-namespace App\Helpers;
-
-use App\Models\MirNivel;
-use App\Models\User;
-
-class UrPermissions
+// Dentro de boot():
+public function boot(): void
 {
-    /**
-     * Verifica si el usuario puede escribir en un nivel de MIR específico.
-     */
-    public static function puedeEscribirEnNivel(User $user, MirNivel $nivel): bool
-    {
+    // Definir lógica global para que "admin" pueda saltarse cuaquier autorización futura
+    Gate::before(function ($user, $ability) {
         if ($user->hasRole('admin')) {
             return true;
         }
-
-        $rolEnPrograma = request()->get('ur_rol_en_programa');
-
-        // Coordinadora: acceso completo
-        if ($rolEnPrograma === 'coordinadora') {
-            return true;
-        }
-
-        // Coadyuvante: solo en niveles asignados a su team
-        if ($rolEnPrograma === 'coadyuvante') {
-            return $nivel->team_id === $user->currentTeam?->id;
-        }
-
-        return false;
-    }
+    });
 }
 ```
 
-### 5. Crear tests del middleware
+*Nota: La policy fina `MirNivelPolicy` se creará e implementará en el Sprint 3 para leer el atributo `ur_rol_en_programa` del request.*
+
+### 6. Tests de Integración Ejecutables
+
+Dado que ahora contamos con las estructuras (stubs) del modelo y tabla, los tests pueden ser reales.
 
 ```bash
 sail artisan make:test AislamientoMultiURTest
 ```
 
-Editar `tests/Feature/AislamientoMultiURTest.php`:
+Editar `tests/Feature/AislamientoMultiURTest.php` reemplazando su contenido por:
 
 ```php
 <?php
 
 namespace Tests\Feature;
 
+use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class AislamientoMultiURTest extends TestCase
@@ -185,23 +211,50 @@ class AislamientoMultiURTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Asegurar que existan roles
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
     }
 
-    public function test_admin_puede_acceder_a_cualquier_programa(): void
+    public function test_usuario_sin_relacion_es_bloqueado(): void
     {
         $user = User::factory()->create();
-        $user->assignRole('admin');
+        $user->assignRole('planeador'); // Asignar rol base, no admin
+        
+        $team = Team::factory()->create(['user_id' => $user->id]);
+        $user->current_team_id = $team->id;
+        $user->save();
 
-        // El admin no debe recibir 403 aunque no pertenezca al programa
-        $this->actingAs($user);
-        $this->assertTrue($user->hasRole('admin'));
+        $programa = ProgramaPresupuestario::create(['nombre' => 'Prog Test', 'clave' => 'P-001']);
+
+        // Crear una ruta dummy protegida con el middleware
+        Route::get('/test-programa/{programa}', function (ProgramaPresupuestario $programa) {
+            return 'OK';
+        })->middleware(['auth', 'ur.aislamiento']);
+
+        $this->actingAs($user)
+             ->get("/test-programa/{$programa->id}")
+             ->assertForbidden(); // Espera 403
     }
 
-    public function test_operador_sin_equipo_activo_recibe_403(): void
+    public function test_coordinadora_accede(): void
     {
-        // Se implementa en Sprint 3 cuando existan rutas de programas
-        $this->markTestSkipped('Requiere rutas de programas (Sprint 3)');
+        $user = User::factory()->create();
+        $team = Team::factory()->create(['user_id' => $user->id]);
+        $user->current_team_id = $team->id;
+        $user->save();
+
+        $programa = ProgramaPresupuestario::create(['nombre' => 'Prog Test', 'clave' => 'P-002']);
+        
+        // Crear relación con rol Coordinadora
+        $programa->equipos()->attach($team->id, ['rol' => 'coordinadora']);
+
+        Route::get('/test-programa/{programa}', function (ProgramaPresupuestario $programa) {
+            return 'OK';
+        })->middleware(['auth', 'ur.aislamiento']);
+
+        $this->actingAs($user)
+             ->get("/test-programa/{$programa->id}")
+             ->assertOk(); // Espera 200
     }
 }
 ```
@@ -216,30 +269,16 @@ sail artisan test --filter AislamientoMultiURTest
 
 ## Criterios de aceptación
 
-- [ ] Middleware `AislamientoMultiUR` creado y registrado con alias `ur.aislamiento`
-- [ ] Consulta a `programa_team` para determinar el rol del team activo del usuario
-- [ ] UR Coordinadora: acceso sin restricciones al programa
-- [ ] UR Coadyuvante: escritura limitada a `mir_niveles` donde `team_id` coincide
-- [ ] Aislamiento total para usuarios sin relación con el programa (403)
-- [ ] Admin puede acceder a todos los programas sin restricción
-- [ ] Tests unitarios verifican la lógica de roles
+- [ ] Migración `create_programa_team_table` creada y ejecutada satisfactoriamente en `testing`.
+- [ ] Modelo `ProgramaPresupuestario` (stub) creado con su respectiva relación `equipos()`.
+- [ ] Middleware `AislamientoMultiUR` inyecta rol mediante `$request->attributes->set()` (Mejor práctica que `$request->merge()`).
+- [ ] Middleware permite paso automáticamente a un usuario con rol `admin`.
+- [ ] Tests validan activamente que se bloquea acceso a URs ajenas (403) y permite acceso a URs relacionadas (200).
 
 ---
 
-## Uso en rutas (Sprint 3+)
+## Notas para el equipo
 
-```php
-// routes/web.php
-Route::middleware(['auth:sanctum', 'verified', 'ur.aislamiento'])
-    ->group(function () {
-        Route::resource('programas', ProgramaPresupuestarioController::class);
-    });
-```
-
----
-
-## Notas
-
-- El middleware se aplica en rutas que reciben `{programa}` como parámetro de ruta (route model binding)
-- Los tests completos (coadyuvante puede capturar su componente, etc.) se implementan en Sprint 3 cuando existen programas y mir_niveles reales
-- `$request->merge(['ur_rol_en_programa' => ...])` es la forma de pasar contexto al controlador sin acoplamiento
+1.  **`request()->attributes` vs `request()->merge`:** Usar `$request->attributes->set()` es muchísimo más limpio para pasar metadatos al controlador (como el rol de la UR) que `merge()`. Este último fue diseñado para inyectar input/payload, lo cual rompe responsabilidades y puede causar colisiones.
+2.  **Stubs Seguros:** Crear un `ProgramaPresupuestario` semi-vacío ahora mismo era vital para compilar. En el Sprint 3, su migración extenderá o creará los campos definitivos sin romper el trabajo efectuado aquí.
+3.  **Autorización Evolutiva:** Ya quedó el cimiento de Laravel Auth Gate preparado. En los tickets siguientes, implementaremos `MirNivelPolicy` para controlar qué y dónde puede editar la UR coadyuvante.

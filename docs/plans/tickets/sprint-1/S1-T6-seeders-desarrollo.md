@@ -1,30 +1,34 @@
-# Plan: S1-T6 — Seeders de datos de prueba para desarrollo
+# Plan: S1-T6 — Seeders de datos de prueba completos
 
 **Ticket:** S1-T6
 **Tipo:** chore
 **Rama:** `chore/S1-T6-seeders-desarrollo`
 **Sprint:** 1 — Identidad y Aislamiento
-**Depende de:** S1-T1, S1-T2, S1-T3 (roles, permisos y campos UR deben existir)
+**Depende de:** S1-T1, S1-T2, S1-T3, **S1-T5** (Modelo Programa y tabla pivote deben existir)
 
 ---
 
 ## Contexto
 
-Los seeders de desarrollo generan un escenario realista completo que permite trabajar el sistema sin datos reales. Incluyen el escenario **multi-UR** crítico para probar el middleware de S1-T5:
+Los seeders de desarrollo generan un escenario realista completo que permite probar el sistema de inmediato. La mejora más importante con respecto a la instalación por defecto es la integración con el **Middleware de Aislamiento Multi-UR** desarrollado en S1-T5. 
 
-- **Secretaría de Educación** = UR Coordinadora de un programa transversal
-- **Secretaría de Salud** = UR Coadyuvante del mismo programa (responsable del Componente 2)
-- **Secretaría de Seguridad** = UR sin participación en el programa transversal
+Para poder probar este aislamiento desde el día uno, generaremos el siguiente escenario:
+
+- **Secretaría de Educación** = UR Coordinadora de un programa transversal.
+- **Secretaría de Salud** = UR Coadyuvante del mismo programa.
+- **Secretaría de Seguridad** = UR sin participación (para probar accesos denegados).
 
 Cada UR tiene 2 usuarios: 1 planeador y 1 operador. Más un admin global.
+Se implementarán mejores prácticas: el uso de Factories, constantes de roles en lugar de 'magic strings', comandos idempotentes (firstOrCreate / syncWithoutDetaching), y un guardia para proteger los entornos de producción.
 
 ---
 
 ## Pre-requisitos
 
-- S1-T1 completado (Jetstream con Teams)
-- S1-T2 completado (campos `clave_ur`, `titular`, `tipo_ur`, `activa` en `teams`)
-- S1-T3 completado (roles `admin`, `planeador`, `operador` y permisos)
+- S1-T1 completado (Jetstream con Teams).
+- S1-T2 completado (campos `clave_ur`, `titular`, `tipo_ur`, `activa` en BD).
+- S1-T3 completado (constantes de roles como `User::ROLE_ADMIN` y permisos).
+- S1-T5 completado (tabla migración `programa_team` y el modelo stub `ProgramaPresupuestario`).
 
 ---
 
@@ -43,148 +47,118 @@ Editar `database/seeders/DesarrolloSeeder.php`:
 
 namespace Database\Seeders;
 
+use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\PermissionRegistrar;
 
 class DesarrolloSeeder extends Seeder
 {
     public function run(): void
     {
-        // Limpiar cache de permisos
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+        // 1. Guardia de seguridad: NUNCA correr en producción
+        if (app()->environment('production')) {
+            $this->command->error('No se puede ejecutar este seeder con contraseñas hardcoded en producción.');
+            return;
+        }
 
-        // ── 1. ADMIN GLOBAL ──────────────────────────────────────
-        $admin = User::create([
-            'name'     => 'Administrador del Sistema',
-            'email'    => 'admin@sistema.test',
-            'password' => Hash::make('password'),
+        $this->command->info('Iniciando carga de datos de desarrollo...');
+
+        // 2. ADMIN GLOBAL
+        $admin = User::factory()->create([
+            'name'  => 'Administrador Sistema',
+            'email' => 'admin@sistema.test',
         ]);
-        $admin->assignRole('admin');
+        $admin->assignRole(User::ROLE_ADMIN);
 
-        // ── 2. UR COORDINADORA: Secretaría de Educación ──────────
-        $urEducacion = Team::create([
-            'user_id'      => $admin->id,
-            'name'         => 'Secretaría de Educación',
-            'clave_ur'     => 'SE-001',
-            'titular'      => 'Dr. Juan Pérez García',
-            'tipo_ur'      => 'sustantiva',
-            'activa'       => true,
-            'personal_team' => false,
-        ]);
+        // helper interno para crear URs y usuarios asociados iterativamente
+        $crearUR = function (string $nombre, string $clave, string $titular, string $tipo) use ($admin) {
+            $team = Team::firstOrCreate(
+                ['clave_ur' => $clave],
+                [
+                    'name'          => $nombre,
+                    'user_id'       => $admin->id, // Owner de los teams (Admin)
+                    'titular'       => $titular,
+                    'tipo_ur'       => $tipo,
+                    'activa'        => true,
+                    'personal_team' => false,
+                ]
+            );
 
-        $planeadorEdu = $this->crearUsuario(
-            'Planeador Educación',
-            'planeador.edu@sistema.test',
-            'planeador',
-            $urEducacion
+            // Crear Planeador
+            $planeador = User::factory()->create([
+                'name'  => "Planeador {$clave}",
+                'email' => "planeador." . strtolower($clave) . "@sistema.test",
+            ]);
+            $planeador->assignRole(User::ROLE_PLANEADOR);
+            $team->users()->attach($planeador, ['role' => 'planeador']);
+            $planeador->forceFill(['current_team_id' => $team->id])->save();
+
+            // Crear Operador
+            $operador = User::factory()->create([
+                'name'  => "Operador {$clave}",
+                'email' => "operador." . strtolower($clave) . "@sistema.test",
+            ]);
+            $operador->assignRole(User::ROLE_OPERADOR);
+            $team->users()->attach($operador, ['role' => 'operador']);
+            $operador->forceFill(['current_team_id' => $team->id])->save();
+
+            return $team;
+        };
+
+        // 3. Crear URs usando el helper
+        $urEducacion = $crearUR('Secretaría de Educación', 'SE-001', 'Dr. Juan Pérez', Team::TIPO_SUSTANTIVA);
+        $urSalud = $crearUR('Secretaría de Salud', 'SS-002', 'Dra. María López', Team::TIPO_APOYO);
+        $urSeguridad = $crearUR('Secretaría de Seguridad', 'SEG-003', 'Lic. Roberto Sánchez', Team::TIPO_SUSTANTIVA);
+
+        // 4. Crear Programa Transversal (Requerido para el testeo del Middleware S1-T5)
+        $programaTransversal = ProgramaPresupuestario::firstOrCreate(
+            ['clave' => 'TRANS-2026-001'],
+            ['nombre' => 'Programa Interinstitucional de Salud Escolar']
         );
 
-        $operadorEdu = $this->crearUsuario(
-            'Operador Educación',
-            'operador.edu@sistema.test',
-            'operador',
-            $urEducacion
-        );
-
-        // ── 3. UR COADYUVANTE: Secretaría de Salud ───────────────
-        $urSalud = Team::create([
-            'user_id'      => $admin->id,
-            'name'         => 'Secretaría de Salud',
-            'clave_ur'     => 'SS-002',
-            'titular'      => 'Dra. María López Hernández',
-            'tipo_ur'      => 'apoyo',
-            'activa'       => true,
-            'personal_team' => false,
-        ]);
-
-        $planeadorSalud = $this->crearUsuario(
-            'Planeador Salud',
-            'planeador.salud@sistema.test',
-            'planeador',
-            $urSalud
-        );
-
-        $operadorSalud = $this->crearUsuario(
-            'Operador Salud',
-            'operador.salud@sistema.test',
-            'operador',
-            $urSalud
-        );
-
-        // ── 4. UR SIN PARTICIPACIÓN: Secretaría de Seguridad ─────
-        $urSeguridad = Team::create([
-            'user_id'      => $admin->id,
-            'name'         => 'Secretaría de Seguridad',
-            'clave_ur'     => 'SEG-003',
-            'titular'      => 'Lic. Roberto Sánchez Cruz',
-            'tipo_ur'      => 'sustantiva',
-            'activa'       => true,
-            'personal_team' => false,
+        // 5. Definir roles en el programa usando la tabla pivote de S1-T5
+        
+        // Educación es Coordinadora (Acceso total)
+        $programaTransversal->equipos()->syncWithoutDetaching([
+            $urEducacion->id => ['rol' => 'coordinadora']
         ]);
 
-        $planeadorSeg = $this->crearUsuario(
-            'Planeador Seguridad',
-            'planeador.seg@sistema.test',
-            'planeador',
-            $urSeguridad
-        );
+        // Salud es Coadyuvante (Acceso limitado a su nivel MIR)
+        $programaTransversal->equipos()->syncWithoutDetaching([
+            $urSalud->id => ['rol' => 'coadyuvante']
+        ]);
+        
+        // Seguridad NO se agrega intencionalmente. Si el planeador de SEG intenta entrar, debe arrojar 403.
 
-        $operadorSeg = $this->crearUsuario(
-            'Operador Seguridad',
-            'operador.seg@sistema.test',
-            'operador',
-            $urSeguridad
-        );
-
-        $this->command->info('✓ Seeders de desarrollo completados.');
+        $this->command->info('✓ Datos de desarrollo y escenario transversal cargados.');
         $this->command->table(
             ['Usuario', 'Email', 'Rol', 'UR'],
             [
                 ['Admin', 'admin@sistema.test', 'admin', '—'],
-                ['Planeador Edu', 'planeador.edu@sistema.test', 'planeador', 'Educación'],
-                ['Operador Edu', 'operador.edu@sistema.test', 'operador', 'Educación'],
-                ['Planeador Salud', 'planeador.salud@sistema.test', 'planeador', 'Salud'],
-                ['Operador Salud', 'operador.salud@sistema.test', 'operador', 'Salud'],
-                ['Planeador Seg', 'planeador.seg@sistema.test', 'planeador', 'Seguridad'],
-                ['Operador Seg', 'operador.seg@sistema.test', 'operador', 'Seguridad'],
+                ['Planeador Edu', 'planeador.se-001@sistema.test', 'planeador', 'Educación'],
+                ['Operador Edu', 'operador.se-001@sistema.test', 'operador', 'Educación'],
+                ['Planeador Salud', 'planeador.ss-002@sistema.test', 'planeador', 'Salud'],
+                ['Operador Salud', 'operador.ss-002@sistema.test', 'operador', 'Salud'],
+                ['Planeador Seg', 'planeador.seg-003@sistema.test', 'planeador', 'Seguridad'],
+                ['Operador Seg', 'operador.seg-003@sistema.test', 'operador', 'Seguridad'],
             ]
         );
-        $this->command->info('Contraseña de todos los usuarios: password');
-    }
-
-    private function crearUsuario(string $nombre, string $email, string $rol, Team $team): User
-    {
-        $user = User::create([
-            'name'     => $nombre,
-            'email'    => $email,
-            'password' => Hash::make('password'),
-        ]);
-
-        $user->assignRole($rol);
-
-        // Asignar team como equipo actual
-        $user->teams()->attach($team->id);
-        $user->forceFill(['current_team_id' => $team->id])->save();
-
-        return $user;
+        $this->command->info('Contraseña para todos los usuarios: password');
     }
 }
 ```
 
 ### 2. Actualizar DatabaseSeeder
 
-Editar `database/seeders/DatabaseSeeder.php`:
+Editar `database/seeders/DatabaseSeeder.php` para integrar el nuevo flujo:
 
 ```php
 public function run(): void
 {
     $this->call([
-        RolesAndPermissionsSeeder::class,
-        DesarrolloSeeder::class,
+        RolesAndPermissionsSeeder::class, // Esencial generar permisos antes que usuarios
+        DesarrolloSeeder::class,          // Ejecuta los Factories y relaciones
     ]);
 }
 ```
@@ -195,7 +169,9 @@ public function run(): void
 sail artisan migrate:fresh --seed
 ```
 
-### 4. Verificar el escenario
+### 4. Verificación Interna (Tinker)
+
+Probar que la información quedó interconectada para S1-T5.
 
 ```bash
 sail artisan tinker
@@ -203,65 +179,40 @@ sail artisan tinker
 
 ```php
 use App\Models\User;
+use App\Models\ProgramaPresupuestario;
 
-// Verificar admin
-$admin = User::where('email', 'admin@sistema.test')->first();
-$admin->hasRole('admin'); // true
+// 1. Verificar usuario y su respectiva suscripción de roles
+$user = User::where('email', 'planeador.se-001@sistema.test')->first();
+$user->currentTeam->name; // Debe decir "Secretaría de Educación"
+$user->hasRole(User::ROLE_PLANEADOR); // true
 
-// Verificar planeador de Educación
-$planeador = User::where('email', 'planeador.edu@sistema.test')->first();
-$planeador->hasRole('planeador');          // true
-$planeador->currentTeam->name;             // "Secretaría de Educación"
-$planeador->currentTeam->clave_ur;         // "SE-001"
-$planeador->hasPermissionTo('crear_programa'); // true
+// 2. Verificar el escenario transversal esencial para el AislamientoMultiUR
+$prog = ProgramaPresupuestario::where('clave', 'TRANS-2026-001')->first();
 
-// Verificar operador de Salud
-$operador = User::where('email', 'operador.salud@sistema.test')->first();
-$operador->hasRole('operador');                 // true
-$operador->currentTeam->name;                   // "Secretaría de Salud"
-$operador->hasPermissionTo('capturar_avance');  // true
-$operador->hasPermissionTo('crear_programa');   // false
+// Verificar Rol Coordinador
+$prog->equipos()->wherePivot('rol', 'coordinadora')->first()->name; 
+// => "Secretaría de Educación"
 
+// Verificar Rol Coadyuvante
+$prog->equipos()->wherePivot('rol', 'coadyuvante')->first()->name; 
+// => "Secretaría de Salud"
 exit
 ```
-
-### 5. Probar login en el navegador
-
-Acceder a `http://localhost/login` con cualquier usuario de prueba:
-- `admin@sistema.test` / `password`
-- `planeador.edu@sistema.test` / `password`
-- `operador.salud@sistema.test` / `password`
 
 ---
 
 ## Criterios de aceptación
 
-- [ ] `sail artisan db:seed` ejecuta sin errores
-- [ ] Se crean 7 usuarios con roles y teams correctamente asignados
-- [ ] Login con cualquier usuario de prueba funciona en `http://localhost/login`
-- [ ] `$user->currentTeam` retorna la UR correcta para cada usuario
-- [ ] `$user->hasPermissionTo(...)` respeta los permisos por rol
-- [ ] 2FA puede configurarse para usuarios de prueba (Jetstream lo permite en `/user/profile`)
+- [ ] Seeder usa `$user = User::factory()->create()` para facilitar el control de contraseñas.
+- [ ] Implementación de Security Guard a nivel entorno (`app()->environment('production')`).
+- [ ] Utilización de las constantes de rol definidas en `S1-T3` para robustez de la codebase.
+- [ ] Creación con `firstOrCreate` y anexión a pivote con `syncWithoutDetaching` otorgando idempotencia al Database Seedering.
+- [ ] Creación obligatoria del Sub-Escenario Transversal validando así la funcionalidad del ticket hermano (S1-T5).
+- [ ] La tabla de resumen imprime todos los correos generados correctamene para simplificar visualización.
 
 ---
 
-## Usuarios de prueba
+## Notas para el equipo
 
-| Email                          | Password   | Rol       | UR                       |
-|--------------------------------|------------|-----------|--------------------------|
-| admin@sistema.test             | password   | admin     | —                        |
-| planeador.edu@sistema.test     | password   | planeador | Secretaría de Educación  |
-| operador.edu@sistema.test      | password   | operador  | Secretaría de Educación  |
-| planeador.salud@sistema.test   | password   | planeador | Secretaría de Salud      |
-| operador.salud@sistema.test    | password   | operador  | Secretaría de Salud      |
-| planeador.seg@sistema.test     | password   | planeador | Secretaría de Seguridad  |
-| operador.seg@sistema.test      | password   | operador  | Secretaría de Seguridad  |
-
----
-
-## Notas
-
-- La asociación del escenario multi-UR (Educación=coordinadora, Salud=coadyuvante en el programa transversal) se completa en **S3-T1** cuando exista la tabla `programa_team`
-- Todos los usuarios usan la misma contraseña `password` — **solo para desarrollo local**, nunca en staging/producción
-- El 2FA se puede configurar manualmente en `/user/profile` para cada usuario de prueba
-- `migrate:fresh --seed` borra todos los datos — usar solo en desarrollo local
+- La base de datos es ahora capaz de someterse a la prueba del middleware de Inyección Multi-UR (que lanzaba `403` a las URs que no estaban mapeadas en el query del modelo `$programa`).
+- El uso nativo de las funciones idempotentes facilita hacer pruebas unitarias o de requests rápidos evitando errores Duplicate de SQL en futuras iteraciones. Todos los usuarios creados con los Factories tienen el password por defecto en "password" como es usual de Laravel Fortify.
