@@ -50,6 +50,19 @@ class UserFactory extends Factory
     }
 
     /**
+     * Indicate that the user should have 2FA enabled (for security tests).
+     */
+    public function withTwoFactor(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'two_factor_secret' => encrypt('test-secret'),
+                'two_factor_confirmed_at' => now(),
+            ];
+        });
+    }
+
+    /**
      * Indicate that the user should have a personal team.
      */
     public function withPersonalTeam(?callable $callback = null): static
