@@ -2,36 +2,45 @@
 
 ---
 
-### S8-T1: Refactorizar LlmService con patrones avanzados (Alcance Reducido y Enfocado)
+### S8-T1: Consolidar y Refactorizar LlmService con Arquitectura Resiliente
 
 **Tipo:** refactor
 **Rama:** `refactor/S8-T1-llm-service-avanzado`
+**Depende de:** S3-T8, S4-T5, S4-T6, S4-T7, S4-T9, S6-T4, S7-T5
 
 **Descripcion:**
-Consolidar el servicio de IA creado en S3-T8 con todos los metodos del dominio. **Nota importante:** gracias al motor de poka-yoke implementado en S4-T11, la IA ya NO necesita detectar errores de Tipo, Dimension o Frecuencia de indicadores, los cuales son bloqueados por el sistema antes de persistirse. El LlmService se concentra en auditoria semantica y causal de mayor valor.
+Consolidar y refactorizar el `LlmService` (creado en S3-T8 y extendido en S4-S7) para unificar todos los métodos de dominio bajo una arquitectura robusta. Se implementan patrones de resiliencia, control de costos y versionado de prompts.
+
+**Decisiones técnicas:**
+
+- **Modo Degradado (Fallback):** El servicio operará en modo no bloqueante. Si el API de IA falla, retornará una respuesta "pendiente" que no impide al usuario continuar, en lugar de lanzar una excepción.
+- **Prompts Versionados:** Los prompts se gestionarán en `resources/prompts/` con un `manifest.json` para auditoría y control de versiones.
+- **Caché de Respuestas:** Se implementará una caché (`llm_cache`) para almacenar respuestas de consultas idénticas y reducir costos.
+- **Configuración Centralizada:** `config/llm.php` gestionará modelos por tarea, costos y comportamiento de fallback.
 
 **Metodos consolidados (alcance exclusivo de la IA):**
-- `suggestNarrativeSyntax($nivel, $texto)` — Validacion sintactica SHCP (semantica, no estructura)
-- `validateCremaa($indicador)` — Validacion CREMAA letra por letra (criterios de calidad del indicador)
-- `validateVerticalLogic($mir)` — Congruencia causal entre niveles (causa-efecto)
-- `validateHorizontalLogic($nivel)` — Indicador mide el objetivo; medio verifica el indicador
-- `extractVariables($formula)` — Extraccion de variables de formulas matematicas
-- `generateJustification($avance, $supuestos, $historial)` — Borradores de justificacion acotados a supuestos (Col. 4), magnitud de desviacion e historial
-- `suggestAlignment($texto, $nivel)` — Sugerencias de alineacion semantica con la cascada de planes
-- `detectCausalBreaks($evaluacion)` — Deteccion de rupturas causales entre niveles al cierre del ejercicio
+
+- `suggestNarrativeSyntax($nivel, $texto)` — Validación sintáctica SHCP (S4-T5)
+- `validateCremaa($indicador)` — Validación CREMAA (S4-T6)
+- `validateVerticalLogic($mir)` — Congruencia causal (S4-T7)
+- `validateHorizontalLogic($nivel)` — Consistencia por fila (S4-T7)
+- `extractVariables($formula)` — Extracción de variables (S4-T9)
+- `generateJustification($avance, ...)` — Borradores de justificación (S6-T4)
+- `suggestAlignment($texto, $nivel)` — Sugerencias de alineación (S4-T8)
+- `detectCausalBreaks($evaluacion)` — Detección de rupturas al cierre (S7-T5)
 
 **Lo que la IA ya NO valida (delegado al sistema en S4-T11):**
-- Tipo de indicador por nivel (bloqueado por Form Request)
-- Dimension de medicion por nivel (filtrado en UI y validado en backend)
-- Frecuencia de medicion por nivel (dropdowns restringidos y validacion backend)
+
+- Tipo, Dimensión y Frecuencia de indicadores (responsabilidad del motor Poka-Yoke).
 
 **Criterios de aceptacion:**
-- [ ] Todos los metodos centralizados en un solo servicio
-- [ ] Cada metodo tiene su prompt template versionado
-- [ ] Los prompts NO incluyen instrucciones para validar Tipo, Dimension o Frecuencia (son responsabilidad del sistema)
-- [ ] Tests unitarios con mocks para cada metodo
-- [ ] Logging unificado de todas las interacciones
-- [ ] Rate limiting por usuario/sesion
+
+- [ ] Todos los métodos de dominio están centralizados en `LlmService`.
+- [ ] Implementado el modo degradado: en caso de fallo del API, el sistema no se bloquea.
+- [ ] Implementada la caché de respuestas con TTL configurable.
+- [ ] Los prompts se cargan desde `resources/prompts/` y se gestionan con un `manifest.json`.
+- [ ] Los prompts NO incluyen instrucciones para validar Tipo, Dimensión o Frecuencia.
+- [ ] Tests unitarios con mocks para cada método, incluyendo pruebas para el modo degradado y la caché.
 
 ---
 
@@ -39,16 +48,25 @@ Consolidar el servicio de IA creado en S3-T8 con todos los metodos del dominio. 
 
 **Tipo:** feat
 **Rama:** `feat/S8-T2-embeddings-batch`
+**Depende de:** S2-T10
 
 **Descripcion:**
-Comando artisan para generar/regenerar embeddings en batch para todos los registros que no los tengan o necesiten actualizacion.
+Comando Artisan para generar/regenerar embeddings en batch. Este pipeline es crucial para la carga inicial de datos y la recuperación de embeddings fallidos, e implementa manejo de rate limits y errores.
+
+**Decisiones técnicas:**
+
+- **Rate Limiting:** Se introduce un delay configurable entre chunks para no saturar el API.
+- **Reintentos:** Se implementa una lógica de reintentos con backoff exponencial para manejar errores transitorios del API.
+- **Priorización:** El comando procesa las tablas en un orden lógico (PED, ODS, PND) para que los datos más críticos para la alineación estén disponibles primero.
 
 **Criterios de aceptacion:**
-- [ ] `php artisan embeddings:generate` procesa todos los registros pendientes
-- [ ] Procesamiento en chunks para no saturar el API
-- [ ] Reporte al finalizar: N generados, M fallidos, X omitidos
-- [ ] Flag `--force` para regenerar todos
-- [ ] Schedulable para ejecucion nocturna
+
+- [ ] Comando `app:embeddings-generate` procesa registros con `embedding IS NULL`.
+- [ ] Procesamiento en chunks (`--chunk-size`) con delay configurable (`--delay`).
+- [ ] Reintenta hasta 3 veces con backoff exponencial en caso de fallo.
+- [ ] Reporte al finalizar: N generados, M fallidos, X omitidos.
+- [ ] Flag `--force` para regenerar todos los embeddings.
+- [ ] Schedulable para ejecución nocturna.
 
 ---
 
@@ -56,19 +74,31 @@ Comando artisan para generar/regenerar embeddings en batch para todos los regist
 
 **Tipo:** feat
 **Rama:** `feat/S8-T3-monitoreo-ia`
+**Depende de:** S3-T8, S8-T1
 
 **Descripcion:**
-Dashboard para el administrador que muestre metricas de uso del servicio de IA.
+Dashboard administrativo para monitorear el consumo, costos y rendimiento del servicio de IA, con un sistema de presupuestos y alertas.
+
+**Decisiones técnicas:**
+
+- Se define un schema completo para la tabla `llm_logs` para una auditoría detallada.
+- Se crea la tabla `llm_budgets` para gestionar presupuestos mensuales (global, por UR o por usuario).
+- Se implementan alertas para umbrales de uso, costo y tasa de error.
+- Se define una política de retención de datos para controlar el crecimiento de la BD.
 
 **Metricas:**
+
 - Llamadas por dia/semana/mes
-- Tokens consumidos
+- Tokens consumidos y **costo estimado en USD**.
 - Tiempo promedio de respuesta
 - Tasa de error
 - Uso por tipo de operacion (validacion, sugerencia, justificacion)
 - Uso por usuario/UR
 
 **Criterios de aceptacion:**
-- [ ] Tabla de logs de IA con campos: tipo, usuario, tokens, duracion, status
-- [ ] Dashboard con graficas basicas
-- [ ] Solo accesible para admin
+
+- [ ] Migraciones para `llm_logs` (actualizada) y `llm_budgets` creadas.
+- [ ] Dashboard con gráficas de uso, costos y rendimiento.
+- [ ] Sistema de alertas que notifica al admin si se superan umbrales de costo o tasa de error.
+- [ ] Política de retención implementada (ej. logs detallados por 90 días, métricas agregadas por 2 años).
+- [ ] Solo accesible para el rol `admin`.
