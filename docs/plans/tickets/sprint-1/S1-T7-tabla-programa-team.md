@@ -1,36 +1,37 @@
-# Plan: S1-T7 — Migración tabla pivote programa_team (Multi-UR Ready)
+# Plan: S1-T7 — Mejorar y Documentar Tablas de Programa
 
 **Ticket:** S1-T7
-**Tipo:** feat
-**Rama:** `feat/S1-T7-tabla-programa-team`
+**Tipo:** refactor
+**Rama:** `refactor/S1-T7-mejora-tabla-programa`
 **Sprint:** 1 — Identidad y Aislamiento
-**Depende de:** S1-T1, S1-T2
 
 ---
 
 ## Contexto
 
-Para que el middleware `AislamientoMultiUR` y los seeders de desarrollo funcionen correctamente desde el Sprint 1, necesitamos la estructura de datos básica donde se guarda la relación de permisos de los programas. Aunque la lógica de negocio de "Programas" y "MIR" pertenecen al Sprint 3, la infraestructura de relación (tabla pivote) la necesitamos ahora.
+Las migraciones para `programas_presupuestarios` y `programa_team` se crearon implícitamente para satisfacer las dependencias del middleware `AislamientoMultiUR` (S1-T5). Sin embargo, el campo `rol` en `programa_team` podría haberse implementado como `enum` nativo de PostgreSQL, lo cual es menos flexible.
 
-Para evitar errores de "tabla no encontrada" o "dependencia circular", se crearán **migraciones stub** (vacías pero con los campos clave) para las tablas padre, posibilitando así que las claves foráneas (Foreign Keys) complen satisfactoriamente desde este primer paso y permitiendo la ejecución fluida del `migrate:fresh`.
+Este ticket:
+
+1.  Verifica la estructura actual.
+2.  Aplica una mejora técnica si es necesaria (`enum` → `string`).
+3.  Documenta que las tablas son stubs para ser expandidas en el Sprint 3.
 
 ---
 
 ## Pre-requisitos
 
-- S1-T1 completado (tabla `teams` existe).
-- S1-T2 completado (campos de UR en `teams`).
+- S1-T5 completado (tablas `programas_presupuestarios` y `programa_team` existen en BD).
+- Paquete `doctrine/dbal` instalado para modificación de columnas.
 
 ---
 
 ## Pasos
 
-### 1. Crear migración Stub: Programa Presupuestario
-
-Necesaria para que `programa_team` pueda referenciarla. Sin la tabla padre, la clave foránea en PostgreSQL romperá.
+### 1. Instalar `doctrine/dbal`
 
 ```bash
-sail artisan make:migration create_programas_presupuestarios_table
+sail composer require doctrine/dbal
 ```
 
 Editar el archivo generado para dejarlo en su versión mínima (Stub):
@@ -121,6 +122,7 @@ sail artisan migrate:fresh
 ```
 
 Salida esperada (entre otras tablas del framework):
+
 - `xxxx_xx_xx_xxxxxx_create_programas_presupuestarios_table` ... OK
 - `xxxx_xx_xx_xxxxxx_create_programa_team_table` ... OK
 
