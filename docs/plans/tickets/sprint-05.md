@@ -2,111 +2,107 @@
 
 ---
 
-### S5-T1: Parser de Markdown para MIR existentes
+### S5-T1: Importador Multi-formato y Diagnóstico
 
 **Tipo:** feat
-**Rama:** `feat/S5-T1-parser-markdown-mir`
+**Rama:** `feat/S5-T1-importador-multiformato`
+**Depende de:** S4-T2, S4-T3
 
 **Descripcion:**
-Importador que acepta un archivo Markdown con la estructura de una MIR existente y lo mapea a las tablas del sistema.
+Implementar un importador multi-formato (Markdown, CSV, Excel) que parsea programas existentes, los convierte a un DTO intermedio (`ImportedMirData`), y genera un diagnóstico de completitud que se persiste en la base de datos.
 
-**Formato esperado:** segun plantilla definida en el documento de diseno (con Frecuencia, Tipo/Dimension, Linea Base).
+**Decisiones técnicas:**
+
+- Se usará un DTO (`ImportedMirData`) como capa de abstracción entre los parsers y la lógica de negocio.
+- El diagnóstico se persistirá en una nueva tabla `importacion_reportes` para auditoría y reanudación.
+- Se utilizará el paquete `maatwebsite/laravel-excel` para los parsers de CSV y Excel.
 
 **Criterios de aceptacion:**
-- [ ] Acepta Markdown con estructura de MIR
-- [ ] Parsea los 4 niveles (Fin, Proposito, Componentes, Actividades)
-- [ ] Extrae indicadores con todos los campos de ficha tecnica
-- [ ] Previsualizacion antes de confirmar importacion
-- [ ] Manejo de errores de formato con mensajes claros
+
+- [ ] Migración y modelo para `importacion_reportes` creados.
+- [ ] DTO `ImportedMirData` definido.
+- [ ] Servicio `MirParserService` con métodos `fromMarkdown()` y `fromCsv()` que retornan el DTO.
+- [ ] Componente Livewire que permite subir archivos (MD, CSV, XLSX).
+- [ ] Al subir, se genera y persiste un `ImportacionReporte` con el diagnóstico de huecos (críticos y menores).
+- [ ] La UI muestra una previsualización de la estructura importada y el reporte de diagnóstico.
+- [ ] El usuario no puede proceder al siguiente paso si el archivo tiene errores de formato irrecuperables.
 
 ---
 
-### S5-T2: Parser de CSV/Excel para MIR existentes
+### S5-T2: Persistencia y Flujo de Completitud de Programas Importados
 
 **Tipo:** feat
-**Rama:** `feat/S5-T2-parser-csv-excel-mir`
+**Rama:** `feat/S5-T2-flujo-completitud`
+**Depende de:** S5-T1, S3-T8
 
 **Descripcion:**
-Importador alternativo que acepta archivos CSV o Excel. Mapeo de columnas configurable.
+Tras el diagnóstico, este ticket se encarga de persistir el programa en la base de datos y proveer una interfaz para que el usuario corrija los huecos detectados.
+
+**Decisiones técnicas:**
+
+- La persistencia se realiza dentro de una transacción (`DB::transaction`).
+- La interfaz de completitud tendrá guardado automático por campo (`wire:model.lazy`) y una barra de progreso.
+- La IA (`LlmService`) asistirá en la corrección de huecos, como la extracción de variables de fórmulas.
 
 **Criterios de aceptacion:**
-- [ ] Acepta CSV y Excel (.xlsx)
-- [ ] Paso de mapeo: usuario asocia columnas del archivo con campos del sistema
-- [ ] Previsualizacion del resultado
-- [ ] Misma logica de creacion de registros que el parser Markdown
+
+- [ ] Al confirmar la previsualización de S5-T1, los datos del DTO se persisten en las tablas `programas_presupuestarios`, `mir_niveles`, `indicadores`, etc.
+- [ ] El programa se crea con `origen = importado`.
+- [ ] Indicadores con huecos críticos se marcan como `activo_seguimiento = false`.
+- [ ] Componente Livewire `CompletarHuecos` que muestra la lista de huecos pendientes (críticos primero).
+- [ ] Al seleccionar un hueco, se muestra un formulario para corregirlo, con asistencia de IA si aplica (ej. "Extraer Variables").
+- [ ] El guardado es automático al salir del campo.
+- [ ] Una barra de progreso visual muestra el avance de la completitud.
+- [ ] Al corregir todos los huecos críticos de un indicador, se actualiza a `activo_seguimiento = true`.
 
 ---
 
-### S5-T3: Diagnostico de completitud
+### S5-T3: Vinculación de Programas Importados con Cascada de Planes
 
 **Tipo:** feat
-**Rama:** `feat/S5-T3-diagnostico-completitud`
+**Rama:** `feat/S5-T3-vinculacion-importados`
+**Depende de:** S5-T2, S2-T5, S2-T11
 
 **Descripcion:**
-Tras la importacion, generar reporte que clasifica huecos en criticos y menores.
+Una vez que el programa importado está en la base de datos, este ticket se encarga de alinearlo con la cascada de planes (PED, PND, ODS) usando la Matriz de Alineación y el servicio de búsqueda semántica.
 
-**Huecos criticos (bloquean seguimiento del indicador):**
-- Variables de formula no identificadas
-- Frecuencia de medicion ausente
-- Linea base y anio base faltantes
+**Decisiones técnicas:**
 
-**Huecos menores (no bloquean):**
-- Sintaxis del resumen narrativo
-- Supuestos faltantes
-- Medios de verificacion incompletos
+- Se reutiliza la lógica de `S4-T8` pero aplicada a un programa ya existente.
+- El umbral de similitud para sugerencias automáticas se establece más alto (ej. 0.85) para evitar falsos positivos.
+- El usuario debe confirmar explícitamente cada vínculo sugerido.
 
 **Criterios de aceptacion:**
-- [ ] Reporte visual: tabla con cada elemento, estado (OK/faltante/critico) y accion sugerida
-- [ ] Indicadores con huecos criticos marcados como `activo_seguimiento = false`
-- [ ] Indicadores completos marcados como `activo_seguimiento = true`
-- [ ] Enlace directo para completar cada hueco
+
+- [ ] Interfaz que detecta si el programa importado carece de alineación.
+- [ ] Para cada nivel de la MIR (Fin, Propósito, etc.), se usa `SemanticSearchService` para sugerir alineaciones con la cascada de planes.
+- [ ] Las sugerencias se presentan con su score de similitud y el texto completo del objetivo para que el usuario juzgue.
+- [ ] El usuario confirma cada vínculo, que se guarda en las FKs de la tabla `mir_niveles`.
+- [ ] Si el programa importado ya tenía una alineación, el sistema la valida contra la Matriz y señala inconsistencias.
 
 ---
 
-### S5-T4: Flujo asistido para completar huecos
+### S5-T4: Calendarización de Metas al Activar Programa
 
 **Tipo:** feat
-**Rama:** `feat/S5-T4-completar-huecos`
+**Rama:** `feat/S5-T4-calendarizacion-metas`
+**Depende de:** S5-T2, S6-T1
 
 **Descripcion:**
-Interfaz que guia al usuario por los huecos pendientes de un programa importado. La IA sugiere contenido basado en lo ya importado.
+Al activar un programa (nuevo o importado), el sistema genera los registros de `metas_periodo`, distribuyendo la meta anual según la frecuencia de cada indicador.
+
+**Decisiones técnicas:**
+
+- La lógica de distribución varía según el tipo de variable (`acumulable`, `continua`, `tasa`).
+- Se presenta una tabla de calendarización editable para que el usuario ajuste la distribución antes de confirmar.
 
 **Criterios de aceptacion:**
-- [ ] Lista de huecos pendientes ordenados por prioridad (criticos primero)
-- [ ] Al seleccionar un hueco, formulario de captura con sugerencia de IA
-- [ ] Al completar huecos criticos de un indicador, se activa automaticamente para seguimiento
-- [ ] Progreso visible: barra o porcentaje de completitud
 
----
-
-### S5-T5: Vinculacion de programas importados con cascada de planes
-
-**Tipo:** feat
-**Rama:** `feat/S5-T5-vinculacion-importados-planes`
-
-**Descripcion:**
-Si el programa importado no tiene alineacion, el sistema sugiere vinculos usando la Matriz de Alineacion y busqueda semantica. Si ya tiene, valida contra la Matriz.
-
-**Criterios de aceptacion:**
-- [ ] Deteccion: programa sin alineacion → flujo de sugerencia
-- [ ] Deteccion: programa con alineacion → flujo de validacion
-- [ ] Sugerencias basadas en similitud semantica del Resumen Narrativo
-- [ ] Advertencias si la alineacion existente contradice la Matriz
-
----
-
-### S5-T6: Calendarizacion de metas al activar programa
-
-**Tipo:** feat
-**Rama:** `feat/S5-T6-calendarizacion-metas`
-
-**Descripcion:**
-Al activar un programa (nuevo o importado), el sistema genera los registros de `metas_periodo` distribuyendo la meta anual en los periodos segun la frecuencia de cada indicador.
-
-**Criterios de aceptacion:**
-- [ ] Generacion automatica de periodos con fechas de inicio/fin
-- [ ] Distribucion de meta anual (el usuario puede ajustar la distribucion)
-- [ ] Etiquetas legibles: "Q1 2026", "Ene 2026", "S1 2026"
-- [ ] Validacion: la suma de metas por periodo = meta anual (para variables acumulables)
+- [ ] Al cambiar el estado de un programa a `activo`, se dispara el proceso de calendarización.
+- [ ] Se presenta una tabla editable con la distribución de metas por período.
+- [ ] El sistema valida la distribución según el tipo de variable:
+    - **Acumulable:** La suma de los períodos debe ser igual a la meta anual.
+    - **Continua/Tasa:** No se valida la suma, cada período es independiente.
+- [ ] Al confirmar, se crean los registros en la tabla `metas_periodo`.
 
 ---
