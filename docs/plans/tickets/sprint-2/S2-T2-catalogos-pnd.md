@@ -548,6 +548,4 @@ $estrategia->objetivo;    // BelongsTo
 | Formato de clave | "1.1" | "1.1.1" (3 niveles) |
 
 ---
-
-¿Aprobamos este plan para proceder con la ejecución?
 ```

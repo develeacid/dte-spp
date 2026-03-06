@@ -1046,6 +1046,4 @@ $plan->activar();
 - El CRUD completo se implementa en S2-T6
 
 ---
-
-¿Aprobamos este plan para proceder con la ejecución?
 ```
