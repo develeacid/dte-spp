@@ -8,13 +8,18 @@
 **Rama:** `feat/S7-T1-migraciones-evaluacion`
 
 **Descripcion:**
-Crear tablas: `evaluaciones_programa`, `anexos_transversales`, `indicador_anexo_transversal`.
+Crear las tablas para el ciclo de evaluación: `evaluaciones_programa`, `anexos_transversales` y la pivote `indicador_anexo_transversal`. La tabla de evaluaciones se enriquece para incluir el desglose del cálculo y metadatos para auditoría.
+
+**Decisiones técnicas:**
+
+- **`evaluaciones_programa`:** Almacenará no solo el índice final, sino el desglose por nivel y la configuración usada en el cálculo (`configuracion_calculo` en JSONB).
 
 **Criterios de aceptacion:**
+
 - [ ] Migraciones completas
 - [ ] Seeder para anexos transversales base (Genero, NNA, Cambio Climatico, Anticorrupcion)
 - [ ] Pivote M:M entre indicadores y anexos transversales
-- [ ] `evaluaciones_programa` con indice de desempeno y conteos de semaforo
+- [ ] Tabla `evaluaciones_programa` con campos para índice general, desglose por nivel, conteos de semáforos, y metadatos del cálculo en JSONB.
 - [ ] Actualizar documentacion del esquema
 
 ---
@@ -28,31 +33,41 @@ Crear tablas: `evaluaciones_programa`, `anexos_transversales`, `indicador_anexo_
 En la ficha del indicador (Sprint 4) o al importar, permitir etiquetar cada indicador con una o mas tematicas transversales.
 
 **Criterios de aceptacion:**
+
 - [ ] Checkboxes de anexos transversales en la ficha del indicador
 - [ ] Guardado en tabla pivote
 - [ ] Visible en la vista de MIR y en el panel de seguimiento
 
 ---
 
-### S7-T3: Calculo del Indice de Desempeno General
+### S7-T3: Cálculo del Índice de Eficacia
 
 **Tipo:** feat
-**Rama:** `feat/S7-T3-indice-desempeno`
+**Rama:** `feat/S7-T3-indice-eficacia`
 
 **Descripcion:**
 Calcular el indice 0-100 por programa al cierre del ejercicio. Promedio ponderado del porcentaje de avance de metas, con mayor peso a niveles superiores.
 
 **Pesos sugeridos:**
+
 - Fin: 40%
 - Proposito: 30%
 - Componentes: 20%
 - Actividades: 10%
 
+**Decisiones técnicas:**
+
+- La fórmula ponderará el **promedio de avance de cada nivel**, no los indicadores individuales, para evitar sesgos por cantidad.
+- **Tratamiento de "Sin Dato":** Indicadores sin capturas en todo el año se excluyen del cálculo y se marcan como "No evaluados".
+- El cálculo se ejecuta vía comando Artisan para flexibilidad.
+
 **Criterios de aceptacion:**
+
 - [ ] Comando artisan que calcula y guarda en `evaluaciones_programa`
 - [ ] Conteo de semaforos (verde, amarillo, rojo, sin dato) incluido
 - [ ] Pesos configurables (no hardcodeados)
 - [ ] El calculo solo considera indicadores con `activo_seguimiento = true`
+- [ ] El cálculo excluye indicadores sin capturas y lo refleja en el conteo `indicadores_no_evaluados`.
 
 ---
 
@@ -64,7 +79,8 @@ Calcular el indice 0-100 por programa al cierre del ejercicio. Promedio ponderad
 **Descripcion:**
 Pantalla de evaluacion integral al cierre del ejercicio fiscal para un programa especifico.
 
-**Secciones:**
+**Secciones a mostrar:**
+
 1. Resumen ejecutivo (alineacion, objetivo central)
 2. Tablero de semaforos consolidado
 3. Comparativa vs ejercicio anterior con tendencias
@@ -72,9 +88,10 @@ Pantalla de evaluacion integral al cierre del ejercicio fiscal para un programa 
 5. Indicadores cronicos en rojo (2+ ejercicios)
 
 **Criterios de aceptacion:**
+
 - [ ] Vista completa con las 5 secciones
 - [ ] Tendencia por indicador: mejoro / empeoro / estable
-- [ ] Indicadores cronicos destacados visualmente
+- [ ] Indicadores crónicos (rojo en 2 de los últimos 3 ejercicios) destacados visualmente.
 - [ ] Solo accesible con permiso `exportar_reportes`
 
 ---
@@ -88,10 +105,16 @@ Pantalla de evaluacion integral al cierre del ejercicio fiscal para un programa 
 La IA analiza los semaforos por nivel y detecta rupturas en la cadena causal.
 
 **Ejemplo de ruptura:**
+
 - Actividades en verde + Componente en rojo = problema de diseno (la solucion no sirve)
 - Componente en verde + Proposito en rojo = factores externos (supuestos no cumplidos)
 
+**Decisiones técnicas:**
+
+- El lenguaje usado en el reporte de la IA será **diagnóstico, no acusatorio** (ej. "brecha detectada" en lugar de "falla").
+
 **Criterios de aceptacion:**
+
 - [ ] Analisis automatico al generar evaluacion
 - [ ] Reporte de rupturas con explicacion por caso
 - [ ] Sugerencia: problema de ejecucion vs problema de diseno
@@ -105,15 +128,21 @@ La IA analiza los semaforos por nivel y detecta rupturas en la cadena causal.
 **Rama:** `feat/S7-T6-evaluacion-transversal`
 
 **Descripcion:**
-Paneles que cruzan todos los programas del estado para dar vision global al planeador.
+Paneles que cruzan todos los programas del estado para dar visión global al planeador.
 
 **Vistas:**
+
 - Por Eje del PED: conteo de semaforos e indice promedio
 - Por ODS: indicadores que contribuyen a cada ODS
 - Por Unidad Responsable: desempeno por dependencia
 - Por Anexo Transversal: filtro por tematica cruzando dependencias
 
+**Decisiones técnicas:**
+
+- Los paneles mostrarán una advertencia clara si existen programas sin alineación, ya que esto afecta la completitud de los datos.
+
 **Criterios de aceptacion:**
+
 - [ ] 4 vistas funcionales con filtros
 - [ ] Ranqueo por indice de desempeno
 - [ ] Datos derivados de la Matriz de Alineacion (herencia funcional)
@@ -127,20 +156,26 @@ Paneles que cruzan todos los programas del estado para dar vision global al plan
 **Rama:** `feat/S7-T7-exportacion-pdf-excel`
 
 **Descripcion:**
-Generar reportes exportables en formato PDF y Excel.
+Generar reportes exportables en formato PDF y Excel, manejando los reportes pesados de forma asíncrona.
 
 **Reportes:**
+
 - MIR en formato oficial
 - Fichas tecnicas de indicadores
 - Reporte de avance trimestral por programa
 - Reporte de evaluacion anual por programa
 - Reporte transversal por Eje PED / ODS / Anexo
 
+**Decisiones técnicas:**
+
+- Los reportes que involucren múltiples programas o MIRs complejas se generarán en una **cola de trabajos (jobs)** para no bloquear la UI.
+
 **Criterios de aceptacion:**
+
 - [ ] Cada reporte incluye sello de tiempo y periodo evaluado
 - [ ] PDF con formato profesional (encabezado institucional configurable)
 - [ ] Excel con hojas separadas por seccion
-- [ ] Descarga funcional desde la interfaz
+- [ ] Descarga funcional desde la interfaz. Para reportes en cola, se notifica al usuario cuando está listo.
 - [ ] Solo accesible con permiso `exportar_reportes`
 
 ---
@@ -154,6 +189,7 @@ Generar reportes exportables en formato PDF y Excel.
 Exportar datos en CSV y JSON, empaquetados con un archivo de metadatos (Diccionario de Datos) que describe cada campo.
 
 **Criterios de aceptacion:**
+
 - [ ] Exportacion CSV con codificacion UTF-8
 - [ ] Exportacion JSON estructurado
 - [ ] Diccionario de datos generado automaticamente (nombre de campo, tipo, descripcion)
