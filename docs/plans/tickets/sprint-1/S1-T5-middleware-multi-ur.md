@@ -150,12 +150,22 @@ class AislamientoMultiUR
 
 ### 4. Registrar alias del middleware
 
-En `bootstrap/app.php`:
+> **⚠️ Importante:** Para este punto, `bootstrap/app.php` ya tiene contenido de S1-T3 (alias de Spatie) y de S1-T4 (`web(append: [...])`). **No reemplazar el bloque existente.** Agregar `ur.aislamiento` al array `alias` ya existente.
+
+El resultado esperado del bloque `withMiddleware` debe quedar así:
 
 ```php
-$middleware->alias([
-    'ur.aislamiento' => \App\Http\Middleware\AislamientoMultiUR::class,
-]);
+->withMiddleware(function (Middleware $middleware): void {
+    $middleware->alias([
+        'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
+        'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+        'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+        'ur.aislamiento'     => \App\Http\Middleware\AislamientoMultiUR::class, // <- agregar esta línea
+    ]);
+    $middleware->web(append: [
+        \App\Http\Middleware\RequireTwoFactorAuthentication::class,
+    ]);
+})
 ```
 
 ### 5. Definir autorización temporal / Policy (Mejora Arquitectónica)
@@ -211,25 +221,27 @@ class AislamientoMultiURTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        // Asegurar que existan roles
+        // Asegurar que existan roles (RolesAndPermissionsSeeder define: admin, planeador, operador)
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        // Registrar la ruta de prueba UNA SOLA VEZ en setUp para evitar problemas
+        // de aislamiento entre tests cuando se definen rutas con Route::get() dentro
+        // de cada método de test individual.
+        Route::get('/test-programa/{programa}', function (ProgramaPresupuestario $programa) {
+            return 'OK';
+        })->middleware(['web', 'auth', 'ur.aislamiento']);
     }
 
     public function test_usuario_sin_relacion_es_bloqueado(): void
     {
         $user = User::factory()->create();
-        $user->assignRole('planeador'); // Asignar rol base, no admin
-        
+        $user->assignRole('planeador'); // Rol base (existe en RolesAndPermissionsSeeder)
+
         $team = Team::factory()->create(['user_id' => $user->id]);
         $user->current_team_id = $team->id;
         $user->save();
 
         $programa = ProgramaPresupuestario::create(['nombre' => 'Prog Test', 'clave' => 'P-001']);
-
-        // Crear una ruta dummy protegida con el middleware
-        Route::get('/test-programa/{programa}', function (ProgramaPresupuestario $programa) {
-            return 'OK';
-        })->middleware(['auth', 'ur.aislamiento']);
 
         $this->actingAs($user)
              ->get("/test-programa/{$programa->id}")
@@ -244,13 +256,9 @@ class AislamientoMultiURTest extends TestCase
         $user->save();
 
         $programa = ProgramaPresupuestario::create(['nombre' => 'Prog Test', 'clave' => 'P-002']);
-        
+
         // Crear relación con rol Coordinadora
         $programa->equipos()->attach($team->id, ['rol' => 'coordinadora']);
-
-        Route::get('/test-programa/{programa}', function (ProgramaPresupuestario $programa) {
-            return 'OK';
-        })->middleware(['auth', 'ur.aislamiento']);
 
         $this->actingAs($user)
              ->get("/test-programa/{$programa->id}")
@@ -282,3 +290,5 @@ sail artisan test --filter AislamientoMultiURTest
 1.  **`request()->attributes` vs `request()->merge`:** Usar `$request->attributes->set()` es muchísimo más limpio para pasar metadatos al controlador (como el rol de la UR) que `merge()`. Este último fue diseñado para inyectar input/payload, lo cual rompe responsabilidades y puede causar colisiones.
 2.  **Stubs Seguros:** Crear un `ProgramaPresupuestario` semi-vacío ahora mismo era vital para compilar. En el Sprint 3, su migración extenderá o creará los campos definitivos sin romper el trabajo efectuado aquí.
 3.  **Autorización Evolutiva:** Ya quedó el cimiento de Laravel Auth Gate preparado. En los tickets siguientes, implementaremos `MirNivelPolicy` para controlar qué y dónde puede editar la UR coadyuvante.
+4.  **Sin escape hatch de entorno (decisión consciente):** A diferencia de `RequireTwoFactorAuthentication` (que aplica globalmente), `AislamientoMultiUR` se registra como alias y solo se activa en rutas específicas. Los tests pueden ejercitarlo directamente con `RefreshDatabase`, por lo que no necesita bypass de entorno. No agregar uno.
+5.  **`bootstrap/app.php` tiene múltiples secciones:** Desde S1-T3 y S1-T4, ese archivo ya tiene `alias([...])` y `web(append: [...])` dentro de `withMiddleware`. Cualquier ticket futuro que modifique ese archivo debe extender las secciones existentes, nunca reemplazarlas. Ver Step 4 de este plan como referencia del estado esperado del archivo.
