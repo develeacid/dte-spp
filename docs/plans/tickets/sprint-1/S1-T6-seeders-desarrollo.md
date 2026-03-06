@@ -10,7 +10,7 @@
 
 ## Contexto
 
-Los seeders de desarrollo generan un escenario realista completo que permite probar el sistema de inmediato. La mejora más importante con respecto a la instalación por defecto es la integración con el **Middleware de Aislamiento Multi-UR** desarrollado en S1-T5. 
+Los seeders de desarrollo generan un escenario realista completo que permite probar el sistema de inmediato. La mejora más importante con respecto a la instalación por defecto es la integración con el **Middleware de Aislamiento Multi-UR** desarrollado en S1-T5.
 
 Para poder probar este aislamiento desde el día uno, generaremos el siguiente escenario:
 
@@ -47,6 +47,9 @@ Editar `database/seeders/DesarrolloSeeder.php`:
 
 namespace Database\Seeders;
 
+use App\Enums\SystemRole;
+use App\Enums\TipoUnidadResponsable;
+
 use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
 use App\Models\User;
@@ -69,17 +72,17 @@ class DesarrolloSeeder extends Seeder
             'name'  => 'Administrador Sistema',
             'email' => 'admin@sistema.test',
         ]);
-        $admin->assignRole(User::ROLE_ADMIN);
+        $admin->assignRole(SystemRole::ADMIN->value);
 
         // helper interno para crear URs y usuarios asociados iterativamente
-        $crearUR = function (string $nombre, string $clave, string $titular, string $tipo) use ($admin) {
+        $crearUR = function (string $nombre, string $clave, string $titular, TipoUnidadResponsable $tipo) use ($admin) {
             $team = Team::firstOrCreate(
                 ['clave_ur' => $clave],
                 [
                     'name'          => $nombre,
                     'user_id'       => $admin->id, // Owner de los teams (Admin)
                     'titular'       => $titular,
-                    'tipo_ur'       => $tipo,
+                    'tipo_ur'       => $tipo, // Eloquent handles the Enum cast automatically
                     'activa'        => true,
                     'personal_team' => false,
                 ]
@@ -90,7 +93,7 @@ class DesarrolloSeeder extends Seeder
                 'name'  => "Planeador {$clave}",
                 'email' => "planeador." . strtolower($clave) . "@sistema.test",
             ]);
-            $planeador->assignRole(User::ROLE_PLANEADOR);
+            $planeador->assignRole(SystemRole::PLANEADOR->value);
             $team->users()->attach($planeador, ['role' => 'planeador']);
             $planeador->forceFill(['current_team_id' => $team->id])->save();
 
@@ -99,7 +102,7 @@ class DesarrolloSeeder extends Seeder
                 'name'  => "Operador {$clave}",
                 'email' => "operador." . strtolower($clave) . "@sistema.test",
             ]);
-            $operador->assignRole(User::ROLE_OPERADOR);
+            $operador->assignRole(SystemRole::OPERADOR->value);
             $team->users()->attach($operador, ['role' => 'operador']);
             $operador->forceFill(['current_team_id' => $team->id])->save();
 
@@ -107,9 +110,9 @@ class DesarrolloSeeder extends Seeder
         };
 
         // 3. Crear URs usando el helper
-        $urEducacion = $crearUR('Secretaría de Educación', 'SE-001', 'Dr. Juan Pérez', Team::TIPO_SUSTANTIVA);
-        $urSalud = $crearUR('Secretaría de Salud', 'SS-002', 'Dra. María López', Team::TIPO_APOYO);
-        $urSeguridad = $crearUR('Secretaría de Seguridad', 'SEG-003', 'Lic. Roberto Sánchez', Team::TIPO_SUSTANTIVA);
+        $urEducacion = $crearUR('Secretaría de Educación', 'SE-001', 'Dr. Juan Pérez', TipoUnidadResponsable::SUSTANTIVA);
+        $urSalud = $crearUR('Secretaría de Salud', 'SS-002', 'Dra. María López', TipoUnidadResponsable::APOYO);
+        $urSeguridad = $crearUR('Secretaría de Seguridad', 'SEG-003', 'Lic. Roberto Sánchez', TipoUnidadResponsable::SUSTANTIVA);
 
         // 4. Crear Programa Transversal (Requerido para el testeo del Middleware S1-T5)
         $programaTransversal = ProgramaPresupuestario::firstOrCreate(
@@ -118,7 +121,7 @@ class DesarrolloSeeder extends Seeder
         );
 
         // 5. Definir roles en el programa usando la tabla pivote de S1-T5
-        
+
         // Educación es Coordinadora (Acceso total)
         $programaTransversal->equipos()->syncWithoutDetaching([
             $urEducacion->id => ['rol' => 'coordinadora']
@@ -128,7 +131,7 @@ class DesarrolloSeeder extends Seeder
         $programaTransversal->equipos()->syncWithoutDetaching([
             $urSalud->id => ['rol' => 'coadyuvante']
         ]);
-        
+
         // Seguridad NO se agrega intencionalmente. Si el planeador de SEG intenta entrar, debe arrojar 403.
 
         $this->command->info('✓ Datos de desarrollo y escenario transversal cargados.');
@@ -190,11 +193,11 @@ $user->hasRole(User::ROLE_PLANEADOR); // true
 $prog = ProgramaPresupuestario::where('clave', 'TRANS-2026-001')->first();
 
 // Verificar Rol Coordinador
-$prog->equipos()->wherePivot('rol', 'coordinadora')->first()->name; 
+$prog->equipos()->wherePivot('rol', 'coordinadora')->first()->name;
 // => "Secretaría de Educación"
 
 // Verificar Rol Coadyuvante
-$prog->equipos()->wherePivot('rol', 'coadyuvante')->first()->name; 
+$prog->equipos()->wherePivot('rol', 'coadyuvante')->first()->name;
 // => "Secretaría de Salud"
 exit
 ```
