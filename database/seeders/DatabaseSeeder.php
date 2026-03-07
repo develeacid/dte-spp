@@ -13,16 +13,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->withPersonalTeam()->create();
-
-        User::factory()->withPersonalTeam()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
         $this->call([
-            RolesAndPermissionsSeeder::class,
-            UnidadesResponsablesSeeder::class,
+            RolesAndPermissionsSeeder::class, // Esencial generar permisos antes que usuarios
+            DesarrolloSeeder::class,          // Ejecuta los Factories y relaciones
         ]);
     }
 }
