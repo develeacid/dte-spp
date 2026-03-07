@@ -5,9 +5,8 @@
             <span class="text-sm text-gray-700">{{ Str::limit($linea->descripcion, 50) }}</span>
         </div>
 
-        <a href="{{ route('cascade.ped.nodo.edit', ['tipo' => 'linea', 'id' => $linea->id]) }}"
-           class="text-xs text-indigo-600 hover:text-indigo-900 font-medium">
+        <x-ui.button.secondary href="{{ route('cascade.ped.nodo.edit', ['tipo' => 'linea', 'id' => $linea->id]) }}" class="text-xs py-1 px-2">
             Editar
-        </a>
+        </x-ui.button.secondary>
     </div>
 </div>

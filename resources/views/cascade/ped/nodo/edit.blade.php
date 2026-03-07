@@ -1,8 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Editar {{ ucfirst($tipo) }}
-        </h2>
+        <x-page.header :title="'Editar ' . ucfirst($tipo)" />
     </x-slot>
 
     <x-page.container
@@ -14,12 +12,6 @@
     >
 
         <livewire:cascade.ped-nodo-form :tipo="$tipo" :nodo-id="$id" />
-
-        <x-slot:footer>
-            <x-ui.button.secondary href="{{ route('cascade.ped.index') }}">
-                Cancelar
-            </x-ui.button.secondary>
-        </x-slot:footer>
 
     </x-page.container>
 

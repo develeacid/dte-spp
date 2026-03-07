@@ -56,13 +56,16 @@
             </div>
         @endif
 
-        <div class="col-span-6 flex justify-end">
-            <x-ui.button.primary wire:click="save" type="button">
-                {{ $nodoId ? 'Guardar Cambios' : 'Crear ' . $this->getTipoLabel() }}
-            </x-ui.button.primary>
-        </div>
-
     </x-forms.section>
+
+    <div class="flex justify-end space-x-3 mb-4">
+        <x-ui.button.secondary href="{{ route('cascade.ped.index') }}">
+            Cancelar
+        </x-ui.button.secondary>
+        <x-ui.button.primary wire:click="save" type="button">
+            {{ $nodoId ? 'Guardar Cambios' : 'Crear ' . $this->getTipoLabel() }}
+        </x-ui.button.primary>
+    </div>
 
     {{-- Botón Eliminar (solo en edición) + Modal de confirmación --}}
     @if($nodoId)

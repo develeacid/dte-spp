@@ -10,7 +10,7 @@
         @endif
     </div>
 
-    @if(!empty($slot->toHtml()))
+    @if($slot->isNotEmpty())
         <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
             {{ $slot }}
         </div>

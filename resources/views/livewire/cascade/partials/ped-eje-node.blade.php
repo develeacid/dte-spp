@@ -15,20 +15,18 @@
         </div>
 
         <div class="flex items-center space-x-2">
-            <a href="{{ route('cascade.ped.nodo.edit', ['tipo' => 'eje', 'id' => $eje->id]) }}"
-               class="text-xs text-indigo-600 hover:text-indigo-900 font-medium">
+            <x-ui.button.secondary href="{{ route('cascade.ped.nodo.edit', ['tipo' => 'eje', 'id' => $eje->id]) }}" class="text-xs py-1 px-2">
                 Editar
-            </a>
+            </x-ui.button.secondary>
         </div>
     </div>
 
     <div x-show="expanded_{{ $eje->id }}" class="ml-6 mt-1">
         <div class="flex items-center justify-between mb-2">
             <span class="text-xs text-gray-500">Temas ({{ $eje->temas->count() }})</span>
-            <a href="{{ route('cascade.ped.nodo.create', ['tipo' => 'tema', 'parent_id' => $eje->id]) }}"
-               class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+            <x-ui.button.secondary href="{{ route('cascade.ped.nodo.create', ['tipo' => 'tema', 'parent_id' => $eje->id]) }}" class="text-xs py-1 px-2">
                 + Tema
-            </a>
+            </x-ui.button.secondary>
         </div>
 
         @foreach($eje->temas as $tema)

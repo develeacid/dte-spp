@@ -43,11 +43,14 @@
             <x-label for="activo" class="ml-2" value="Marcar como plan activo" />
         </div>
 
-        <div class="col-span-6 flex justify-end">
-            <x-ui.button.primary wire:click="save" type="button">
-                {{ $plan && $plan->exists ? 'Guardar Cambios' : 'Crear Plan' }}
-            </x-ui.button.primary>
-        </div>
-
     </x-forms.section>
+
+    <div class="flex justify-end space-x-3">
+        <x-ui.button.secondary href="{{ route('cascade.ped.index') }}">
+            Cancelar
+        </x-ui.button.secondary>
+        <x-ui.button.primary wire:click="save" type="button">
+            {{ $plan && $plan->exists ? 'Guardar Cambios' : 'Crear Plan' }}
+        </x-ui.button.primary>
+    </div>
 </div>

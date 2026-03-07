@@ -1,8 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Plan Estatal de Desarrollo
-        </h2>
+        <x-page.header title="Plan Estatal de Desarrollo">
+            <x-ui.button.primary href="{{ route('cascade.ped.plan.create') }}">
+                Nuevo Plan
+            </x-ui.button.primary>
+        </x-page.header>
     </x-slot>
 
     <x-page.container
@@ -11,12 +13,6 @@
             ['label' => 'PED'],
         ]"
     >
-
-        <x-slot:actions>
-            <x-ui.button.primary href="{{ route('cascade.ped.plan.create') }}">
-                Nuevo Plan
-            </x-ui.button.primary>
-        </x-slot:actions>
 
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-6">

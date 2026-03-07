@@ -42,20 +42,20 @@
             </div>
 
             <div class="flex flex-row justify-end px-6 py-4 bg-gray-100 space-x-3">
-                <x-secondary-button @click="open = false">
+                <x-ui.button.secondary @click="open = false">
                     {{ $cancelText }}
-                </x-secondary-button>
+                </x-ui.button.secondary>
 
                 @if($confirmUrl)
                     <form method="POST" action="{{ $confirmUrl }}">
                         @csrf
                         @method($method)
-                        <x-danger-button type="submit">{{ $confirmText }}</x-danger-button>
+                        <x-ui.button.danger type="submit">{{ $confirmText }}</x-ui.button.danger>
                     </form>
                 @else
-                    <x-danger-button @click="$dispatch('confirmed-{{ $id }}'); open = false">
+                    <x-ui.button.danger @click="$dispatch('confirmed-{{ $id }}'); open = false">
                         {{ $confirmText }}
-                    </x-danger-button>
+                    </x-ui.button.danger>
                 @endif
             </div>
         </div>

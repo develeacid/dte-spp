@@ -14,19 +14,17 @@
             <span class="text-sm text-gray-700">{{ Str::limit($estrategia->descripcion, 50) }}</span>
         </div>
 
-        <a href="{{ route('cascade.ped.nodo.edit', ['tipo' => 'estrategia', 'id' => $estrategia->id]) }}"
-           class="text-xs text-indigo-600 hover:text-indigo-900 font-medium">
+        <x-ui.button.secondary href="{{ route('cascade.ped.nodo.edit', ['tipo' => 'estrategia', 'id' => $estrategia->id]) }}" class="text-xs py-1 px-2">
             Editar
-        </a>
+        </x-ui.button.secondary>
     </div>
 
     <div x-show="expanded_{{ $estrategia->id }}" class="ml-6 mt-1">
         <div class="flex items-center justify-between mb-2">
             <span class="text-xs text-gray-500">Líneas de Acción ({{ $estrategia->lineasAccion->count() }})</span>
-            <a href="{{ route('cascade.ped.nodo.create', ['tipo' => 'linea', 'parent_id' => $estrategia->id]) }}"
-               class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+            <x-ui.button.secondary href="{{ route('cascade.ped.nodo.create', ['tipo' => 'linea', 'parent_id' => $estrategia->id]) }}" class="text-xs py-1 px-2">
                 + Línea
-            </a>
+            </x-ui.button.secondary>
         </div>
 
         @foreach($estrategia->lineasAccion as $linea)

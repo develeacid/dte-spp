@@ -1,8 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Editar Plan: {{ $plan->nombre }}
-        </h2>
+        <x-page.header :title="'Editar Plan: ' . $plan->nombre" />
     </x-slot>
 
     <x-page.container
@@ -14,12 +12,6 @@
     >
 
         <livewire:cascade.ped-plan-form :plan="$plan" />
-
-        <x-slot:footer>
-            <x-ui.button.secondary href="{{ route('cascade.ped.index') }}">
-                Cancelar
-            </x-ui.button.secondary>
-        </x-slot:footer>
 
     </x-page.container>
 
