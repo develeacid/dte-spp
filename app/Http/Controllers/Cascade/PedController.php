@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Cascade;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 use App\Http\Requests\Cascade\StorePedEjeRequest;
 use App\Http\Requests\Cascade\StorePedEstrategiaRequest;
 use App\Http\Requests\Cascade\StorePedLineaAccionRequest;
@@ -30,6 +32,16 @@ class PedController extends Controller
     // ============================================
     // PLAN
     // ============================================
+
+    public function createPlan(): View
+    {
+        return view('cascade.ped.plan.create');
+    }
+
+    public function editPlan(PedPlan $plan): View
+    {
+        return view('cascade.ped.plan.edit', compact('plan'));
+    }
 
     public function storePlan(StorePedPlanRequest $request)
     {
@@ -212,6 +224,27 @@ class PedController extends Controller
         return redirect()->route('cascade.ped.index')
             ->with('flash.banner', $mensaje)
             ->with('flash.bannerStyle', 'success');
+    }
+
+    // ============================================
+    // NODO (páginas GET)
+    // ============================================
+
+    public function createNodo(Request $request): View
+    {
+        $tipo = $request->query('tipo');
+        $parentId = $request->query('parent_id');
+
+        abort_if(!in_array($tipo, ['eje', 'tema', 'objetivo', 'estrategia', 'linea']), 400);
+
+        return view('cascade.ped.nodo.create', compact('tipo', 'parentId'));
+    }
+
+    public function editNodo(string $tipo, int $id): View
+    {
+        abort_if(!in_array($tipo, ['eje', 'tema', 'objetivo', 'estrategia', 'linea']), 400);
+
+        return view('cascade.ped.nodo.edit', compact('tipo', 'id'));
     }
 
     // ============================================

@@ -10,25 +10,23 @@
                 </svg>
             </span>
 
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
-                {{ $estrategia->clave_completa }}
-            </span>
+            <x-ui.badge color="yellow">{{ $estrategia->clave_completa }}</x-ui.badge>
             <span class="text-sm text-gray-700">{{ Str::limit($estrategia->descripcion, 50) }}</span>
         </div>
 
-        <button @click.stop="$dispatch('edit-nodo', { tipo: 'estrategia', nodoId: {{ $estrategia->id }} })"
-                class="text-xs text-indigo-600 hover:text-indigo-900">
+        <a href="{{ route('cascade.ped.nodo.edit', ['tipo' => 'estrategia', 'id' => $estrategia->id]) }}"
+           class="text-xs text-indigo-600 hover:text-indigo-900 font-medium">
             Editar
-        </button>
+        </a>
     </div>
 
     <div x-show="expanded_{{ $estrategia->id }}" class="ml-6 mt-1">
         <div class="flex items-center justify-between mb-2">
             <span class="text-xs text-gray-500">Líneas de Acción ({{ $estrategia->lineasAccion->count() }})</span>
-            <button @click="$dispatch('create-nodo', { tipo: 'linea', parentId: {{ $estrategia->id }} })"
-                    class="text-xs text-indigo-600 hover:text-indigo-800">
+            <a href="{{ route('cascade.ped.nodo.create', ['tipo' => 'linea', 'parent_id' => $estrategia->id]) }}"
+               class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
                 + Línea
-            </button>
+            </a>
         </div>
 
         @foreach($estrategia->lineasAccion as $linea)

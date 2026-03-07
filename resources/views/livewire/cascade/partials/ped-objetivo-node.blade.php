@@ -10,25 +10,23 @@
                 </svg>
             </span>
 
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                {{ $objetivo->clave_completa }}
-            </span>
+            <x-ui.badge color="green">{{ $objetivo->clave_completa }}</x-ui.badge>
             <span class="text-sm text-gray-700">{{ Str::limit($objetivo->descripcion, 50) }}</span>
         </div>
 
-        <button @click.stop="$dispatch('edit-nodo', { tipo: 'objetivo', nodoId: {{ $objetivo->id }} })"
-                class="text-xs text-indigo-600 hover:text-indigo-900">
+        <a href="{{ route('cascade.ped.nodo.edit', ['tipo' => 'objetivo', 'id' => $objetivo->id]) }}"
+           class="text-xs text-indigo-600 hover:text-indigo-900 font-medium">
             Editar
-        </button>
+        </a>
     </div>
 
     <div x-show="expanded_{{ $objetivo->id }}" class="ml-6 mt-1">
         <div class="flex items-center justify-between mb-2">
             <span class="text-xs text-gray-500">Estrategias ({{ $objetivo->estrategias->count() }})</span>
-            <button @click="$dispatch('create-nodo', { tipo: 'estrategia', parentId: {{ $objetivo->id }} })"
-                    class="text-xs text-indigo-600 hover:text-indigo-800">
+            <a href="{{ route('cascade.ped.nodo.create', ['tipo' => 'estrategia', 'parent_id' => $objetivo->id]) }}"
+               class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
                 + Estrategia
-            </button>
+            </a>
         </div>
 
         @foreach($objetivo->estrategias as $estrategia)

@@ -13,6 +13,10 @@ Route::middleware([
     Route::prefix('ped')->name('ped.')->group(function () {
         Route::get('/', [PedController::class, 'index'])->name('index');
 
+        // Páginas de formulario (GET) — Plan
+        Route::get('/plan/create', [PedController::class, 'createPlan'])->name('plan.create');
+        Route::get('/plan/{plan}/edit', [PedController::class, 'editPlan'])->name('plan.edit');
+
         Route::post('/plan', [PedController::class, 'storePlan'])->name('plan.store');
         Route::put('/plan/{plan}', [PedController::class, 'updatePlan'])->name('plan.update');
         Route::delete('/plan/{plan}', [PedController::class, 'destroyPlan'])->name('plan.destroy');
@@ -36,5 +40,9 @@ Route::middleware([
         Route::post('/linea', [PedController::class, 'storeLinea'])->name('linea.store');
         Route::put('/linea/{linea}', [PedController::class, 'updateLinea'])->name('linea.update');
         Route::delete('/linea/{linea}', [PedController::class, 'destroyLinea'])->name('linea.destroy');
+
+        // Páginas de formulario (GET) — Nodo (eje, tema, objetivo, estrategia, linea)
+        Route::get('/nodo/create', [PedController::class, 'createNodo'])->name('nodo.create');
+        Route::get('/nodo/{tipo}/{id}/edit', [PedController::class, 'editNodo'])->name('nodo.edit');
     });
 });

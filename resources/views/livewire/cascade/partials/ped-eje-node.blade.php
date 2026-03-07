@@ -10,27 +10,25 @@
                 </svg>
             </span>
 
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                {{ $eje->numero }}
-            </span>
+            <x-ui.badge color="blue">{{ $eje->numero }}</x-ui.badge>
             <span class="text-sm font-medium text-gray-800">{{ $eje->nombre }}</span>
         </div>
 
         <div class="flex items-center space-x-2">
-            <button @click.stop="$dispatch('edit-nodo', { tipo: 'eje', nodoId: {{ $eje->id }} })"
-                    class="text-xs text-indigo-600 hover:text-indigo-900">
+            <a href="{{ route('cascade.ped.nodo.edit', ['tipo' => 'eje', 'id' => $eje->id]) }}"
+               class="text-xs text-indigo-600 hover:text-indigo-900 font-medium">
                 Editar
-            </button>
+            </a>
         </div>
     </div>
 
     <div x-show="expanded_{{ $eje->id }}" class="ml-6 mt-1">
         <div class="flex items-center justify-between mb-2">
             <span class="text-xs text-gray-500">Temas ({{ $eje->temas->count() }})</span>
-            <button @click="$dispatch('create-nodo', { tipo: 'tema', parentId: {{ $eje->id }} })"
-                    class="text-xs text-indigo-600 hover:text-indigo-800">
+            <a href="{{ route('cascade.ped.nodo.create', ['tipo' => 'tema', 'parent_id' => $eje->id]) }}"
+               class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
                 + Tema
-            </button>
+            </a>
         </div>
 
         @foreach($eje->temas as $tema)

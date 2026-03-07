@@ -14,229 +14,138 @@ class PedNodoForm extends Component
     public string $tipo = 'eje';
     public ?int $parentId = null;
     public ?int $nodoId = null;
-    public bool $showModal = false;
-    public string $mode = 'create';
 
-    public string $numero = '';
+    // Campos comunes
     public string $clave = '';
-    public string $nombre = '';
     public string $descripcion = '';
+    // Campos para eje/tema
+    public string $numero = '';
+    public string $nombre = '';
 
-    protected $listeners = [
-        'edit-nodo' => 'editByParams',
-        'create-nodo' => 'createByParams',
-    ];
-
-    protected function rules(): array
+    public function mount(string $tipo, ?int $parentId = null, ?int $nodoId = null): void
     {
-        $rules = [
-            'descripcion' => ['required', 'string', 'max:500'],
-        ];
-
-        if (in_array($this->tipo, ['eje', 'tema'])) {
-            $rules['numero'] = ['required', 'string', 'max:10'];
-            $rules['nombre'] = ['required', 'string', 'max:255'];
-        } else {
-            $rules['clave'] = ['required', 'string', 'max:40'];
-        }
-
-        return $rules;
-    }
-
-    public function createByParams(string $tipo, int $parentId): void
-    {
-        $this->create($tipo, $parentId);
-    }
-
-    public function create(string $tipo, int $parentId): void
-    {
-        $this->reset(['numero', 'clave', 'nombre', 'descripcion']);
         $this->tipo = $tipo;
         $this->parentId = $parentId;
-        $this->nodoId = null;
-        $this->mode = 'create';
-        $this->showModal = true;
-    }
-
-    public function editByParams(string $tipo, int $nodoId): void
-    {
-        $this->edit($tipo, $nodoId);
-    }
-
-    public function edit(string $tipo, int $nodoId): void
-    {
-        $this->tipo = $tipo;
         $this->nodoId = $nodoId;
-        $this->mode = 'edit';
 
-        $nodo = $this->getNodo();
-
-        if ($nodo) {
-            $this->parentId = $this->getParentId($nodo);
-            $this->numero = $nodo->numero ?? '';
-            $this->clave = $nodo->clave ?? '';
-            $this->nombre = $nodo->nombre ?? '';
-            $this->descripcion = $nodo->descripcion ?? '';
+        if ($nodoId) {
+            $this->loadNodo($nodoId);
         }
+    }
 
-        $this->showModal = true;
+    protected function loadNodo(int $id): void
+    {
+        $model = $this->getModel()->find($id);
+        if (!$model) return;
+
+        if (in_array($this->tipo, ['eje', 'tema'])) {
+            $this->numero = $model->numero;
+            $this->nombre = $model->nombre;
+            $this->descripcion = $model->descripcion ?? '';
+        } else {
+            $this->clave = $model->clave;
+            $this->descripcion = $model->descripcion;
+        }
     }
 
     public function save(): void
     {
-        $this->validate();
+        $this->validate($this->getValidationRules());
 
-        $data = $this->buildDataArray();
+        $data = in_array($this->tipo, ['eje', 'tema'])
+            ? ['numero' => $this->numero, 'nombre' => $this->nombre, 'descripcion' => $this->descripcion]
+            : ['clave' => $this->clave, 'descripcion' => $this->descripcion];
 
-        if ($this->mode === 'create') {
-            $this->createNodo($data);
-            $this->dispatch('nodeCreated');
-            session()->flash('message', "{$this->getTipoLabel()} creado exitosamente.");
+        $data = array_merge($data, $this->getParentData());
+
+        if ($this->nodoId) {
+            $this->getModel()->find($this->nodoId)?->update($data);
+            session()->flash('message', ucfirst($this->getTipoLabel()) . ' actualizado.');
         } else {
-            $this->updateNodo($data);
-            $this->dispatch('nodeUpdated');
-            session()->flash('message', "{$this->getTipoLabel()} actualizado exitosamente.");
+            $this->getModel()->create($data);
+            session()->flash('message', ucfirst($this->getTipoLabel()) . ' creado.');
         }
 
-        $this->showModal = false;
+        $this->redirect(route('cascade.ped.index'));
     }
 
     public function delete(): void
     {
-        $nodo = $this->getNodo();
-
-        if ($nodo) {
-            $dependientes = $this->getDependientesCount($nodo);
-            $nodo->delete();
-            $this->dispatch('nodeDeleted');
-
-            $mensaje = "{$this->getTipoLabel()} eliminado.";
-            if ($dependientes > 0) {
-                $mensaje .= " Se eliminaron {$dependientes} elementos dependientes.";
-            }
-            session()->flash('message', $mensaje);
-        }
-
-        $this->showModal = false;
+        $this->getModel()->find($this->nodoId)?->delete();
+        session()->flash('message', ucfirst($this->getTipoLabel()) . ' eliminado.');
+        $this->redirect(route('cascade.ped.index'));
     }
 
-    public function getDependientes(): array
-    {
-        if ($this->mode !== 'edit' || !$this->nodoId) {
-            return [];
-        }
-
-        $nodo = $this->getNodo();
-        return $this->getDependientesData($nodo);
-    }
-
-    private function getNodo()
+    protected function getModel(): \Illuminate\Database\Eloquent\Builder
     {
         return match($this->tipo) {
-            'eje' => PedEje::find($this->nodoId),
-            'tema' => PedTema::find($this->nodoId),
-            'objetivo' => PedObjetivoEstrategico::find($this->nodoId),
-            'estrategia' => PedEstrategia::find($this->nodoId),
-            'linea' => PedLineaAccion::find($this->nodoId),
-            default => null,
+            'eje'        => PedEje::query(),
+            'tema'       => PedTema::query(),
+            'objetivo'   => PedObjetivoEstrategico::query(),
+            'estrategia' => PedEstrategia::query(),
+            'linea'      => PedLineaAccion::query(),
         };
     }
 
-    private function getParentId($nodo): ?int
+    protected function getParentData(): array
     {
         return match($this->tipo) {
-            'eje' => $nodo->ped_plan_id,
-            'tema' => $nodo->ped_eje_id,
-            'objetivo' => $nodo->ped_tema_id,
-            'estrategia' => $nodo->ped_objetivo_estrategico_id,
-            'linea' => $nodo->ped_estrategia_id,
-            default => null,
-        };
-    }
-
-    private function buildDataArray(): array
-    {
-        $data = ['descripcion' => $this->descripcion];
-
-        if (in_array($this->tipo, ['eje', 'tema'])) {
-            $data['numero'] = $this->numero;
-            $data['nombre'] = $this->nombre;
-        } else {
-            $data['clave'] = $this->clave;
-        }
-
-        $data = array_merge($data, match($this->tipo) {
-            'eje' => ['ped_plan_id' => $this->parentId],
-            'tema' => ['ped_eje_id' => $this->parentId],
-            'objetivo' => ['ped_tema_id' => $this->parentId],
+            'eje'        => ['ped_plan_id' => $this->parentId],
+            'tema'       => ['ped_eje_id' => $this->parentId],
+            'objetivo'   => ['ped_tema_id' => $this->parentId],
             'estrategia' => ['ped_objetivo_estrategico_id' => $this->parentId],
-            'linea' => ['ped_estrategia_id' => $this->parentId],
-            default => [],
-        });
-
-        return $data;
-    }
-
-    private function createNodo(array $data)
-    {
-        return match($this->tipo) {
-            'eje' => PedEje::create($data),
-            'tema' => PedTema::create($data),
-            'objetivo' => PedObjetivoEstrategico::create($data),
-            'estrategia' => PedEstrategia::create($data),
-            'linea' => PedLineaAccion::create($data),
-            default => null,
+            'linea'      => ['ped_estrategia_id' => $this->parentId],
+            default      => [],
         };
     }
 
-    private function updateNodo(array $data)
+    protected function getValidationRules(): array
     {
-        $nodo = $this->getNodo();
-        $nodo?->update($data);
-        return $nodo;
-    }
-
-    private function getDependientesCount($nodo): int
-    {
-        return match($this->tipo) {
-            'eje' => $nodo->temas()->count(),
-            'tema' => $nodo->objetivosEstrategicos()->count(),
-            'objetivo' => $nodo->estrategias()->count(),
-            'estrategia' => $nodo->lineasAccion()->count(),
-            'linea' => 0,
-            default => 0,
-        };
-    }
-
-    private function getDependientesData($nodo): array
-    {
-        if (!$nodo) {
-            return [];
+        if (in_array($this->tipo, ['eje', 'tema'])) {
+            return [
+                'numero'      => ['required', 'string', 'max:10'],
+                'nombre'      => ['required', 'string', 'max:255'],
+                'descripcion' => ['nullable', 'string', 'max:500'],
+            ];
         }
-
-        return match($this->tipo) {
-            'eje' => ['temas' => $nodo->temas()->count()],
-            'tema' => ['objetivos' => $nodo->objetivosEstrategicos()->count()],
-            'objetivo' => ['estrategias' => $nodo->estrategias()->count()],
-            'estrategia' => ['lineas' => $nodo->lineasAccion()->count()],
-            'linea' => [],
-            default => [],
-        };
+        return [
+            'clave'       => ['required', 'string', 'max:40'],
+            'descripcion' => ['required', 'string', 'max:500'],
+        ];
     }
 
     public function getTipoLabel(): string
     {
         return match($this->tipo) {
-            'eje' => 'Eje',
-            'tema' => 'Tema',
-            'objetivo' => 'Objetivo Estratégico',
+            'eje'        => 'Eje',
+            'tema'       => 'Tema',
+            'objetivo'   => 'Objetivo estratégico',
             'estrategia' => 'Estrategia',
-            'linea' => 'Línea de Acción',
-            default => 'Elemento',
+            'linea'      => 'Línea de acción',
+            default      => $this->tipo,
         };
     }
 
-    public function render()
+    public function getDependientes(): array
+    {
+        if (!$this->nodoId) return [];
+
+        $model = $this->getModel()->find($this->nodoId);
+        if (!$model) return [];
+
+        $map = [
+            'eje'        => fn($m) => ['temas' => $m->temas()->count()],
+            'tema'       => fn($m) => ['objetivos' => $m->objetivosEstrategicos()->count()],
+            'objetivo'   => fn($m) => ['estrategias' => $m->estrategias()->count()],
+            'estrategia' => fn($m) => ['lineas' => $m->lineasAccion()->count()],
+            'linea'      => fn($m) => [],
+        ];
+
+        $counts = ($map[$this->tipo] ?? fn($m) => [])($model);
+        return array_filter($counts, fn($c) => $c > 0);
+    }
+
+    public function render(): \Illuminate\View\View
     {
         return view('livewire.cascade.ped-nodo-form');
     }

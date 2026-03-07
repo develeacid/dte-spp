@@ -1,29 +1,29 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Plan Estatal de Desarrollo
-            </h2>
-            <livewire:cascade.ped-plan-form />
-        </div>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            Plan Estatal de Desarrollo
+        </h2>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <x-page.container
+        :breadcrumbs="[
+            ['label' => 'Inicio', 'url' => route('dashboard')],
+            ['label' => 'PED'],
+        ]"
+    >
 
-            @if(session('message'))
-                <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                    {{ session('message') }}
-                </div>
-            @endif
+        <x-slot:actions>
+            <x-ui.button.primary href="{{ route('cascade.ped.plan.create') }}">
+                Nuevo Plan
+            </x-ui.button.primary>
+        </x-slot:actions>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
-                    <livewire:cascade.ped-tree />
-                </div>
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="p-6">
+                <livewire:cascade.ped-tree />
             </div>
         </div>
-    </div>
 
-    <livewire:cascade.ped-nodo-form />
+    </x-page.container>
+
 </x-app-layout>
