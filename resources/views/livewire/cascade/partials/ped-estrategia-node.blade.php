@@ -32,7 +32,7 @@
         </div>
 
         @foreach($estrategia->lineasAccion as $linea)
-            @include('livewire.partials.ped-linea-node', ['linea' => $linea])
+            @include('livewire.cascade.partials.ped-linea-node', ['linea' => $linea])
         @endforeach
     </div>
 </div>

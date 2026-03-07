@@ -17,7 +17,7 @@ class ProgramasDerivadosEnumTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\PedSeeder::class);
+        $this->seed(\Database\Seeders\Cascade\PedSeeder::class);
     }
 
     public function test_enum_php_contiene_los_cuatro_tipos(): void

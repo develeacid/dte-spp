@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Cascade;
 
 use App\Models\PedPlan;
 use Livewire\Component;
@@ -106,6 +106,6 @@ class PedPlanForm extends Component
 
     public function render()
     {
-        return view('livewire.ped-plan-form');
+        return view('livewire.cascade.ped-plan-form');
     }
 }

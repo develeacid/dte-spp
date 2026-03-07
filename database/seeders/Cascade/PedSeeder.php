@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Seeders;
+namespace Database\Seeders\Cascade;
 
 use App\Models\PedEje;
 use App\Models\PedEstrategia;

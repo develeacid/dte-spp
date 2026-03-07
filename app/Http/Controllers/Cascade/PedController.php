@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Cascade;
 
-use App\Http\Requests\StorePedEjeRequest;
-use App\Http\Requests\StorePedEstrategiaRequest;
-use App\Http\Requests\StorePedLineaAccionRequest;
-use App\Http\Requests\StorePedObjetivoRequest;
-use App\Http\Requests\StorePedPlanRequest;
-use App\Http\Requests\StorePedTemaRequest;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Cascade\StorePedEjeRequest;
+use App\Http\Requests\Cascade\StorePedEstrategiaRequest;
+use App\Http\Requests\Cascade\StorePedLineaAccionRequest;
+use App\Http\Requests\Cascade\StorePedObjetivoRequest;
+use App\Http\Requests\Cascade\StorePedPlanRequest;
+use App\Http\Requests\Cascade\StorePedTemaRequest;
 use App\Models\PedEje;
 use App\Models\PedEstrategia;
 use App\Models\PedLineaAccion;
@@ -23,7 +24,7 @@ class PedController extends Controller
             'ejes.temas.objetivosEstrategicos.estrategias.lineasAccion'
         ])->orderBy('activo', 'desc')->orderBy('periodo_inicio', 'desc')->get();
 
-        return view('ped.index', compact('planes'));
+        return view('cascade.ped.index', compact('planes'));
     }
 
     // ============================================
@@ -34,7 +35,7 @@ class PedController extends Controller
     {
         $plan = PedPlan::create($request->validated());
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', "Plan '{$plan->nombre}' creado exitosamente.")
             ->with('flash.bannerStyle', 'success');
     }
@@ -43,7 +44,7 @@ class PedController extends Controller
     {
         $plan->update($request->validated());
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', "Plan actualizado exitosamente.")
             ->with('flash.bannerStyle', 'success');
     }
@@ -60,7 +61,7 @@ class PedController extends Controller
             $mensaje .= " Se eliminaron {$hijos} ejes y todos sus descendientes.";
         }
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', $mensaje)
             ->with('flash.bannerStyle', 'success');
     }
@@ -73,7 +74,7 @@ class PedController extends Controller
     {
         PedEje::create($request->validated());
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', 'Eje creado exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -82,7 +83,7 @@ class PedController extends Controller
     {
         $eje->update($request->validated());
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', 'Eje actualizado exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -97,7 +98,7 @@ class PedController extends Controller
             $mensaje .= " Se eliminaron {$hijos} temas y sus descendientes.";
         }
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', $mensaje)
             ->with('flash.bannerStyle', 'success');
     }
@@ -110,7 +111,7 @@ class PedController extends Controller
     {
         PedTema::create($request->validated());
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', 'Tema creado exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -119,7 +120,7 @@ class PedController extends Controller
     {
         $tema->update($request->validated());
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', 'Tema actualizado exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -134,7 +135,7 @@ class PedController extends Controller
             $mensaje .= " Se eliminaron {$hijos} objetivos y sus descendientes.";
         }
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', $mensaje)
             ->with('flash.bannerStyle', 'success');
     }
@@ -147,7 +148,7 @@ class PedController extends Controller
     {
         PedObjetivoEstrategico::create($request->validated());
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', 'Objetivo Estratégico creado exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -156,7 +157,7 @@ class PedController extends Controller
     {
         $objetivo->update($request->validated());
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', 'Objetivo Estratégico actualizado exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -171,7 +172,7 @@ class PedController extends Controller
             $mensaje .= " Se eliminaron {$hijos} estrategias y sus líneas de acción.";
         }
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', $mensaje)
             ->with('flash.bannerStyle', 'success');
     }
@@ -184,7 +185,7 @@ class PedController extends Controller
     {
         PedEstrategia::create($request->validated());
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', 'Estrategia creada exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -193,7 +194,7 @@ class PedController extends Controller
     {
         $estrategia->update($request->validated());
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', 'Estrategia actualizada exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -208,7 +209,7 @@ class PedController extends Controller
             $mensaje .= " Se eliminaron {$hijos} líneas de acción.";
         }
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', $mensaje)
             ->with('flash.bannerStyle', 'success');
     }
@@ -221,7 +222,7 @@ class PedController extends Controller
     {
         PedLineaAccion::create($request->validated());
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', 'Línea de Acción creada exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -230,7 +231,7 @@ class PedController extends Controller
     {
         $linea->update($request->validated());
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', 'Línea de Acción actualizada exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -239,7 +240,7 @@ class PedController extends Controller
     {
         $linea->delete();
 
-        return redirect()->route('ped.index')
+        return redirect()->route('cascade.ped.index')
             ->with('flash.banner', 'Línea de Acción eliminada.')
             ->with('flash.bannerStyle', 'success');
     }

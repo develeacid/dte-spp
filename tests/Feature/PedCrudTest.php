@@ -28,7 +28,7 @@ class PedCrudTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('ped.index'));
+        $response = $this->actingAs($user)->get(route('cascade.ped.index'));
 
         $response->assertForbidden();
     }
@@ -38,7 +38,7 @@ class PedCrudTest extends TestCase
         $user = User::factory()->withPersonalTeam()->create();
         $user->givePermissionTo('gestionar_catalogos');
 
-        $response = $this->actingAs($user)->get(route('ped.index'));
+        $response = $this->actingAs($user)->get(route('cascade.ped.index'));
 
         $response->assertOk();
         $response->assertSee('Plan Estatal de Desarrollo');
@@ -54,7 +54,7 @@ class PedCrudTest extends TestCase
         $user->givePermissionTo('gestionar_catalogos');
 
         Livewire::actingAs($user)
-            ->test('ped-plan-form')
+            ->test('cascade.ped-plan-form')
             ->call('create')
             ->set('nombre', 'Plan de Prueba 2025-2030')
             ->set('periodo_inicio', 2025)
@@ -82,7 +82,7 @@ class PedCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test('ped-plan-form')
+            ->test('cascade.ped-plan-form')
             ->call('edit', $plan)
             ->set('nombre', 'Plan Editado')
             ->call('save')
@@ -103,7 +103,7 @@ class PedCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test('ped-plan-form')
+            ->test('cascade.ped-plan-form')
             ->call('edit', $plan)
             ->call('delete')
             ->assertDispatched('planDeleted');
@@ -127,7 +127,7 @@ class PedCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test('ped-nodo-form')
+            ->test('cascade.ped-nodo-form')
             ->call('create', 'eje', $plan->id)
             ->set('numero', '1')
             ->set('nombre', 'Eje de Prueba')
@@ -165,7 +165,7 @@ class PedCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test('ped-nodo-form')
+            ->test('cascade.ped-nodo-form')
             ->call('edit', 'eje', $eje->id)
             ->call('delete');
 
@@ -183,7 +183,7 @@ class PedCrudTest extends TestCase
         $user->givePermissionTo('gestionar_catalogos');
 
         Livewire::actingAs($user)
-            ->test('ped-plan-form')
+            ->test('cascade.ped-plan-form')
             ->call('create')
             ->set('nombre', 'Plan Test')
             ->set('periodo_inicio', 2030)
@@ -204,7 +204,7 @@ class PedCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test('ped-nodo-form')
+            ->test('cascade.ped-nodo-form')
             ->call('create', 'eje', $plan->id)
             ->set('numero', '1')
             ->set('nombre', 'Eje Test')

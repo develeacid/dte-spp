@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Seeders;
+namespace Database\Seeders\Mml;
 
 use App\Models\PndEje;
 use App\Models\PndEstrategia;

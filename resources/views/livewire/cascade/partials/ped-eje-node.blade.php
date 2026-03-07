@@ -34,7 +34,7 @@
         </div>
 
         @foreach($eje->temas as $tema)
-            @include('livewire.partials.ped-tema-node', ['tema' => $tema])
+            @include('livewire.cascade.partials.ped-tema-node', ['tema' => $tema])
         @endforeach
     </div>
 </div>

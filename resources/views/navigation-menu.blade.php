@@ -16,7 +16,7 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
                     @can('gestionar_catalogos')
-                        <x-nav-link href="{{ route('ped.index') }}" :active="request()->routeIs('ped.*')">
+                        <x-nav-link href="{{ route('cascade.ped.index') }}" :active="request()->routeIs('cascade.ped.*')">
                             {{ __('Plan Estatal') }}
                         </x-nav-link>
                     @endcan

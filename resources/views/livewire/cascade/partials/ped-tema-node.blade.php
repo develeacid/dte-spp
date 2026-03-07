@@ -32,7 +32,7 @@
         </div>
 
         @foreach($tema->objetivosEstrategicos as $objetivo)
-            @include('livewire.partials.ped-objetivo-node', ['objetivo' => $objetivo])
+            @include('livewire.cascade.partials.ped-objetivo-node', ['objetivo' => $objetivo])
         @endforeach
     </div>
 </div>

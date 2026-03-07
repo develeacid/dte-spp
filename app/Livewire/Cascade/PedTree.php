@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Cascade;
 
 use App\Models\PedEje;
 use App\Models\PedEstrategia;
@@ -84,7 +84,7 @@ class PedTree extends Component
         ->orderBy('periodo_inicio', 'desc')
         ->get();
 
-        return view('livewire.ped-tree', [
+        return view('livewire.cascade.ped-tree', [
             'planes' => $planes,
         ]);
     }

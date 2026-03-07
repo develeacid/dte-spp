@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Cascade;
 
 use App\Models\PedEje;
 use App\Models\PedEstrategia;
@@ -238,6 +238,6 @@ class PedNodoForm extends Component
 
     public function render()
     {
-        return view('livewire.ped-nodo-form');
+        return view('livewire.cascade.ped-nodo-form');
     }
 }

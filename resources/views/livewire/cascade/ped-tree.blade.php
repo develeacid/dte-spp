@@ -61,7 +61,7 @@
                     </div>
 
                     @foreach($plan->ejes as $eje)
-                        @include('livewire.partials.ped-eje-node', ['eje' => $eje, 'level' => 1])
+                        @include('livewire.cascade.partials.ped-eje-node', ['eje' => $eje, 'level' => 1])
                     @endforeach
                 </div>
             </div>
