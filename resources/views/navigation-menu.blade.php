@@ -15,6 +15,11 @@
                     <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    @can('gestionar_catalogos')
+                        <x-nav-link href="{{ route('ped.index') }}" :active="request()->routeIs('ped.*')">
+                            {{ __('Plan Estatal') }}
+                        </x-nav-link>
+                    @endcan
                 </div>
             </div>
 
