@@ -19,6 +19,9 @@
                         <x-nav-link href="{{ route('cascade.ped.index') }}" :active="request()->routeIs('cascade.ped.*')">
                             {{ __('Plan Estatal') }}
                         </x-nav-link>
+                        <x-nav-link href="{{ route('cascade.programas-derivados.index') }}" :active="request()->routeIs('cascade.programas-derivados.*')">
+                            {{ __('Programas Derivados') }}
+                        </x-nav-link>
                     @endcan
                 </div>
             </div>

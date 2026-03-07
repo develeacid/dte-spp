@@ -36,6 +36,32 @@ enum TipoProgramaDerivado: string
     }
 
     /**
+     * Retorna el prefijo de clave del tipo (OS, OE, OI, OR).
+     */
+    public function prefijo(): string
+    {
+        return match($this) {
+            self::SECTORIAL => 'OS',
+            self::ESPECIAL => 'OE',
+            self::INSTITUCIONAL => 'OI',
+            self::REGIONAL => 'OR',
+        };
+    }
+
+    /**
+     * Retorna clases CSS de Tailwind para badge de color según tipo.
+     */
+    public function colorClass(): string
+    {
+        return match($this) {
+            self::SECTORIAL => 'bg-blue-100 text-blue-800',
+            self::ESPECIAL => 'bg-green-100 text-green-800',
+            self::INSTITUCIONAL => 'bg-purple-100 text-purple-800',
+            self::REGIONAL => 'bg-orange-100 text-orange-800',
+        };
+    }
+
+    /**
      * Retorna todos los valores para validaciones.
      */
     public static function values(): array

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Cascade\PedController;
+use App\Http\Controllers\Cascade\ProgramaDerivadoController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([
@@ -44,5 +45,19 @@ Route::middleware([
         // Páginas de formulario (GET) — Nodo (eje, tema, objetivo, estrategia, linea)
         Route::get('/nodo/create', [PedController::class, 'createNodo'])->name('nodo.create');
         Route::get('/nodo/{tipo}/{id}/edit', [PedController::class, 'editNodo'])->name('nodo.edit');
+    });
+
+    Route::prefix('programas-derivados')->name('programas-derivados.')->group(function () {
+        Route::get('/', [ProgramaDerivadoController::class, 'index'])->name('index');
+
+        // CRUD Programas
+        Route::post('/', [ProgramaDerivadoController::class, 'store'])->name('store');
+        Route::put('/{programa}', [ProgramaDerivadoController::class, 'update'])->name('update');
+        Route::delete('/{programa}', [ProgramaDerivadoController::class, 'destroy'])->name('destroy');
+
+        // CRUD Objetivos (nested)
+        Route::post('/{programa}/objetivos', [ProgramaDerivadoController::class, 'storeObjetivo'])->name('objetivos.store');
+        Route::put('/{programa}/objetivos/{objetivo}', [ProgramaDerivadoController::class, 'updateObjetivo'])->name('objetivos.update');
+        Route::delete('/{programa}/objetivos/{objetivo}', [ProgramaDerivadoController::class, 'destroyObjetivo'])->name('objetivos.destroy');
     });
 });
