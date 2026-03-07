@@ -9,10 +9,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. Crear ENUM nativo de PostgreSQL primero
-        DB::statement(
-            "CREATE TYPE tipo_programa_derivado AS ENUM ('sectorial', 'especial', 'institucional', 'regional')"
-        );
+        // 1. Crear ENUM nativo de PostgreSQL primero (IF NOT EXISTS via DO block)
+        DB::statement(<<<'SQL'
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tipo_programa_derivado') THEN
+                    CREATE TYPE tipo_programa_derivado AS ENUM ('sectorial', 'especial', 'institucional', 'regional');
+                END IF;
+            END $$;
+        SQL);
 
         // 2. Crear tabla
         Schema::create('programas_derivados', function (Blueprint $table) {
