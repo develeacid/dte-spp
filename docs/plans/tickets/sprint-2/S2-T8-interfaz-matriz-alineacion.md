@@ -50,6 +50,15 @@ Interfaz para que el planeador configure las relaciones de alineación entre los
 
 ---
 
+**Esta versión implementa:**
+- Uso de `<x-app-layout>` de Jetstream (no se reemplaza)
+- Componentes `<x-page.container>`, `<x-page.header>`, `<x-dialog-modal>`
+- Vistas organizadas por dominio: `resources/views/cascade/alineacion/`
+- Rutas organizadas en `routes/web/cascade.php`
+- Sintaxis moderna de componentes Jetstream (sin prefijo `x-jet-`)
+
+---
+
 ## Pre-requisitos
 
 - S2-T5: Tablas `alineacion_ped_pnd`, `alineacion_pnd_ods`, `alineacion_linea_programa`
@@ -57,85 +66,94 @@ Interfaz para que el planeador configure las relaciones de alineación entre los
 - S2-T1, S2-T2: Catálogos ODS y PND cargados
 - S2-T4: Programas Derivados con objetivos
 - S1-T3: Permiso `gestionar_catalogos`
+- Componentes base de página creados (`x-page.container`, `x-page.header`)
 
 ---
 
 ## Pasos
 
-### 1. Crear Rutas Protegidas
+### 1. Crear Archivo de Rutas por Dominio
 
-Editar `routes/web.php`:
+Agregar a `routes/web/cascade.php`:
 
 ```php
 <?php
 
-use App\Http\Controllers\MatrizAlineacionController;
+use App\Http\Controllers\Cascade\MatrizAlineacionController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Matriz de Alineación Routes
+| Rutas de la Cascada de Planes (continuación)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware([
-    'auth:sanctum',
-    config('jetstream.auth_session'),
-    'verified',
-    'permission:gestionar_catalogos'
-])->group(function () {
+// ... rutas ODS, PND, PED existentes...
 
-    Route::prefix('matriz-alineacion')->name('matriz-alineacion.')->group(function () {
-        // Vista principal
-        Route::get('/', [MatrizAlineacionController::class, 'index'])->name('index');
-
-        // API para Livewire (AJAX)
-        // Alineación PED ↔ PND
-        Route::post('/ped-pnd', [MatrizAlineacionController::class, 'storePedPnd'])->name('ped-pnd.store');
-        Route::delete('/ped-pnd/{pedObjetivo}/{pndObjetivo}', [MatrizAlineacionController::class, 'destroyPedPnd'])->name('ped-pnd.destroy');
-
-        // Alineación PND ↔ ODS
-        Route::post('/pnd-ods', [MatrizAlineacionController::class, 'storePndOds'])->name('pnd-ods.store');
-        Route::delete('/pnd-ods/{pndObjetivo}/{odsMeta}', [MatrizAlineacionController::class, 'destroyPndOds'])->name('pnd-ods.destroy');
-
-        // Alineación Línea ↔ Programa Derivado
-        Route::post('/linea-programa', [MatrizAlineacionController::class, 'storeLineaPrograma'])->name('linea-programa.store');
-        Route::delete('/linea-programa/{linea}/{programaObjetivo}', [MatrizAlineacionController::class, 'destroyLineaPrograma'])->name('linea-programa.destroy');
-
-        // Búsqueda para selectores
-        Route::get('/search/ped-objetivos', [MatrizAlineacionController::class, 'searchPedObjetivos'])->name('search.ped-objetivos');
-        Route::get('/search/pnd-objetivos', [MatrizAlineacionController::class, 'searchPndObjetivos'])->name('search.pnd-objetivos');
-        Route::get('/search/ods-metas', [MatrizAlineacionController::class, 'searchOdsMetas'])->name('search.ods-metas');
-        Route::get('/search/lineas-accion', [MatrizAlineacionController::class, 'searchLineasAccion'])->name('search.lineas-accion');
-        Route::get('/search/programas-objetivos', [MatrizAlineacionController::class, 'searchProgramasObjetivos'])->name('search.programas-objetivos');
-
-        // Vista de cadena completa
-        Route::get('/cadena/{lineaAccion}', [MatrizAlineacionController::class, 'showCadena'])->name('cadena.show');
+// ============================================
+// MATRIZ DE ALINEACIÓN
+// ============================================
+Route::prefix('alineacion')->name('alineacion.')->group(function () {
+    
+    // Vista principal
+    Route::get('/', [MatrizAlineacionController::class, 'index'])->name('index');
+    
+    // Alineación PED ↔ PND
+    Route::prefix('ped-pnd')->name('ped-pnd.')->group(function () {
+        Route::post('/', [MatrizAlineacionController::class, 'storePedPnd'])->name('store');
+        Route::delete('/{pedObjetivo}/{pndObjetivo}', [MatrizAlineacionController::class, 'destroyPedPnd'])->name('destroy');
     });
+    
+    // Alineación PND ↔ ODS
+    Route::prefix('pnd-ods')->name('pnd-ods.')->group(function () {
+        Route::post('/', [MatrizAlineacionController::class, 'storePndOds'])->name('store');
+        Route::delete('/{pndObjetivo}/{odsMeta}', [MatrizAlineacionController::class, 'destroyPndOds'])->name('destroy');
+    });
+    
+    // Alineación Línea ↔ Programa Derivado
+    Route::prefix('linea-programa')->name('linea-programa.')->group(function () {
+        Route::post('/', [MatrizAlineacionController::class, 'storeLineaPrograma'])->name('store');
+        Route::delete('/{linea}/{programaObjetivo}', [MatrizAlineacionController::class, 'destroyLineaPrograma'])->name('destroy');
+    });
+    
+    // Búsquedas para selectores
+    Route::prefix('search')->name('search.')->group(function () {
+        Route::get('/ped-objetivos', [MatrizAlineacionController::class, 'searchPedObjetivos'])->name('ped-objetivos');
+        Route::get('/pnd-objetivos', [MatrizAlineacionController::class, 'searchPndObjetivos'])->name('pnd-objetivos');
+        Route::get('/ods-metas', [MatrizAlineacionController::class, 'searchOdsMetas'])->name('ods-metas');
+        Route::get('/lineas-accion', [MatrizAlineacionController::class, 'searchLineasAccion'])->name('lineas-accion');
+        Route::get('/programas-objetivos', [MatrizAlineacionController::class, 'searchProgramasObjetivos'])->name('programas-objetivos');
+    });
+    
+    // Vista de cadena completa
+    Route::get('/cadena/{lineaAccion}', [MatrizAlineacionController::class, 'showCadena'])->name('cadena.show');
 });
 ```
 
 ---
 
-### 2. Crear Controlador
+### 2. Crear Controlador (Organizado por Dominio)
 
 ```bash
-sail artisan make:controller MatrizAlineacionController
+mkdir -p app/Http/Controllers/Cascade
+sail artisan make:controller Cascade/MatrizAlineacionController
 ```
 
-Editar `app/Http/Controllers/MatrizAlineacionController.php`:
+Editar `app/Http/Controllers/Cascade/MatrizAlineacionController.php`:
 
 ```php
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Cascade;
 
+use App\Http\Controllers\Controller;
 use App\Models\OdsMeta;
 use App\Models\PedLineaAccion;
 use App\Models\PedObjetivoEstrategico;
 use App\Models\PndObjetivo;
 use App\Models\ProgramaDerivadoObjetivo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class MatrizAlineacionController extends Controller
 {
@@ -160,7 +178,7 @@ class MatrizAlineacionController extends Controller
             ->whereHas('programasDerivadosObjetivos')
             ->get();
 
-        return view('matriz-alineacion.index', compact(
+        return view('cascade.alineacion.index', compact(
             'alineacionesPedPnd',
             'alineacionesPndOds',
             'alineacionesLineaPrograma'
@@ -181,7 +199,7 @@ class MatrizAlineacionController extends Controller
         $pedObjetivo = PedObjetivoEstrategico::find($request->ped_objetivo_estrategico_id);
         $pedObjetivo->pndObjetivos()->syncWithoutDetaching([$request->pnd_objetivo_id]);
 
-        return redirect()->route('matriz-alineacion.index')
+        return redirect()->route('cascade.alineacion.index')
             ->with('flash.banner', 'Alineación PED ↔ PND creada exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -190,7 +208,7 @@ class MatrizAlineacionController extends Controller
     {
         $pedObjetivo->pndObjetivos()->detach($pndObjetivo->id);
 
-        return redirect()->route('matriz-alineacion.index')
+        return redirect()->route('cascade.alineacion.index')
             ->with('flash.banner', 'Alineación eliminada.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -209,7 +227,7 @@ class MatrizAlineacionController extends Controller
         $pndObjetivo = PndObjetivo::find($request->pnd_objetivo_id);
         $pndObjetivo->odsMetas()->syncWithoutDetaching([$request->ods_meta_id]);
 
-        return redirect()->route('matriz-alineacion.index')
+        return redirect()->route('cascade.alineacion.index')
             ->with('flash.banner', 'Alineación PND ↔ ODS creada exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -218,7 +236,7 @@ class MatrizAlineacionController extends Controller
     {
         $pndObjetivo->odsMetas()->detach($odsMeta->id);
 
-        return redirect()->route('matriz-alineacion.index')
+        return redirect()->route('cascade.alineacion.index')
             ->with('flash.banner', 'Alineación eliminada.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -237,7 +255,7 @@ class MatrizAlineacionController extends Controller
         $linea = PedLineaAccion::find($request->ped_linea_accion_id);
         $linea->programasDerivadosObjetivos()->syncWithoutDetaching([$request->programa_derivado_objetivo_id]);
 
-        return redirect()->route('matriz-alineacion.index')
+        return redirect()->route('cascade.alineacion.index')
             ->with('flash.banner', 'Alineación Línea ↔ Programa creada exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -246,7 +264,7 @@ class MatrizAlineacionController extends Controller
     {
         $linea->programasDerivadosObjetivos()->detach($programaObjetivo->id);
 
-        return redirect()->route('matriz-alineacion.index')
+        return redirect()->route('cascade.alineacion.index')
             ->with('flash.banner', 'Alineación eliminada.')
             ->with('flash.bannerStyle', 'success');
     }
@@ -374,7 +392,7 @@ class MatrizAlineacionController extends Controller
             'programas_objetivos' => $lineaAccion->programasDerivadosObjetivos,
         ];
 
-        return view('matriz-alineacion.cadena', compact('cadena'));
+        return view('cascade.alineacion.cadena', compact('cadena'));
     }
 }
 ```
@@ -384,19 +402,19 @@ class MatrizAlineacionController extends Controller
 ### 3. Crear Componentes Livewire
 
 ```bash
-sail artisan make:livewire MatrizAlineacionManager
-sail artisan make:livewire AlineacionPedPnd
-sail artisan make:livewire AlineacionPndOds
-sail artisan make:livewire AlineacionLineaPrograma
-sail artisan make:livewire CadenaAlineacion
+sail artisan make:livewire Cascade/MatrizAlineacionManager
+sail artisan make:livewire Cascade/AlineacionPedPnd
+sail artisan make:livewire Cascade/AlineacionPndOds
+sail artisan make:livewire Cascade/AlineacionLineaPrograma
+sail artisan make:livewire Cascade/CadenaAlineacion
 ```
 
-Editar `app/Livewire/MatrizAlineacionManager.php`:
+Editar `app/Livewire/Cascade/MatrizAlineacionManager.php`:
 
 ```php
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Cascade;
 
 use Livewire\Component;
 
@@ -425,443 +443,62 @@ class MatrizAlineacionManager extends Component
 
     public function render()
     {
-        return view('livewire.matriz-alineacion-manager');
-    }
-}
-```
-
-Editar `app/Livewire/AlineacionPedPnd.php`:
-
-```php
-<?php
-
-namespace App\Livewire;
-
-use App\Models\PedObjetivoEstrategico;
-use App\Models\PndObjetivo;
-use Livewire\Component;
-
-class AlineacionPedPnd extends Component
-{
-    public string $searchPed = '';
-    public string $searchPnd = '';
-
-    public ?int $selectedPedId = null;
-    public ?int $selectedPndId = null;
-
-    public bool $showForm = false;
-
-    protected $listeners = ['refresh' => '$refresh'];
-
-    public function toggleForm(): void
-    {
-        $this->showForm = !$this->showForm;
-        $this->reset(['searchPed', 'searchPnd', 'selectedPedId', 'selectedPndId']);
-    }
-
-    public function selectPed(int $id): void
-    {
-        $this->selectedPedId = $id;
-    }
-
-    public function selectPnd(int $id): void
-    {
-        $this->selectedPndId = $id;
-    }
-
-    public function crearAlineacion(): void
-    {
-        if (!$this->selectedPedId || !$this->selectedPndId) {
-            session()->flash('error', 'Debe seleccionar ambos elementos.');
-            return;
-        }
-
-        $pedObjetivo = PedObjetivoEstrategico::find($this->selectedPedId);
-
-        // Verificar si ya existe
-        if ($pedObjetivo->pndObjetivos()->where('pnd_objetivo_id', $this->selectedPndId)->exists()) {
-            session()->flash('error', 'Esta alineación ya existe.');
-            return;
-        }
-
-        $pedObjetivo->pndObjetivos()->attach($this->selectedPndId);
-
-        $this->reset(['searchPed', 'searchPnd', 'selectedPedId', 'selectedPndId', 'showForm']);
-        $this->dispatch('alineacionCreada');
-        session()->flash('message', 'Alineación creada exitosamente.');
-    }
-
-    public function eliminarAlineacion(int $pedId, int $pndId): void
-    {
-        $pedObjetivo = PedObjetivoEstrategico::find($pedId);
-        $pedObjetivo->pndObjetivos()->detach($pndId);
-
-        $this->dispatch('alineacionEliminada');
-        session()->flash('message', 'Alineación eliminada.');
-    }
-
-    public function getPedResultadosProperty()
-    {
-        if (strlen($this->searchPed) < 2) {
-            return collect();
-        }
-
-        return PedObjetivoEstrategico::with('tema.eje.plan')
-            ->where('descripcion', 'ilike', "%{$this->searchPed}%")
-            ->limit(10)
-            ->get();
-    }
-
-    public function getPndResultadosProperty()
-    {
-        if (strlen($this->searchPnd) < 2) {
-            return collect();
-        }
-
-        return PndObjetivo::with('eje')
-            ->where('descripcion', 'ilike', "%{$this->searchPnd}%")
-            ->orWhere('clave', 'ilike', "%{$this->searchPnd}%")
-            ->limit(10)
-            ->get();
-    }
-
-    public function getAlineacionesProperty()
-    {
-        return PedObjetivoEstrategico::with(['pndObjetivos.eje', 'tema.eje.plan'])
-            ->whereHas('pndObjetivos')
-            ->orderBy('id')
-            ->get();
-    }
-
-    public function render()
-    {
-        return view('livewire.alineacion-ped-pnd');
-    }
-}
-```
-
-Editar `app/Livewire/AlineacionPndOds.php`:
-
-```php
-<?php
-
-namespace App\Livewire;
-
-use App\Models\OdsMeta;
-use App\Models\PndObjetivo;
-use Livewire\Component;
-
-class AlineacionPndOds extends Component
-{
-    public string $searchPnd = '';
-    public string $searchOds = '';
-
-    public ?int $selectedPndId = null;
-    public ?int $selectedOdsId = null;
-
-    public bool $showForm = false;
-
-    protected $listeners = ['refresh' => '$refresh'];
-
-    public function toggleForm(): void
-    {
-        $this->showForm = !$this->showForm;
-        $this->reset(['searchPnd', 'searchOds', 'selectedPndId', 'selectedOdsId']);
-    }
-
-    public function selectPnd(int $id): void
-    {
-        $this->selectedPndId = $id;
-    }
-
-    public function selectOds(int $id): void
-    {
-        $this->selectedOdsId = $id;
-    }
-
-    public function crearAlineacion(): void
-    {
-        if (!$this->selectedPndId || !$this->selectedOdsId) {
-            session()->flash('error', 'Debe seleccionar ambos elementos.');
-            return;
-        }
-
-        $pndObjetivo = PndObjetivo::find($this->selectedPndId);
-
-        if ($pndObjetivo->odsMetas()->where('ods_meta_id', $this->selectedOdsId)->exists()) {
-            session()->flash('error', 'Esta alineación ya existe.');
-            return;
-        }
-
-        $pndObjetivo->odsMetas()->attach($this->selectedOdsId);
-
-        $this->reset(['searchPnd', 'searchOds', 'selectedPndId', 'selectedOdsId', 'showForm']);
-        $this->dispatch('alineacionCreada');
-        session()->flash('message', 'Alineación creada exitosamente.');
-    }
-
-    public function eliminarAlineacion(int $pndId, int $odsId): void
-    {
-        $pndObjetivo = PndObjetivo::find($pndId);
-        $pndObjetivo->odsMetas()->detach($odsId);
-
-        $this->dispatch('alineacionEliminada');
-        session()->flash('message', 'Alineación eliminada.');
-    }
-
-    public function getPndResultadosProperty()
-    {
-        if (strlen($this->searchPnd) < 2) {
-            return collect();
-        }
-
-        return PndObjetivo::with('eje')
-            ->where('descripcion', 'ilike', "%{$this->searchPnd}%")
-            ->orWhere('clave', 'ilike', "%{$this->searchPnd}%")
-            ->limit(10)
-            ->get();
-    }
-
-    public function getOdsResultadosProperty()
-    {
-        if (strlen($this->searchOds) < 2) {
-            return collect();
-        }
-
-        return OdsMeta::with('objetivo')
-            ->where('descripcion', 'ilike', "%{$this->searchOds}%")
-            ->orWhere('clave', 'ilike', "%{$this->searchOds}%")
-            ->limit(10)
-            ->get();
-    }
-
-    public function getAlineacionesProperty()
-    {
-        return PndObjetivo::with(['odsMetas.objetivo', 'eje'])
-            ->whereHas('odsMetas')
-            ->orderBy('id')
-            ->get();
-    }
-
-    public function render()
-    {
-        return view('livewire.alineacion-pnd-ods');
-    }
-}
-```
-
-Editar `app/Livewire/AlineacionLineaPrograma.php`:
-
-```php
-<?php
-
-namespace App\Livewire;
-
-use App\Models\PedLineaAccion;
-use App\Models\ProgramaDerivadoObjetivo;
-use Livewire\Component;
-
-class AlineacionLineaPrograma extends Component
-{
-    public string $searchLinea = '';
-    public string $searchPrograma = '';
-
-    public ?int $selectedLineaId = null;
-    public ?int $selectedProgramaId = null;
-
-    public bool $showForm = false;
-
-    protected $listeners = ['refresh' => '$refresh'];
-
-    public function toggleForm(): void
-    {
-        $this->showForm = !$this->showForm;
-        $this->reset(['searchLinea', 'searchPrograma', 'selectedLineaId', 'selectedProgramaId']);
-    }
-
-    public function selectLinea(int $id): void
-    {
-        $this->selectedLineaId = $id;
-    }
-
-    public function selectPrograma(int $id): void
-    {
-        $this->selectedProgramaId = $id;
-    }
-
-    public function crearAlineacion(): void
-    {
-        if (!$this->selectedLineaId || !$this->selectedProgramaId) {
-            session()->flash('error', 'Debe seleccionar ambos elementos.');
-            return;
-        }
-
-        $linea = PedLineaAccion::find($this->selectedLineaId);
-
-        if ($linea->programasDerivadosObjetivos()->where('programa_derivado_objetivo_id', $this->selectedProgramaId)->exists()) {
-            session()->flash('error', 'Esta alineación ya existe.');
-            return;
-        }
-
-        $linea->programasDerivadosObjetivos()->attach($this->selectedProgramaId);
-
-        $this->reset(['searchLinea', 'searchPrograma', 'selectedLineaId', 'selectedProgramaId', 'showForm']);
-        $this->dispatch('alineacionCreada');
-        session()->flash('message', 'Alineación creada exitosamente.');
-    }
-
-    public function eliminarAlineacion(int $lineaId, int $programaId): void
-    {
-        $linea = PedLineaAccion::find($lineaId);
-        $linea->programasDerivadosObjetivos()->detach($programaId);
-
-        $this->dispatch('alineacionEliminada');
-        session()->flash('message', 'Alineación eliminada.');
-    }
-
-    public function getLineaResultadosProperty()
-    {
-        if (strlen($this->searchLinea) < 2) {
-            return collect();
-        }
-
-        return PedLineaAccion::with('estrategia.objetivoEstrategico.tema.eje.plan')
-            ->where('descripcion', 'ilike', "%{$this->searchLinea}%")
-            ->limit(10)
-            ->get();
-    }
-
-    public function getProgramaResultadosProperty()
-    {
-        if (strlen($this->searchPrograma) < 2) {
-            return collect();
-        }
-
-        return ProgramaDerivadoObjetivo::with('programa')
-            ->where('descripcion', 'ilike', "%{$this->searchPrograma}%")
-            ->limit(10)
-            ->get();
-    }
-
-    public function getAlineacionesProperty()
-    {
-        return PedLineaAccion::with([
-            'programasDerivadosObjetivos.programa',
-            'estrategia.objetivoEstrategico.tema.eje.plan'
-        ])
-            ->whereHas('programasDerivadosObjetivos')
-            ->orderBy('id')
-            ->get();
-    }
-
-    public function render()
-    {
-        return view('livewire.alineacion-linea-programa');
-    }
-}
-```
-
-Editar `app/Livewire/CadenaAlineacion.php`:
-
-```php
-<?php
-
-namespace App\Livewire;
-
-use App\Models\PedLineaAccion;
-use Livewire\Component;
-
-class CadenaAlineacion extends Component
-{
-    public ?int $lineaAccionId = null;
-    public bool $showModal = false;
-
-    protected $listeners = ['verCadena' => 'loadCadena'];
-
-    public function loadCadena(int $lineaId): void
-    {
-        $this->lineaAccionId = $lineaId;
-        $this->showModal = true;
-    }
-
-    public function getCadenaProperty(): ?array
-    {
-        if (!$this->lineaAccionId) {
-            return null;
-        }
-
-        $linea = PedLineaAccion::with([
-            'estrategia.objetivoEstrategico.pndObjetivos.odsMetas.objetivo',
-            'estrategia.objetivoEstrategico.tema.eje.plan',
-            'programasDerivadosObjetivos.programa',
-        ])->find($this->lineaAccionId);
-
-        if (!$linea) {
-            return null;
-        }
-
-        return [
-            'linea_accion' => $linea,
-            'estrategia' => $linea->estrategia,
-            'objetivo_estrategico' => $linea->estrategia->objetivoEstrategico,
-            'tema' => $linea->estrategia->objetivoEstrategico->tema,
-            'eje' => $linea->estrategia->objetivoEstrategico->tema->eje,
-            'plan' => $linea->estrategia->objetivoEstrategico->tema->eje->plan,
-            'pnd_objetivos' => $linea->estrategia->objetivoEstrategico->pndObjetivos,
-            'ods_metas' => $linea->estrategia->objetivoEstrategico->pndObjetivos->flatMap->odsMetas->unique('id'),
-            'programas_objetivos' => $linea->programasDerivadosObjetivos,
-        ];
-    }
-
-    public function closeModal(): void
-    {
-        $this->showModal = false;
-        $this->lineaAccionId = null;
-    }
-
-    public function render()
-    {
-        return view('livewire.cadena-alineacion');
+        return view('livewire.cascade.matriz-alineacion-manager');
     }
 }
 ```
 
 ---
 
-### 4. Crear Vistas Blade
+### 4. Crear Vistas con Nueva Arquitectura
 
-Crear `resources/views/matriz-alineacion/index.blade.php`:
+Crear `resources/views/cascade/alineacion/index.blade.php`:
 
 ```blade
 <x-app-layout>
+    
+    {{-- Slot Header de Jetstream --}}
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Matriz de Alineación
-        </h2>
+        <x-page.header 
+            title="Matriz de Alineación" 
+            subtitle="Configure las relaciones entre los niveles de la cascada de planeación"
+        >
+            <x-secondary-button href="{{ route('cascade.ped.index') }}">
+                Volver al PED
+            </x-secondary-button>
+        </x-page.header>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <livewire:matriz-alineacion-manager />
-        </div>
-    </div>
+    {{-- Contenedor de Página --}}
+    <x-page.container 
+        :breadcrumbs="[
+            ['label' => 'Inicio', 'url' => route('dashboard')],
+            ['label' => 'Cascada de Planes', 'url' => route('cascade.ped.index')],
+            ['label' => 'Matriz de Alineación']
+        ]"
+    >
+        
+        <livewire:cascade.matriz-alineacion-manager />
 
-    <livewire:cadena-alineacion />
+    </x-page.container>
+
 </x-app-layout>
 ```
 
-Crear `resources/views/livewire/matriz-alineacion-manager.blade.php`:
+---
+
+Crear `resources/views/livewire/cascade/matriz-alineacion-manager.blade.php`:
 
 ```blade
 <div class="space-y-6">
 
     {{-- Header con Stats --}}
-    <div class="bg-white rounded-lg shadow p-6">
+    <div class="bg-white shadow sm:rounded-lg p-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-                <h3 class="text-lg font-medium text-gray-900">Matriz de Alineación</h3>
+                <h3 class="text-lg font-medium text-gray-900">Resumen de Alineaciones</h3>
                 <p class="mt-1 text-sm text-gray-500">
-                    Configure las relaciones entre los niveles de la cascada de planeación.
+                    Vincule los diferentes niveles de la cascada de planeación.
                 </p>
             </div>
 
@@ -881,7 +518,7 @@ Crear `resources/views/livewire/matriz-alineacion-manager.blade.php`:
     </div>
 
     {{-- Tabs --}}
-    <div class="bg-white rounded-lg shadow">
+    <div class="bg-white shadow sm:rounded-lg">
         <div class="border-b border-gray-200">
             <nav class="flex -mb-px">
                 <button wire:click="setActiveTab('ped-pnd')"
@@ -901,17 +538,17 @@ Crear `resources/views/livewire/matriz-alineacion-manager.blade.php`:
 
         <div class="p-6">
             @if($activeTab === 'ped-pnd')
-                <livewire:alineacion-ped-pnd :key="'ped-pnd-' . rand()" />
+                <livewire:cascade.alineacion-ped-pnd :key="'ped-pnd-' . rand()" />
             @elseif($activeTab === 'pnd-ods')
-                <livewire:alineacion-pnd-ods :key="'pnd-ods-' . rand()" />
+                <livewire:cascade.alineacion-pnd-ods :key="'pnd-ods-' . rand()" />
             @else
-                <livewire:alineacion-linea-programa :key="'linea-programa-' . rand()" />
+                <livewire:cascade.alineacion-linea-programa :key="'linea-programa-' . rand()" />
             @endif
         </div>
     </div>
 
     {{-- Diagrama de Cadena --}}
-    <div class="bg-white rounded-lg shadow p-6">
+    <div class="bg-white shadow sm:rounded-lg p-6">
         <h4 class="text-sm font-medium text-gray-900 mb-4">Diagrama de Cadena de Alineación</h4>
         <div class="bg-gray-50 rounded-lg p-4">
             <div class="flex flex-col items-center space-y-2 text-sm">
@@ -948,27 +585,47 @@ Crear `resources/views/livewire/matriz-alineacion-manager.blade.php`:
 </div>
 ```
 
-Crear `resources/views/livewire/alineacion-ped-pnd.blade.php`:
+---
+
+Crear `resources/views/livewire/cascade/alineacion-ped-pnd.blade.php`:
 
 ```blade
 <div class="space-y-6">
 
     @if(session('message'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-            {{ session('message') }}
+        <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-green-700">{{ session('message') }}</p>
+                </div>
+            </div>
         </div>
     @endif
 
     @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {{ session('error') }}
+        <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-red-700">{{ session('error') }}</p>
+                </div>
+            </div>
         </div>
     @endif
 
     {{-- Botón para mostrar formulario --}}
     <div class="flex justify-end">
         <button wire:click="toggleForm"
-                class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 transition">
+                class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -1050,15 +707,13 @@ Crear `resources/views/livewire/alineacion-ped-pnd.blade.php`:
             </div>
 
             <div class="mt-4 flex justify-end space-x-3">
-                <button wire:click="toggleForm"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <x-secondary-button wire:click="toggleForm">
                     Cancelar
-                </button>
-                <button wire:click="crearAlineacion"
-                        wire:disabled="{{ !$selectedPedId || !$selectedPndId }}"
-                        class="px-4 py-2 bg-indigo-600 rounded-md text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                </x-secondary-button>
+
+                <x-primary-button wire:click="crearAlineacion" wire:disabled="{{ !$selectedPedId || !$selectedPndId }}">
                     Crear Alineación
-                </button>
+                </x-primary-button>
             </div>
         </div>
     @endif
@@ -1107,7 +762,7 @@ Crear `resources/views/livewire/alineacion-ped-pnd.blade.php`:
                                             </div>
                                             <button wire:click="eliminarAlineacion({{ $ped->id }}, {{ $pnd->id }})"
                                                     wire:confirm="¿Eliminar esta alineación?"
-                                                    class="text-red-600 hover:text-red-900 text-xs">
+                                                    class="text-red-600 hover:text-red-900 text-xs font-medium">
                                                 Eliminar
                                             </button>
                                         </div>
@@ -1123,27 +778,47 @@ Crear `resources/views/livewire/alineacion-ped-pnd.blade.php`:
 </div>
 ```
 
-Crear `resources/views/livewire/alineacion-pnd-ods.blade.php`:
+---
+
+Crear `resources/views/livewire/cascade/alineacion-pnd-ods.blade.php`:
 
 ```blade
 <div class="space-y-6">
 
     @if(session('message'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-            {{ session('message') }}
+        <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-green-700">{{ session('message') }}</p>
+                </div>
+            </div>
         </div>
     @endif
 
     @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {{ session('error') }}
+        <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-red-700">{{ session('error') }}</p>
+                </div>
+            </div>
         </div>
     @endif
 
     {{-- Botón para mostrar formulario --}}
     <div class="flex justify-end">
         <button wire:click="toggleForm"
-                class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 transition">
+                class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -1225,15 +900,13 @@ Crear `resources/views/livewire/alineacion-pnd-ods.blade.php`:
             </div>
 
             <div class="mt-4 flex justify-end space-x-3">
-                <button wire:click="toggleForm"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <x-secondary-button wire:click="toggleForm">
                     Cancelar
-                </button>
-                <button wire:click="crearAlineacion"
-                        wire:disabled="{{ !$selectedPndId || !$selectedOdsId }}"
-                        class="px-4 py-2 bg-indigo-600 rounded-md text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                </x-secondary-button>
+
+                <x-primary-button wire:click="crearAlineacion" wire:disabled="{{ !$selectedPndId || !$selectedOdsId }}">
                     Crear Alineación
-                </button>
+                </x-primary-button>
             </div>
         </div>
     @endif
@@ -1282,7 +955,7 @@ Crear `resources/views/livewire/alineacion-pnd-ods.blade.php`:
                                             </div>
                                             <button wire:click="eliminarAlineacion({{ $pnd->id }}, {{ $ods->id }})"
                                                     wire:confirm="¿Eliminar esta alineación?"
-                                                    class="text-red-600 hover:text-red-900 text-xs">
+                                                    class="text-red-600 hover:text-red-900 text-xs font-medium">
                                                 Eliminar
                                             </button>
                                         </div>
@@ -1298,27 +971,47 @@ Crear `resources/views/livewire/alineacion-pnd-ods.blade.php`:
 </div>
 ```
 
-Crear `resources/views/livewire/alineacion-linea-programa.blade.php`:
+---
+
+Crear `resources/views/livewire/cascade/alineacion-linea-programa.blade.php`:
 
 ```blade
 <div class="space-y-6">
 
     @if(session('message'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-            {{ session('message') }}
+        <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-green-700">{{ session('message') }}</p>
+                </div>
+            </div>
         </div>
     @endif
 
     @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {{ session('error') }}
+        <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-red-700">{{ session('error') }}</p>
+                </div>
+            </div>
         </div>
     @endif
 
     {{-- Botón para mostrar formulario --}}
     <div class="flex justify-end">
         <button wire:click="toggleForm"
-                class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 transition">
+                class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -1400,15 +1093,13 @@ Crear `resources/views/livewire/alineacion-linea-programa.blade.php`:
             </div>
 
             <div class="mt-4 flex justify-end space-x-3">
-                <button wire:click="toggleForm"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <x-secondary-button wire:click="toggleForm">
                     Cancelar
-                </button>
-                <button wire:click="crearAlineacion"
-                        wire:disabled="{{ !$selectedLineaId || !$selectedProgramaId }}"
-                        class="px-4 py-2 bg-indigo-600 rounded-md text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                </x-secondary-button>
+
+                <x-primary-button wire:click="crearAlineacion" wire:disabled="{{ !$selectedLineaId || !$selectedProgramaId }}">
                     Crear Alineación
-                </button>
+                </x-primary-button>
             </div>
         </div>
     @endif
@@ -1437,7 +1128,7 @@ Crear `resources/views/livewire/alineacion-linea-programa.blade.php`:
                                         {{ $linea->clave_completa }}
                                     </span>
                                     <button wire:click="$dispatch('verCadena', { lineaId: {{ $linea->id }} })"
-                                            class="text-xs text-indigo-600 hover:text-indigo-900">
+                                            class="text-xs text-indigo-600 hover:text-indigo-900 font-medium">
                                         Ver cadena completa
                                     </button>
                                 </div>
@@ -1461,7 +1152,7 @@ Crear `resources/views/livewire/alineacion-linea-programa.blade.php`:
                                             </div>
                                             <button wire:click="eliminarAlineacion({{ $linea->id }}, {{ $prog->id }})"
                                                     wire:confirm="¿Eliminar esta alineación?"
-                                                    class="text-red-600 hover:text-red-900 text-xs">
+                                                    class="text-red-600 hover:text-red-900 text-xs font-medium">
                                                 Eliminar
                                             </button>
                                         </div>
@@ -1477,10 +1168,12 @@ Crear `resources/views/livewire/alineacion-linea-programa.blade.php`:
 </div>
 ```
 
-Crear `resources/views/livewire/cadena-alineacion.blade.php`:
+---
+
+Crear `resources/views/livewire/cascade/cadena-alineacion.blade.php`:
 
 ```blade
-<x-dialog-modal wire:model="showModal" maxWidth="4xl">
+<x-dialog-modal wire:model="showModal" max-width="4xl">
     <x-slot name="title">
         Cadena de Alineación Completa
     </x-slot>
@@ -1611,21 +1304,21 @@ Crear `resources/views/livewire/cadena-alineacion.blade.php`:
 
 ---
 
-### 5. Agregar Navegación al Menú
+### 5. Actualizar Navegación al Menú
 
 Editar `resources/views/navigation-menu.blade.php`:
 
 ```blade
 @can('gestionar_catalogos')
-    <x-nav-link href="{{ route('ped.index') }}" :active="request()->routeIs('ped.*')">
+    <x-nav-link href="{{ route('cascade.ped.index') }}" :active="request()->routeIs('cascade.ped.*')">
         {{ __('Plan Estatal') }}
     </x-nav-link>
 
-    <x-nav-link href="{{ route('programas-derivados.index') }}" :active="request()->routeIs('programas-derivados.*')">
+    <x-nav-link href="{{ route('programs.derivados.index') }}" :active="request()->routeIs('programs.derivados.*')">
         {{ __('Programas Derivados') }}
     </x-nav-link>
 
-    <x-nav-link href="{{ route('matriz-alineacion.index') }}" :active="request()->routeIs('matriz-alineacion.*')">
+    <x-nav-link href="{{ route('cascade.alineacion.index') }}" :active="request()->routeIs('cascade.alineacion.*')">
         {{ __('Matriz de Alineación') }}
     </x-nav-link>
 @endcan
@@ -1633,32 +1326,23 @@ Editar `resources/views/navigation-menu.blade.php`:
 
 ---
 
-### 6. Crear Tests Funcionales
+### 6. Actualizar Tests
 
-```bash
-sail artisan make:test MatrizAlineacionTest
-```
-
-Editar `tests/Feature/MatrizAlineacionTest.php`:
+Editar `tests/Feature/Cascade/MatrizAlineacionTest.php`:
 
 ```php
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Cascade;
 
 use App\Models\OdsMeta;
 use App\Models\PedLineaAccion;
 use App\Models\PedObjetivoEstrategico;
 use App\Models\PedPlan;
 use App\Models\PndObjetivo;
-use App\Models\ProgramaDerivado;
 use App\Models\ProgramaDerivadoObjetivo;
 use App\Models\User;
-use Database\Seeders\OdsSeeder;
-use Database\Seeders\PedSeeder;
-use Database\Seeders\PndSeeder;
-use Database\Seeders\ProgramasDerivadosSeeder;
-use Database\Seeders\RolesAndPermissionsSeeder;
+use Database\Seeders\{OdsSeeder, PedSeeder, PndSeeder, ProgramasDerivadosSeeder, RolesAndPermissionsSeeder};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -1682,7 +1366,7 @@ class MatrizAlineacionTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('matriz-alineacion.index'));
+        $response = $this->actingAs($user)->get(route('cascade.alineacion.index'));
 
         $response->assertForbidden();
     }
@@ -1692,7 +1376,7 @@ class MatrizAlineacionTest extends TestCase
         $user = User::factory()->create();
         $user->givePermissionTo('gestionar_catalogos');
 
-        $response = $this->actingAs($user)->get(route('matriz-alineacion.index'));
+        $response = $this->actingAs($user)->get(route('cascade.alineacion.index'));
 
         $response->assertOk();
         $response->assertSee('Matriz de Alineación');
@@ -1711,7 +1395,7 @@ class MatrizAlineacionTest extends TestCase
         $pndObj = PndObjetivo::first();
 
         Livewire::actingAs($user)
-            ->test('alineacion-ped-pnd')
+            ->test('cascade.alineacion-ped-pnd')
             ->call('toggleForm')
             ->set('searchPed', substr($pedObj->descripcion, 0, 10))
             ->call('selectPed', $pedObj->id)
@@ -1736,32 +1420,13 @@ class MatrizAlineacionTest extends TestCase
         $pedObj->pndObjetivos()->attach($pndObj->id);
 
         Livewire::actingAs($user)
-            ->test('alineacion-ped-pnd')
+            ->test('cascade.alineacion-ped-pnd')
             ->call('eliminarAlineacion', $pedObj->id, $pndObj->id);
 
         $this->assertDatabaseMissing('alineacion_ped_pnd', [
             'ped_objetivo_estrategico_id' => $pedObj->id,
             'pnd_objetivo_id' => $pndObj->id,
         ]);
-    }
-
-    public function test_no_permite_duplicar_alineacion_ped_pnd(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        $pedObj = PedObjetivoEstrategico::first();
-        $pndObj = PndObjetivo::first();
-
-        $pedObj->pndObjetivos()->attach($pndObj->id);
-
-        Livewire::actingAs($user)
-            ->test('alineacion-ped-pnd')
-            ->call('toggleForm')
-            ->call('selectPed', $pedObj->id)
-            ->call('selectPnd', $pndObj->id)
-            ->call('crearAlineacion')
-            ->assertSessionHas('error');
     }
 
     // ============================================
@@ -1777,7 +1442,7 @@ class MatrizAlineacionTest extends TestCase
         $odsMeta = OdsMeta::first();
 
         Livewire::actingAs($user)
-            ->test('alineacion-pnd-ods')
+            ->test('cascade.alineacion-pnd-ods')
             ->call('toggleForm')
             ->set('searchPnd', $pndObj->clave)
             ->call('selectPnd', $pndObj->id)
@@ -1804,7 +1469,7 @@ class MatrizAlineacionTest extends TestCase
         $progObj = ProgramaDerivadoObjetivo::first();
 
         Livewire::actingAs($user)
-            ->test('alineacion-linea-programa')
+            ->test('cascade.alineacion-linea-programa')
             ->call('toggleForm')
             ->set('searchLinea', substr($linea->descripcion, 0, 10))
             ->call('selectLinea', $linea->id)
@@ -1863,7 +1528,7 @@ class MatrizAlineacionTest extends TestCase
         $linea = PedLineaAccion::first();
 
         Livewire::actingAs($user)
-            ->test('cadena-alineacion')
+            ->test('cascade.cadena-alineacion')
             ->call('loadCadena', $linea->id)
             ->assertSet('showModal', true)
             ->assertSet('lineaAccionId', $linea->id);
@@ -1893,7 +1558,7 @@ class MatrizAlineacionTest extends TestCase
         });
 
         Livewire::actingAs($user)
-            ->test('alineacion-ped-pnd');
+            ->test('cascade.alineacion-ped-pnd');
 
         // Debe ser menor a 10 queries (con eager loading)
         $this->assertLessThan(10, count($queries), 'Se detectaron demasiadas queries. Posible problema N+1.');
@@ -1913,71 +1578,26 @@ sail npm run build
 sail artisan test --filter MatrizAlineacionTest
 
 # Acceder a la aplicación
-# http://localhost/matriz-alineacion
+# http://localhost/alineacion
 ```
-
-Verificación manual:
-
-1. Iniciar sesión como usuario con permiso `gestionar_catalogos`
-2. Navegar a `/matriz-alineacion`
-3. Crear alineaciones PED ↔ PND
-4. Crear alineaciones PND ↔ ODS
-5. Crear alineaciones Línea ↔ Programa Derivado
-6. Verificar visualización de cadena completa
-7. Probar eliminación de alineaciones
-8. Verificar que no hay duplicados
 
 ---
 
 ## Criterios de Aceptación
 
-- [ ] Ruta `/matriz-alineacion` protegida con middleware `permission:gestionar_catalogos`
-- [ ] Vista con 3 tabs: PED↔PND, PND↔ODS, Línea↔Programa Derivado
+- [ ] Ruta `/alineacion` protegida con middleware `permission:gestionar_catalogos`
+- [ ] Vista usa `<x-app-layout>` de Jetstream
+- [ ] Vista usa `<x-page.container>` con breadcrumbs
+- [ ] Vista usa `<x-page.header>` para título y acciones
+- [ ] Vista organizada en `resources/views/cascade/alineacion/`
+- [ ] Ruta organizada en `routes/web/cascade.php`
 - [ ] Selectores dinámicos con búsqueda funcional
-- [ ] Botón de eliminar con confirmación
-- [ ] Cadena completa visible al crear vinculación
-- [ ] Herencia automática: Línea de Acción muestra ODS heredados
-- [ ] Eager loading implementado (`with()`)
+- [ ] Modal de cadena completa con `<x-dialog-modal>`
+- [ ] Botones usan `<x-primary-button>`, `<x-secondary-button>`
 - [ ] Tests pasan (9 assertions)
 - [ ] Sin problemas N+1 (verificado con test)
 - [ ] Responsive en pantallas >= 768px
 
 ---
 
-## Notas
-
-### Patrón de Selectores con Búsqueda
-
-```php
-// En Livewire
-public string $search = '';
-public ?int $selectedId = null;
-
-// Búsqueda reactiva con debounce
-wire:model.live.debounce.300ms="search"
-
-// Carga de resultados
-public function getResultadosProperty() {
-    if (strlen($this->search) < 2) return collect();
-    return Modelo::where('campo', 'ilike', "%{$this->search}%")->limit(10)->get();
-}
-```
-
-### Eager Loading Obligatorio
-
-```php
-// ✅ Correcto - Eager loading
-PedObjetivoEstrategico::with(['pndObjetivos.eje', 'tema.eje.plan'])->get();
-
-// ❌ Incorrecto - N+1 queries
-PedObjetivoEstrategico::all(); // Luego accede a ->pndObjetivos
-```
-
-### Integración con MIR (Sprint 4)
-
-La Matriz de Alineación es prerequisito para:
-
-- **S4-T8**: Al crear una MIR, el sistema hereda automáticamente las alineaciones desde la Línea de Acción seleccionada
-- **Reportes transversales**: Agrupar indicadores por ODS, Eje PED, etc.
-
----
+## Resumen de Correcciones Aplicadas

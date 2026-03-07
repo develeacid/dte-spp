@@ -4,7 +4,7 @@
 
 **Goal:** Migrar todas las vistas del módulo PED a la arquitectura de componentes Blade definida (Atomic Design con Slots), eliminando el uso de modales para flujos CRUD y estandarizando los elementos visuales.
 
-**Architecture:** Se mantiene `x-app-layout` de Jetstream con `x-slot name="header"` para el título de sección. Se crean los componentes de contenido faltantes (`x-page.container`, `x-ui.button.*`, `x-modals.confirm`, `x-forms.section`) que viven dentro del slot principal de `x-app-layout`. Los formularios de crear/editar Plan y Nodo se convierten de modales Livewire a páginas completas con rutas propias. Los partiales del árbol reemplazan sus `$dispatch` events por enlaces de navegación directa.
+**Architecture:** Jetstream es el shell (`x-app-layout`). `x-slot name="header"` recibe título + acciones vía `x-page.header`. El `$slot` principal se envuelve con `x-page.container` (breadcrumbs + contenido). Los formularios usan `x-page.form-footer` (barra sticky) en lugar de footer slot. Se crean los componentes de contenido faltantes (`x-page.container`, `x-page.header`, `x-page.form-footer`, `x-ui.button.*`, `x-modals.confirm`, `x-forms.section`). Los formularios de crear/editar Plan y Nodo se convierten de modales Livewire a páginas completas. Los partiales del árbol reemplazan sus `$dispatch` events por enlaces de navegación directa.
 
 **Tech Stack:** Laravel 12, Livewire 3, Alpine.js, Blade Components, Tailwind CSS
 
@@ -26,89 +26,93 @@
 ## Tarea 1: Componentes base — Estructura de Página
 
 **Files:**
-- Crear: `resources/views/components/page/container.blade.php`
 - Crear: `resources/views/components/page/header.blade.php`
+- Crear: `resources/views/components/page/container.blade.php`
+- Crear: `resources/views/components/page/form-footer.blade.php`
 
-> **Nota de layout:** Se usa `x-app-layout` de Jetstream con `x-slot name="header"` para el título de sección (patrón estándar del proyecto). `x-page.container` vive dentro del slot principal (`$slot`) de `x-app-layout` y maneja breadcrumbs, acciones, flash y footer.
+> **Filosofía:** Jetstream es el shell. `x-page.header` va dentro de `x-slot name="header"` (lleva título + botones de acción). `x-page.container` envuelve el cuerpo (breadcrumbs + contenido). `x-page.form-footer` es la barra sticky de Guardar/Cancelar dentro de formularios.
 
 **Paso 1: Crear `components/page/header.blade.php`**
+
+Diseñado para ir dentro del `<x-slot name="header">` de Jetstream.
 
 ```blade
 @props(['title', 'subtitle' => null])
 
-<div class="md:flex md:items-center md:justify-between mb-6">
-    <div class="flex-1 min-w-0">
-        <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ $title }}
-        </h1>
+        </h2>
         @if($subtitle)
             <p class="mt-1 text-sm text-gray-500">{{ $subtitle }}</p>
         @endif
     </div>
 
     @if(!empty($slot->toHtml()))
-        <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+        <div class="mt-4 sm:mt-0 sm:ml-4 flex items-center space-x-3">
             {{ $slot }}
         </div>
     @endif
 </div>
 ```
 
-**Paso 3: Crear `components/page/container.blade.php`**
+**Paso 2: Crear `components/page/container.blade.php`**
+
+Envuelve el cuerpo de la página: padding, max-width, breadcrumbs y flash message.
 
 ```blade
-@props([
-    'title',
-    'subtitle' => null,
-    'breadcrumbs' => [],
-])
+@props(['breadcrumbs' => []])
 
-<div {{ $attributes->merge(['class' => 'max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 space-y-6']) }}>
+<div {{ $attributes->merge(['class' => 'py-6']) }}>
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-    {{-- 1. Breadcrumb --}}
-    @if(!empty($breadcrumbs))
-        <nav class="text-sm text-gray-500 flex space-x-1">
-            @foreach($breadcrumbs as $crumb)
-                @if(!$loop->last)
-                    <a href="{{ $crumb['url'] }}" class="hover:text-gray-700">{{ $crumb['label'] }}</a>
-                    <span>/</span>
-                @else
-                    <span class="text-gray-700 font-medium">{{ $crumb['label'] }}</span>
-                @endif
-            @endforeach
-        </nav>
-    @endif
-
-    {{-- 2. Header con título y acciones --}}
-    <x-page.header :title="$title" :subtitle="$subtitle">
-        @if(!empty($actions))
-            {{ $actions }}
+        {{-- 1. Breadcrumb --}}
+        @if(!empty($breadcrumbs))
+            <nav class="text-sm text-gray-500 flex space-x-1 mb-4">
+                @foreach($breadcrumbs as $crumb)
+                    @if(!$loop->last)
+                        <a href="{{ $crumb['url'] }}" class="hover:text-gray-700">{{ $crumb['label'] }}</a>
+                        <span>/</span>
+                    @else
+                        <span class="text-gray-700 font-medium">{{ $crumb['label'] }}</span>
+                    @endif
+                @endforeach
+            </nav>
         @endif
-    </x-page.header>
 
-    {{-- 3. Flash message --}}
-    @if(session('message') || session('status'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-            {{ session('message') ?? session('status') }}
+        {{-- 2. Flash message --}}
+        @if(session('message') || session('status'))
+            <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                {{ session('message') ?? session('status') }}
+            </div>
+        @endif
+
+        {{-- 3. Contenido principal --}}
+        <div class="space-y-6">
+            {{ $slot }}
         </div>
-    @endif
 
-    {{-- 4. Contenido principal --}}
-    <div class="space-y-6">
-        {{ $slot }}
     </div>
-
-    {{-- 5. Footer (botones Guardar/Cancelar) --}}
-    @if(!empty($footer))
-        <div class="mt-8 pt-5 border-t border-gray-200 bg-white rounded-lg p-4 flex justify-end space-x-3 sticky bottom-0 shadow-md">
-            {{ $footer }}
-        </div>
-    @endif
-
 </div>
 ```
 
-**Paso 4: Verificar que no hay errores de sintaxis**
+**Paso 3: Crear `components/page/form-footer.blade.php`**
+
+Barra sticky fija al pie de la pantalla para botones Guardar/Cancelar en formularios. El `lg:left-64` compensa el ancho del sidebar de Jetstream.
+
+```blade
+<div class="fixed bottom-0 left-0 right-0 lg:left-64 bg-white border-t border-gray-200 py-4 px-6 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto flex justify-end space-x-3">
+        {{ $slot }}
+    </div>
+</div>
+
+{{-- Espaciador para que el footer no tape el contenido al final del form --}}
+<div class="h-20"></div>
+```
+
+**Paso 4: Verificar caché**
 
 ```bash
 ./vendor/bin/sail php artisan view:clear
@@ -316,30 +320,23 @@ El botón "Nuevo Plan" deja de abrir un modal y pasa a ser un link a la ruta `ca
 ```blade
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Plan Estatal de Desarrollo
-        </h2>
-    </x-slot>
-
-    <x-page.container
-        :breadcrumbs="[
-            ['label' => 'Inicio', 'url' => route('dashboard')],
-            ['label' => 'PED'],
-        ]"
-    >
-
-        <x-slot:actions>
+        <x-page.header title="Plan Estatal de Desarrollo"
+                       subtitle="Árbol de ejes, temas, objetivos, estrategias y líneas de acción">
             <x-ui.button.primary href="{{ route('cascade.ped.plan.create') }}">
                 Nuevo Plan
             </x-ui.button.primary>
-        </x-slot:actions>
+        </x-page.header>
+    </x-slot>
 
+    <x-page.container :breadcrumbs="[
+        ['label' => 'Inicio', 'url' => route('dashboard')],
+        ['label' => 'PED'],
+    ]">
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-6">
                 <livewire:cascade.ped-tree />
             </div>
         </div>
-
     </x-page.container>
 
 </x-app-layout>
@@ -534,6 +531,15 @@ Reemplazar completamente. Sin `x-dialog-modal`. Renderiza solo los campos del fo
         </div>
 
     </x-forms.section>
+
+    <x-page.form-footer>
+        <x-ui.button.secondary href="{{ route('cascade.ped.index') }}" type="button">
+            Cancelar
+        </x-ui.button.secondary>
+        <x-ui.button.primary wire:click="save" type="button">
+            {{ $plan && $plan->exists ? 'Guardar Cambios' : 'Crear Plan' }}
+        </x-ui.button.primary>
+    </x-page.form-footer>
 </div>
 ```
 
@@ -542,60 +548,36 @@ Reemplazar completamente. Sin `x-dialog-modal`. Renderiza solo los campos del fo
 ```blade
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Nuevo Plan Estatal de Desarrollo
-        </h2>
+        <x-page.header title="Nuevo Plan Estatal de Desarrollo" />
     </x-slot>
 
-    <x-page.container
-        :breadcrumbs="[
-            ['label' => 'Inicio', 'url' => route('dashboard')],
-            ['label' => 'PED', 'url' => route('cascade.ped.index')],
-            ['label' => 'Nuevo Plan'],
-        ]"
-    >
-
+    <x-page.container :breadcrumbs="[
+        ['label' => 'Inicio', 'url' => route('dashboard')],
+        ['label' => 'PED', 'url' => route('cascade.ped.index')],
+        ['label' => 'Nuevo Plan'],
+    ]">
         <livewire:cascade.ped-plan-form />
-
-        <x-slot:footer>
-            <x-ui.button.secondary href="{{ route('cascade.ped.index') }}">
-                Cancelar
-            </x-ui.button.secondary>
-        </x-slot:footer>
-
     </x-page.container>
 
 </x-app-layout>
 ```
 
-> **Nota sobre el botón Guardar:** En Livewire 3 la forma más limpia es poner el botón submit dentro del componente Livewire mismo con `wire:click="save"`. El footer de la página tiene solo el botón Cancelar. El botón Guardar vive en `ped-plan-form.blade.php`.
+> **Nota sobre los botones Guardar/Cancelar:** El componente Livewire `ped-plan-form` renderiza su propio `x-page.form-footer` con los botones. De esta forma el formulario es autocontenido: la página solo provee el layout y el header.
 
 **Paso 4: Crear `cascade/ped/plan/edit.blade.php`**
 
 ```blade
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Editar Plan: {{ $plan->nombre }}
-        </h2>
+        <x-page.header title="Editar Plan" :subtitle="$plan->nombre" />
     </x-slot>
 
-    <x-page.container
-        :breadcrumbs="[
-            ['label' => 'Inicio', 'url' => route('dashboard')],
-            ['label' => 'PED', 'url' => route('cascade.ped.index')],
-            ['label' => 'Editar Plan'],
-        ]"
-    >
-
+    <x-page.container :breadcrumbs="[
+        ['label' => 'Inicio', 'url' => route('dashboard')],
+        ['label' => 'PED', 'url' => route('cascade.ped.index')],
+        ['label' => 'Editar Plan'],
+    ]">
         <livewire:cascade.ped-plan-form :plan="$plan" />
-
-        <x-slot:footer>
-            <x-ui.button.secondary href="{{ route('cascade.ped.index') }}">
-                Cancelar
-            </x-ui.button.secondary>
-        </x-slot:footer>
-
     </x-page.container>
 
 </x-app-layout>
@@ -900,26 +882,30 @@ class PedNodoForm extends Component
 
     </x-forms.section>
 
-    {{-- Botón Eliminar (solo en edición) + Modal de confirmación --}}
+    {{-- Modal de confirmación de eliminación (solo en edición) --}}
     @if($nodoId)
-        <div class="flex justify-start mt-4" x-data>
-            <x-ui.button.danger
-                @click="$dispatch('open-confirm-nodo-{{ $nodoId }}')">
-                Eliminar {{ $this->getTipoLabel() }}
-            </x-ui.button.danger>
-        </div>
-
         <x-modals.confirm
             id="nodo-{{ $nodoId }}"
             :title="'¿Eliminar ' . $this->getTipoLabel() . '?'"
             message="Esta acción no se puede deshacer. Se eliminarán todos los elementos dependientes."
             confirmText="Sí, eliminar"
         />
-
-        <div x-data
-             x-on:confirmed-nodo-{{ $nodoId }}.window="$wire.delete()">
-        </div>
+        <div x-data x-on:confirmed-nodo-{{ $nodoId }}.window="$wire.delete()"></div>
     @endif
+
+    <x-page.form-footer>
+        @if($nodoId)
+            <x-ui.button.danger x-data @click="$dispatch('open-confirm-nodo-{{ $nodoId }}')" type="button">
+                Eliminar
+            </x-ui.button.danger>
+        @endif
+        <x-ui.button.secondary href="{{ route('cascade.ped.index') }}" type="button">
+            Cancelar
+        </x-ui.button.secondary>
+        <x-ui.button.primary wire:click="save" type="button">
+            {{ $nodoId ? 'Guardar Cambios' : 'Crear ' . $this->getTipoLabel() }}
+        </x-ui.button.primary>
+    </x-page.form-footer>
 </div>
 ```
 
@@ -928,27 +914,15 @@ class PedNodoForm extends Component
 ```blade
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Nuevo {{ ucfirst($tipo) }}
-        </h2>
+        <x-page.header :title="'Nuevo ' . ucfirst($tipo)" />
     </x-slot>
 
-    <x-page.container
-        :breadcrumbs="[
-            ['label' => 'Inicio', 'url' => route('dashboard')],
-            ['label' => 'PED', 'url' => route('cascade.ped.index')],
-            ['label' => 'Nuevo ' . ucfirst($tipo)],
-        ]"
-    >
-
+    <x-page.container :breadcrumbs="[
+        ['label' => 'Inicio', 'url' => route('dashboard')],
+        ['label' => 'PED', 'url' => route('cascade.ped.index')],
+        ['label' => 'Nuevo ' . ucfirst($tipo)],
+    ]">
         <livewire:cascade.ped-nodo-form :tipo="$tipo" :parent-id="(int) $parentId" />
-
-        <x-slot:footer>
-            <x-ui.button.secondary href="{{ route('cascade.ped.index') }}">
-                Cancelar
-            </x-ui.button.secondary>
-        </x-slot:footer>
-
     </x-page.container>
 
 </x-app-layout>
@@ -959,27 +933,15 @@ class PedNodoForm extends Component
 ```blade
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Editar {{ ucfirst($tipo) }}
-        </h2>
+        <x-page.header :title="'Editar ' . ucfirst($tipo)" />
     </x-slot>
 
-    <x-page.container
-        :breadcrumbs="[
-            ['label' => 'Inicio', 'url' => route('dashboard')],
-            ['label' => 'PED', 'url' => route('cascade.ped.index')],
-            ['label' => 'Editar'],
-        ]"
-    >
-
+    <x-page.container :breadcrumbs="[
+        ['label' => 'Inicio', 'url' => route('dashboard')],
+        ['label' => 'PED', 'url' => route('cascade.ped.index')],
+        ['label' => 'Editar'],
+    ]">
         <livewire:cascade.ped-nodo-form :tipo="$tipo" :nodo-id="$id" />
-
-        <x-slot:footer>
-            <x-ui.button.secondary href="{{ route('cascade.ped.index') }}">
-                Cancelar
-            </x-ui.button.secondary>
-        </x-slot:footer>
-
     </x-page.container>
 
 </x-app-layout>
@@ -1215,6 +1177,7 @@ git commit -m "refactor(ped): migrar vistas a arquitectura frontend v2 (Atomic D
 |---|---|
 | `x-page.container` | `components/page/container.blade.php` |
 | `x-page.header` | `components/page/header.blade.php` |
+| `x-page.form-footer` | `components/page/form-footer.blade.php` |
 | `x-forms.section` | `components/forms/section.blade.php` |
 | `x-ui.button.primary` | `components/ui/button/primary.blade.php` |
 | `x-ui.button.secondary` | `components/ui/button/secondary.blade.php` |
