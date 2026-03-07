@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Cascade\MatrizAlineacionController;
 use App\Http\Controllers\Cascade\PedController;
 use App\Http\Controllers\Cascade\ProgramaDerivadoController;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +46,39 @@ Route::middleware([
         // Páginas de formulario (GET) — Nodo (eje, tema, objetivo, estrategia, linea)
         Route::get('/nodo/create', [PedController::class, 'createNodo'])->name('nodo.create');
         Route::get('/nodo/{tipo}/{id}/edit', [PedController::class, 'editNodo'])->name('nodo.edit');
+    });
+
+    // ============================================
+    // MATRIZ DE ALINEACIÓN
+    // ============================================
+    Route::prefix('alineacion')->name('alineacion.')->group(function () {
+
+        Route::get('/', [MatrizAlineacionController::class, 'index'])->name('index');
+
+        Route::prefix('ped-pnd')->name('ped-pnd.')->group(function () {
+            Route::post('/', [MatrizAlineacionController::class, 'storePedPnd'])->name('store');
+            Route::delete('/{pedObjetivo}/{pndObjetivo}', [MatrizAlineacionController::class, 'destroyPedPnd'])->name('destroy');
+        });
+
+        Route::prefix('pnd-ods')->name('pnd-ods.')->group(function () {
+            Route::post('/', [MatrizAlineacionController::class, 'storePndOds'])->name('store');
+            Route::delete('/{pndObjetivo}/{odsMeta}', [MatrizAlineacionController::class, 'destroyPndOds'])->name('destroy');
+        });
+
+        Route::prefix('linea-programa')->name('linea-programa.')->group(function () {
+            Route::post('/', [MatrizAlineacionController::class, 'storeLineaPrograma'])->name('store');
+            Route::delete('/{linea}/{programaObjetivo}', [MatrizAlineacionController::class, 'destroyLineaPrograma'])->name('destroy');
+        });
+
+        Route::prefix('search')->name('search.')->group(function () {
+            Route::get('/ped-objetivos', [MatrizAlineacionController::class, 'searchPedObjetivos'])->name('ped-objetivos');
+            Route::get('/pnd-objetivos', [MatrizAlineacionController::class, 'searchPndObjetivos'])->name('pnd-objetivos');
+            Route::get('/ods-metas', [MatrizAlineacionController::class, 'searchOdsMetas'])->name('ods-metas');
+            Route::get('/lineas-accion', [MatrizAlineacionController::class, 'searchLineasAccion'])->name('lineas-accion');
+            Route::get('/programas-objetivos', [MatrizAlineacionController::class, 'searchProgramasObjetivos'])->name('programas-objetivos');
+        });
+
+        Route::get('/cadena/{lineaAccion}', [MatrizAlineacionController::class, 'showCadena'])->name('cadena.show');
     });
 
     Route::prefix('programas-derivados')->name('programas-derivados.')->group(function () {
