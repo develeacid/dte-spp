@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             DesarrolloSeeder::class,          // Ejecuta los Factories y relaciones
             OdsSeeder::class,                 // Catálogo ODS Agenda 2030
             PndSeeder::class,                 // Catálogo Plan Nacional de Desarrollo
+            PedSeeder::class,
         ]);
     }
 }
