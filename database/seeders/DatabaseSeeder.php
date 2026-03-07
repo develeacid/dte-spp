@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolesAndPermissionsSeeder::class, // Esencial generar permisos antes que usuarios
             DesarrolloSeeder::class,          // Ejecuta los Factories y relaciones
+            OdsSeeder::class,
+            PedSeeder::class,
         ]);
     }
 }
