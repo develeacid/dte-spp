@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\TipoUnidadResponsable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Laravel\Jetstream\Events\TeamCreated;
 use Laravel\Jetstream\Events\TeamDeleted;
 use Laravel\Jetstream\Events\TeamUpdated;
@@ -36,5 +37,12 @@ class Team extends JetstreamTeam
             'activa' => 'boolean',
             'tipo_ur' => TipoUnidadResponsable::class,
         ];
+    }
+
+    public function programas(): BelongsToMany
+    {
+        return $this->belongsToMany(ProgramaPresupuestario::class, 'programa_team')
+                    ->withPivot('rol')
+                    ->withTimestamps();
     }
 }

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('programa_presupuestario_id')->constrained()->cascadeOnDelete();
             $table->foreignId('team_id')->constrained()->cascadeOnDelete();
-            $table->enum('rol', ['coordinadora', 'coadyuvante'])->default('coadyuvante');
+            $table->string('rol', 20)->default('coadyuvante');
             $table->timestamps();
 
             $table->unique(['programa_presupuestario_id', 'team_id'], 'pt_programa_team_unique');
