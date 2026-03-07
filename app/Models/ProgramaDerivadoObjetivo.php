@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class ProgramaDerivadoObjetivo extends Model
 {
@@ -39,6 +40,16 @@ class ProgramaDerivadoObjetivo extends Model
     // ============================================
     // Accessors
     // ============================================
+
+    public function lineasAccionPed(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            PedLineaAccion::class,
+            'alineacion_linea_programa',
+            'programa_derivado_objetivo_id',
+            'ped_linea_accion_id'
+        )->withTimestamps();
+    }
 
     /**
      * Retorna clave completa con prefijo del programa.
