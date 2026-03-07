@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             OdsSeeder::class,                 // Catálogo ODS Agenda 2030
             PndSeeder::class,                 // Catálogo Plan Nacional de Desarrollo
             PedSeeder::class,
+            ProgramasDerivadosSeeder::class,  // Programas derivados del PED
         ]);
     }
 }
