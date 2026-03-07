@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             PndSeeder::class,                 // Catálogo Plan Nacional de Desarrollo
             PedSeeder::class,
             ProgramasDerivadosSeeder::class,  // Programas derivados del PED
+            AlineacionSeeder::class,          // Tablas pivote de la matriz de alineación
         ]);
     }
 }

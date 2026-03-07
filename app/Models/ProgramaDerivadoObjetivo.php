@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class ProgramaDerivadoObjetivo extends Model
 {
@@ -34,6 +35,23 @@ class ProgramaDerivadoObjetivo extends Model
     public function plan()
     {
         return $this->programa->plan;
+    }
+
+    // ============================================
+    // Accessors
+    // ============================================
+
+    /**
+     * Líneas de Acción del PED alineadas a este objetivo.
+     */
+    public function lineasAccionPed(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            PedLineaAccion::class,
+            'alineacion_linea_programa',
+            'programa_derivado_objetivo_id',
+            'ped_linea_accion_id'
+        )->withTimestamps();
     }
 
     // ============================================
