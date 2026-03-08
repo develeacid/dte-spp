@@ -21,3 +21,4 @@ Route::middleware([
 });
 
 require __DIR__ . '/web/cascade.php';
+require __DIR__ . '/web/mml.php';
