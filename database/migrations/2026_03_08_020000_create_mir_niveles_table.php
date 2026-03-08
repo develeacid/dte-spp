@@ -25,7 +25,7 @@ return new class extends Migration
             $table->foreignId('ped_objetivo_estrategico_id')
                 ->nullable()->constrained('ped_objetivos_estrategicos')->nullOnDelete();
             $table->foreignId('programa_derivado_objetivo_id')
-                ->nullable()->constrained('programa_derivado_objetivos')->nullOnDelete();
+                ->nullable()->constrained('programas_derivados_objetivos')->nullOnDelete();
             $table->foreignId('ped_linea_accion_id')
                 ->nullable()->constrained('ped_lineas_accion')->nullOnDelete();
 
