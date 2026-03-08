@@ -13,5 +13,7 @@ Route::prefix('mml')
                     ->name('mml.etapa1');
                 Route::get('/etapa/2', \App\Livewire\Mml\ArbolProblemaBuilder::class)
                     ->name('mml.etapa2');
+                Route::get('/etapa/3', \App\Livewire\Mml\ArbolObjetivosBuilder::class)
+                    ->name('mml.etapa3');
             });
     });
