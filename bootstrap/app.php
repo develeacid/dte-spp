@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'ur.aislamiento'     => \App\Http\Middleware\AislamientoMultiUR::class,
         ]);
         $middleware->web(append: [
+            \App\Http\Middleware\EnsureUserIsActivated::class,
             \App\Http\Middleware\RequireTwoFactorAuthentication::class,
         ]);
     })
