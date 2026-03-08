@@ -6,6 +6,10 @@ Route::prefix('mml')
     ->middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])
     ->group(function () {
 
+        // Importar programa desde archivo MIR
+        Route::get('/importar', \App\Livewire\Mml\ImportarPrograma::class)
+            ->name('mml.importar');
+
         // Etapas del MML para un programa
         Route::prefix('{programa}')
             ->group(function () {
