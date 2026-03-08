@@ -15,6 +15,12 @@
                     <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('mml.programas') }}" :active="request()->routeIs('mml.programas') || request()->routeIs('mml.etapa*') || request()->routeIs('mml.mir')">
+                        {{ __('Programas') }}
+                    </x-nav-link>
+                    <x-nav-link href="{{ route('mml.importaciones') }}" :active="request()->routeIs('mml.importar*') || request()->routeIs('mml.importaciones')">
+                        {{ __('Importaciones') }}
+                    </x-nav-link>
                     @can('gestionar_catalogos')
                         <x-nav-link href="{{ route('cascade.ped.index') }}" :active="request()->routeIs('cascade.ped.*')">
                             {{ __('Plan Estatal') }}
@@ -152,6 +158,12 @@
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link href="{{ route('mml.programas') }}" :active="request()->routeIs('mml.programas') || request()->routeIs('mml.etapa*') || request()->routeIs('mml.mir')">
+                {{ __('Programas') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link href="{{ route('mml.importaciones') }}" :active="request()->routeIs('mml.importar*') || request()->routeIs('mml.importaciones')">
+                {{ __('Importaciones') }}
             </x-responsive-nav-link>
         </div>
 
