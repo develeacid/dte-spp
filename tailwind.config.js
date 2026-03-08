@@ -13,8 +13,22 @@ export default {
 
     theme: {
         extend: {
+            colors: {
+                brand: {
+                    DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
+                    hover: 'rgb(var(--color-primary-hover) / <alpha-value>)',
+                    light: 'rgb(var(--color-primary-light) / <alpha-value>)',
+                    dark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
+                },
+                surface: 'rgb(var(--color-surface) / <alpha-value>)',
+                background: 'rgb(var(--color-background) / <alpha-value>)',
+            },
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['var(--font-sans)', ...defaultTheme.fontFamily.sans],
+            },
+            width: {
+                sidebar: 'var(--sidebar-width)',
+                'sidebar-collapsed': 'var(--sidebar-collapsed-width)',
             },
         },
     },
