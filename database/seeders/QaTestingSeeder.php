@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\SentidoIndicador;
 use App\Enums\SystemRole;
 use App\Enums\TipoNivelMir;
+use App\Models\Mml\Indicador;
 use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
@@ -353,7 +355,158 @@ class QaTestingSeeder extends Seeder
 
     private function crearIndicadores(): void
     {
-        // Stub — se implementará en Task 4
+        // ===== PROGRAMA 1: FER-001 — MIR bien estructurada =====
+        $prog1 = ProgramaPresupuestario::where('clave', 'FER-001')->first();
+        $prog1Fin = MirNivel::where('programa_presupuestario_id', $prog1->id)
+            ->where('tipo_nivel', TipoNivelMir::FIN->value)->first();
+        $prog1Proposito = MirNivel::where('programa_presupuestario_id', $prog1->id)
+            ->where('tipo_nivel', TipoNivelMir::PROPOSITO->value)->first();
+        $prog1Comps = MirNivel::where('programa_presupuestario_id', $prog1->id)
+            ->where('tipo_nivel', TipoNivelMir::COMPONENTE->value)->orderBy('orden')->get();
+
+        // Ind1: FIN, trimestral, ascendente
+        Indicador::firstOrCreate(
+            ['mir_nivel_id' => $prog1Fin->id, 'nombre' => 'Tasa de crecimiento del PIB estatal'],
+            [
+                'tipo' => 'estrategico',
+                'dimension' => 'eficacia',
+                'frecuencia' => 'trimestral',
+                'sentido' => SentidoIndicador::ASCENDENTE->value,
+                'meta' => 80,
+                'activo_seguimiento' => true,
+                'orden' => 1,
+            ]
+        );
+
+        // Ind2: PROPOSITO, trimestral, descendente
+        Indicador::firstOrCreate(
+            ['mir_nivel_id' => $prog1Proposito->id, 'nombre' => 'Tasa de desempleo en MiPyMEs beneficiadas'],
+            [
+                'tipo' => 'estrategico',
+                'dimension' => 'eficacia',
+                'frecuencia' => 'trimestral',
+                'sentido' => SentidoIndicador::DESCENDENTE->value,
+                'meta' => 30,
+                'activo_seguimiento' => true,
+                'orden' => 1,
+            ]
+        );
+
+        // Ind3: COMPONENTE 1, semestral, ascendente
+        Indicador::firstOrCreate(
+            ['mir_nivel_id' => $prog1Comps[0]->id, 'nombre' => 'Porcentaje de créditos otorgados vs solicitados'],
+            [
+                'tipo' => 'gestion',
+                'dimension' => 'eficiencia',
+                'frecuencia' => 'semestral',
+                'sentido' => SentidoIndicador::ASCENDENTE->value,
+                'meta' => 85,
+                'activo_seguimiento' => true,
+                'orden' => 1,
+            ]
+        );
+
+        // Ind4: COMPONENTE 2, semestral, regular — with ranges
+        Indicador::firstOrCreate(
+            ['mir_nivel_id' => $prog1Comps[1]->id, 'nombre' => 'Índice de satisfacción de capacitados'],
+            [
+                'tipo' => 'gestion',
+                'dimension' => 'calidad',
+                'frecuencia' => 'semestral',
+                'sentido' => SentidoIndicador::REGULAR->value,
+                'meta' => 80,
+                'rango_verde_min' => 75,
+                'rango_verde_max' => 90,
+                'rango_amarillo_min' => 60,
+                'rango_amarillo_max' => 95,
+                'activo_seguimiento' => true,
+                'orden' => 1,
+            ]
+        );
+
+        // ===== PROGRAMA 2: DP-002 — MIR con defectos =====
+        $prog2 = ProgramaPresupuestario::where('clave', 'DP-002')->first();
+        $prog2Fin = MirNivel::where('programa_presupuestario_id', $prog2->id)
+            ->where('tipo_nivel', TipoNivelMir::FIN->value)->first();
+        $prog2Comps = MirNivel::where('programa_presupuestario_id', $prog2->id)
+            ->where('tipo_nivel', TipoNivelMir::COMPONENTE->value)->orderBy('orden')->get();
+
+        // Ind1: FIN, trimestral, ascendente — SIN CREMAA
+        Indicador::firstOrCreate(
+            ['mir_nivel_id' => $prog2Fin->id, 'nombre' => 'Porcentaje de cosas'],
+            [
+                'tipo' => 'estrategico',
+                'dimension' => 'eficacia',
+                'frecuencia' => 'trimestral',
+                'sentido' => SentidoIndicador::ASCENDENTE->value,
+                'meta' => 100,
+                'activo_seguimiento' => true,
+                'orden' => 1,
+            ]
+        );
+
+        // Ind2: COMPONENTE 1, trimestral, ascendente
+        Indicador::firstOrCreate(
+            ['mir_nivel_id' => $prog2Comps[0]->id, 'nombre' => 'Kilómetros de carretera pavimentados'],
+            [
+                'tipo' => 'gestion',
+                'dimension' => 'eficacia',
+                'frecuencia' => 'trimestral',
+                'sentido' => SentidoIndicador::ASCENDENTE->value,
+                'meta' => 50,
+                'activo_seguimiento' => true,
+                'orden' => 1,
+            ]
+        );
+
+        // Ind3: COMPONENTE 2, anual, ascendente
+        Indicador::firstOrCreate(
+            ['mir_nivel_id' => $prog2Comps[1]->id, 'nombre' => 'Número de productores beneficiados'],
+            [
+                'tipo' => 'gestion',
+                'dimension' => 'eficacia',
+                'frecuencia' => 'anual',
+                'sentido' => SentidoIndicador::ASCENDENTE->value,
+                'meta' => 500,
+                'activo_seguimiento' => true,
+                'orden' => 1,
+            ]
+        );
+
+        // ===== PROGRAMA 3: SP-003 =====
+        $prog3 = ProgramaPresupuestario::where('clave', 'SP-003')->first();
+        $prog3Proposito = MirNivel::where('programa_presupuestario_id', $prog3->id)
+            ->where('tipo_nivel', TipoNivelMir::PROPOSITO->value)->first();
+        $prog3Comp = MirNivel::where('programa_presupuestario_id', $prog3->id)
+            ->where('tipo_nivel', TipoNivelMir::COMPONENTE->value)->first();
+
+        // Ind1: PROPOSITO, trimestral, ascendente
+        Indicador::firstOrCreate(
+            ['mir_nivel_id' => $prog3Proposito->id, 'nombre' => 'Porcentaje de cobertura de vacunación en población objetivo'],
+            [
+                'tipo' => 'estrategico',
+                'dimension' => 'eficacia',
+                'frecuencia' => 'trimestral',
+                'sentido' => SentidoIndicador::ASCENDENTE->value,
+                'meta' => 80,
+                'activo_seguimiento' => true,
+                'orden' => 1,
+            ]
+        );
+
+        // Ind2: COMPONENTE, trimestral, ascendente
+        Indicador::firstOrCreate(
+            ['mir_nivel_id' => $prog3Comp->id, 'nombre' => 'Número de jornadas de vacunación realizadas'],
+            [
+                'tipo' => 'gestion',
+                'dimension' => 'eficacia',
+                'frecuencia' => 'trimestral',
+                'sentido' => SentidoIndicador::ASCENDENTE->value,
+                'meta' => 12,
+                'activo_seguimiento' => true,
+                'orden' => 1,
+            ]
+        );
     }
 
     private function crearMetaPeriodos(): void
