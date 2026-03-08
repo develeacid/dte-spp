@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('seguimiento')
     ->middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])
     ->group(function () {
+        Route::get('/', \App\Livewire\Tracking\PanelSeguimiento::class)
+            ->name('tracking.panel');
         Route::get('/pendientes', MisIndicadoresPendientes::class)
             ->name('tracking.pendientes');
         Route::get('/vencidos', IndicadoresVencidos::class)

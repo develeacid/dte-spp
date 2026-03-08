@@ -21,6 +21,11 @@
                     <x-nav-link href="{{ route('mml.importaciones') }}" :active="request()->routeIs('mml.importar*') || request()->routeIs('mml.importaciones')">
                         {{ __('Importaciones') }}
                     </x-nav-link>
+                    @can('revisar_avance')
+                        <x-nav-link href="{{ route('tracking.panel') }}" :active="request()->routeIs('tracking.*')">
+                            {{ __('Seguimiento') }}
+                        </x-nav-link>
+                    @endcan
                     @can('gestionar_catalogos')
                         <x-nav-link href="{{ route('cascade.ped.index') }}" :active="request()->routeIs('cascade.ped.*')">
                             {{ __('Plan Estatal') }}
@@ -165,6 +170,11 @@
             <x-responsive-nav-link href="{{ route('mml.importaciones') }}" :active="request()->routeIs('mml.importar*') || request()->routeIs('mml.importaciones')">
                 {{ __('Importaciones') }}
             </x-responsive-nav-link>
+            @can('revisar_avance')
+                <x-responsive-nav-link href="{{ route('tracking.panel') }}" :active="request()->routeIs('tracking.*')">
+                    {{ __('Seguimiento') }}
+                </x-responsive-nav-link>
+            @endcan
         </div>
 
         <!-- Responsive Settings Options -->
