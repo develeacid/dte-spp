@@ -1,26 +1,54 @@
-## Sprint 7: Evaluacion y Reportes
+## Sprint 7: Evaluación y Reportes
+
+**Objetivo:** Implementar evaluación de programas al cierre del ejercicio, paneles transversales (PED, ODS, UR, Anexos), exportación PDF/Excel/datos abiertos, y análisis de lógica vertical con IA.
+
+**Baseline técnico al iniciar Sprint 7:**
+- 349 tests passing, 7 skipped
+- Dominio Tracking completo: Avance, AvanceVariable, AvanceEvidencia, Desbloqueo
+- FormulaEvaluatorService, SemaforoService, AvanceEstadoService, JustificacionService
+- LlmService con suggest(), validate(), transform() + llm_logs
+- config/llm.php configurado (model, rate_limit, queue, logging)
+- Permiso `exportar_reportes` ya definido en SystemPermission enum y asignado a PLANEADOR y OPERADOR
+- Modelos de alineación: PedPlan → PedEje → PedTema → PedEstrategia → PedLineaAccion, OdsObjetivo → OdsMeta, PndEje → PndEstrategia → PndObjetivo
+- MirNivel tiene ped_objetivo_estrategico_id, ped_linea_accion_id para alineación
+- TipoNivelMir enum: FIN(1), PROPOSITO(2), COMPONENTE(3), ACTIVIDAD(4) con método orden()
+- Indicador.activo_seguimiento (boolean) para filtrar indicadores evaluables
+- No existe routes/web/evaluation.php ni app/Models/Evaluation/ — área nueva
+
+**Dependencias externas:**
+- `barryvdh/laravel-dompdf` o `spatie/laravel-pdf` para PDF
+- `maatwebsite/excel` para Excel/CSV
+- Ninguna dependencia cruzada fuera del dominio
 
 ---
 
-### S7-T1: Migraciones para evaluacion
+### S7-T1: Migraciones y modelos para evaluación
 
 **Tipo:** feat
 **Rama:** `feat/S7-T1-migraciones-evaluacion`
 
-**Descripcion:**
-Crear las tablas para el ciclo de evaluación: `evaluaciones_programa`, `anexos_transversales` y la pivote `indicador_anexo_transversal`. La tabla de evaluaciones se enriquece para incluir el desglose del cálculo y metadatos para auditoría.
+**Descripción:**
+Crear tablas y modelos del dominio Evaluation: `evaluaciones_programa`, `anexos_transversales`, pivote `indicador_anexo_transversal`. Seeder con los 4 anexos transversales base.
 
 **Decisiones técnicas:**
 
-- **`evaluaciones_programa`:** Almacenará no solo el índice final, sino el desglose por nivel y la configuración usada en el cálculo (`configuracion_calculo` en JSONB).
+- **`evaluaciones_programa`:** programa_presupuestario_id (FK), ejercicio_fiscal (int), indice_eficacia (decimal 8,4), desglose_niveles (JSONB: {fin: %, proposito: %, componentes: %, actividades: %}), conteo_semaforos (JSONB: {verde, amarillo, rojo, sin_dato}), indicadores_evaluados (int), indicadores_no_evaluados (int), configuracion_calculo (JSONB: pesos usados), analisis_ia (text nullable — rupturas verticales), calculado_por (FK users), timestamps. Unique: [programa_presupuestario_id, ejercicio_fiscal].
+- **`anexos_transversales`:** id, nombre, clave (string unique), descripcion (text nullable), activo (boolean), orden (int), timestamps.
+- **`indicador_anexo_transversal`:** indicador_id FK, anexo_transversal_id FK, timestamps. Unique: [indicador_id, anexo_transversal_id].
+- Modelos en `app/Models/Evaluation/`.
+- Seeder: Género, Niñas Niños y Adolescentes, Cambio Climático, Anticorrupción.
 
-**Criterios de aceptacion:**
+**Criterios de aceptación:**
 
-- [ ] Migraciones completas
-- [ ] Seeder para anexos transversales base (Genero, NNA, Cambio Climatico, Anticorrupcion)
-- [ ] Pivote M:M entre indicadores y anexos transversales
-- [ ] Tabla `evaluaciones_programa` con campos para índice general, desglose por nivel, conteos de semáforos, y metadatos del cálculo en JSONB.
-- [ ] Actualizar documentacion del esquema
+- [ ] Migración create_evaluaciones_programa_table con JSONB desglose_niveles y conteo_semaforos
+- [ ] Migración create_anexos_transversales_table
+- [ ] Migración create_indicador_anexo_transversal_table (pivote)
+- [ ] Modelo EvaluacionPrograma con fillable, casts, relaciones
+- [ ] Modelo AnexoTransversal con fillable, relación belongsToMany(Indicador)
+- [ ] Indicador::anexosTransversales() relación belongsToMany agregada
+- [ ] Seeder AnexosTransversalesSeeder con 4 registros base
+- [ ] migrate:fresh --seed sin errores
+- [ ] Tests: modelos, relaciones, seeder (~6 tests)
 
 ---
 
@@ -28,15 +56,24 @@ Crear las tablas para el ciclo de evaluación: `evaluaciones_programa`, `anexos_
 
 **Tipo:** feat
 **Rama:** `feat/S7-T2-etiquetado-anexos-transversales`
+**Depende de:** S7-T1
 
-**Descripcion:**
-En la ficha del indicador (Sprint 4) o al importar, permitir etiquetar cada indicador con una o mas tematicas transversales.
+**Descripción:**
+Agregar checkboxes de anexos transversales en la ficha del indicador (MirEditor de Sprint 4). Persistir en tabla pivote. Mostrar etiquetas en MIR y panel de seguimiento.
 
-**Criterios de aceptacion:**
+**Decisiones técnicas:**
 
-- [ ] Checkboxes de anexos transversales en la ficha del indicador
-- [ ] Guardado en tabla pivote
-- [ ] Visible en la vista de MIR y en el panel de seguimiento
+- Integrar en el componente existente de ficha de indicador (buscar en MirEditor o IndicadorEditor)
+- Usar `sync()` para la relación M:M
+- Mostrar badges con nombre del anexo en las vistas de MIR y PanelSeguimiento
+
+**Criterios de aceptación:**
+
+- [ ] Checkboxes de anexos transversales en ficha del indicador
+- [ ] Guardado con sync() en tabla pivote
+- [ ] Badges visibles en la vista MIR
+- [ ] Badges visibles en PanelSeguimiento
+- [ ] Tests: sync, display (~3 tests)
 
 ---
 
@@ -44,156 +81,210 @@ En la ficha del indicador (Sprint 4) o al importar, permitir etiquetar cada indi
 
 **Tipo:** feat
 **Rama:** `feat/S7-T3-indice-eficacia`
+**Depende de:** S7-T1
 
-**Descripcion:**
-Calcular el indice 0-100 por programa al cierre del ejercicio. Promedio ponderado del porcentaje de avance de metas, con mayor peso a niveles superiores.
-
-**Pesos sugeridos:**
-
-- Fin: 40%
-- Proposito: 30%
-- Componentes: 20%
-- Actividades: 10%
+**Descripción:**
+Comando artisan `evaluacion:calcular-indice {programa} {ejercicio}` que calcula el índice de eficacia 0-100. Promedio ponderado del porcentaje de avance por nivel MIR.
 
 **Decisiones técnicas:**
 
-- La fórmula ponderará el **promedio de avance de cada nivel**, no los indicadores individuales, para evitar sesgos por cantidad.
-- **Tratamiento de "Sin Dato":** Indicadores sin capturas en todo el año se excluyen del cálculo y se marcan como "No evaluados".
-- El cálculo se ejecuta vía comando Artisan para flexibilidad.
+- Pesos por nivel (configurables en config/evaluation.php):
+  - FIN: 40%, PROPOSITO: 30%, COMPONENTES: 20%, ACTIVIDADES: 10%
+- Por cada nivel: promedio de (resultado/meta * 100) de sus indicadores con activo_seguimiento=true
+- Indicadores sin avances aprobados en el ejercicio → excluidos, contados como no_evaluados
+- Semáforo por indicador: último avance aprobado del ejercicio
+- Guarda en evaluaciones_programa con desglose completo
 
-**Criterios de aceptacion:**
+**Criterios de aceptación:**
 
-- [ ] Comando artisan que calcula y guarda en `evaluaciones_programa`
-- [ ] Conteo de semaforos (verde, amarillo, rojo, sin dato) incluido
-- [ ] Pesos configurables (no hardcodeados)
-- [ ] El calculo solo considera indicadores con `activo_seguimiento = true`
-- [ ] El cálculo excluye indicadores sin capturas y lo refleja en el conteo `indicadores_no_evaluados`.
+- [ ] Comando evaluacion:calcular-indice calcula y guarda
+- [ ] Conteo de semáforos (verde, amarillo, rojo, sin_dato)
+- [ ] Pesos en config/evaluation.php, no hardcodeados
+- [ ] Solo indicadores con activo_seguimiento=true
+- [ ] Excluye indicadores sin capturas → indicadores_no_evaluados
+- [ ] Tests: cálculo correcto, pesos, exclusiones (~6 tests)
 
 ---
 
-### S7-T4: Evaluacion por programa — Vista de cierre
+### S7-T4: Evaluación por programa — Vista de cierre
 
 **Tipo:** feat
 **Rama:** `feat/S7-T4-evaluacion-programa`
+**Depende de:** S7-T3
 
-**Descripcion:**
-Pantalla de evaluacion integral al cierre del ejercicio fiscal para un programa especifico.
+**Descripción:**
+Pantalla Livewire de evaluación integral al cierre del ejercicio para un programa específico. 5 secciones.
 
-**Secciones a mostrar:**
+**Secciones:**
+1. Resumen ejecutivo (alineación PED, objetivo central del programa)
+2. Tablero de semáforos consolidado (por nivel, gráfico de barras o cards)
+3. Comparativa vs ejercicio anterior (tendencias: mejoró/empeoró/estable)
+4. Análisis de desviaciones (justificaciones aprobadas, supuestos incumplidos)
+5. Indicadores crónicos en rojo (2+ de últimos 3 ejercicios)
 
-1. Resumen ejecutivo (alineacion, objetivo central)
-2. Tablero de semaforos consolidado
-3. Comparativa vs ejercicio anterior con tendencias
-4. Analisis de desviaciones (justificaciones aprobadas, supuestos incumplidos)
-5. Indicadores cronicos en rojo (2+ ejercicios)
+**Decisiones técnicas:**
 
-**Criterios de aceptacion:**
+- Tendencia: comparar índice del ejercicio actual vs anterior. Por indicador: comparar último semáforo.
+- Indicadores crónicos: query avances aprobados en últimos 3 ejercicios, contar rojos por indicador
+- Usa EvaluacionPrograma ya calculada en T3
+- Route: `routes/web/evaluation.php`
 
-- [ ] Vista completa con las 5 secciones
-- [ ] Tendencia por indicador: mejoro / empeoro / estable
-- [ ] Indicadores crónicos (rojo en 2 de los últimos 3 ejercicios) destacados visualmente.
-- [ ] Solo accesible con permiso `exportar_reportes`
+**Criterios de aceptación:**
+
+- [ ] Vista completa con 5 secciones
+- [ ] Tendencia por indicador: mejoró / empeoró / estable
+- [ ] Indicadores crónicos destacados visualmente
+- [ ] Solo accesible con exportar_reportes
+- [ ] routes/web/evaluation.php creado
+- [ ] Tests: render, tendencias, crónicos, permisos (~5 tests)
 
 ---
 
-### S7-T5: Validacion de logica vertical al cierre
+### S7-T5: Validación de lógica vertical al cierre [REQUIERE_API_IA]
 
 **Tipo:** feat
 **Rama:** `feat/S7-T5-logica-vertical-cierre`
+**Depende de:** S7-T3
 
-**Descripcion:**
-La IA analiza los semaforos por nivel y detecta rupturas en la cadena causal.
-
-**Ejemplo de ruptura:**
-
-- Actividades en verde + Componente en rojo = problema de diseno (la solucion no sirve)
-- Componente en verde + Proposito en rojo = factores externos (supuestos no cumplidos)
+**Descripción:**
+La IA analiza semáforos por nivel MIR y detecta rupturas en la cadena causal. Se integra al cálculo de evaluación.
 
 **Decisiones técnicas:**
 
-- El lenguaje usado en el reporte de la IA será **diagnóstico, no acusatorio** (ej. "brecha detectada" en lugar de "falla").
+- Prompt Blade en `resources/views/prompts/evaluation/analizar-rupturas.blade.php`
+- Usa LlmService::suggest() — mock implementado para cuando no hay API key
+- Resultado guardado en evaluaciones_programa.analisis_ia
+- Lenguaje diagnóstico, no acusatorio
 
-**Criterios de aceptacion:**
+**Criterios de aceptación:**
 
-- [ ] Analisis automatico al generar evaluacion
-- [ ] Reporte de rupturas con explicacion por caso
-- [ ] Sugerencia: problema de ejecucion vs problema de diseno
-- [ ] La IA no emite juicios de valor sobre las UR
+- [ ] Prompt analizar-rupturas.blade.php con semáforos por nivel y supuestos
+- [ ] Servicio detecta rupturas (actividades verde + componente rojo = diseño)
+- [ ] Sugerencia: problema de ejecución vs diseño
+- [ ] IA no emite juicios sobre UR
+- [ ] Mock retorna análisis placeholder cuando no hay API key
+- [ ] Tests con mock LlmService (~4 tests)
 
 ---
 
-### S7-T6: Paneles de evaluacion transversal
+### S7-T6: Paneles de evaluación transversal
 
 **Tipo:** feat
 **Rama:** `feat/S7-T6-evaluacion-transversal`
+**Depende de:** S7-T2, S7-T3
 
-**Descripcion:**
-Paneles que cruzan todos los programas del estado para dar visión global al planeador.
+**Descripción:**
+4 paneles que cruzan todos los programas para visión global.
 
-**Vistas:**
-
-- Por Eje del PED: conteo de semaforos e indice promedio
-- Por ODS: indicadores que contribuyen a cada ODS
-- Por Unidad Responsable: desempeno por dependencia
-- Por Anexo Transversal: filtro por tematica cruzando dependencias
+**Vistas (tabs o sub-rutas):**
+- Por Eje PED: programas agrupados por eje, conteo semáforos, índice promedio
+- Por ODS: indicadores por objetivo ODS (via alineación MirNivel → PED → ODS)
+- Por Unidad Responsable: ranking de teams por índice
+- Por Anexo Transversal: indicadores filtrados por anexo, cruzando dependencias
 
 **Decisiones técnicas:**
 
-- Los paneles mostrarán una advertencia clara si existen programas sin alineación, ya que esto afecta la completitud de los datos.
+- Un solo componente PanelTransversal con tabs
+- Datos derivados de evaluaciones_programa + alineación existente (MirNivel → pedObjetivoEstrategico → pedEje)
+- ODS: relación PedLineaAccion → OdsMeta (verificar si existe)
+- Advertencia si programas sin alineación
 
-**Criterios de aceptacion:**
+**Criterios de aceptación:**
 
-- [ ] 4 vistas funcionales con filtros
-- [ ] Ranqueo por indice de desempeno
-- [ ] Datos derivados de la Matriz de Alineacion (herencia funcional)
-- [ ] Solo accesible con permiso `exportar_reportes`
+- [ ] 4 vistas con filtros (tabs)
+- [ ] Ranking por índice de desempeño
+- [ ] Datos de Matriz de Alineación
+- [ ] Advertencia para programas sin alineación
+- [ ] Solo con exportar_reportes
+- [ ] Tests: render, aislamiento, datos (~5 tests)
 
 ---
 
-### S7-T7: Exportacion a PDF y Excel
+### S7-T7: Exportación a PDF y Excel
 
 **Tipo:** feat
 **Rama:** `feat/S7-T7-exportacion-pdf-excel`
+**Depende de:** S7-T4, S7-T6
 
-**Descripcion:**
-Generar reportes exportables en formato PDF y Excel, manejando los reportes pesados de forma asíncrona.
+**Descripción:**
+Generar reportes exportables. Reportes pesados en cola de jobs.
 
 **Reportes:**
-
-- MIR en formato oficial
-- Fichas tecnicas de indicadores
-- Reporte de avance trimestral por programa
-- Reporte de evaluacion anual por programa
-- Reporte transversal por Eje PED / ODS / Anexo
+1. MIR formato oficial (4×4 matrix)
+2. Fichas técnicas de indicadores
+3. Avance trimestral por programa
+4. Evaluación anual por programa
+5. Transversal por Eje PED / ODS / Anexo
 
 **Decisiones técnicas:**
 
-- Los reportes que involucren múltiples programas o MIRs complejas se generarán en una **cola de trabajos (jobs)** para no bloquear la UI.
+- Instalar `barryvdh/laravel-dompdf` para PDF
+- Instalar `maatwebsite/excel` para Excel
+- Jobs para reportes multi-programa (GenerarReportePdfJob, GenerarReporteExcelJob)
+- Notificación cuando job completa, con link de descarga
+- Almacenar en `storage/app/private/reportes/` con TTL (borrar después de 24h)
 
-**Criterios de aceptacion:**
+**Criterios de aceptación:**
 
-- [ ] Cada reporte incluye sello de tiempo y periodo evaluado
-- [ ] PDF con formato profesional (encabezado institucional configurable)
-- [ ] Excel con hojas separadas por seccion
-- [ ] Descarga funcional desde la interfaz. Para reportes en cola, se notifica al usuario cuando está listo.
-- [ ] Solo accesible con permiso `exportar_reportes`
+- [ ] Cada reporte con sello de tiempo y período
+- [ ] PDF con encabezado institucional configurable
+- [ ] Excel con hojas separadas por sección
+- [ ] Jobs para reportes pesados + notificación
+- [ ] Solo con exportar_reportes
+- [ ] Tests: generación PDF, Excel, job dispatch (~6 tests)
 
 ---
 
-### S7-T8: Exportacion de datos abiertos con Diccionario
+### S7-T8: Exportación de datos abiertos con Diccionario
 
 **Tipo:** feat
 **Rama:** `feat/S7-T8-datos-abiertos`
+**Depende de:** S7-T3
 
-**Descripcion:**
-Exportar datos en CSV y JSON, empaquetados con un archivo de metadatos (Diccionario de Datos) que describe cada campo.
+**Descripción:**
+Exportar datos en CSV y JSON con diccionario de datos, empaquetados en ZIP.
 
-**Criterios de aceptacion:**
+**Criterios de aceptación:**
 
-- [ ] Exportacion CSV con codificacion UTF-8
-- [ ] Exportacion JSON estructurado
-- [ ] Diccionario de datos generado automaticamente (nombre de campo, tipo, descripcion)
-- [ ] Empaquetado en ZIP: datos + diccionario
-- [ ] Cumple con requisitos de la Ley General de Transparencia
+- [ ] CSV con codificación UTF-8
+- [ ] JSON estructurado
+- [ ] Diccionario de datos generado automáticamente
+- [ ] ZIP: datos + diccionario
+- [ ] Cumple requisitos Ley General de Transparencia
+- [ ] Tests: CSV, JSON, ZIP, diccionario (~4 tests)
 
 ---
+
+## Orden de ejecución
+
+```
+S7-T1 → S7-T2 → S7-T6
+       → S7-T3 → S7-T4 → S7-T7
+              → S7-T5
+              → S7-T8
+```
+
+- **T1** bloquea todo (modelos base)
+- **T2** (etiquetado) y **T3** (cálculo) pueden paralelizarse después de T1
+- **T4** requiere T3 (evaluación calculada)
+- **T5** requiere T3 (IA analiza evaluación)
+- **T6** requiere T2+T3
+- **T7** requiere T4+T6
+- **T8** requiere T3
+
+## Notas de integración con Sprint 6
+
+| Recurso Sprint 6 | Reutilizado en Sprint 7 |
+|---|---|
+| Avance.resultado, semaforo_calculado | Input para cálculo de índice (T3) |
+| Avance.estado = APROBADO | Solo avances aprobados cuentan para evaluación |
+| Avance.justificacion_final | Sección de desviaciones en T4 |
+| SemaforoService | Referencia para conteo de semáforos |
+| Indicador.activo_seguimiento | Filtro de indicadores evaluables |
+| MirNivel.supuestos | Contexto para análisis IA (T5) |
+| PanelSeguimiento | Link desde evaluación a seguimiento |
+| LlmService::suggest() | Análisis de rupturas verticales (T5) |
+
+## Issues con [REQUIERE_API_IA]
+
+- **S7-T5** usa LlmService::suggest() — implementar con mock que retorna análisis placeholder estático cuando `config('llm.api_key')` está vacío.
