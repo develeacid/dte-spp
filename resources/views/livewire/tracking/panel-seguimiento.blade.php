@@ -70,8 +70,17 @@
                                         {{ $fila['nivel_tipo']->label() }}
                                     </span>
                                 </td>
-                                <td class="max-w-xs truncate px-4 py-3 text-sm text-gray-900">
-                                    {{ $fila['indicador_nombre'] }}
+                                <td class="max-w-xs px-4 py-3 text-sm text-gray-900">
+                                    <span class="truncate block">{{ $fila['indicador_nombre'] }}</span>
+                                    @if ($fila['indicador']->anexosTransversales->count() > 0)
+                                        <div class="flex flex-wrap gap-1 mt-1">
+                                            @foreach ($fila['indicador']->anexosTransversales as $anexo)
+                                                <span class="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                                                    {{ $anexo->nombre }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="whitespace-nowrap px-4 py-3 text-center text-sm text-gray-700">
                                     {{ $fila['meta'] !== null ? number_format((float) $fila['meta'], 2) : '—' }}

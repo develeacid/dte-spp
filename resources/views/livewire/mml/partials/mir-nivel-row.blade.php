@@ -316,6 +316,44 @@
                         @endif
                     </div>
 
+                    {{-- Anexos Transversales --}}
+                    @if (isset($anexosTransversales) && $anexosTransversales->count() > 0)
+                        <div class="border-t border-gray-100 pt-1" x-data="{
+                            selected: @js($indicador->anexosTransversales->pluck('id')->toArray()),
+                            toggle(id) {
+                                const idx = this.selected.indexOf(id);
+                                if (idx === -1) { this.selected.push(id); } else { this.selected.splice(idx, 1); }
+                                $wire.syncAnexosTransversales({{ $indicador->id }}, this.selected);
+                            }
+                        }">
+                            <span class="text-xs font-medium text-gray-500">Anexos Transversales:</span>
+                            <div class="mt-1 flex flex-wrap gap-2">
+                                @foreach ($anexosTransversales as $anexo)
+                                    <label class="inline-flex items-center gap-1 text-xs cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            :checked="selected.includes({{ $anexo->id }})"
+                                            @change="toggle({{ $anexo->id }})"
+                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 h-3.5 w-3.5"
+                                        />
+                                        <span class="text-gray-700">{{ $anexo->nombre }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Badges de anexos transversales asignados --}}
+                    @if ($indicador->anexosTransversales->count() > 0)
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            @foreach ($indicador->anexosTransversales as $anexo)
+                                <span class="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                                    {{ $anexo->nombre }}
+                                </span>
+                            @endforeach
+                        </div>
+                    @endif
+
                     <button wire:click="eliminarIndicador({{ $indicador->id }})" class="text-xs text-red-400 hover:text-red-600">Eliminar indicador</button>
                 </div>
             @endforeach

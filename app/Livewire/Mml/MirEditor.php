@@ -4,6 +4,7 @@ namespace App\Livewire\Mml;
 
 use App\Contracts\LlmServiceInterface;
 use App\Enums\TipoNivelMir;
+use App\Models\Evaluation\AnexoTransversal;
 use App\Models\Mml\CremaaValidacion;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\IndicadorVariable;
@@ -114,6 +115,12 @@ class MirEditor extends Component
         ])->validate();
 
         $indicador->update($validated);
+    }
+
+    public function syncAnexosTransversales(int $indicadorId, array $anexoIds): void
+    {
+        $indicador = Indicador::findOrFail($indicadorId);
+        $indicador->anexosTransversales()->sync(array_map('intval', $anexoIds));
     }
 
     public function eliminarIndicador(int $indicadorId): void
@@ -444,13 +451,13 @@ class MirEditor extends Component
 
         $componentes = $this->programa->mirNiveles()
             ->where('tipo_nivel', TipoNivelMir::COMPONENTE->value)
-            ->with(['actividades.indicadores.mediosVerificacion', 'actividades.indicadores.cremaaValidacion', 'actividades.indicadores.variables', 'actividades.pedObjetivoEstrategico', 'actividades.pedLineaAccion', 'actividades.team', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'pedObjetivoEstrategico', 'pedLineaAccion', 'team'])
+            ->with(['actividades.indicadores.mediosVerificacion', 'actividades.indicadores.cremaaValidacion', 'actividades.indicadores.variables', 'actividades.indicadores.anexosTransversales', 'actividades.pedObjetivoEstrategico', 'actividades.pedLineaAccion', 'actividades.team', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'indicadores.anexosTransversales', 'pedObjetivoEstrategico', 'pedLineaAccion', 'team'])
             ->orderBy('orden')
             ->get();
 
         // Load indicadores and alignment for fin and proposito
-        $fin?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'pedObjetivoEstrategico', 'pedLineaAccion']);
-        $proposito?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'pedObjetivoEstrategico', 'pedLineaAccion']);
+        $fin?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'indicadores.anexosTransversales', 'pedObjetivoEstrategico', 'pedLineaAccion']);
+        $proposito?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'indicadores.anexosTransversales', 'pedObjetivoEstrategico', 'pedLineaAccion']);
 
         // Build rules map for each nivel type
         $reglasMap = [];
@@ -465,6 +472,7 @@ class MirEditor extends Component
             : collect();
 
         $teams = \App\Models\Team::orderBy('name')->get();
+        $anexosTransversales = AnexoTransversal::activos()->get();
 
         return view('livewire.mml.mir-editor', [
             'fin' => $fin,
@@ -474,6 +482,7 @@ class MirEditor extends Component
             'unidadesMedida' => $unidadesMedida,
             'versiones' => $versiones,
             'teams' => $teams,
+            'anexosTransversales' => $anexosTransversales,
         ]);
     }
 }

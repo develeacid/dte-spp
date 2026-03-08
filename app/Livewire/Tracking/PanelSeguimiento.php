@@ -57,6 +57,7 @@ class PanelSeguimiento extends Component
                 'indicadores.metasPeriodo.avance.variables.indicadorVariable',
                 'indicadores.metasPeriodo.avance.evidencias',
                 'indicadores.variables',
+                'indicadores.anexosTransversales',
             ]);
 
         if ($this->filtroPrograma) {
