@@ -27,18 +27,18 @@ class AbrirPeriodosCaptura extends Command
         $count = 0;
 
         foreach ($metasPendientes as $meta) {
-            $avance = Avance::create([
-                'meta_periodo_id' => $meta->id,
-                'indicador_id' => $meta->indicador_id,
-                'estado' => EstadoAvance::EN_CAPTURA->value,
-            ]);
+            // Find the team for this indicator
+            $teamId = $meta->indicador->mirNivel->team_id
+                ?? $meta->indicador->mirNivel->programa?->team_id
+                ?? null;
 
-            $teamId = $meta->indicador->mirNivel->team_id ?? null;
-
+            // Find first user with capturar_avance permission in the team
+            $capturadorId = null;
             $permissionExists = Permission::where('name', 'capturar_avance')
                 ->where('guard_name', 'web')
                 ->exists();
 
+            $usuarios = collect();
             if ($teamId && $permissionExists) {
                 $usuarios = User::permission('capturar_avance')
                     ->where(function ($q) use ($teamId) {
@@ -47,6 +47,18 @@ class AbrirPeriodosCaptura extends Command
                     })
                     ->get();
 
+                $capturadorId = $usuarios->first()?->id;
+            }
+
+            $avance = Avance::create([
+                'meta_periodo_id' => $meta->id,
+                'indicador_id' => $meta->indicador_id,
+                'estado' => EstadoAvance::EN_CAPTURA->value,
+                'capturado_por' => $capturadorId,
+            ]);
+
+            // Notify all users with capturar_avance permission in the team
+            if ($usuarios->isNotEmpty()) {
                 $avance->load('indicador', 'metaPeriodo');
 
                 foreach ($usuarios as $usuario) {

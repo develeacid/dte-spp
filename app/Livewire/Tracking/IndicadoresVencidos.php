@@ -12,7 +12,11 @@ class IndicadoresVencidos extends Component
 {
     public function render()
     {
-        $teamId = auth()->user()->currentTeam->id;
+        $user = auth()->user();
+
+        abort_unless($user->can('revisar_avance'), 403);
+
+        $teamId = $user->currentTeam->id;
 
         $avances = Avance::query()
             ->where('estado', EstadoAvance::VENCIDO->value)
