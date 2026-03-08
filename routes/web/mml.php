@@ -11,5 +11,7 @@ Route::prefix('mml')
             ->group(function () {
                 Route::get('/etapa/1', \App\Livewire\Mml\DefinicionProblema::class)
                     ->name('mml.etapa1');
+                Route::get('/etapa/2', \App\Livewire\Mml\ArbolProblemaBuilder::class)
+                    ->name('mml.etapa2');
             });
     });
