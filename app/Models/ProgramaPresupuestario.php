@@ -72,6 +72,16 @@ class ProgramaPresupuestario extends Model
         return $this->hasMany(\App\Models\Mml\Alternativa::class, 'programa_presupuestario_id');
     }
 
+    public function mirNiveles(): HasMany
+    {
+        return $this->hasMany(Mml\MirNivel::class);
+    }
+
+    public function mirVersiones(): HasMany
+    {
+        return $this->hasMany(Mml\MirVersion::class);
+    }
+
     // --- Scopes ---
 
     public function scopeParaTeam(Builder $query, int $teamId): Builder
