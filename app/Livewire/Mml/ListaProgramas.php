@@ -3,8 +3,10 @@
 namespace App\Livewire\Mml;
 
 use App\Models\ProgramaPresupuestario;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('layouts.app')]
 class ListaProgramas extends Component
 {
     public function render()
