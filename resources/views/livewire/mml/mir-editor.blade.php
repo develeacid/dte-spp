@@ -95,5 +95,55 @@
                 </tbody>
             </table>
         </div>
+
+        {{-- Validación Lógica --}}
+        <div class="mt-6">
+            <button
+                wire:click="validarMirCompleta"
+                wire:loading.attr="disabled"
+                wire:target="validarMirCompleta"
+                class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+                <span wire:loading.remove wire:target="validarMirCompleta">Validar MIR completa</span>
+                <span wire:loading wire:target="validarMirCompleta">Validando...</span>
+            </button>
+
+            @if ($validacionLogicaEjecutada)
+                <div class="mt-4 rounded-lg border {{ count($hallazgosLogica) > 0 ? 'border-yellow-300 bg-yellow-50' : 'border-green-300 bg-green-50' }} p-4">
+                    <h3 class="text-sm font-semibold {{ count($hallazgosLogica) > 0 ? 'text-yellow-800' : 'text-green-800' }}">
+                        Resultado de Validación Lógica
+                        @if (count($hallazgosLogica) === 0)
+                            — Sin hallazgos
+                        @else
+                            — {{ count($hallazgosLogica) }} hallazgo(s)
+                        @endif
+                    </h3>
+
+                    @if (count($hallazgosLogica) > 0)
+                        <div class="mt-3 space-y-2">
+                            @foreach ($hallazgosLogica as $hallazgo)
+                                @php
+                                    $colorMap = [
+                                        'error_critico' => 'bg-red-100 text-red-800 border-red-200',
+                                        'advertencia' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                        'sugerencia' => 'bg-blue-100 text-blue-800 border-blue-200',
+                                    ];
+                                    $color = $colorMap[$hallazgo['tipo'] ?? 'sugerencia'] ?? $colorMap['sugerencia'];
+                                @endphp
+                                <div class="rounded border p-2 {{ $color }}">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold uppercase">{{ $hallazgo['nivel'] ?? '' }}</span>
+                                        <span class="text-xs">{{ $hallazgo['mensaje'] ?? '' }}</span>
+                                    </div>
+                                    @if (!empty($hallazgo['detalle']))
+                                        <p class="mt-1 text-xs opacity-80">{{ $hallazgo['detalle'] }}</p>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            @endif
+        </div>
     </x-page.container>
 </div>

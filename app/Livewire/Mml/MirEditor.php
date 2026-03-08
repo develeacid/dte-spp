@@ -10,6 +10,7 @@ use App\Models\Mml\MedioVerificacion;
 use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Services\Mml\IndicadorReglasService;
+use App\Services\Mml\MirLogicaValidacionService;
 use App\Services\Mml\MirPrellenadoService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -20,6 +21,8 @@ use Livewire\Component;
 class MirEditor extends Component
 {
     public ProgramaPresupuestario $programa;
+    public array $hallazgosLogica = [];
+    public bool $validacionLogicaEjecutada = false;
 
     public function mount(ProgramaPresupuestario $programa): void
     {
@@ -200,6 +203,18 @@ class MirEditor extends Component
             );
         } catch (\Exception $e) {
             session()->flash('error', 'No se pudo validar CREMAA con IA.');
+        }
+    }
+
+    public function validarMirCompleta(): void
+    {
+        try {
+            $servicio = app(MirLogicaValidacionService::class);
+            $resultado = $servicio->validarCompleta($this->programa);
+            $this->hallazgosLogica = $resultado['hallazgos'] ?? [];
+            $this->validacionLogicaEjecutada = true;
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudo ejecutar la validación lógica.');
         }
     }
 
