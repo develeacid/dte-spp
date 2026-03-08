@@ -4,6 +4,7 @@ namespace App\Livewire\Mml;
 
 use App\Contracts\LlmServiceInterface;
 use App\Enums\TipoNivelMir;
+use App\Models\Mml\CremaaValidacion;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MedioVerificacion;
 use App\Models\Mml\MirNivel;
@@ -159,6 +160,49 @@ class MirEditor extends Component
         }
     }
 
+    public function validarCremaa(int $indicadorId): void
+    {
+        $indicador = Indicador::with('mirNivel')->findOrFail($indicadorId);
+
+        if (empty($indicador->nombre)) {
+            return;
+        }
+
+        $promptText = view('prompts.mir.validar-cremaa', [
+            'nombre' => $indicador->nombre,
+            'formula' => $indicador->formula_texto,
+            'tipo' => $indicador->tipo?->label() ?? '',
+            'dimension' => $indicador->dimension?->label() ?? '',
+            'frecuencia' => $indicador->frecuencia?->label() ?? '',
+            'resumenNarrativo' => $indicador->mirNivel->resumen_narrativo,
+        ])->render();
+
+        try {
+            $llm = app(LlmServiceInterface::class);
+            $result = $llm->suggest($promptText);
+            $data = json_decode($result, true);
+
+            if (!is_array($data)) {
+                return;
+            }
+
+            $cremaaFields = ['claro', 'relevante', 'economico', 'monitoreable', 'adecuado', 'aportante'];
+            $upsertData = ['indicador_id' => $indicadorId];
+
+            foreach ($cremaaFields as $field) {
+                $upsertData[$field] = (bool) ($data[$field] ?? false);
+                $upsertData[$field . '_observacion'] = $data[$field . '_observacion'] ?? null;
+            }
+
+            CremaaValidacion::updateOrCreate(
+                ['indicador_id' => $indicadorId],
+                $upsertData
+            );
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudo validar CREMAA con IA.');
+        }
+    }
+
     public function aceptarSugerencia(int $nivelId): void
     {
         $nivel = MirNivel::findOrFail($nivelId);
@@ -186,13 +230,13 @@ class MirEditor extends Component
 
         $componentes = $this->programa->mirNiveles()
             ->where('tipo_nivel', TipoNivelMir::COMPONENTE->value)
-            ->with(['actividades.indicadores.mediosVerificacion', 'indicadores.mediosVerificacion'])
+            ->with(['actividades.indicadores.mediosVerificacion', 'actividades.indicadores.cremaaValidacion', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion'])
             ->orderBy('orden')
             ->get();
 
         // Load indicadores for fin and proposito
-        $fin?->load('indicadores.mediosVerificacion');
-        $proposito?->load('indicadores.mediosVerificacion');
+        $fin?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion']);
+        $proposito?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion']);
 
         // Build rules map for each nivel type
         $reglasMap = [];
