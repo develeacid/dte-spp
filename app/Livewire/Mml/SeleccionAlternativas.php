@@ -139,10 +139,13 @@ class SeleccionAlternativas extends Component
             ->with('nodos')
             ->get();
 
+        $tieneMir = $this->programa->mirNiveles()->exists();
+
         return view('livewire.mml.seleccion-alternativas', [
             'medios' => $medios,
             'alternativas' => $alternativas,
             'alternativaSeleccionada' => $alternativaSeleccionada,
+            'tieneMir' => $tieneMir,
         ]);
     }
 }

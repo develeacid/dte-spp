@@ -17,6 +17,8 @@
             </div>
         @endif
 
+        @include('livewire.mml.partials.mir-impact-warning', ['tieneMir' => $tieneMir])
+
         @if (!$arbol)
             <div class="rounded-md bg-yellow-50 p-4">
                 <p class="text-sm text-yellow-700">

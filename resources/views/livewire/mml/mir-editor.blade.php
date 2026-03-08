@@ -96,6 +96,63 @@
             </table>
         </div>
 
+        {{-- Snapshots --}}
+        <div class="mt-6 flex items-center gap-4">
+            <div class="flex items-center gap-2">
+                <input
+                    type="text"
+                    wire:model="snapshotEtiqueta"
+                    class="rounded-md border-gray-300 text-sm shadow-sm"
+                    placeholder="Etiqueta del snapshot..."
+                />
+                <button
+                    wire:click="crearSnapshot"
+                    wire:loading.attr="disabled"
+                    wire:target="crearSnapshot"
+                    class="inline-flex items-center gap-1 rounded-md bg-gray-600 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700"
+                >
+                    <span wire:loading.remove wire:target="crearSnapshot">Crear snapshot</span>
+                    <span wire:loading wire:target="crearSnapshot">Guardando...</span>
+                </button>
+            </div>
+            <button
+                wire:click="toggleVersiones"
+                class="text-sm text-gray-600 hover:text-gray-800 underline"
+            >
+                {{ $mostrarVersiones ? 'Ocultar versiones' : 'Ver versiones' }}
+            </button>
+        </div>
+
+        @if ($mostrarVersiones && $versiones->count() > 0)
+            <div class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <h3 class="text-sm font-semibold text-gray-700 mb-2">Versiones guardadas</h3>
+                <div class="space-y-2">
+                    @foreach ($versiones as $version)
+                        <div class="flex items-center justify-between rounded bg-white p-2 border border-gray-100">
+                            <div>
+                                <span class="text-sm font-medium">{{ $version->etiqueta }}</span>
+                                <span class="ml-2 text-xs text-gray-500">
+                                    {{ $version->created_at->format('d/m/Y H:i') }}
+                                    @if ($version->creador)
+                                        — {{ $version->creador->name }}
+                                    @endif
+                                </span>
+                            </div>
+                            <button
+                                wire:click="restaurarVersion({{ $version->id }})"
+                                wire:confirm="¿Restaurar esta versión? Se reemplazará la MIR actual."
+                                class="rounded bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800 hover:bg-amber-200"
+                            >
+                                Restaurar
+                            </button>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @elseif ($mostrarVersiones)
+            <p class="mt-3 text-sm text-gray-500">No hay versiones guardadas.</p>
+        @endif
+
         {{-- Validación Lógica --}}
         <div class="mt-6">
             <button
