@@ -26,6 +26,10 @@
             localStorage.setItem('sidebar-collapsed', this.collapsed);
         }
     }">
+        <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded focus:shadow-lg focus:text-brand focus:ring-2 focus:ring-brand">
+            Saltar al contenido principal
+        </a>
+
         <x-banner />
 
         <div class="min-h-screen bg-background">
@@ -46,7 +50,7 @@
                 </x-ui.topbar>
 
                 {{-- Page Content --}}
-                <main>
+                <main id="main-content">
                     {{ $slot }}
                 </main>
             </div>

@@ -93,7 +93,7 @@
             @endif
 
             {{-- Collapse toggle (desktop only) --}}
-            <button @click="toggle()" class="hidden lg:flex w-full items-center justify-center py-2 text-gray-400 hover:text-gray-600 transition-colors">
+            <button @click="toggle()" class="hidden lg:flex w-full items-center justify-center py-2 text-gray-400 hover:text-gray-600 transition-colors" aria-label="Colapsar barra lateral" :aria-label="collapsed ? 'Expandir barra lateral' : 'Colapsar barra lateral'">
                 <svg x-show="!collapsed" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7"/>
                 </svg>

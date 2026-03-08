@@ -28,6 +28,10 @@
 
         {{-- Modal panel --}}
         <div x-show="open"
+             x-trap.noscroll="open"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="confirm-title-{{ $id }}"
              x-transition:enter="ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
              x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
@@ -37,7 +41,7 @@
              class="relative mb-6 bg-white rounded-lg overflow-hidden shadow-xl sm:max-w-sm sm:mx-auto">
 
             <div class="px-6 py-4">
-                <div class="text-lg font-medium text-gray-900">{{ $title }}</div>
+                <div id="confirm-title-{{ $id }}" class="text-lg font-medium text-gray-900">{{ $title }}</div>
                 <div class="mt-4 text-sm text-gray-600">{{ $message }}</div>
             </div>
 
