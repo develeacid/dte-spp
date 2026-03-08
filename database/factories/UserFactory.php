@@ -36,6 +36,10 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'profile_photo_path' => null,
             'current_team_id' => null,
+            'activated_at' => now(),
+            'active' => true,
+            'invitation_token' => null,
+            'invitation_sent_at' => null,
         ];
     }
 
@@ -81,5 +85,15 @@ class UserFactory extends Factory
                 ->when(is_callable($callback), $callback),
             'ownedTeams'
         );
+    }
+
+    public function invited(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'password' => null,
+            'activated_at' => null,
+            'invitation_token' => \Illuminate\Support\Str::random(64),
+            'invitation_sent_at' => now(),
+        ]);
     }
 }
