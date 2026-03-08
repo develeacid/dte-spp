@@ -6,8 +6,10 @@ use App\Contracts\LlmServiceInterface;
 use App\Enums\TipoNivelMir;
 use App\Models\Mml\CremaaValidacion;
 use App\Models\Mml\Indicador;
+use App\Models\Mml\IndicadorVariable;
 use App\Models\Mml\MedioVerificacion;
 use App\Models\Mml\MirNivel;
+use App\Models\CatalogoUnidadMedida;
 use App\Models\ProgramaPresupuestario;
 use App\Services\Embeddings\SemanticSearchService;
 use App\Services\Mml\IndicadorReglasService;
@@ -138,6 +140,81 @@ class MirEditor extends Component
     public function eliminarMedioVerificacion(int $medioId): void
     {
         MedioVerificacion::findOrFail($medioId)->delete();
+    }
+
+    public function extraerVariables(int $indicadorId): void
+    {
+        $indicador = Indicador::findOrFail($indicadorId);
+
+        if (empty($indicador->formula_texto)) {
+            return;
+        }
+
+        $promptText = view('prompts.mir.extraer-variables', [
+            'formula' => $indicador->formula_texto,
+        ])->render();
+
+        try {
+            $llm = app(LlmServiceInterface::class);
+            $result = $llm->suggest($promptText);
+            $data = json_decode($result, true);
+
+            if (!is_array($data)) {
+                return;
+            }
+
+            // Clear existing variables and recreate
+            $indicador->variables()->delete();
+
+            foreach ($data as $i => $var) {
+                IndicadorVariable::create([
+                    'indicador_id' => $indicadorId,
+                    'simbolo' => $var['simbolo'] ?? chr(65 + $i),
+                    'nombre' => $var['nombre'] ?? '',
+                    'descripcion' => $var['descripcion'] ?? null,
+                    'orden' => $i + 1,
+                ]);
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudieron extraer las variables con IA.');
+        }
+    }
+
+    public function agregarVariable(int $indicadorId): void
+    {
+        $maxOrden = IndicadorVariable::where('indicador_id', $indicadorId)->max('orden') ?? 0;
+        $nextSymbol = chr(65 + $maxOrden); // A, B, C...
+
+        IndicadorVariable::create([
+            'indicador_id' => $indicadorId,
+            'simbolo' => $nextSymbol,
+            'nombre' => '',
+            'orden' => $maxOrden + 1,
+        ]);
+    }
+
+    public function guardarVariable(int $variableId, array $data): void
+    {
+        $variable = IndicadorVariable::findOrFail($variableId);
+
+        $validated = validator($data, [
+            'simbolo' => 'required|string|max:5',
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string|max:500',
+            'unidad_medida_id' => 'nullable|integer|exists:catalogo_unidades_medida,id',
+        ])->validate();
+
+        $variable->update($validated);
+    }
+
+    public function eliminarVariable(int $variableId): void
+    {
+        IndicadorVariable::findOrFail($variableId)->delete();
+    }
+
+    public function guardarFormulaTexto(int $indicadorId, string $formula): void
+    {
+        Indicador::findOrFail($indicadorId)->update(['formula_texto' => $formula]);
     }
 
     public function validarSintaxis(int $nivelId): void
@@ -305,13 +382,13 @@ class MirEditor extends Component
 
         $componentes = $this->programa->mirNiveles()
             ->where('tipo_nivel', TipoNivelMir::COMPONENTE->value)
-            ->with(['actividades.indicadores.mediosVerificacion', 'actividades.indicadores.cremaaValidacion', 'actividades.pedObjetivoEstrategico', 'actividades.pedLineaAccion', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'pedObjetivoEstrategico', 'pedLineaAccion'])
+            ->with(['actividades.indicadores.mediosVerificacion', 'actividades.indicadores.cremaaValidacion', 'actividades.indicadores.variables', 'actividades.pedObjetivoEstrategico', 'actividades.pedLineaAccion', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'pedObjetivoEstrategico', 'pedLineaAccion'])
             ->orderBy('orden')
             ->get();
 
         // Load indicadores and alignment for fin and proposito
-        $fin?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'pedObjetivoEstrategico', 'pedLineaAccion']);
-        $proposito?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'pedObjetivoEstrategico', 'pedLineaAccion']);
+        $fin?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'pedObjetivoEstrategico', 'pedLineaAccion']);
+        $proposito?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'pedObjetivoEstrategico', 'pedLineaAccion']);
 
         // Build rules map for each nivel type
         $reglasMap = [];
@@ -319,11 +396,14 @@ class MirEditor extends Component
             $reglasMap[$tipo->value] = IndicadorReglasService::reglasParaNivel($tipo);
         }
 
+        $unidadesMedida = CatalogoUnidadMedida::orderBy('nombre')->get();
+
         return view('livewire.mml.mir-editor', [
             'fin' => $fin,
             'proposito' => $proposito,
             'componentes' => $componentes,
             'reglasMap' => $reglasMap,
+            'unidadesMedida' => $unidadesMedida,
         ]);
     }
 }
