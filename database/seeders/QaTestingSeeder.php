@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\Tracking\SemaforoService;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 
 class QaTestingSeeder extends Seeder
@@ -723,6 +724,106 @@ class QaTestingSeeder extends Seeder
 
     private function generarResultadosEsperados(): void
     {
-        // Stub — se implementará en Task 7
+        $se = Team::where('clave_ur', 'SE-001')->first();
+        $ss = Team::where('clave_ur', 'SS-002')->first();
+
+        $content = "# Resultados Esperados — QA Testing\n\n";
+        $content .= "> Generado automáticamente por QaTestingSeeder el " . now()->format('Y-m-d H:i') . "\n\n";
+
+        // Semáforos por avance
+        $content .= "## Semáforos Esperados por Avance\n\n";
+        $content .= "| Programa | Indicador | Resultado | Meta Periodo | Sentido | Semáforo | Estado |\n";
+        $content .= "|----------|-----------|-----------|-------------|---------|----------|--------|\n";
+
+        $avances = Avance::with(['indicador.mirNivel.programa', 'metaPeriodo'])->get();
+        foreach ($avances as $avance) {
+            $prog = $avance->indicador->mirNivel->programa->clave ?? '?';
+            $ind = $avance->indicador->nombre ?? '?';
+            $res = $avance->resultado ?? 'N/A';
+            $mp = $avance->metaPeriodo->meta_periodo ?? 'N/A';
+            $sentido = $avance->indicador->sentido->value ?? $avance->indicador->sentido ?? '?';
+            $sem = $avance->semaforo_calculado ?? 'N/A';
+            $est = $avance->estado->value ?? $avance->estado ?? '?';
+            $content .= "| {$prog} | {$ind} | {$res} | {$mp} | {$sentido} | {$sem} | {$est} |\n";
+        }
+
+        // Dashboard Admin SE-001
+        $content .= "\n## Dashboard Admin — SE-001 (team_id={$se->id})\n\n";
+        $progsSE = ProgramaPresupuestario::paraTeam($se->id)->count();
+        $indsSE = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->paraTeam($se->id))
+            ->where('activo_seguimiento', true)->count();
+        $vencidosSE = MetaPeriodo::where('fecha_cierre', '<', now())
+            ->where('activo', true)
+            ->doesntHave('avance')
+            ->whereHas('indicador.mirNivel.programa', fn ($q) => $q->paraTeam($se->id))
+            ->count();
+
+        $content .= "- **Programas:** {$progsSE}\n";
+        $content .= "- **Indicadores con seguimiento:** {$indsSE}\n";
+        $content .= "- **Vencidos (metas sin avance con fecha pasada):** {$vencidosSE}\n";
+
+        // Dashboard Admin SS-002
+        $content .= "\n## Dashboard Admin — SS-002 (team_id={$ss->id})\n\n";
+        $progsSS = ProgramaPresupuestario::paraTeam($ss->id)->count();
+        $indsSS = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->paraTeam($ss->id))
+            ->where('activo_seguimiento', true)->count();
+
+        $content .= "- **Programas:** {$progsSS}\n";
+        $content .= "- **Indicadores con seguimiento:** {$indsSS}\n";
+
+        // Distribución Semáforo Global SE-001
+        $content .= "\n## Distribución Semáforo — SE-001\n\n";
+        $semSE = Avance::whereHas('indicador.mirNivel.programa', fn ($q) => $q->paraTeam($se->id))
+            ->whereNotNull('semaforo_calculado')
+            ->get()
+            ->groupBy('semaforo_calculado')
+            ->map->count();
+
+        $content .= "- Verde: " . ($semSE['verde'] ?? 0) . "\n";
+        $content .= "- Amarillo: " . ($semSE['amarillo'] ?? 0) . "\n";
+        $content .= "- Rojo: " . ($semSE['rojo'] ?? 0) . "\n";
+
+        // Distribución Semáforo Global SS-002
+        $content .= "\n## Distribución Semáforo — SS-002\n\n";
+        $semSS = Avance::whereHas('indicador.mirNivel.programa', fn ($q) => $q->paraTeam($ss->id))
+            ->whereNotNull('semaforo_calculado')
+            ->get()
+            ->groupBy('semaforo_calculado')
+            ->map->count();
+
+        $content .= "- Verde: " . ($semSS['verde'] ?? 0) . "\n";
+        $content .= "- Amarillo: " . ($semSS['amarillo'] ?? 0) . "\n";
+        $content .= "- Rojo: " . ($semSS['rojo'] ?? 0) . "\n";
+
+        // Operador stats
+        $operador = User::where('email', 'ele.operador@gmail.com')->first();
+        $pendientes = Avance::where('capturado_por', $operador->id)
+            ->where('estado', EstadoAvance::EN_CAPTURA)->count();
+        $capturadosMes = Avance::where('capturado_por', $operador->id)
+            ->whereMonth('updated_at', now()->month)
+            ->whereYear('updated_at', now()->year)
+            ->whereIn('estado', [EstadoAvance::EN_REVISION, EstadoAvance::APROBADO])
+            ->count();
+
+        $content .= "\n## Dashboard Operador — ele.operador@gmail.com\n\n";
+        $content .= "- **Pendientes (en_captura):** {$pendientes}\n";
+        $content .= "- **Capturados este mes (en_revision + aprobado):** {$capturadosMes}\n";
+
+        // Operador2 stats
+        $operador2 = User::where('email', 'ele.operador2@gmail.com')->first();
+        $pendientes2 = Avance::where('capturado_por', $operador2->id)
+            ->where('estado', EstadoAvance::EN_CAPTURA)->count();
+
+        $content .= "\n## Dashboard Operador — ele.operador2@gmail.com\n\n";
+        $content .= "- **Pendientes (en_captura):** {$pendientes2}\n";
+
+        // Write file
+        $dir = base_path('docs/qa');
+        if (! File::isDirectory($dir)) {
+            File::makeDirectory($dir, 0755, true);
+        }
+        File::put("{$dir}/expected-results.md", $content);
+
+        $this->command->info('✓ Resultados esperados generados en docs/qa/expected-results.md');
     }
 }
