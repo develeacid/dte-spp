@@ -152,6 +152,59 @@
                         <button wire:click="agregarMedioVerificacion({{ $indicador->id }})" class="mt-1 text-xs text-blue-500 hover:text-blue-700">+ Medio</button>
                     </div>
 
+                    {{-- CREMAA --}}
+                    <div class="border-t border-gray-100 pt-1">
+                        <div class="flex items-center gap-2">
+                            <button
+                                wire:click="validarCremaa({{ $indicador->id }})"
+                                wire:loading.attr="disabled"
+                                wire:target="validarCremaa({{ $indicador->id }})"
+                                class="text-xs text-purple-600 hover:text-purple-800"
+                            >
+                                <span wire:loading.remove wire:target="validarCremaa({{ $indicador->id }})">Validar CREMAA</span>
+                                <span wire:loading wire:target="validarCremaa({{ $indicador->id }})">Evaluando...</span>
+                            </button>
+
+                            @if ($indicador->cremaaValidacion)
+                                @php
+                                    $cremaa = $indicador->cremaaValidacion;
+                                    $letras = [
+                                        ['letra' => 'C', 'campo' => 'claro', 'obs' => $cremaa->claro_observacion],
+                                        ['letra' => 'R', 'campo' => 'relevante', 'obs' => $cremaa->relevante_observacion],
+                                        ['letra' => 'E', 'campo' => 'economico', 'obs' => $cremaa->economico_observacion],
+                                        ['letra' => 'M', 'campo' => 'monitoreable', 'obs' => $cremaa->monitoreable_observacion],
+                                        ['letra' => 'A', 'campo' => 'adecuado', 'obs' => $cremaa->adecuado_observacion],
+                                        ['letra' => 'A', 'campo' => 'aportante', 'obs' => $cremaa->aportante_observacion],
+                                    ];
+                                @endphp
+                                <div class="flex gap-0.5">
+                                    @foreach ($letras as $l)
+                                        <span
+                                            class="inline-flex h-5 w-5 items-center justify-center rounded text-xs font-bold {{ $cremaa->{$l['campo']} ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}"
+                                            title="{{ $l['obs'] ?: 'Cumple' }}"
+                                        >{{ $l['letra'] }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+
+                        @if ($indicador->cremaaValidacion)
+                            <div x-data="{ open: false }" class="mt-1">
+                                <button @click="open = !open" class="text-xs text-gray-500 hover:text-gray-700">
+                                    <span x-show="!open">Ver detalles CREMAA</span>
+                                    <span x-show="open">Ocultar detalles</span>
+                                </button>
+                                <div x-show="open" x-cloak class="mt-1 space-y-1 text-xs">
+                                    @foreach ($letras as $l)
+                                        @if (!$cremaa->{$l['campo']} && $l['obs'])
+                                            <p class="text-red-600"><strong>{{ $l['letra'] }}</strong>: {{ $l['obs'] }}</p>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+
                     <button wire:click="eliminarIndicador({{ $indicador->id }})" class="text-xs text-red-400 hover:text-red-600">Eliminar indicador</button>
                 </div>
             @endforeach
