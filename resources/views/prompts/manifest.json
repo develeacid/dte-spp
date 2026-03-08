@@ -1,0 +1,69 @@
+{
+    "prompts": {
+        "mml/validar-problema": {
+            "version": "1.0",
+            "description": "Validación de definición de problema en árbol de problemas",
+            "created": "2026-03-07"
+        },
+        "mml/transformar-a-positivo": {
+            "version": "1.0",
+            "description": "Transformación de enunciados negativos a positivos para árbol de objetivos",
+            "created": "2026-03-07"
+        },
+        "mml/evaluar-alternativa": {
+            "version": "1.0",
+            "description": "Evaluación de viabilidad de alternativas de solución",
+            "created": "2026-03-07"
+        },
+        "mir/validar-sintaxis-actividad": {
+            "version": "1.0",
+            "description": "Validación de sintaxis narrativa para nivel Actividad",
+            "created": "2026-03-07"
+        },
+        "mir/validar-sintaxis-fin": {
+            "version": "1.0",
+            "description": "Validación de sintaxis narrativa para nivel Fin",
+            "created": "2026-03-07"
+        },
+        "mir/validar-sintaxis-componente": {
+            "version": "1.0",
+            "description": "Validación de sintaxis narrativa para nivel Componente",
+            "created": "2026-03-07"
+        },
+        "mir/validar-sintaxis-proposito": {
+            "version": "1.0",
+            "description": "Validación de sintaxis narrativa para nivel Propósito",
+            "created": "2026-03-07"
+        },
+        "mir/validar-cremaa": {
+            "version": "1.0",
+            "description": "Validación de criterios CREMAA para indicadores MIR",
+            "created": "2026-03-07"
+        },
+        "mir/validar-logica-horizontal": {
+            "version": "1.0",
+            "description": "Validación de lógica horizontal de la MIR",
+            "created": "2026-03-07"
+        },
+        "mir/validar-logica-vertical": {
+            "version": "1.0",
+            "description": "Validación de lógica vertical de la MIR",
+            "created": "2026-03-07"
+        },
+        "mir/extraer-variables": {
+            "version": "1.0",
+            "description": "Extracción de variables de fórmulas de indicadores",
+            "created": "2026-03-07"
+        },
+        "tracking/justificar-avance": {
+            "version": "1.0",
+            "description": "Generación de justificaciones para reportes de avance",
+            "created": "2026-03-07"
+        },
+        "evaluation/analizar-rupturas": {
+            "version": "1.0",
+            "description": "Detección de rupturas causales en evaluación de programas",
+            "created": "2026-03-07"
+        }
+    }
+}

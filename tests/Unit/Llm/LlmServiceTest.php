@@ -91,8 +91,11 @@ class LlmServiceTest extends TestCase
         $this->assertEquals('Texto transformado positivamente', $result);
     }
 
-    public function test_handles_api_error(): void
+    public function test_handles_api_error_with_fallback_disabled(): void
     {
+        config(['llm.fallback.enabled' => false]);
+        $this->service = new LlmService();
+
         Http::fake([
             'api.openai.com/*' => Http::response(['error' => ['message' => 'Rate limited']], 429),
         ]);
@@ -100,6 +103,20 @@ class LlmServiceTest extends TestCase
         $this->expectException(\App\Exceptions\LlmException::class);
 
         $this->service->suggest('Test prompt');
+    }
+
+    public function test_handles_api_error_with_fallback_enabled(): void
+    {
+        config(['llm.fallback.enabled' => true]);
+        config(['llm.fallback.message' => 'IA no disponible.']);
+
+        Http::fake([
+            'api.openai.com/*' => Http::response(['error' => ['message' => 'Rate limited']], 429),
+        ]);
+
+        $result = $this->service->suggest('Test prompt');
+
+        $this->assertEquals('IA no disponible.', $result);
     }
 
     public function test_logs_error_on_failure(): void

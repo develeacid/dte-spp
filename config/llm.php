@@ -23,4 +23,19 @@ return [
         'enabled' => env('LLM_LOGGING_ENABLED', true),
         'channel' => env('LLM_LOG_CHANNEL', 'stack'),
     ],
+
+    'cache' => [
+        'enabled' => env('LLM_CACHE_ENABLED', true),
+        'ttl' => (int) env('LLM_CACHE_TTL', 3600),
+        'store' => env('LLM_CACHE_STORE', null),
+    ],
+
+    'fallback' => [
+        'enabled' => env('LLM_FALLBACK_ENABLED', true),
+        'message' => 'Análisis de IA no disponible temporalmente.',
+    ],
+
+    'prompts' => [
+        'manifest_path' => resource_path('views/prompts/manifest.json'),
+    ],
 ];
