@@ -6,9 +6,12 @@ use App\Models\ProgramaPresupuestario;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class EvaluacionPrograma extends Model
 {
+    use LogsActivity;
     protected $table = 'evaluaciones_programa';
 
     protected $fillable = [
@@ -35,6 +38,19 @@ class EvaluacionPrograma extends Model
             'indicadores_evaluados' => 'integer',
             'indicadores_no_evaluados' => 'integer',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'programa_presupuestario_id', 'ejercicio_fiscal',
+                'indice_eficacia', 'indicadores_evaluados',
+                'indicadores_no_evaluados', 'calculado_por',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn (string $eventName) => "EvaluacionPrograma {$eventName}");
     }
 
     public function programa(): BelongsTo
