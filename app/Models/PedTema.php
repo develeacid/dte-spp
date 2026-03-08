@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasEmbedding;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PedTema extends Model
 {
+    use HasEmbedding;
+
     protected $fillable = [
         'ped_eje_id',
         'numero',

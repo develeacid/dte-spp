@@ -54,6 +54,24 @@ return [
     'max_tokens' => env('EMBEDDING_MAX_TOKENS', 8000),
 
     // ============================================
+    // Batch Processing
+    // ============================================
+
+    'batch' => [
+        // Default chunk size for batch processing
+        'chunk_size' => env('EMBEDDING_BATCH_CHUNK_SIZE', 50),
+
+        // Delay between chunks in milliseconds
+        'delay_ms' => env('EMBEDDING_BATCH_DELAY_MS', 1000),
+
+        // Max retries per record on API failure
+        'max_retries' => env('EMBEDDING_BATCH_MAX_RETRIES', 3),
+
+        // Base backoff in seconds (doubles each retry: 1s, 2s, 4s)
+        'backoff_base' => env('EMBEDDING_BATCH_BACKOFF_BASE', 1),
+    ],
+
+    // ============================================
     // Observers
     // ============================================
 

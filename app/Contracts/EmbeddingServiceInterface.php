@@ -15,6 +15,15 @@ interface EmbeddingServiceInterface
     public function generate(string $text): array;
 
     /**
+     * Genera embeddings para múltiples textos en una sola llamada.
+     *
+     * @param array<string> $texts Array de textos a convertir
+     * @return array<array<float>> Array de embeddings (misma posición que input)
+     * @throws \RuntimeException Si el API falla
+     */
+    public function generateBatch(array $texts): array;
+
+    /**
      * Obtiene la dimensión del embedding (número de elementos).
      */
     public function getDimension(): int;

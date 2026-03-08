@@ -39,6 +39,58 @@ class EmbeddingService implements EmbeddingServiceInterface
     }
 
     /**
+     * Genera embeddings para múltiples textos en una sola llamada al API.
+     */
+    public function generateBatch(array $texts): array
+    {
+        if (empty($texts)) {
+            return [];
+        }
+
+        $cleanTexts = array_map(fn (string $text) => $this->truncateText($text), $texts);
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Content-Type' => 'application/json',
+            ])
+            ->timeout($this->timeout)
+            ->post($this->apiUrl, [
+                'model' => $this->model,
+                'input' => array_values($cleanTexts),
+            ]);
+
+            if (!$response->successful()) {
+                $error = $response->json('error.message', 'Error desconocido');
+                $statusCode = $response->status();
+
+                Log::error('Embedding batch API error', [
+                    'status' => $statusCode,
+                    'error' => $error,
+                    'count' => count($texts),
+                ]);
+
+                throw new \RuntimeException("Embedding API error ({$statusCode}): {$error}");
+            }
+
+            $data = $response->json('data', []);
+
+            // Sort by index to ensure correct order
+            usort($data, fn ($a, $b) => ($a['index'] ?? 0) <=> ($b['index'] ?? 0));
+
+            return array_map(fn ($item) => $item['embedding'], $data);
+
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error('Embedding batch API connection error', [
+                'message' => $e->getMessage(),
+                'count' => count($texts),
+            ]);
+
+            throw new \RuntimeException('Connection error to Embedding API');
+        }
+    }
+
+    /**
      * Obtiene la dimensión del embedding.
      */
     public function getDimension(): int

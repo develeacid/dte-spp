@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('mir:abrir-periodos')->dailyAt('06:00');
 Schedule::command('mir:cerrar-vencidos')->dailyAt('23:00');
+Schedule::command('app:embeddings-generate')->dailyAt('02:00')->withoutOverlapping();
