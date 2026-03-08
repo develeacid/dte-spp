@@ -6,18 +6,23 @@ Route::prefix('mml')
     ->middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])
     ->group(function () {
 
-        // Importar programa desde archivo MIR
-        Route::get('/importar', \App\Livewire\Mml\ImportarPrograma::class)
-            ->name('mml.importar');
+        // Flujo de importación MIR
+        Route::prefix('importar')->group(function () {
+            Route::get('/', \App\Livewire\Mml\DashboardImportaciones::class)
+                ->name('mml.importaciones');
 
-        Route::get('/importar/{importacion}/completar', \App\Livewire\Mml\CompletarHuecos::class)
-            ->name('mml.importar.completar');
+            Route::get('/nuevo', \App\Livewire\Mml\ImportarPrograma::class)
+                ->name('mml.importar.nuevo');
 
-        Route::get('/importar/{importacion}/vincular', \App\Livewire\Mml\VincularAlineacion::class)
-            ->name('mml.importar.vincular');
+            Route::get('/{importacion}/completar', \App\Livewire\Mml\CompletarHuecos::class)
+                ->name('mml.importar.completar');
 
-        Route::get('/importar/{importacion}/calendarizar', \App\Livewire\Mml\CalendarizarMetas::class)
-            ->name('mml.importar.calendarizar');
+            Route::get('/{importacion}/vincular', \App\Livewire\Mml\VincularAlineacion::class)
+                ->name('mml.importar.vincular');
+
+            Route::get('/{importacion}/calendarizar', \App\Livewire\Mml\CalendarizarMetas::class)
+                ->name('mml.importar.calendarizar');
+        });
 
         // Etapas del MML para un programa
         Route::prefix('{programa}')

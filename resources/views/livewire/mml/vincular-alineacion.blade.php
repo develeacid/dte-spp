@@ -1,4 +1,6 @@
 <x-page.container>
+    @include('livewire.mml.partials.stepper-importacion', ['pasoActual' => 3])
+
     <x-page.header title="Vincular Alineación con Cascada de Planes">
         @if ($pasoActual >= $totalPasos - 1)
             <button wire:click="finalizar"

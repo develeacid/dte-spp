@@ -2,6 +2,7 @@
     <x-page.header title="Importar Programa desde MIR" />
 
     <x-page.container>
+        @include('livewire.mml.partials.stepper-importacion', ['pasoActual' => 1])
         {{-- Upload section --}}
         <div class="mb-6">
             <label for="archivo" class="block text-sm font-medium text-gray-700 mb-2">

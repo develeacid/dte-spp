@@ -3,6 +3,8 @@
 </x-slot>
 
 <x-page.container>
+    @include('livewire.mml.partials.stepper-importacion', ['pasoActual' => 4])
+
     <div class="space-y-6">
         @if ($programa)
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
