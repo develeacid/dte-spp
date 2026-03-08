@@ -37,7 +37,11 @@
             <div class="space-y-8">
                 {{-- SECCIÓN: EFECTOS (arriba) --}}
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Efectos</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">
+                        <x-ui.help-label glossary="efecto_directo" class="text-lg font-semibold text-gray-900">
+                            Efectos
+                        </x-ui.help-label>
+                    </h3>
                     <div class="space-y-3">
                         @foreach ($efectosDirectos as $efecto)
                             <div class="ml-4">
@@ -81,7 +85,11 @@
 
                 {{-- SECCIÓN: CAUSAS (abajo) --}}
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Causas</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">
+                        <x-ui.help-label glossary="causa_directa" class="text-lg font-semibold text-gray-900">
+                            Causas
+                        </x-ui.help-label>
+                    </h3>
                     <div class="space-y-3">
                         @foreach ($causasDirectas as $causa)
                             <div class="ml-4">

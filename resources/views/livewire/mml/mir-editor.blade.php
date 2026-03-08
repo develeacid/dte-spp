@@ -22,10 +22,26 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="w-16 px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">Nivel</th>
-                        <th class="w-1/4 px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">Resumen Narrativo</th>
-                        <th class="w-1/3 px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">Indicadores</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">Medios de Verificación</th>
-                        <th class="w-1/6 px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">Supuestos</th>
+                        <th class="w-1/4 px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                            <x-ui.help-label glossary="resumen_narrativo" class="text-xs font-medium uppercase text-gray-500">
+                                Resumen Narrativo
+                            </x-ui.help-label>
+                        </th>
+                        <th class="w-1/3 px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                            <x-ui.help-label glossary="indicador" class="text-xs font-medium uppercase text-gray-500">
+                                Indicadores
+                            </x-ui.help-label>
+                        </th>
+                        <th class="px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                            <x-ui.help-label glossary="medios_verificacion" class="text-xs font-medium uppercase text-gray-500">
+                                Medios de Verificación
+                            </x-ui.help-label>
+                        </th>
+                        <th class="w-1/6 px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                            <x-ui.help-label glossary="supuestos" class="text-xs font-medium uppercase text-gray-500">
+                                Supuestos
+                            </x-ui.help-label>
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">

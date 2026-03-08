@@ -29,9 +29,9 @@
         >
             <div class="space-y-4">
                 <div>
-                    <label for="descripcion" class="block text-sm font-medium text-gray-700">
+                    <x-ui.help-label for="descripcion" glossary="problema_central" class="block text-sm font-medium text-gray-700">
                         Descripción del problema
-                    </label>
+                    </x-ui.help-label>
                     <textarea
                         wire:model="descripcion"
                         id="descripcion"

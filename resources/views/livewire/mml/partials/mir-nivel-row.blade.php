@@ -8,9 +8,11 @@
 <tr class="{{ $colorClass }}" wire:key="nivel-{{ $nivel->id }}">
     {{-- Nivel --}}
     <td class="px-3 py-3 align-top">
-        <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold {{ $tipoEnum?->colorClass() }}">
-            {{ $tipoEnum?->label() }}
-        </span>
+        <x-ui.tooltip :text="config('glosario.' . $tipoEnum?->value, '')" position="right">
+            <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold {{ $tipoEnum?->colorClass() }} cursor-help">
+                {{ $tipoEnum?->label() }}
+            </span>
+        </x-ui.tooltip>
         @if ($deletable)
             <button
                 wire:click="eliminarNivel({{ $nivel->id }})"
@@ -201,7 +203,9 @@
 
                     {{-- Fórmula y Variables --}}
                     <div class="border-t border-gray-100 pt-1">
-                        <span class="text-xs font-medium text-gray-500">Fórmula:</span>
+                        <x-ui.help-label glossary="formula_indicador" class="text-xs font-medium text-gray-500">
+                            Fórmula
+                        </x-ui.help-label>
                         <div class="flex items-center gap-1 mt-1">
                             <input
                                 type="text"
@@ -266,6 +270,9 @@
                     {{-- CREMAA --}}
                     <div class="border-t border-gray-100 pt-1">
                         <div class="flex items-center gap-2">
+                            <x-ui.tooltip :text="config('glosario.cremaa')" position="top">
+                                <span class="text-xs text-gray-400 cursor-help">?</span>
+                            </x-ui.tooltip>
                             <button
                                 wire:click="validarCremaa({{ $indicador->id }})"
                                 wire:loading.attr="disabled"
