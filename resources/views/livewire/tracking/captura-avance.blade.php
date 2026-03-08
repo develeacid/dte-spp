@@ -98,13 +98,39 @@
             {{-- Justification --}}
             @if(in_array($semaforoCalculado, ['amarillo', 'rojo']))
                 <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 class="mb-4 text-lg font-medium text-gray-900">Justificacion</h3>
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-900">Justificacion</h3>
+                        @unless($avance->estaCongelado() || ! $avance->estado->esEditable())
+                            <button
+                                type="button"
+                                wire:click="generarJustificacionIa"
+                                wire:loading.attr="disabled"
+                                wire:target="generarJustificacionIa"
+                                class="inline-flex items-center rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                            >
+                                <div wire:loading wire:target="generarJustificacionIa" class="mr-2">
+                                    <svg class="h-4 w-4 animate-spin text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                    </svg>
+                                </div>
+                                {{ $justificacionIa ? 'Regenerar con IA' : 'Generar con IA' }}
+                            </button>
+                        @endunless
+                    </div>
+
+                    @if($justificacionIa)
+                        <p class="mb-2 text-xs text-gray-400">
+                            Borrador generado por IA. Revise y edite antes de guardar.
+                        </p>
+                    @endif
+
                     <p class="mb-2 text-sm text-gray-500">
                         Es obligatorio proporcionar una justificacion cuando el semaforo es amarillo o rojo.
                     </p>
                     <textarea
                         wire:model="justificacion"
-                        rows="4"
+                        rows="6"
                         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         placeholder="Explique las causas del resultado y las acciones correctivas..."
                         @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif

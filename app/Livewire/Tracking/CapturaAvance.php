@@ -5,6 +5,7 @@ namespace App\Livewire\Tracking;
 use App\Models\Tracking\Avance;
 use App\Models\Tracking\AvanceVariable;
 use App\Services\Tracking\FormulaEvaluatorService;
+use App\Services\Tracking\JustificacionService;
 use App\Services\Tracking\SemaforoService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -23,9 +24,11 @@ class CapturaAvance extends Component
 
     public ?string $justificacion = null;
 
+    public ?string $justificacionIa = null;
+
     public function mount(Avance $avance): void
     {
-        $avance->load(['indicador.variables', 'metaPeriodo', 'variables']);
+        $avance->load(['indicador.variables', 'indicador.mirNivel', 'metaPeriodo', 'variables']);
 
         if (! $avance->estado->esEditable() && ! $avance->estaCongelado()) {
             // Allow viewing but form will be disabled
@@ -33,6 +36,7 @@ class CapturaAvance extends Component
 
         $this->avance = $avance;
         $this->justificacion = $avance->justificacion_final;
+        $this->justificacionIa = $avance->justificacion_ia;
         $this->resultado = $avance->resultado ? (float) $avance->resultado : null;
         $this->semaforoCalculado = $avance->semaforo_calculado;
 
@@ -79,6 +83,34 @@ class CapturaAvance extends Component
             : null;
 
         $this->semaforoCalculado = $semaforoService->calcular($resultado, $indicador, $metaPeriodo);
+
+        // Auto-generate AI justification when semaforo is amarillo or rojo
+        if (in_array($this->semaforoCalculado, ['amarillo', 'rojo']) && ! $this->justificacionIa) {
+            $this->generarJustificacionIa();
+        }
+    }
+
+    public function generarJustificacionIa(): void
+    {
+        if ($this->resultado === null) {
+            return;
+        }
+
+        // Temporarily set resultado on avance for the service
+        $this->avance->resultado = $this->resultado;
+        $this->avance->semaforo_calculado = $this->semaforoCalculado;
+
+        $service = app(JustificacionService::class);
+        $draft = $service->generar($this->avance);
+
+        if ($draft) {
+            $this->justificacionIa = $draft;
+
+            // Pre-fill justificacion if user hasn't written one yet
+            if (empty($this->justificacion)) {
+                $this->justificacion = $draft;
+            }
+        }
     }
 
     public function guardar(): void
@@ -124,6 +156,7 @@ class CapturaAvance extends Component
         $this->avance->update([
             'resultado' => $this->resultado,
             'semaforo_calculado' => $this->semaforoCalculado,
+            'justificacion_ia' => $this->justificacionIa,
             'justificacion_final' => $this->justificacion,
         ]);
 
