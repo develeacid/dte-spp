@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Tracking\EvidenciaController;
+use App\Livewire\Tracking\CapturaAvance;
 use App\Livewire\Tracking\EvidenciaAvance;
 use App\Livewire\Tracking\IndicadoresVencidos;
 use App\Livewire\Tracking\MisIndicadoresPendientes;
@@ -13,6 +14,8 @@ Route::prefix('seguimiento')
             ->name('tracking.pendientes');
         Route::get('/vencidos', IndicadoresVencidos::class)
             ->name('tracking.vencidos');
+        Route::get('/captura/{avance}', CapturaAvance::class)
+            ->name('tracking.captura');
         Route::get('/avance/{avance}/evidencias', EvidenciaAvance::class)
             ->name('tracking.evidencia.index');
         Route::get('/evidencia/{evidencia}/download', [EvidenciaController::class, 'download'])
