@@ -15,5 +15,7 @@ Route::prefix('mml')
                     ->name('mml.etapa2');
                 Route::get('/etapa/3', \App\Livewire\Mml\ArbolObjetivosBuilder::class)
                     ->name('mml.etapa3');
+                Route::get('/etapa/4', \App\Livewire\Mml\SeleccionAlternativas::class)
+                    ->name('mml.etapa4');
             });
     });
