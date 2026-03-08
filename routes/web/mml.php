@@ -13,6 +13,9 @@ Route::prefix('mml')
         Route::get('/importar/{importacion}/completar', \App\Livewire\Mml\CompletarHuecos::class)
             ->name('mml.importar.completar');
 
+        Route::get('/importar/{importacion}/vincular', \App\Livewire\Mml\VincularAlineacion::class)
+            ->name('mml.importar.vincular');
+
         // Etapas del MML para un programa
         Route::prefix('{programa}')
             ->group(function () {
