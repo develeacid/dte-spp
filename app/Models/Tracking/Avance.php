@@ -9,9 +9,24 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Avance extends Model
 {
+    protected static function booted(): void
+    {
+        static::deleting(function (Avance $avance) {
+            // Delete each evidencia (triggers AvanceEvidencia::deleting -> file cleanup)
+            $avance->evidencias->each->delete();
+
+            // Remove the directory for this avance's evidence files
+            $dir = "evidencias/{$avance->id}";
+            if (Storage::disk('local')->exists($dir)) {
+                Storage::disk('local')->deleteDirectory($dir);
+            }
+        });
+    }
+
     protected $fillable = [
         'meta_periodo_id', 'indicador_id', 'resultado',
         'semaforo_calculado', 'semaforo_ajustado',

@@ -4,7 +4,6 @@ namespace App\Livewire\Tracking;
 
 use App\Models\Tracking\Avance;
 use App\Models\Tracking\AvanceEvidencia;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -75,7 +74,6 @@ class EvidenciaAvance extends Component
 
         $evidencia = $this->avance->evidencias()->findOrFail($evidenciaId);
 
-        Storage::disk('local')->delete($evidencia->ruta_archivo);
         $evidencia->delete();
 
         $this->avance->refresh();
