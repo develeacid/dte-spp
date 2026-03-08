@@ -51,4 +51,9 @@ class MirNivel extends Model
     {
         return $this->belongsTo(\App\Models\Team::class);
     }
+
+    public function indicadores(): HasMany
+    {
+        return $this->hasMany(Indicador::class)->orderBy('orden');
+    }
 }
