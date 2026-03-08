@@ -79,9 +79,9 @@ class QaTestingSeederTest extends TestCase
     {
         $this->seed(QaTestingSeeder::class);
 
-        $this->assertDatabaseHas('programas_presupuestarios', ['clave' => 'FER-001']);
-        $this->assertDatabaseHas('programas_presupuestarios', ['clave' => 'DP-002']);
-        $this->assertDatabaseHas('programas_presupuestarios', ['clave' => 'SP-003']);
+        $this->assertDatabaseHas('programa_presupuestarios', ['clave' => 'FER-001']);
+        $this->assertDatabaseHas('programa_presupuestarios', ['clave' => 'DP-002']);
+        $this->assertDatabaseHas('programa_presupuestarios', ['clave' => 'SP-003']);
     }
 
     public function test_programs_belong_to_correct_teams(): void
