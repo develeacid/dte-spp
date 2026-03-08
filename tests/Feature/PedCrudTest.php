@@ -45,6 +45,69 @@ class PedCrudTest extends TestCase
     }
 
     // ============================================
+    // Tests de Páginas GET (formularios)
+    // ============================================
+
+    public function test_puede_acceder_pagina_crear_plan(): void
+    {
+        $user = User::factory()->withPersonalTeam()->create();
+        $user->givePermissionTo('gestionar_catalogos');
+
+        $response = $this->actingAs($user)
+            ->get(route('cascade.ped.plan.create'));
+
+        $response->assertStatus(200)
+            ->assertSeeLivewire('cascade.ped-plan-form');
+    }
+
+    public function test_puede_acceder_pagina_editar_plan(): void
+    {
+        $user = User::factory()->withPersonalTeam()->create();
+        $user->givePermissionTo('gestionar_catalogos');
+
+        $plan = PedPlan::create([
+            'nombre' => 'Plan Test',
+            'periodo_inicio' => 2025,
+            'periodo_fin' => 2030,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('cascade.ped.plan.edit', $plan));
+
+        $response->assertStatus(200)
+            ->assertSeeLivewire('cascade.ped-plan-form');
+    }
+
+    public function test_puede_acceder_pagina_crear_nodo(): void
+    {
+        $user = User::factory()->withPersonalTeam()->create();
+        $user->givePermissionTo('gestionar_catalogos');
+
+        $plan = PedPlan::create([
+            'nombre' => 'Plan Test',
+            'periodo_inicio' => 2025,
+            'periodo_fin' => 2030,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('cascade.ped.nodo.create', ['tipo' => 'eje', 'parent_id' => $plan->id]));
+
+        $response->assertStatus(200)
+            ->assertSeeLivewire('cascade.ped-nodo-form');
+    }
+
+    public function test_crear_nodo_con_tipo_invalido_retorna_400(): void
+    {
+        $user = User::factory()->withPersonalTeam()->create();
+        $user->givePermissionTo('gestionar_catalogos');
+
+        $response = $this->actingAs($user)
+            ->get(route('cascade.ped.nodo.create', ['tipo' => 'invalido', 'parent_id' => 1]));
+
+        $response->assertStatus(400);
+    }
+
+    // ============================================
     // Tests de Plan
     // ============================================
 

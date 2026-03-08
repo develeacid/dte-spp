@@ -58,33 +58,28 @@
 
     </x-forms.section>
 
-    <div class="flex justify-end space-x-3 mb-4">
-        <x-ui.button.secondary href="{{ route('cascade.ped.index') }}">
-            Cancelar
-        </x-ui.button.secondary>
-        <x-ui.button.primary wire:click="save" type="button">
-            {{ $nodoId ? 'Guardar Cambios' : 'Crear ' . $this->getTipoLabel() }}
-        </x-ui.button.primary>
-    </div>
-
-    {{-- Botón Eliminar (solo en edición) + Modal de confirmación --}}
+    {{-- Modal de confirmación de eliminación (solo en edición) --}}
     @if($nodoId)
-        <div class="flex justify-start mt-4" x-data>
-            <x-ui.button.danger
-                @click="$dispatch('open-confirm-nodo-{{ $nodoId }}')">
-                Eliminar {{ $this->getTipoLabel() }}
-            </x-ui.button.danger>
-        </div>
-
         <x-modals.confirm
             id="nodo-{{ $nodoId }}"
             :title="'¿Eliminar ' . $this->getTipoLabel() . '?'"
             message="Esta acción no se puede deshacer. Se eliminarán todos los elementos dependientes."
             confirmText="Sí, eliminar"
         />
-
-        <div x-data
-             x-on:confirmed-nodo-{{ $nodoId }}.window="$wire.delete()">
-        </div>
+        <div x-data x-on:confirmed-nodo-{{ $nodoId }}.window="$wire.delete()"></div>
     @endif
+
+    <x-page.form-footer>
+        @if($nodoId)
+            <x-ui.button.danger x-data @click="$dispatch('open-confirm-nodo-{{ $nodoId }}')" type="button">
+                Eliminar
+            </x-ui.button.danger>
+        @endif
+        <x-ui.button.secondary href="{{ route('cascade.ped.index') }}" type="button">
+            Cancelar
+        </x-ui.button.secondary>
+        <x-ui.button.primary wire:click="save" type="button">
+            {{ $nodoId ? 'Guardar Cambios' : 'Crear ' . $this->getTipoLabel() }}
+        </x-ui.button.primary>
+    </x-page.form-footer>
 </div>

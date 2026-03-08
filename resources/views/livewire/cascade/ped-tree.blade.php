@@ -30,9 +30,7 @@
                         <p class="text-sm text-gray-500">
                             {{ $plan->periodo_inicio }} - {{ $plan->periodo_fin }}
                             @if($plan->activo)
-                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                    Activo
-                                </span>
+                                <x-ui.badge color="green" class="ml-2">Activo</x-ui.badge>
                             @endif
                         </p>
                     </div>
