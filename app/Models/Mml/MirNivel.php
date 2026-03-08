@@ -17,6 +17,8 @@ class MirNivel extends Model
         'resumen_narrativo', 'supuestos', 'arbol_nodo_id', 'orden',
         'ped_objetivo_estrategico_id', 'programa_derivado_objetivo_id',
         'ped_linea_accion_id', 'team_id',
+        'sintaxis_valida', 'sintaxis_observacion',
+        'sintaxis_sugerencia', 'sintaxis_validada_at',
     ];
 
     protected function casts(): array
@@ -24,6 +26,8 @@ class MirNivel extends Model
         return [
             'tipo_nivel' => TipoNivelMir::class,
             'orden' => 'integer',
+            'sintaxis_valida' => 'boolean',
+            'sintaxis_validada_at' => 'datetime',
         ];
     }
 

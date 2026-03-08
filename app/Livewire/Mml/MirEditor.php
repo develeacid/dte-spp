@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Mml;
 
+use App\Contracts\LlmServiceInterface;
 use App\Enums\TipoNivelMir;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MedioVerificacion;
@@ -130,6 +131,47 @@ class MirEditor extends Component
     public function eliminarMedioVerificacion(int $medioId): void
     {
         MedioVerificacion::findOrFail($medioId)->delete();
+    }
+
+    public function validarSintaxis(int $nivelId): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+
+        if (empty($nivel->resumen_narrativo)) {
+            return;
+        }
+
+        $promptView = 'prompts.mir.validar-sintaxis-' . $nivel->tipo_nivel->value;
+        $promptText = view($promptView, ['texto' => $nivel->resumen_narrativo])->render();
+
+        try {
+            $llm = app(LlmServiceInterface::class);
+            $result = $llm->validate($promptText, []);
+
+            $nivel->update([
+                'sintaxis_valida' => $result->isValid,
+                'sintaxis_observacion' => implode('; ', $result->issues),
+                'sintaxis_sugerencia' => $result->suggestion,
+                'sintaxis_validada_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudo validar la sintaxis con IA.');
+        }
+    }
+
+    public function aceptarSugerencia(int $nivelId): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+
+        if ($nivel->sintaxis_sugerencia) {
+            $nivel->update([
+                'resumen_narrativo' => $nivel->sintaxis_sugerencia,
+                'sintaxis_valida' => null,
+                'sintaxis_observacion' => null,
+                'sintaxis_sugerencia' => null,
+                'sintaxis_validada_at' => null,
+            ]);
+        }
     }
 
     public function render()

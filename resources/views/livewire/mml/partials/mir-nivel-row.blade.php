@@ -30,6 +30,51 @@
             rows="3"
             placeholder="Resumen narrativo..."
         >{{ $nivel->resumen_narrativo }}</textarea>
+
+        {{-- Validación sintáctica SHCP --}}
+        <div class="mt-2 space-y-1">
+            <button
+                wire:click="validarSintaxis({{ $nivel->id }})"
+                wire:loading.attr="disabled"
+                wire:target="validarSintaxis({{ $nivel->id }})"
+                class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 hover:bg-gray-200"
+            >
+                <span wire:loading.remove wire:target="validarSintaxis({{ $nivel->id }})">Validar sintaxis</span>
+                <span wire:loading wire:target="validarSintaxis({{ $nivel->id }})">Validando...</span>
+            </button>
+
+            @if ($nivel->sintaxis_validada_at)
+                <div class="flex items-center gap-1">
+                    @if ($nivel->sintaxis_valida)
+                        <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Cumple</span>
+                    @else
+                        <span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">No cumple</span>
+                    @endif
+                </div>
+
+                @if ($nivel->sintaxis_observacion)
+                    <p class="text-xs text-gray-500">{{ $nivel->sintaxis_observacion }}</p>
+                @endif
+
+                @if ($nivel->sintaxis_sugerencia && !$nivel->sintaxis_valida)
+                    <div x-data="{ open: false }" class="text-xs">
+                        <button @click="open = !open" class="text-indigo-600 hover:text-indigo-800">
+                            <span x-show="!open">Ver sugerencia</span>
+                            <span x-show="open">Ocultar sugerencia</span>
+                        </button>
+                        <div x-show="open" x-cloak class="mt-1 rounded border border-indigo-200 bg-indigo-50 p-2">
+                            <p class="text-gray-700">{{ $nivel->sintaxis_sugerencia }}</p>
+                            <button
+                                wire:click="aceptarSugerencia({{ $nivel->id }})"
+                                class="mt-1 rounded bg-indigo-600 px-2 py-0.5 text-white hover:bg-indigo-700"
+                            >
+                                Aceptar sugerencia
+                            </button>
+                        </div>
+                    </div>
+                @endif
+            @endif
+        </div>
     </td>
 
     {{-- Indicadores --}}
