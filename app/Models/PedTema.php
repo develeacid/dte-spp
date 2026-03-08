@@ -6,10 +6,13 @@ use App\Traits\HasEmbedding;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class PedTema extends Model
 {
     use HasEmbedding;
+    use LogsActivity;
 
     protected $fillable = [
         'ped_eje_id',
@@ -23,6 +26,15 @@ class PedTema extends Model
         return [
             'ped_eje_id' => 'integer',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['ped_eje_id', 'numero', 'nombre', 'descripcion'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn (string $eventName) => "PedTema {$eventName}");
     }
 
     public function eje(): BelongsTo
