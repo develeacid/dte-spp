@@ -62,4 +62,9 @@ class Indicador extends Model
     {
         return $this->belongsTo(\App\Models\CatalogoUnidadMedida::class, 'unidad_medida_id');
     }
+
+    public function metasPeriodo(): HasMany
+    {
+        return $this->hasMany(MetaPeriodo::class)->orderBy('periodo');
+    }
 }

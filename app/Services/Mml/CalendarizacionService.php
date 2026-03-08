@@ -1,0 +1,87 @@
+<?php
+
+namespace App\Services\Mml;
+
+use App\Enums\FrecuenciaMedicion;
+use App\Models\Mml\Indicador;
+use App\Models\Mml\MetaPeriodo;
+use App\Models\ProgramaPresupuestario;
+
+class CalendarizacionService
+{
+    /**
+     * Generate proposed period goals for all active indicators of a programa.
+     *
+     * @return array<int, array{indicador_id: int, nombre: string, meta: string, frecuencia: string, periodos: array}>
+     */
+    public function generar(ProgramaPresupuestario $programa): array
+    {
+        $indicadores = Indicador::query()
+            ->whereIn('mir_nivel_id', $programa->mirNiveles()->pluck('id'))
+            ->where('activo_seguimiento', true)
+            ->whereNotNull('meta')
+            ->with('mirNivel')
+            ->orderBy('orden')
+            ->get();
+
+        return $indicadores->map(function (Indicador $indicador) {
+            $numPeriodos = $this->numeroPeriodos($indicador->frecuencia);
+            $metaAnual = (float) $indicador->meta;
+            $metaPorPeriodo = $numPeriodos > 0 ? $metaAnual / $numPeriodos : $metaAnual;
+
+            $periodos = [];
+            for ($i = 1; $i <= $numPeriodos; $i++) {
+                $periodos[] = [
+                    'periodo' => $i,
+                    'meta_periodo' => round($metaPorPeriodo, 4),
+                ];
+            }
+
+            return [
+                'indicador_id' => $indicador->id,
+                'nombre' => $indicador->nombre,
+                'meta' => $indicador->meta,
+                'frecuencia' => $indicador->frecuencia->value,
+                'periodos' => $periodos,
+            ];
+        })->values()->toArray();
+    }
+
+    /**
+     * Persist adjusted period goals for all indicators of a programa.
+     */
+    public function confirmar(ProgramaPresupuestario $programa, array $metasAjustadas, int $ejercicio): void
+    {
+        foreach ($metasAjustadas as $indicadorData) {
+            $indicadorId = $indicadorData['indicador_id'];
+
+            foreach ($indicadorData['periodos'] as $periodoData) {
+                MetaPeriodo::updateOrCreate(
+                    [
+                        'indicador_id' => $indicadorId,
+                        'periodo' => $periodoData['periodo'],
+                        'ejercicio_fiscal' => $ejercicio,
+                    ],
+                    [
+                        'meta_periodo' => $periodoData['meta_periodo'],
+                        'activo' => true,
+                    ]
+                );
+            }
+        }
+    }
+
+    /**
+     * Return the number of periods for a given measurement frequency.
+     */
+    public function numeroPeriodos(FrecuenciaMedicion $frecuencia): int
+    {
+        return match ($frecuencia) {
+            FrecuenciaMedicion::MENSUAL => 12,
+            FrecuenciaMedicion::TRIMESTRAL => 4,
+            FrecuenciaMedicion::SEMESTRAL => 2,
+            FrecuenciaMedicion::ANUAL => 1,
+            FrecuenciaMedicion::BIANUAL, FrecuenciaMedicion::SEXENAL => 1,
+        };
+    }
+}

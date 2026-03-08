@@ -16,6 +16,9 @@ Route::prefix('mml')
         Route::get('/importar/{importacion}/vincular', \App\Livewire\Mml\VincularAlineacion::class)
             ->name('mml.importar.vincular');
 
+        Route::get('/importar/{importacion}/calendarizar', \App\Livewire\Mml\CalendarizarMetas::class)
+            ->name('mml.importar.calendarizar');
+
         // Etapas del MML para un programa
         Route::prefix('{programa}')
             ->group(function () {
