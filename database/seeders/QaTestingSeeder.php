@@ -100,8 +100,11 @@ class QaTestingSeeder extends Seeder
             $user = User::firstOrCreate(
                 ['email' => $data['email']],
                 [
-                    'name'     => $data['name'],
-                    'password' => $password,
+                    'name'              => $data['name'],
+                    'password'          => $password,
+                    'email_verified_at' => now(),
+                    'activated_at'      => now(),
+                    'active'            => true,
                 ]
             );
 

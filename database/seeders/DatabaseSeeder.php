@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             PedSeeder::class,
             ProgramasDerivadosSeeder::class,  // Programas derivados del PED
             AnexosTransversalesSeeder::class, // Catálogo Anexos Transversales
+            QaTestingSeeder::class,           // Datos de prueba QA
         ]);
     }
 }

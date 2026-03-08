@@ -18,6 +18,8 @@ class AdminUserSeeder extends Seeder
                 'name'              => 'Ele Leader',
                 'password'          => Hash::make('LseRdlP0P'),
                 'email_verified_at' => now(),
+                'activated_at'      => now(),
+                'active'            => true,
             ]
         );
 
