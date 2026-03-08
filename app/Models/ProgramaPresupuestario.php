@@ -67,6 +67,11 @@ class ProgramaPresupuestario extends Model
         return $this->arboles()->where('tipo', 'objetivos')->first();
     }
 
+    public function alternativas(): HasMany
+    {
+        return $this->hasMany(\App\Models\Mml\Alternativa::class, 'programa_presupuestario_id');
+    }
+
     // --- Scopes ---
 
     public function scopeParaTeam(Builder $query, int $teamId): Builder
