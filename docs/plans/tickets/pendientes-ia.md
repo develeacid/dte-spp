@@ -6,7 +6,7 @@ Issues que dependen del API key de IA. Implementados con mock/comportamiento deg
 
 ## S7-T5: Validación de lógica vertical al cierre
 
-**Estado mock:** Pendiente de implementación
+**Estado mock:** Mock implementado
 **Sprint:** 7
 **Rama:** `feat/S7-T5-logica-vertical-cierre`
 

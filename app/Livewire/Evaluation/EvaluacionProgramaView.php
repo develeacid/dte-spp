@@ -189,6 +189,7 @@ class EvaluacionProgramaView extends Component
             'comparativa' => $this->comparativa(),
             'desviaciones' => $this->desviaciones(),
             'cronicos' => $this->indicadoresCronicos(),
+            'analisisIa' => $this->evaluacionModel->analisis_ia,
         ]);
     }
 
