@@ -199,6 +199,50 @@
                         </select>
                     </div>
 
+                    {{-- Fórmula y Variables --}}
+                    <div class="border-t border-gray-100 pt-1">
+                        <span class="text-xs font-medium text-gray-500">Fórmula:</span>
+                        <div class="flex items-center gap-1 mt-1">
+                            <input
+                                type="text"
+                                value="{{ $indicador->formula_texto }}"
+                                wire:change="guardarFormulaTexto({{ $indicador->id }}, $event.target.value)"
+                                class="flex-1 rounded border-gray-300 text-xs"
+                                placeholder="Ej: (A / B) x 100"
+                            />
+                            <button
+                                wire:click="extraerVariables({{ $indicador->id }})"
+                                wire:loading.attr="disabled"
+                                wire:target="extraerVariables({{ $indicador->id }})"
+                                class="shrink-0 rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 hover:bg-gray-200"
+                            >
+                                <span wire:loading.remove wire:target="extraerVariables({{ $indicador->id }})">Extraer variables</span>
+                                <span wire:loading wire:target="extraerVariables({{ $indicador->id }})">Extrayendo...</span>
+                            </button>
+                        </div>
+
+                        @if ($indicador->variables->count() > 0)
+                            <div class="mt-1 space-y-1">
+                                @foreach ($indicador->variables as $variable)
+                                    <div class="flex items-center gap-1" wire:key="var-{{ $variable->id }}">
+                                        <span class="w-6 text-center text-xs font-bold text-gray-700">{{ $variable->simbolo }}</span>
+                                        <input
+                                            type="text"
+                                            value="{{ $variable->nombre }}"
+                                            wire:change="guardarVariable({{ $variable->id }}, { simbolo: '{{ $variable->simbolo }}', nombre: $event.target.value })"
+                                            class="flex-1 rounded border-gray-300 text-xs"
+                                            placeholder="Nombre de variable"
+                                        />
+                                        <button wire:click="eliminarVariable({{ $variable->id }})" class="text-red-400 hover:text-red-600">
+                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                        <button wire:click="agregarVariable({{ $indicador->id }})" class="mt-1 text-xs text-blue-500 hover:text-blue-700">+ Variable</button>
+                    </div>
+
                     {{-- Medios de Verificación inline --}}
                     <div class="border-t border-gray-100 pt-1">
                         <span class="text-xs font-medium text-gray-500">Medios:</span>
