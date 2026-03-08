@@ -21,7 +21,7 @@ class Indicador extends Model
         'rango_verde_min', 'rango_verde_max',
         'rango_amarillo_min', 'rango_amarillo_max',
         'rango_rojo_min', 'rango_rojo_max',
-        'unidad_medida_id', 'orden',
+        'unidad_medida_id', 'orden', 'activo_seguimiento',
     ];
 
     protected function casts(): array
@@ -34,6 +34,7 @@ class Indicador extends Model
             'linea_base' => 'decimal:4',
             'meta' => 'decimal:4',
             'orden' => 'integer',
+            'activo_seguimiento' => 'boolean',
         ];
     }
 

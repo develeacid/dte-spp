@@ -10,6 +10,9 @@ Route::prefix('mml')
         Route::get('/importar', \App\Livewire\Mml\ImportarPrograma::class)
             ->name('mml.importar');
 
+        Route::get('/importar/{importacion}/completar', \App\Livewire\Mml\CompletarHuecos::class)
+            ->name('mml.importar.completar');
+
         // Etapas del MML para un programa
         Route::prefix('{programa}')
             ->group(function () {
