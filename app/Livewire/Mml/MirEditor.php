@@ -15,6 +15,7 @@ use App\Services\Embeddings\SemanticSearchService;
 use App\Services\Mml\IndicadorReglasService;
 use App\Services\Mml\MirLogicaValidacionService;
 use App\Services\Mml\MirPrellenadoService;
+use App\Services\Mml\MirSnapshotService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -28,6 +29,8 @@ class MirEditor extends Component
     public bool $validacionLogicaEjecutada = false;
     public array $sugerenciasAlineacion = [];
     public ?int $nivelAlineacionActivo = null;
+    public string $snapshotEtiqueta = '';
+    public bool $mostrarVersiones = false;
 
     public function mount(ProgramaPresupuestario $programa): void
     {
@@ -370,6 +373,34 @@ class MirEditor extends Component
         }
     }
 
+    public function crearSnapshot(): void
+    {
+        if (empty($this->snapshotEtiqueta)) {
+            return;
+        }
+
+        $service = app(MirSnapshotService::class);
+        $service->crear($this->programa, $this->snapshotEtiqueta, auth()->id());
+
+        $this->snapshotEtiqueta = '';
+        session()->flash('success', 'Snapshot creado correctamente.');
+    }
+
+    public function restaurarVersion(int $versionId): void
+    {
+        $version = $this->programa->mirVersiones()->findOrFail($versionId);
+
+        $service = app(MirSnapshotService::class);
+        $service->restaurar($version);
+
+        session()->flash('success', 'MIR restaurada desde snapshot.');
+    }
+
+    public function toggleVersiones(): void
+    {
+        $this->mostrarVersiones = !$this->mostrarVersiones;
+    }
+
     public function render()
     {
         $fin = $this->programa->mirNiveles()
@@ -398,12 +429,17 @@ class MirEditor extends Component
 
         $unidadesMedida = CatalogoUnidadMedida::orderBy('nombre')->get();
 
+        $versiones = $this->mostrarVersiones
+            ? $this->programa->mirVersiones()->with('creador')->latest()->get()
+            : collect();
+
         return view('livewire.mml.mir-editor', [
             'fin' => $fin,
             'proposito' => $proposito,
             'componentes' => $componentes,
             'reglasMap' => $reglasMap,
             'unidadesMedida' => $unidadesMedida,
+            'versiones' => $versiones,
         ]);
     }
 }
