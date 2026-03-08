@@ -17,7 +17,6 @@
 | Método | URI | Controlador | Nombre |
 |--------|-----|-------------|--------|
 | GET | `/` | Closure → welcome | — |
-| GET | `/branding` | Closure → branding.index | branding.index |
 | GET | `/activar/{token}` | OnboardingController@showSetPassword | activar.show |
 | POST | `/activar/{token}/password` | OnboardingController@storePassword | activar.password |
 | GET | `/activar/{token}/2fa` | OnboardingController@showSetup2fa | activar.2fa |

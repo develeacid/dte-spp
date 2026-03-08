@@ -6,10 +6,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/branding', function () {
-    return view('branding.index');
-})->name('branding.index');
-
 // Onboarding — activación de cuenta (sin auth, usa token)
 Route::prefix('activar')->name('activar.')->group(function () {
     Route::get('/{token}', [\App\Http\Controllers\OnboardingController::class, 'showSetPassword'])->name('show');
