@@ -115,7 +115,7 @@ class DashboardTest extends TestCase
 
         $this->actingAs($this->admin);
         Livewire::test(Dashboard::class)
-            ->assertSee('Semáforo Global')
+            ->assertSee('Semaforo Global')
             ->assertSee('Avance por Programa')
             ->assertSee('Tendencia de Captura');
     }
