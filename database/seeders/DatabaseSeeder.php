@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             PndSeeder::class,                 // Catálogo Plan Nacional de Desarrollo
             PedSeeder::class,
             ProgramasDerivadosSeeder::class,  // Programas derivados del PED
+            AnexosTransversalesSeeder::class, // Catálogo Anexos Transversales
         ]);
     }
 }

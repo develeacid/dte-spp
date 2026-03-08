@@ -72,4 +72,12 @@ class Indicador extends Model
     {
         return $this->hasMany(\App\Models\Tracking\Avance::class);
     }
+
+    public function anexosTransversales(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Models\Evaluation\AnexoTransversal::class,
+            'indicador_anexo_transversal'
+        );
+    }
 }
