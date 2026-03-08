@@ -1,5 +1,5 @@
 <x-app-layout>
-    <x-page.container title="Dashboard" subtitle="Sistema de Planeación y Programación 2026">
+    <x-page.container title="Dashboard" subtitle="SPP — Ejercicio Fiscal 2026">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {{-- Placeholder widgets — will be populated in Sprint 10 --}}
             @can('revisar_avance')
