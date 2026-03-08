@@ -8,6 +8,7 @@ $colors = [
     'red'    => 'bg-red-100 text-red-800',
     'gray'   => 'bg-gray-100 text-gray-800',
     'purple' => 'bg-purple-100 text-purple-800',
+    'brand'  => 'bg-brand-light text-brand-dark',
 ];
 $colorClass = $colors[$color] ?? $colors['blue'];
 @endphp
