@@ -17,5 +17,7 @@ Route::prefix('mml')
                     ->name('mml.etapa3');
                 Route::get('/etapa/4', \App\Livewire\Mml\SeleccionAlternativas::class)
                     ->name('mml.etapa4');
+                Route::get('/etapa/5/mir', \App\Livewire\Mml\MirEditor::class)
+                    ->name('mml.mir');
             });
     });
