@@ -373,6 +373,37 @@ class MirEditor extends Component
         }
     }
 
+    public function asignarUrCoadyuvante(int $nivelId, ?int $teamId): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+
+        if (!in_array($nivel->tipo_nivel, [TipoNivelMir::COMPONENTE, TipoNivelMir::ACTIVIDAD])) {
+            return;
+        }
+
+        $oldTeamId = $nivel->team_id;
+        $nivel->update(['team_id' => $teamId ?: null]);
+
+        if ($teamId) {
+            $this->programa->equipos()->syncWithoutDetaching([
+                $teamId => ['rol' => 'coadyuvante'],
+            ]);
+        }
+
+        // If old UR was removed, check if it still has other niveles
+        if ($oldTeamId && $oldTeamId !== $teamId) {
+            $otrosNiveles = MirNivel::where('programa_presupuestario_id', $this->programa->id)
+                ->where('team_id', $oldTeamId)
+                ->exists();
+
+            if (!$otrosNiveles) {
+                $this->programa->equipos()
+                    ->wherePivot('rol', 'coadyuvante')
+                    ->detach($oldTeamId);
+            }
+        }
+    }
+
     public function crearSnapshot(): void
     {
         if (empty($this->snapshotEtiqueta)) {
@@ -413,7 +444,7 @@ class MirEditor extends Component
 
         $componentes = $this->programa->mirNiveles()
             ->where('tipo_nivel', TipoNivelMir::COMPONENTE->value)
-            ->with(['actividades.indicadores.mediosVerificacion', 'actividades.indicadores.cremaaValidacion', 'actividades.indicadores.variables', 'actividades.pedObjetivoEstrategico', 'actividades.pedLineaAccion', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'pedObjetivoEstrategico', 'pedLineaAccion'])
+            ->with(['actividades.indicadores.mediosVerificacion', 'actividades.indicadores.cremaaValidacion', 'actividades.indicadores.variables', 'actividades.pedObjetivoEstrategico', 'actividades.pedLineaAccion', 'actividades.team', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'pedObjetivoEstrategico', 'pedLineaAccion', 'team'])
             ->orderBy('orden')
             ->get();
 
@@ -433,6 +464,8 @@ class MirEditor extends Component
             ? $this->programa->mirVersiones()->with('creador')->latest()->get()
             : collect();
 
+        $teams = \App\Models\Team::orderBy('name')->get();
+
         return view('livewire.mml.mir-editor', [
             'fin' => $fin,
             'proposito' => $proposito,
@@ -440,6 +473,7 @@ class MirEditor extends Component
             'reglasMap' => $reglasMap,
             'unidadesMedida' => $unidadesMedida,
             'versiones' => $versiones,
+            'teams' => $teams,
         ]);
     }
 }

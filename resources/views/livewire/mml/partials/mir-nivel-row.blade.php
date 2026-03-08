@@ -344,10 +344,26 @@
             placeholder="Supuestos..."
         >{{ $nivel->supuestos }}</textarea>
 
-        {{-- UR Coadyuvante placeholder (S4-T12) --}}
+        {{-- UR Coadyuvante --}}
         @if (in_array($tipoEnum, [\App\Enums\TipoNivelMir::COMPONENTE, \App\Enums\TipoNivelMir::ACTIVIDAD]))
-            <div class="mt-2 rounded border border-dashed border-gray-300 p-2 text-xs text-gray-400">
-                UR Coadyuvante (pendiente)
+            <div class="mt-2">
+                <label class="text-xs font-medium text-gray-500">UR Coadyuvante:</label>
+                <select
+                    wire:change="asignarUrCoadyuvante({{ $nivel->id }}, $event.target.value || null)"
+                    class="mt-0.5 w-full rounded border-gray-300 text-xs"
+                >
+                    <option value="">— UR Coordinadora —</option>
+                    @foreach ($teams ?? [] as $team)
+                        <option value="{{ $team->id }}" @selected($nivel->team_id === $team->id)>
+                            {{ $team->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @if ($nivel->team)
+                    <span class="mt-0.5 inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700">
+                        {{ $nivel->team->name }}
+                    </span>
+                @endif
             </div>
         @endif
     </td>
