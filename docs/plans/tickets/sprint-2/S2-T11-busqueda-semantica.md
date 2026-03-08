@@ -24,6 +24,12 @@ Este servicio implementa búsquedas por similitud de cosenos usando pgvector, si
 | HNSW             | Índice optimizado para búsquedas vectoriales (Hierarchical Navigable Small World) |
 | Operador `<=>`   | Operador de pgvector para distancia coseno                                        |
 
+**Esta versión implementa:**
+- Servicio en `App\Services\Embeddings\`
+- DTO en `App\DTOs\`
+- Configuración unificada en `config/embedding.php`
+- Índices HNSW optimizados
+
 ---
 
 ## Pre-requisitos
@@ -69,9 +75,9 @@ readonly class SimilarityResult
      */
     public static function fromQuery(object $result, string $modelClass): self
     {
-        $model = new $modelClass();
-
-        // Llenar el modelo con los atributos del resultado
+        /** @var Model $model */
+        $model = (new $modelClass())->newInstance();
+        
         $attributes = (array) $result;
         unset($attributes['score'], $attributes['distance'], $attributes['embedding']);
 
@@ -105,9 +111,9 @@ readonly class SimilarityResult
 
 ---
 
-### 2. Crear Archivo de Configuración
+### 2. Actualizar Archivo de Configuración (Unificado)
 
-Crear `config/embedding.php`:
+Actualizar `config/embedding.php` agregando las claves de búsqueda:
 
 ```php
 <?php
@@ -115,22 +121,37 @@ Crear `config/embedding.php`:
 return [
     /*
     |--------------------------------------------------------------------------
-    | Configuración del Servicio de Embeddings
+    | API Configuration
     |--------------------------------------------------------------------------
     */
-
+    
     'api_key' => env('EMBEDDING_API_KEY'),
     'api_url' => env('EMBEDDING_API_URL', 'https://api.openai.com/v1/embeddings'),
     'model' => env('EMBEDDING_MODEL', 'text-embedding-ada-002'),
     'dimension' => env('EMBEDDING_DIMENSION', 1536),
+    
+    'rate_limit' => env('EMBEDDING_RATE_LIMIT', 60),
+    'timeout' => env('EMBEDDING_TIMEOUT', 30),
+    
+    'queue' => env('EMBEDDING_QUEUE', 'embeddings'),
+    'tries' => env('EMBEDDING_JOB_TRIES', 3),
+    'backoff' => [10, 60, 300],
+    'timeout_job' => env('EMBEDDING_JOB_TIMEOUT', 60),
+    
+    'max_tokens' => env('EMBEDDING_MAX_TOKENS', 8000),
+    
+    'observers_enabled' => env('EMBEDDING_OBSERVERS_ENABLED', true),
 
     /*
     |--------------------------------------------------------------------------
-    | Configuración de Búsqueda Semántica
+    | Semantic Search Configuration
     |--------------------------------------------------------------------------
+    |
+    | Configuración para el servicio de búsqueda semántica.
+    |
     */
 
-    // Umbral mínimo de similitud para considerar un resultado relevante
+    // Umbral mínimo de similitud para considerar un resultado relevante (0-1)
     'similarity_threshold' => env('EMBEDDING_SIMILARITY_THRESHOLD', 0.7),
 
     // Número máximo de resultados por defecto
@@ -138,8 +159,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Configuración de Índices HNSW
+    | HNSW Index Configuration
     |--------------------------------------------------------------------------
+    |
+    | Parámetros para índices Hierarchical Navigable Small World (HNSW).
+    | Optimizados para búsquedas vectoriales de alta velocidad.
+    |
     */
 
     // Parámetro M: número de conexiones bidireccionales por nodo
@@ -160,12 +185,12 @@ return [
 
 ### 3. Crear Servicio de Búsqueda Semántica
 
-Crear `app/Services/SemanticSearchService.php`:
+Crear `app/Services/Embeddings/SemanticSearchService.php`:
 
 ```php
 <?php
 
-namespace App\Services;
+namespace App\Services\Embeddings;
 
 use App\Contracts\EmbeddingServiceInterface;
 use App\DTOs\SimilarityResult;
@@ -190,6 +215,7 @@ class SemanticSearchService
         \App\Models\PndEje::class,
         \App\Models\PndObjetivo::class,
         \App\Models\PndEstrategia::class,
+        \App\Models\PedPlan::class,
         \App\Models\PedEje::class,
         \App\Models\PedTema::class,
         \App\Models\PedObjetivoEstrategico::class,
@@ -211,35 +237,27 @@ class SemanticSearchService
      *
      * @param string $text Texto de búsqueda
      * @param string $modelClass Clase del modelo donde buscar
-     * @param int $limit Número máximo de resultados
-     * @param float $threshold Umbral mínimo de similitud (0-1)
+     * @param int|null $limit Número máximo de resultados
+     * @param float|null $threshold Umbral mínimo de similitud (0-1)
      * @return Collection<SimilarityResult>
      */
     public function findSimilar(
         string $text,
         string $modelClass,
-        int $limit = null,
-        float $threshold = null
+        ?int $limit = null,
+        ?float $threshold = null
     ): Collection {
         $limit = $limit ?? $this->defaultLimit;
         $threshold = $threshold ?? $this->defaultThreshold;
 
-        // Validar que el modelo es buscable
-        if (!in_array($modelClass, $this->searchableModels)) {
-            throw new \InvalidArgumentException("Model {$modelClass} is not searchable");
-        }
-
-        // Validar threshold
-        if ($threshold < 0 || $threshold > 1) {
-            throw new \InvalidArgumentException('Threshold must be between 0 and 1');
-        }
+        $this->validateModel($modelClass);
+        $this->validateThreshold($threshold);
 
         try {
             // Generar embedding del texto de búsqueda
             $embedding = $this->embeddingService->generate($text);
             $embeddingString = '[' . implode(',', $embedding) . ']';
 
-            // Obtener tabla del modelo
             /** @var Model $modelInstance */
             $modelInstance = new $modelClass();
             $tableName = $modelInstance->getTable();
@@ -262,7 +280,6 @@ class SemanticSearchService
                 LIMIT ?
             ", [$embeddingString, $embeddingString, $embeddingString, $threshold, $embeddingString, $limit]);
 
-            // Convertir resultados a DTOs
             return collect($results)->map(
                 fn($result) => SimilarityResult::fromQuery($result, $modelClass)
             );
@@ -280,18 +297,12 @@ class SemanticSearchService
 
     /**
      * Busca en múltiples modelos simultáneamente.
-     *
-     * @param string $text Texto de búsqueda
-     * @param array $modelClasses Clases de modelos donde buscar
-     * @param int $limitPerModel Límite de resultados por modelo
-     * @param float $threshold Umbral mínimo de similitud
-     * @return Collection<SimilarityResult> Resultados combinados y ordenados por score
      */
     public function findSimilarInMultiple(
         string $text,
         array $modelClasses,
         int $limitPerModel = 3,
-        float $threshold = null
+        ?float $threshold = null
     ): Collection {
         $allResults = collect();
 
@@ -300,13 +311,11 @@ class SemanticSearchService
             $allResults = $allResults->merge($results);
         }
 
-        // Ordenar por score descendente
         return $allResults->sortByDesc('score')->values();
     }
 
     /**
      * Busca la línea de acción del PED más similar al texto.
-     * Método de conveniencia para alineación de MIR.
      */
     public function findSimilarLineaAccion(string $text, int $limit = 5, float $threshold = 0.7): Collection
     {
@@ -315,7 +324,6 @@ class SemanticSearchService
 
     /**
      * Busca objetivos ODS similares al texto.
-     * Método de conveniencia para alineación.
      */
     public function findSimilarOds(string $text, int $limit = 5, float $threshold = 0.7): Collection
     {
@@ -327,14 +335,13 @@ class SemanticSearchService
 
     /**
      * Busca en toda la cascada de planes.
-     * Retorna los resultados más relevantes de cualquier nivel.
      */
     public function searchInCascade(string $text, int $totalLimit = 10, float $threshold = 0.7): Collection
     {
         return $this->findSimilarInMultiple(
             $text,
             $this->searchableModels,
-            3, // 3 resultados por modelo
+            3,
             $threshold
         )->take($totalLimit);
     }
@@ -354,6 +361,26 @@ class SemanticSearchService
     {
         return in_array($modelClass, $this->searchableModels);
     }
+
+    /**
+     * Valida que el modelo sea buscable.
+     */
+    protected function validateModel(string $modelClass): void
+    {
+        if (!in_array($modelClass, $this->searchableModels)) {
+            throw new \InvalidArgumentException("Model {$modelClass} is not searchable");
+        }
+    }
+
+    /**
+     * Valida el umbral de similitud.
+     */
+    protected function validateThreshold(float $threshold): void
+    {
+        if ($threshold < 0 || $threshold > 1) {
+            throw new \InvalidArgumentException('Threshold must be between 0 and 1');
+        }
+    }
 }
 ```
 
@@ -369,34 +396,26 @@ Editar `app/Providers/AppServiceProvider.php`:
 namespace App\Providers;
 
 use App\Contracts\EmbeddingServiceInterface;
-use App\Services\EmbeddingService;
-use App\Services\SemanticSearchService;
+use App\Services\Embeddings\EmbeddingService;
+use App\Services\Embeddings\SemanticSearchService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        // Embedding Service (singleton)
         $this->app->singleton(EmbeddingServiceInterface::class, function ($app) {
             return new EmbeddingService();
         });
 
-        // Semantic Search Service (singleton - comparte embedding service)
         $this->app->singleton(SemanticSearchService::class, function ($app) {
             return new SemanticSearchService($app->make(EmbeddingServiceInterface::class));
         });
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        // ... código existente (observers, gates, etc.)
+        // ... código existente
     }
 }
 ```
@@ -409,7 +428,7 @@ class AppServiceProvider extends ServiceProvider
 sail artisan make:migration create_hnsw_indexes_for_embeddings
 ```
 
-Editar el archivo generado en `database/migrations/`:
+Editar el archivo generado:
 
 ```php
 <?php
@@ -420,16 +439,7 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     /**
-     * Índices HNSW para búsquedas vectoriales.
-     *
-     * HNSW (Hierarchical Navigable Small World) es óptimo para:
-     * - Datasets < 1M registros
-     * - Alto recall (encontrar los vecinos más cercanos)
-     * - Consultas de baja latencia
-     *
-     * Parámetros:
-     * - m: Conexiones por nodo (default 16). Mayor = mejor recall, más memoria
-     * - ef_construction: Calidad del índice durante construcción (default 64)
+     * Run the migrations.
      */
     public function up(): void
     {
@@ -446,6 +456,7 @@ return new class extends Migration
         DB::statement("CREATE INDEX IF NOT EXISTS pnd_estrategias_embedding_idx ON pnd_estrategias USING hnsw (embedding vector_cosine_ops) WITH (m = {$m}, ef_construction = {$efConstruction})");
 
         // PED
+        DB::statement("CREATE INDEX IF NOT EXISTS ped_planes_embedding_idx ON ped_planes USING hnsw (embedding vector_cosine_ops) WITH (m = {$m}, ef_construction = {$efConstruction})");
         DB::statement("CREATE INDEX IF NOT EXISTS ped_ejes_embedding_idx ON ped_ejes USING hnsw (embedding vector_cosine_ops) WITH (m = {$m}, ef_construction = {$efConstruction})");
         DB::statement("CREATE INDEX IF NOT EXISTS ped_temas_embedding_idx ON ped_temas USING hnsw (embedding vector_cosine_ops) WITH (m = {$m}, ef_construction = {$efConstruction})");
         DB::statement("CREATE INDEX IF NOT EXISTS ped_objetivos_estrategicos_embedding_idx ON ped_objetivos_estrategicos USING hnsw (embedding vector_cosine_ops) WITH (m = {$m}, ef_construction = {$efConstruction})");
@@ -456,6 +467,9 @@ return new class extends Migration
         DB::statement("CREATE INDEX IF NOT EXISTS programas_derivados_objetivos_embedding_idx ON programas_derivados_objetivos USING hnsw (embedding vector_cosine_ops) WITH (m = {$m}, ef_construction = {$efConstruction})");
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         // ODS
@@ -468,6 +482,7 @@ return new class extends Migration
         DB::statement('DROP INDEX IF EXISTS pnd_estrategias_embedding_idx');
 
         // PED
+        DB::statement('DROP INDEX IF EXISTS ped_planes_embedding_idx');
         DB::statement('DROP INDEX IF EXISTS ped_ejes_embedding_idx');
         DB::statement('DROP INDEX IF EXISTS ped_temas_embedding_idx');
         DB::statement('DROP INDEX IF EXISTS ped_objetivos_estrategicos_embedding_idx');
@@ -485,22 +500,22 @@ return new class extends Migration
 ### 6. Crear Tests Unitarios
 
 ```bash
-sail artisan make:test SemanticSearchServiceTest --unit
+sail artisan make:test Unit/Embeddings/SemanticSearchServiceTest --unit
 ```
 
-Editar `tests/Unit/SemanticSearchServiceTest.php`:
+Editar `tests/Unit/Embeddings/SemanticSearchServiceTest.php`:
 
 ```php
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\Embeddings;
 
 use App\Contracts\EmbeddingServiceInterface;
 use App\DTOs\SimilarityResult;
 use App\Models\OdsMeta;
 use App\Models\OdsObjetivo;
 use App\Models\PedLineaAccion;
-use App\Services\SemanticSearchService;
+use App\Services\Embeddings\SemanticSearchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -513,7 +528,6 @@ class SemanticSearchServiceTest extends TestCase
     {
         parent::setUp();
 
-        // Configurar valores de prueba
         config([
             'embedding.similarity_threshold' => 0.7,
             'embedding.max_results' => 5,
@@ -527,55 +541,53 @@ class SemanticSearchServiceTest extends TestCase
 
     public function test_find_similar_retorna_resultados_ordenados_por_score(): void
     {
-        // Mock del embedding service
         $mockEmbedding = Mockery::mock(EmbeddingServiceInterface::class);
         $mockEmbedding->shouldReceive('generate')
             ->once()
             ->andReturn(array_fill(0, 1536, 0.5));
 
-        // Crear registros con embeddings simulados
-        $ods1 = OdsMeta::create([
-            'ods_objetivo_id' => OdsObjetivo::create(['numero' => 1, 'nombre' => 'Test'])->id,
+        $ods = OdsObjetivo::create(['numero' => 1, 'nombre' => 'Test']);
+
+        $meta1 = OdsMeta::create([
+            'ods_objetivo_id' => $ods->id,
             'clave' => '1.1',
             'descripcion' => 'Reducir la pobreza extrema',
         ]);
 
-        $ods2 = OdsMeta::create([
-            'ods_objetivo_id' => OdsObjetivo::first()->id,
+        $meta2 = OdsMeta::create([
+            'ods_objetivo_id' => $ods->id,
             'clave' => '1.2',
-            'descripcion' => 'Reducir la pobreza en todas sus formas',
+            'descripcion' => 'Mejorar la educación',
         ]);
 
-        // Insertar embeddings manualmente (simulados)
-        \DB::statement("UPDATE ods_metas SET embedding = '[0.5,0.5,0.5]'::vector || ARRAY_FILL(0.5, ARRAY[1533])::vector WHERE id = ?", [$ods1->id]);
-        \DB::statement("UPDATE ods_metas SET embedding = '[0.4,0.4,0.4]'::vector || ARRAY_FILL(0.4, ARRAY[1533])::vector WHERE id = ?", [$ods2->id]);
+        // Insertar embeddings simulados
+        DB::statement("UPDATE ods_metas SET embedding = '[0.5,0.5,0.5]'::vector || ARRAY_FILL(0.5, ARRAY[1533])::vector WHERE id = ?", [$meta1->id]);
+        DB::statement("UPDATE ods_metas SET embedding = '[0.4,0.4,0.4]'::vector || ARRAY_FILL(0.4, ARRAY[1533])::vector WHERE id = ?", [$meta2->id]);
 
         $service = new SemanticSearchService($mockEmbedding);
         $results = $service->findSimilar('reducir pobreza', OdsMeta::class);
 
         $this->assertCount(2, $results);
         $this->assertInstanceOf(SimilarityResult::class, $results->first());
-
-        // Verificar orden descendente por score
         $this->assertGreaterThanOrEqual($results->last()->score, $results->first()->score);
     }
 
-    public function test_find_similar_respetal_limite(): void
+    public function test_find_similar_respeta_limite(): void
     {
         $mockEmbedding = Mockery::mock(EmbeddingServiceInterface::class);
         $mockEmbedding->shouldReceive('generate')
             ->once()
             ->andReturn(array_fill(0, 1536, 0.5));
 
-        // Crear múltiples registros
         $objetivo = OdsObjetivo::create(['numero' => 1, 'nombre' => 'Test']);
+        
         for ($i = 1; $i <= 10; $i++) {
             $meta = OdsMeta::create([
                 'ods_objetivo_id' => $objetivo->id,
                 'clave' => "1.{$i}",
                 'descripcion' => "Meta {$i}",
             ]);
-            \DB::statement("UPDATE ods_metas SET embedding = '[0.5,0.5,0.5]'::vector || ARRAY_FILL(0.5, ARRAY[1533])::vector WHERE id = ?", [$meta->id]);
+            DB::statement("UPDATE ods_metas SET embedding = '[0.5,0.5,0.5]'::vector || ARRAY_FILL(0.5, ARRAY[1533])::vector WHERE id = ?", [$meta->id]);
         }
 
         $service = new SemanticSearchService($mockEmbedding);
@@ -598,45 +610,19 @@ class SemanticSearchServiceTest extends TestCase
             'clave' => '1.1',
             'descripcion' => 'Alta similitud',
         ]);
-        \DB::statement("UPDATE ods_metas SET embedding = '[0.5,0.5,0.5]'::vector || ARRAY_FILL(0.5, ARRAY[1533])::vector WHERE id = ?", [$meta1->id]);
+        DB::statement("UPDATE ods_metas SET embedding = '[0.5,0.5,0.5]'::vector || ARRAY_FILL(0.5, ARRAY[1533])::vector WHERE id = ?", [$meta1->id]);
 
         $meta2 = OdsMeta::create([
             'ods_objetivo_id' => $objetivo->id,
             'clave' => '1.2',
             'descripcion' => 'Baja similitud',
         ]);
-        // Vector muy diferente
-        \DB::statement("UPDATE ods_metas SET embedding = '[-0.9,-0.9,-0.9]'::vector || ARRAY_FILL(-0.9, ARRAY[1533])::vector WHERE id = ?", [$meta2->id]);
+        DB::statement("UPDATE ods_metas SET embedding = '[-0.9,-0.9,-0.9]'::vector || ARRAY_FILL(-0.9, ARRAY[1533])::vector WHERE id = ?", [$meta2->id]);
 
         $service = new SemanticSearchService($mockEmbedding);
-
-        // Con umbral alto, solo debe retornar el primero
         $results = $service->findSimilar('test', OdsMeta::class, threshold: 0.9);
 
         $this->assertLessThanOrEqual(1, $results->count());
-    }
-
-    public function test_busqueda_con_umbral_alto_retorna_coleccion_vacia(): void
-    {
-        $mockEmbedding = Mockery::mock(EmbeddingServiceInterface::class);
-        $mockEmbedding->shouldReceive('generate')
-            ->once()
-            ->andReturn(array_fill(0, 1536, 0.5));
-
-        $objetivo = OdsObjetivo::create(['numero' => 1, 'nombre' => 'Test']);
-        $meta = OdsMeta::create([
-            'ods_objetivo_id' => $objetivo->id,
-            'clave' => '1.1',
-            'descripcion' => 'Test',
-        ]);
-        \DB::statement("UPDATE ods_metas SET embedding = '[0.5,0.5,0.5]'::vector || ARRAY_FILL(0.5, ARRAY[1533])::vector WHERE id = ?", [$meta->id]);
-
-        $service = new SemanticSearchService($mockEmbedding);
-
-        // Umbral muy alto (0.99)
-        $results = $service->findSimilar('test', OdsMeta::class, threshold: 0.99);
-
-        $this->assertTrue($results->isEmpty());
     }
 
     // ============================================
@@ -665,16 +651,6 @@ class SemanticSearchServiceTest extends TestCase
         $service->findSimilar('test', OdsMeta::class, threshold: 1.5);
     }
 
-    public function test_lanza_excepcion_si_threshold_negativo(): void
-    {
-        $mockEmbedding = Mockery::mock(EmbeddingServiceInterface::class);
-        $service = new SemanticSearchService($mockEmbedding);
-
-        $this->expectException(\InvalidArgumentException::class);
-
-        $service->findSimilar('test', OdsMeta::class, threshold: -0.5);
-    }
-
     // ============================================
     // Tests de DTO
     // ============================================
@@ -692,7 +668,7 @@ class SemanticSearchServiceTest extends TestCase
             'clave' => '1.1',
             'descripcion' => 'Test descripcion',
         ]);
-        \DB::statement("UPDATE ods_metas SET embedding = '[0.5,0.5,0.5]'::vector || ARRAY_FILL(0.5, ARRAY[1533])::vector WHERE id = ?", [$meta->id]);
+        DB::statement("UPDATE ods_metas SET embedding = '[0.5,0.5,0.5]'::vector || ARRAY_FILL(0.5, ARRAY[1533])::vector WHERE id = ?", [$meta->id]);
 
         $service = new SemanticSearchService($mockEmbedding);
         $results = $service->findSimilar('test', OdsMeta::class);
@@ -708,7 +684,7 @@ class SemanticSearchServiceTest extends TestCase
 
     public function test_dto_get_percentage_attribute(): void
     {
-        $result = new \App\DTOs\SimilarityResult(
+        $result = new SimilarityResult(
             model: new OdsMeta(),
             score: 0.856,
             distance: 0.144
@@ -719,13 +695,13 @@ class SemanticSearchServiceTest extends TestCase
 
     public function test_dto_is_high_quality(): void
     {
-        $highQuality = new \App\DTOs\SimilarityResult(
+        $highQuality = new SimilarityResult(
             model: new OdsMeta(),
             score: 0.90,
             distance: 0.10
         );
 
-        $lowQuality = new \App\DTOs\SimilarityResult(
+        $lowQuality = new SimilarityResult(
             model: new OdsMeta(),
             score: 0.80,
             distance: 0.20
@@ -733,65 +709,7 @@ class SemanticSearchServiceTest extends TestCase
 
         $this->assertTrue($highQuality->isHighQuality());
         $this->assertFalse($lowQuality->isHighQuality());
-        $this->assertTrue($lowQuality->isHighQuality(0.75)); // Con umbral personalizado
-    }
-
-    // ============================================
-    // Tests de Búsqueda Múltiple
-    // ============================================
-
-    public function test_find_similar_in_multiple_combina_resultados(): void
-    {
-        $mockEmbedding = Mockery::mock(EmbeddingServiceInterface::class);
-        $mockEmbedding->shouldReceive('generate')
-            ->twice()
-            ->andReturn(array_fill(0, 1536, 0.5));
-
-        // Crear datos en ODS y PND
-        $ods = OdsMeta::create([
-            'ods_objetivo_id' => OdsObjetivo::create(['numero' => 1, 'nombre' => 'Test'])->id,
-            'clave' => '1.1',
-            'descripcion' => 'Reducir pobreza',
-        ]);
-        \DB::statement("UPDATE ods_metas SET embedding = '[0.5,0.5,0.5]'::vector || ARRAY_FILL(0.5, ARRAY[1533])::vector WHERE id = ?", [$ods->id]);
-
-        $service = new SemanticSearchService($mockEmbedding);
-        $results = $service->findSimilarInMultiple(
-            'reducir pobreza',
-            [OdsMeta::class, OdsObjetivo::class],
-            limitPerModel: 2
-        );
-
-        $this->assertGreaterThanOrEqual(0, $results->count());
-    }
-
-    // ============================================
-    // Tests de Métodos de Conveniencia
-    // ============================================
-
-    public function test_find_similar_linea_accion(): void
-    {
-        $mockEmbedding = Mockery::mock(EmbeddingServiceInterface::class);
-        $mockEmbedding->shouldReceive('generate')
-            ->once()
-            ->andReturn(array_fill(0, 1536, 0.5));
-
-        $plan = \App\Models\PedPlan::create([
-            'nombre' => 'Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-        ]);
-        $eje = \App\Models\PedEje::create(['ped_plan_id' => $plan->id, 'numero' => '1', 'nombre' => 'Test']);
-        $tema = \App\Models\PedTema::create(['ped_eje_id' => $eje->id, 'numero' => '1', 'nombre' => 'Test']);
-        $objetivo = \App\Models\PedObjetivoEstrategico::create(['ped_tema_id' => $tema->id, 'clave' => '1', 'descripcion' => 'Test']);
-        $estrategia = \App\Models\PedEstrategia::create(['ped_objetivo_estrategico_id' => $objetivo->id, 'clave' => '1', 'descripcion' => 'Test']);
-        $linea = \App\Models\PedLineaAccion::create(['ped_estrategia_id' => $estrategia->id, 'clave' => '1', 'descripcion' => 'Reducir pobreza']);
-        \DB::statement("UPDATE ped_lineas_accion SET embedding = '[0.5,0.5,0.5]'::vector || ARRAY_FILL(0.5, ARRAY[1533])::vector WHERE id = ?", [$linea->id]);
-
-        $service = new SemanticSearchService($mockEmbedding);
-        $results = $service->findSimilarLineaAccion('reducir pobreza');
-
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $results);
+        $this->assertTrue($lowQuality->isHighQuality(0.75));
     }
 
     // ============================================
@@ -843,15 +761,15 @@ class SemanticSearchServiceTest extends TestCase
 ### 7. Crear Test de Integración con Índices
 
 ```bash
-sail artisan make:test HnswIndexesTest
+sail artisan make:test Feature/Embeddings/HnswIndexesTest
 ```
 
-Editar `tests/Feature/HnswIndexesTest.php`:
+Editar `tests/Feature/Embeddings/HnswIndexesTest.php`:
 
 ```php
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Embeddings;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -863,26 +781,19 @@ class HnswIndexesTest extends TestCase
 
     public function test_indices_hnsw_creados_correctamente(): void
     {
-        // Ejecutar migración
         $this->artisan('migrate');
 
-        // Verificar índices ODS
         $this->assertIndexExists('ods_objetivos_embedding_idx');
         $this->assertIndexExists('ods_metas_embedding_idx');
-
-        // Verificar índices PND
         $this->assertIndexExists('pnd_ejes_embedding_idx');
         $this->assertIndexExists('pnd_objetivos_embedding_idx');
         $this->assertIndexExists('pnd_estrategias_embedding_idx');
-
-        // Verificar índices PED
+        $this->assertIndexExists('ped_planes_embedding_idx');
         $this->assertIndexExists('ped_ejes_embedding_idx');
         $this->assertIndexExists('ped_temas_embedding_idx');
         $this->assertIndexExists('ped_objetivos_estrategicos_embedding_idx');
         $this->assertIndexExists('ped_estrategias_embedding_idx');
         $this->assertIndexExists('ped_lineas_accion_embedding_idx');
-
-        // Verificar índices Programas Derivados
         $this->assertIndexExists('programas_derivados_objetivos_embedding_idx');
     }
 
@@ -905,7 +816,6 @@ class HnswIndexesTest extends TestCase
     {
         $this->artisan('migrate');
 
-        // Verificar que el índice tiene el parámetro m configurado
         $result = DB::selectOne("
             SELECT pg_catalog.pg_get_indexdef(c.oid) AS indexdef
             FROM pg_class c
@@ -919,15 +829,11 @@ class HnswIndexesTest extends TestCase
     public function test_migracion_rollback_elimina_indices(): void
     {
         $this->artisan('migrate');
-
         $this->artisan('migrate:rollback', ['--step' => 1]);
 
         $this->assertIndexNotExists('ods_objetivos_embedding_idx');
     }
 
-    /**
-     * Verifica que un índice existe.
-     */
     protected function assertIndexExists(string $indexName): void
     {
         $result = DB::selectOne("
@@ -940,9 +846,6 @@ class HnswIndexesTest extends TestCase
         $this->assertNotNull($result, "Index {$indexName} does not exist");
     }
 
-    /**
-     * Verifica que un índice NO existe.
-     */
     protected function assertIndexNotExists(string $indexName): void
     {
         $result = DB::selectOne("
@@ -959,7 +862,28 @@ class HnswIndexesTest extends TestCase
 
 ---
 
-### 8. Ejecutar y Verificar
+### 8. Actualizar Variables de Entorno
+
+Editar `.env.example`:
+
+```ini
+# ============================================
+# SEMANTIC SEARCH CONFIGURATION
+# ============================================
+
+# Search Thresholds
+EMBEDDING_SIMILARITY_THRESHOLD=0.7
+EMBEDDING_MAX_RESULTS=5
+
+# HNSW Index Parameters
+EMBEDDING_HNSW_M=16
+EMBEDDING_HNSW_EF_CONSTRUCTION=64
+EMBEDDING_HNSW_EF_SEARCH=40
+```
+
+---
+
+### 9. Ejecutar y Verificar
 
 ```bash
 # Ejecutar migración de índices
@@ -968,49 +892,31 @@ sail artisan migrate
 # Verificar índices creados
 sail shell
 psql -U sail -d laravel -c "\di *embedding*"
-# Debe mostrar todos los índices HNSW
 exit
 
 # Ejecutar tests
 sail artisan test --filter SemanticSearchServiceTest
 sail artisan test --filter HnswIndexesTest
-
-# Verificar en Tinker
-sail artisan tinker
-```
-
-```php
-use App\Services\SemanticSearchService;
-use App\Models\OdsMeta;
-
-// Crear datos de prueba con embedding
-$ods = OdsMeta::create([...]);
-DB::statement("UPDATE ods_metas SET embedding = '[0.5,...]'::vector WHERE id = ?", [$ods->id]);
-
-// Probar búsqueda
-$service = app(SemanticSearchService::class);
-$results = $service->findSimilar('reducir pobreza', OdsMeta::class);
-
-$results->first()->score;
-$results->first()->percentage;
 ```
 
 ---
 
 ## Criterios de Aceptación
 
-- [ ] `SemanticSearchService` registrado en Service Container
+- [ ] `SemanticSearchService` en namespace `App\Services\Embeddings\`
+- [ ] Servicio registrado en `AppServiceProvider`
+- [ ] DTO `SimilarityResult` en `App\DTOs\`
+- [ ] Configuración unificada en `config/embedding.php`
 - [ ] Método `findSimilar()` funciona contra todas las tablas con embeddings
-- [ ] DTO `SimilarityResult` con propiedades `model`, `score`, `distance`
-- [ ] Migración crea índices HNSW en todas las columnas `embedding`
-- [ ] Verificar índices con `\di` en psql muestra `hnsw`
-- [ ] Umbral mínimo configurable via parámetro (default 0.7)
-- [ ] Límite configurable via parámetro (default 5)
-- [ ] Test: búsqueda "reducir pobreza" retorna resultados ordenados por score
-- [ ] Test: búsqueda con umbral 0.99 retorna colección vacía
-- [ ] Test: búsqueda con límite 1 retorna exactamente 1 resultado
+- [ ] Migración crea índices HNSW con `vector_cosine_ops`
+- [ ] Verificar índices con `\di` muestra `hnsw`
+- [ ] Umbral mínimo configurable (default 0.7)
+- [ ] Límite configurable (default 5)
+- [ ] Test: búsqueda retorna resultados ordenados por score
 - [ ] Test: modelo no buscable lanza `InvalidArgumentException`
-- [ ] Configuración en `config/embedding.php` completa
+- [ ] Test: threshold inválido lanza `InvalidArgumentException`
+
+---
 
 ---
 

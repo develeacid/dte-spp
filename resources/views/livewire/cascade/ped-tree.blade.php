@@ -39,10 +39,9 @@
                 </div>
 
                 <div class="flex items-center space-x-2">
-                    <button @click.stop="$dispatch('edit-plan', { id: {{ $plan->id }} })"
-                            class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                    <x-ui.button.secondary href="{{ route('cascade.ped.plan.edit', $plan) }}" class="text-xs py-1 px-2">
                         Editar
-                    </button>
+                    </x-ui.button.secondary>
                 </div>
             </div>
 
@@ -50,14 +49,13 @@
             <div x-show="expanded['plan-{{ $plan->id }}']" class="border-t bg-gray-50">
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="text-sm font-medium text-gray-700">Ejes ({{ $plan->ejes->count() }})</span>
-                        <button @click="$dispatch('create-nodo', { tipo: 'eje', parentId: {{ $plan->id }} })"
-                                class="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-800">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Agregar Eje
-                        </button>
+                        <span class="text-sm font-medium text-gray-700">
+                            Ejes <x-ui.badge color="gray">{{ $plan->ejes->count() }}</x-ui.badge>
+                        </span>
+                        <x-ui.button.secondary href="{{ route('cascade.ped.nodo.create', ['tipo' => 'eje', 'parent_id' => $plan->id]) }}"
+                                               class="text-xs py-1 px-2">
+                            + Eje
+                        </x-ui.button.secondary>
                     </div>
 
                     @foreach($plan->ejes as $eje)

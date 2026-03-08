@@ -10,25 +10,21 @@
                 </svg>
             </span>
 
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-                {{ $tema->clave_completa }}
-            </span>
+            <x-ui.badge color="purple">{{ $tema->clave_completa }}</x-ui.badge>
             <span class="text-sm text-gray-700">{{ $tema->nombre }}</span>
         </div>
 
-        <button @click.stop="$dispatch('edit-nodo', { tipo: 'tema', nodoId: {{ $tema->id }} })"
-                class="text-xs text-indigo-600 hover:text-indigo-900">
+        <x-ui.button.secondary href="{{ route('cascade.ped.nodo.edit', ['tipo' => 'tema', 'id' => $tema->id]) }}" class="text-xs py-1 px-2">
             Editar
-        </button>
+        </x-ui.button.secondary>
     </div>
 
     <div x-show="expanded_{{ $tema->id }}" class="ml-6 mt-1">
         <div class="flex items-center justify-between mb-2">
             <span class="text-xs text-gray-500">Objetivos ({{ $tema->objetivosEstrategicos->count() }})</span>
-            <button @click="$dispatch('create-nodo', { tipo: 'objetivo', parentId: {{ $tema->id }} })"
-                    class="text-xs text-indigo-600 hover:text-indigo-800">
+            <x-ui.button.secondary href="{{ route('cascade.ped.nodo.create', ['tipo' => 'objetivo', 'parent_id' => $tema->id]) }}" class="text-xs py-1 px-2">
                 + Objetivo
-            </button>
+            </x-ui.button.secondary>
         </div>
 
         @foreach($tema->objetivosEstrategicos as $objetivo)

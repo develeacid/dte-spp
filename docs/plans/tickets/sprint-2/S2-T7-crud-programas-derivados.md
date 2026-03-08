@@ -1,4 +1,4 @@
-# Plan: S2-T7 — CRUD de Programas Derivados con Interfaz Livewire
+# Plan: S2-T7 — CRUD de Programas Derivados con Interfaz Livewire (Arquitectura Actualizada)
 
 **Ticket:** S2-T7
 **Tipo:** feat
@@ -10,23 +10,19 @@
 
 ## Contexto
 
-Interfaz de administración para gestionar Programas Derivados (Sectoriales, Especiales, Institucionales, Regionales) y sus objetivos. Reutiliza los patrones de UI establecidos en S2-T6 (CRUD con Livewire, formularios inline, validación reactiva).
+Interfaz de administración para gestionar Programas Derivados (Sectoriales, Especiales, Institucionales, Regionales) y sus objetivos. Esta versión actualizada implementa la **nueva arquitectura de Frontend**:
 
-**Tipos de Programa Derivado:**
-
-| Tipo          | Prefijo | Descripción                              |
-| ------------- | ------- | ---------------------------------------- |
-| Sectorial     | OS      | Programas sectoriales del desarrollo     |
-| Especial      | OE      | Programas para problemáticas específicas |
-| Institucional | OI      | Programas de gestión institucional       |
-| Regional      | OR      | Programas de desarrollo regional         |
+- Uso de `<x-app-layout>` de Jetstream (no se reemplaza).
+- Uso de componentes `<x-page.container>`, `<x-page.header>`, `<x-page.form-footer>`.
+- Vistas organizadas por dominio: `resources/views/programs/derivados/`.
+- Rutas organizadas en `routes/web/programs.php`.
 
 ---
 
 ## Pre-requisitos
 
 - S2-T4: Modelos `ProgramaDerivado`, `ProgramaDerivadoObjetivo` con ENUM `tipo_programa_derivado`
-- S2-T6: Patrones de componentes Livewire validados
+- Componentes base de página creados (`x-page.container`, `x-page.header`, `x-page.form-footer`)
 - S1-T3: Permiso `gestionar_catalogos` registrado
 - S2-T3: Tabla `ped_planes` con al menos un plan activo
 
@@ -34,20 +30,23 @@ Interfaz de administración para gestionar Programas Derivados (Sectoriales, Esp
 
 ## Pasos
 
-### 1. Crear Rutas Protegidas
+### 1. Crear Archivo de Rutas por Dominio
 
-Editar `routes/web.php`:
+Crear `routes/web/programs.php`:
 
 ```php
 <?php
 
-use App\Http\Controllers\ProgramaDerivadoController;
+use App\Http\Controllers\Programs\ProgramaDerivadoController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Programas Derivados Routes
+| Rutas de Programas
 |--------------------------------------------------------------------------
+|
+| Agrupa las rutas relacionadas con programas presupuestarios y derivados.
+|
 */
 
 Route::middleware([
@@ -57,16 +56,20 @@ Route::middleware([
     'permission:gestionar_catalogos'
 ])->group(function () {
 
-    Route::prefix('programas-derivados')->name('programas-derivados.')->group(function () {
-        // Vista principal
+    // ============================================
+    // Programas Derivados
+    // ============================================
+    Route::prefix('programs/derivados')->name('programs.derivados.')->group(function () {
+        
+        // Vista principal (Index)
         Route::get('/', [ProgramaDerivadoController::class, 'index'])->name('index');
-
-        // CRUD Programas
+        
+        // CRUD Programas (API endpoints para Livewire)
         Route::post('/', [ProgramaDerivadoController::class, 'store'])->name('store');
         Route::put('/{programa}', [ProgramaDerivadoController::class, 'update'])->name('update');
         Route::delete('/{programa}', [ProgramaDerivadoController::class, 'destroy'])->name('destroy');
-
-        // CRUD Objetivos (nested)
+        
+        // CRUD Objetivos (nested resources)
         Route::post('/{programa}/objetivos', [ProgramaDerivadoController::class, 'storeObjetivo'])->name('objetivos.store');
         Route::put('/{programa}/objetivos/{objetivo}', [ProgramaDerivadoController::class, 'updateObjetivo'])->name('objetivos.update');
         Route::delete('/{programa}/objetivos/{objetivo}', [ProgramaDerivadoController::class, 'destroyObjetivo'])->name('objetivos.destroy');
@@ -74,9 +77,151 @@ Route::middleware([
 });
 ```
 
+**Registrar en `routes/web.php`:**
+
+```php
+// ... otras rutas
+require __DIR__ . '/web/programs.php';
+```
+
 ---
 
-### 2. Crear Form Requests
+### 2. Crear Controlador (Organizado por Dominio)
+
+```bash
+mkdir -p app/Http/Controllers/Programs
+sail artisan make:controller Programs/ProgramaDerivadoController
+```
+
+Editar `app/Http/Controllers/Programs/ProgramaDerivadoController.php`:
+
+```php
+<?php
+
+namespace App\Http\Controllers\Programs;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreProgramaDerivadoObjetivoRequest;
+use App\Http\Requests\StoreProgramaDerivadoRequest;
+use App\Models\PedPlan;
+use App\Models\ProgramaDerivado;
+use App\Models\ProgramaDerivadoObjetivo;
+
+class ProgramaDerivadoController extends Controller
+{
+    /**
+     * Vista principal de programas derivados.
+     */
+    public function index()
+    {
+        $planActivo = PedPlan::where('activo', true)->first();
+
+        $programas = ProgramaDerivado::with(['objetivos'])
+            ->when($planActivo, fn($q) => $q->where('ped_plan_id', $planActivo->id))
+            ->orderBy('tipo')
+            ->orderBy('nombre')
+            ->get();
+
+        return view('programs.derivados.index', compact('programas', 'planActivo'));
+    }
+
+    /**
+     * Crear nuevo programa derivado.
+     */
+    public function store(StoreProgramaDerivadoRequest $request)
+    {
+        $planActivo = PedPlan::where('activo', true)->first();
+
+        if (!$planActivo) {
+            return back()
+                ->with('flash.banner', 'No existe un Plan Estatal de Desarrollo activo.')
+                ->with('flash.bannerStyle', 'danger');
+        }
+
+        $programa = ProgramaDerivado::create([
+            'ped_plan_id' => $planActivo->id,
+            'nombre' => $request->nombre,
+            'descripcion' => $request->descripcion,
+            'tipo' => $request->tipo,
+        ]);
+
+        return redirect()->route('programs.derivados.index')
+            ->with('flash.banner', "Programa '{$programa->nombre}' creado exitosamente.")
+            ->with('flash.bannerStyle', 'success');
+    }
+
+    /**
+     * Actualizar programa derivado.
+     */
+    public function update(StoreProgramaDerivadoRequest $request, ProgramaDerivado $programa)
+    {
+        $programa->update($request->validated());
+
+        return redirect()->route('programs.derivados.index')
+            ->with('flash.banner', 'Programa actualizado exitosamente.')
+            ->with('flash.bannerStyle', 'success');
+    }
+
+    /**
+     * Eliminar programa derivado.
+     */
+    public function destroy(ProgramaDerivado $programa)
+    {
+        $nombre = $programa->nombre;
+        $objetivos = $programa->objetivos()->count();
+
+        $programa->delete();
+
+        $mensaje = "Programa '{$nombre}' eliminado.";
+        if ($objetivos > 0) {
+            $mensaje .= " Se eliminaron {$objetivos} objetivos.";
+        }
+
+        return redirect()->route('programs.derivados.index')
+            ->with('flash.banner', $mensaje)
+            ->with('flash.bannerStyle', 'success');
+    }
+
+    // ============================================
+    // OBJETIVOS
+    // ============================================
+
+    public function storeObjetivo(StoreProgramaDerivadoObjetivoRequest $request, ProgramaDerivado $programa)
+    {
+        ProgramaDerivadoObjetivo::create([
+            'programa_derivado_id' => $programa->id,
+            'clave' => $request->clave,
+            'descripcion' => $request->descripcion,
+        ]);
+
+        return redirect()->route('programs.derivados.index')
+            ->with('flash.banner', 'Objetivo agregado exitosamente.')
+            ->with('flash.bannerStyle', 'success');
+    }
+
+    public function updateObjetivo(StoreProgramaDerivadoObjetivoRequest $request, ProgramaDerivado $programa, ProgramaDerivadoObjetivo $objetivo)
+    {
+        $objetivo->update($request->validated());
+
+        return redirect()->route('programs.derivados.index')
+            ->with('flash.banner', 'Objetivo actualizado exitosamente.')
+            ->with('flash.bannerStyle', 'success');
+    }
+
+    public function destroyObjetivo(ProgramaDerivado $programa, ProgramaDerivadoObjetivo $objetivo)
+    {
+        $objetivo->delete();
+
+        return redirect()->route('programs.derivados.index')
+            ->with('flash.banner', 'Objetivo eliminado exitosamente.')
+            ->with('flash.bannerStyle', 'success');
+    }
+}
+```
+
+---
+
+### 3. Crear Form Requests
 
 ```bash
 sail artisan make:request StoreProgramaDerivadoRequest
@@ -161,161 +306,20 @@ class StoreProgramaDerivadoObjetivoRequest extends FormRequest
 
 ---
 
-### 3. Crear Controlador
+### 4. Crear Componente Livewire
 
 ```bash
-sail artisan make:controller ProgramaDerivadoController
+sail artisan make:livewire Programs/ProgramasDerivadosManager
 ```
 
-Editar `app/Http/Controllers/ProgramaDerivadoController.php`:
+Editar `app/Livewire/Programs/ProgramasDerivadosManager.php`:
+
+*(El contenido del componente Livewire permanece igual que en la versión anterior, solo cambian las vistas)*
 
 ```php
 <?php
 
-namespace App\Http\Controllers;
-
-use App\Http\Requests\StoreProgramaDerivadoObjetivoRequest;
-use App\Http\Requests\StoreProgramaDerivadoRequest;
-use App\Models\PedPlan;
-use App\Models\ProgramaDerivado;
-use App\Models\ProgramaDerivadoObjetivo;
-use Illuminate\Http\Request;
-
-class ProgramaDerivadoController extends Controller
-{
-    /**
-     * Vista principal de programas derivados.
-     */
-    public function index()
-    {
-        $planActivo = PedPlan::where('activo', true)->first();
-
-        $programas = ProgramaDerivado::with(['objetivos'])
-            ->when($planActivo, fn($q) => $q->where('ped_plan_id', $planActivo->id))
-            ->orderBy('tipo')
-            ->orderBy('nombre')
-            ->get();
-
-        return view('programas-derivados.index', compact('programas', 'planActivo'));
-    }
-
-    /**
-     * Crear nuevo programa derivado.
-     */
-    public function store(StoreProgramaDerivadoRequest $request)
-    {
-        $planActivo = PedPlan::where('activo', true)->first();
-
-        if (!$planActivo) {
-            return back()
-                ->with('flash.banner', 'No existe un Plan Estatal de Desarrollo activo. Active uno antes de crear programas.')
-                ->with('flash.bannerStyle', 'danger');
-        }
-
-        $programa = ProgramaDerivado::create([
-            'ped_plan_id' => $planActivo->id,
-            'nombre' => $request->nombre,
-            'descripcion' => $request->descripcion,
-            'tipo' => $request->tipo,
-        ]);
-
-        return redirect()->route('programas-derivados.index')
-            ->with('flash.banner', "Programa '{$programa->nombre}' creado exitosamente.")
-            ->with('flash.bannerStyle', 'success');
-    }
-
-    /**
-     * Actualizar programa derivado.
-     */
-    public function update(StoreProgramaDerivadoRequest $request, ProgramaDerivado $programa)
-    {
-        $programa->update($request->validated());
-
-        return redirect()->route('programas-derivados.index')
-            ->with('flash.banner', 'Programa actualizado exitosamente.')
-            ->with('flash.bannerStyle', 'success');
-    }
-
-    /**
-     * Eliminar programa derivado.
-     */
-    public function destroy(ProgramaDerivado $programa)
-    {
-        $nombre = $programa->nombre;
-        $objetivos = $programa->objetivos()->count();
-
-        $programa->delete();
-
-        $mensaje = "Programa '{$nombre}' eliminado.";
-        if ($objetivos > 0) {
-            $mensaje .= " Se eliminaron {$objetivos} objetivos.";
-        }
-
-        return redirect()->route('programas-derivados.index')
-            ->with('flash.banner', $mensaje)
-            ->with('flash.bannerStyle', 'success');
-    }
-
-    // ============================================
-    // OBJETIVOS
-    // ============================================
-
-    /**
-     * Crear objetivo para un programa derivado.
-     */
-    public function storeObjetivo(StoreProgramaDerivadoObjetivoRequest $request, ProgramaDerivado $programa)
-    {
-        ProgramaDerivadoObjetivo::create([
-            'programa_derivado_id' => $programa->id,
-            'clave' => $request->clave,
-            'descripcion' => $request->descripcion,
-        ]);
-
-        return redirect()->route('programas-derivados.index')
-            ->with('flash.banner', 'Objetivo agregado exitosamente.')
-            ->with('flash.bannerStyle', 'success');
-    }
-
-    /**
-     * Actualizar objetivo.
-     */
-    public function updateObjetivo(StoreProgramaDerivadoObjetivoRequest $request, ProgramaDerivado $programa, ProgramaDerivadoObjetivo $objetivo)
-    {
-        $objetivo->update($request->validated());
-
-        return redirect()->route('programas-derivados.index')
-            ->with('flash.banner', 'Objetivo actualizado exitosamente.')
-            ->with('flash.bannerStyle', 'success');
-    }
-
-    /**
-     * Eliminar objetivo.
-     */
-    public function destroyObjetivo(ProgramaDerivado $programa, ProgramaDerivadoObjetivo $objetivo)
-    {
-        $objetivo->delete();
-
-        return redirect()->route('programas-derivados.index')
-            ->with('flash.banner', 'Objetivo eliminado exitosamente.')
-            ->with('flash.bannerStyle', 'success');
-    }
-}
-```
-
----
-
-### 4. Crear Componente Livewire Principal
-
-```bash
-sail artisan make:livewire ProgramasDerivadosManager
-```
-
-Editar `app/Livewire/ProgramasDerivadosManager.php`:
-
-```php
-<?php
-
-namespace App\Livewire;
+namespace App\Livewire\Programs;
 
 use App\Enums\TipoProgramaDerivado;
 use App\Models\PedPlan;
@@ -362,13 +366,10 @@ class ProgramasDerivadosManager extends Component
         ];
     }
 
-    protected $listeners = [
-        'refresh' => '$refresh',
-    ];
+    protected $listeners = ['refresh' => '$refresh'];
 
     public function mount(): void
     {
-        // Expandir primer programa por defecto
         $primerPrograma = ProgramaDerivado::first();
         if ($primerPrograma) {
             $this->expandedProgramas[$primerPrograma->id] = true;
@@ -606,58 +607,124 @@ class ProgramasDerivadosManager extends Component
 
     public function render()
     {
-        return view('livewire.programas-derivados-manager');
+        return view('livewire.programs.programas-derivados-manager');
     }
 }
 ```
 
 ---
 
-### 5. Crear Vistas Blade
+Tienes toda la razón. En las versiones modernas de Jetstream (v5+ para Laravel 11 con Livewire 3), los componentes ya no usan el prefijo `x-jet-`. Los componentes están disponibles directamente o bajo el namespace `x-jetstream::`.
 
-Crear `resources/views/programas-derivados/index.blade.php`:
+Aquí tienes la corrección del plan con la sintaxis correcta:
+
+---
+
+# Plan: S2-T7 — CRUD de Programas Derivados (Corregido)
+
+**Ticket:** S2-T7
+**Tipo:** feat
+**Rama:** `feat/S2-T7-crud-programas-derivados`
+**Sprint:** 2 — Cascada de Planes
+
+---
+
+## Corrección: Componentes de Jetstream Moderno
+
+En Jetstream moderno (Laravel 11 / Livewire 3):
+
+| Componente | Sintaxis Correcta |
+|------------|-------------------|
+| Modal | `<x-dialog-modal>` o `<x-jetstream::dialog-modal>` |
+| Botón Primario | `<x-primary-button>` |
+| Botón Secundario | `<x-secondary-button>` |
+| Botón Peligro | `<x-danger-button>` |
+| Input | `<x-input>` |
+| Label | `<x-label>` |
+| Checkbox | `<x-checkbox>` |
+
+---
+
+### 5. Crear Vistas con Sintaxis Correcta
+
+Crear `resources/views/programs/derivados/index.blade.php`:
 
 ```blade
 <x-app-layout>
+    
+    {{-- Slot Header de Jetstream --}}
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Programas Derivados
-        </h2>
+        <x-page.header 
+            title="Programas Derivados" 
+            subtitle="Gestión de programas sectoriales, especiales, institucionales y regionales"
+        >
+            <x-secondary-button href="{{ route('cascade.ped.index') }}">
+                Volver al PED
+            </x-secondary-button>
+        </x-page.header>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <livewire:programas-derivados-manager />
-        </div>
-    </div>
+    {{-- Contenedor de Página --}}
+    <x-page.container 
+        :breadcrumbs="[
+            ['label' => 'Inicio', 'url' => route('dashboard')],
+            ['label' => 'Cascada de Planes', 'url' => route('cascade.ped.index')],
+            ['label' => 'Programas Derivados']
+        ]"
+    >
+        
+        <livewire:programs.programas-derivados-manager />
+
+    </x-page.container>
+
 </x-app-layout>
 ```
 
-Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
+---
+
+Crear `resources/views/livewire/programs/programas-derivados-manager.blade.php`:
 
 ```blade
 <div class="space-y-6">
-
-    {{-- Alertas --}}
+    
+    {{-- Alertas Flash --}}
     @if(session('message'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-            <span class="block sm:inline">{{ session('message') }}</span>
+        <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-green-700">{{ session('message') }}</p>
+                </div>
+            </div>
         </div>
     @endif
 
     @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <span class="block sm:inline">{{ session('error') }}</span>
+        <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-red-700">{{ session('error') }}</p>
+                </div>
+            </div>
         </div>
     @endif
 
-    {{-- Verificar PED Activo --}}
+    {{-- Alerta: Sin PED Activo --}}
     @if(!$this->planActivo)
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
             <div class="flex">
                 <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                     </svg>
                 </div>
                 <div class="ml-3">
@@ -665,7 +732,7 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
                         <strong>No hay Plan Estatal de Desarrollo activo.</strong>
                         Debe activar un PED antes de crear programas derivados.
                     </p>
-                    <a href="{{ route('ped.index') }}" class="mt-2 inline-flex items-center text-sm text-yellow-700 underline hover:text-yellow-600">
+                    <a href="{{ route('cascade.ped.index') }}" class="mt-2 inline-flex items-center text-sm text-yellow-700 underline hover:text-yellow-600">
                         Ir a gestión de PED
                         <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -676,77 +743,82 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
         </div>
     @endif
 
-    {{-- Header con Stats --}}
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-                <h3 class="text-lg font-medium text-gray-900">Programas Derivados</h3>
-                <p class="mt-1 text-sm text-gray-500">
-                    Gestione los programas sectoriales, especiales, institucionales y regionales.
-                </p>
+    {{-- Panel de Estadísticas --}}
+    <div class="bg-white shadow sm:rounded-lg mb-6">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Resumen</h3>
+            
+            @php($stats = $this->stats)
+            
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <div class="text-2xl font-bold text-gray-900">{{ $stats['total'] }}</div>
+                    <div class="text-xs text-gray-500">Total</div>
+                </div>
+                
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <div class="text-2xl font-bold text-blue-600">{{ $stats['sectoriales'] }}</div>
+                    <div class="text-xs text-gray-500">Sectoriales</div>
+                </div>
+                
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <div class="text-2xl font-bold text-green-600">{{ $stats['especiales'] }}</div>
+                    <div class="text-xs text-gray-500">Especiales</div>
+                </div>
+                
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <div class="text-2xl font-bold text-purple-600">{{ $stats['institucionales'] }}</div>
+                    <div class="text-xs text-gray-500">Institucionales</div>
+                </div>
+                
+                <div class="text-center p-4 bg-orange-50 rounded-lg">
+                    <div class="text-2xl font-bold text-orange-600">{{ $stats['regionales'] }}</div>
+                    <div class="text-xs text-gray-500">Regionales</div>
+                </div>
+                
+                <div class="text-center p-4 bg-indigo-50 rounded-lg">
+                    <div class="text-2xl font-bold text-indigo-600">{{ $stats['objetivos'] }}</div>
+                    <div class="text-xs text-gray-500">Objetivos</div>
+                </div>
             </div>
-
-            <div class="mt-4 md:mt-0 flex items-center space-x-3">
-                @php($stats = $this->stats)
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                    {{ $stats['total'] }} programas
-                </span>
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                    {{ $stats['objetivos'] }} objetivos
-                </span>
-            </div>
-        </div>
-
-        {{-- Stats por tipo --}}
-        <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            @foreach([
-                ['tipo' => 'sectoriales', 'color' => 'blue', 'label' => 'Sectoriales'],
-                ['tipo' => 'especiales', 'color' => 'green', 'label' => 'Especiales'],
-                ['tipo' => 'institucionales', 'color' => 'purple', 'label' => 'Institucionales'],
-                ['tipo' => 'regionales', 'color' => 'orange', 'label' => 'Regionales'],
-            ] as $item)
-                <button wire:click="setFiltroTipo('{{ $item['tipo'] }}')"
-                        class="p-4 rounded-lg border-2 transition-all {{ $filtroTipo === $item['tipo'] ? 'border-' . $item['color'] . '-500 bg-' . $item['color'] . '-50' : 'border-gray-200 hover:border-gray-300' }}">
-                    <div class="text-2xl font-bold text-gray-900">{{ $stats[$item['tipo']] }}</div>
-                    <div class="text-sm text-gray-500">{{ $item['label'] }}</div>
-                </button>
-            @endforeach
         </div>
     </div>
 
-    {{-- Filtros y Acciones --}}
-    <div class="bg-white rounded-lg shadow p-4">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    {{-- Barra de Filtros y Acciones --}}
+    <div class="bg-white shadow sm:rounded-lg mb-6">
+        <div class="p-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                
+                {{-- Filtro --}}
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-500">Filtrar:</span>
+                    <select wire:model.live="filtroTipo" 
+                            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md text-sm">
+                        @foreach($this->tiposFiltro as $value => $label)
+                            <option value="{{ $value }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
-            {{-- Filtro por tipo --}}
-            <div class="flex items-center space-x-2">
-                <span class="text-sm text-gray-500">Filtrar:</span>
-                <select wire:model="filtroTipo"
-                        class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md text-sm">
-                    @foreach($this->tiposFiltro as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            {{-- Acciones --}}
-            <div class="flex items-center space-x-2">
-                <button wire:click="expandAll" class="text-sm text-gray-600 hover:text-gray-900">
-                    Expandir todos
-                </button>
-                <span class="text-gray-300">|</span>
-                <button wire:click="collapseAll" class="text-sm text-gray-600 hover:text-gray-900">
-                    Contraer todos
-                </button>
-                <span class="text-gray-300">|</span>
-                <button wire:click="createPrograma"
-                        @if(!$this->planActivo) disabled @endif
-                        class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition ease-in-out duration-150">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Nuevo Programa
-                </button>
+                {{-- Acciones --}}
+                <div class="flex items-center space-x-4">
+                    <button wire:click="expandAll" class="text-sm text-gray-600 hover:text-gray-900">
+                        Expandir
+                    </button>
+                    <span class="text-gray-300">|</span>
+                    <button wire:click="collapseAll" class="text-sm text-gray-600 hover:text-gray-900">
+                        Contraer
+                    </button>
+                    <span class="text-gray-300">|</span>
+                    <button wire:click="createPrograma"
+                            @if(!$this->planActivo) disabled @endif
+                            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition ease-in-out duration-150">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Nuevo Programa
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -754,97 +826,106 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
     {{-- Listado de Programas --}}
     <div class="space-y-4">
         @forelse($this->programas as $programa)
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-
+            <div class="bg-white shadow sm:rounded-lg overflow-hidden">
+                
                 {{-- Header del Programa --}}
-                <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+                <div class="p-4 cursor-pointer hover:bg-gray-50 transition"
                      wire:click="togglePrograma({{ $programa->id }})">
-
-                    <div class="flex items-center space-x-4">
-                        {{-- Icono de expandir --}}
-                        <span class="transform transition-transform duration-200 {{ isset($expandedProgramas[$programa->id]) ? 'rotate-90' : '' }}">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </span>
-
-                        {{-- Badge de tipo --}}
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $programa->tipo->colorClass() }}">
-                            {{ $programa->prefijoClave() }}
-                        </span>
-
-                        {{-- Nombre --}}
-                        <div>
-                            <h4 class="font-medium text-gray-900">{{ $programa->nombre }}</h4>
-                            <p class="text-sm text-gray-500">
-                                {{ $programa->tipo->label() }} · {{ $programa->objetivos->count() }} objetivos
-                            </p>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            {{-- Icono de expandir --}}
+                            <span class="transform transition-transform duration-200 {{ isset($expandedProgramas[$programa->id]) ? 'rotate-90' : '' }}">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </span>
+                            
+                            {{-- Badge de tipo --}}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $programa->tipo->colorClass() }}">
+                                {{ $programa->tipo->prefijo() }}
+                            </span>
+                            
+                            {{-- Nombre y descripción --}}
+                            <div>
+                                <h4 class="font-medium text-gray-900">{{ $programa->nombre }}</h4>
+                                <p class="text-sm text-gray-500">
+                                    {{ $programa->tipo->label() }} · {{ $programa->objetivos->count() }} objetivos
+                                </p>
+                            </div>
                         </div>
-                    </div>
-
-                    {{-- Acciones --}}
-                    <div class="flex items-center space-x-2">
-                        <button wire:click.stop="editPrograma({{ $programa->id }})"
-                                class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
-                            Editar
-                        </button>
-                        <button wire:click.stop="confirmDeletePrograma({{ $programa->id }})"
-                                class="text-red-600 hover:text-red-900 text-sm font-medium">
-                            Eliminar
-                        </button>
+                        
+                        {{-- Acciones --}}
+                        <div class="flex items-center space-x-3">
+                            <button wire:click.stop="editPrograma({{ $programa->id }})"
+                                    class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                Editar
+                            </button>
+                            <button wire:click.stop="confirmDeletePrograma({{ $programa->id }})"
+                                    class="text-red-600 hover:text-red-900 text-sm font-medium">
+                                Eliminar
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 {{-- Contenido expandido (Objetivos) --}}
-                <div wire:show="{{ isset($expandedProgramas[$programa->id]) }}"
-                     x-show="{{ isset($expandedProgramas[$programa->id]) ? 'true' : 'false' }}"
-                     class="border-t bg-gray-50 p-4">
-
-                    <div class="flex items-center justify-between mb-4">
-                        <h5 class="text-sm font-medium text-gray-700">Objetivos</h5>
-                        <button wire:click="createObjetivo({{ $programa->id }})"
-                                class="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-800">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Agregar Objetivo
-                        </button>
-                    </div>
-
-                    @if($programa->objetivos->isEmpty())
-                        <p class="text-sm text-gray-500 text-center py-4">
-                            Este programa no tiene objetivos. Agregue el primero.
-                        </p>
-                    @else
-                        <div class="space-y-2">
-                            @foreach($programa->objetivos as $objetivo)
-                                <div class="flex items-center justify-between p-3 bg-white rounded border hover:shadow-sm transition">
-                                    <div class="flex items-center space-x-3">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
-                                            {{ $programa->prefijoClave() }}.{{ $objetivo->clave }}
-                                        </span>
-                                        <span class="text-sm text-gray-700">{{ Str::limit($objetivo->descripcion, 60) }}</span>
-                                    </div>
-
-                                    <div class="flex items-center space-x-2">
-                                        <button wire:click="editObjetivo({{ $objetivo->id }})"
-                                                class="text-xs text-indigo-600 hover:text-indigo-900">
-                                            Editar
-                                        </button>
-                                        <button wire:click="deleteObjetivo({{ $objetivo->id }})"
-                                                wire:confirm="¿Eliminar este objetivo?"
-                                                class="text-xs text-red-600 hover:text-red-900">
-                                            Eliminar
-                                        </button>
-                                    </div>
-                                </div>
-                            @endforeach
+                @if(isset($expandedProgramas[$programa->id]))
+                    <div class="border-t border-gray-200 bg-gray-50 p-4">
+                        
+                        <div class="flex items-center justify-between mb-4">
+                            <h5 class="text-sm font-medium text-gray-700">Objetivos del Programa</h5>
+                            <button wire:click="createObjetivo({{ $programa->id }})"
+                                    class="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Agregar Objetivo
+                            </button>
                         </div>
-                    @endif
-                </div>
+
+                        @if($programa->objetivos->isEmpty())
+                            <div class="text-center py-8">
+                                <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <p class="mt-2 text-sm text-gray-500">
+                                    Este programa no tiene objetivos. Agregue el primero.
+                                </p>
+                            </div>
+                        @else
+                            <div class="space-y-2">
+                                @foreach($programa->objetivos as $objetivo)
+                                    <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:shadow-sm transition">
+                                        <div class="flex items-center space-x-3">
+                                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-mono font-medium bg-indigo-100 text-indigo-800">
+                                                {{ $programa->tipo->prefijo() }}.{{ $objetivo->clave }}
+                                            </span>
+                                            <span class="text-sm text-gray-700">
+                                                {{ Str::limit($objetivo->descripcion, 60) }}
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="flex items-center space-x-3">
+                                            <button wire:click="editObjetivo({{ $objetivo->id }})"
+                                                    class="text-xs text-indigo-600 hover:text-indigo-900 font-medium">
+                                                Editar
+                                            </button>
+                                            <button wire:click="deleteObjetivo({{ $objetivo->id }})"
+                                                    wire:confirm="¿Eliminar este objetivo?"
+                                                    class="text-xs text-red-600 hover:text-red-900 font-medium">
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                @endif
             </div>
         @empty
-            <div class="bg-white rounded-lg shadow p-12 text-center">
+            <div class="bg-white shadow sm:rounded-lg p-12 text-center">
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -858,7 +939,7 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
                 </p>
                 @if($this->planActivo)
                     <button wire:click="createPrograma"
-                            class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
+                            class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 transition">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
@@ -870,7 +951,7 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
     </div>
 
     {{-- Modal: Crear/Editar Programa --}}
-    <x-dialog-modal wire:model="showProgramaModal" maxWidth="lg">
+    <x-dialog-modal wire:model="showProgramaModal" max-width="lg">
         <x-slot name="title">
             {{ $programaMode === 'create' ? 'Crear Programa Derivado' : 'Editar Programa Derivado' }}
         </x-slot>
@@ -892,8 +973,8 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
                 <div>
                     <x-label for="programaTipo" value="Tipo de Programa" />
                     <select id="programaTipo"
-                            class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                            wire:model="programaTipo">
+                            wire:model="programaTipo"
+                            class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                         <option value="">Seleccione un tipo...</option>
                         @foreach(\App\Enums\TipoProgramaDerivado::cases() as $tipo)
                             <option value="{{ $tipo->value }}">{{ $tipo->label() }}</option>
@@ -912,9 +993,9 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
                 <div>
                     <x-label for="programaDescripcion" value="Descripción (opcional)" />
                     <textarea id="programaDescripcion"
+                              wire:model="programaDescripcion"
                               class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                               rows="3"
-                              wire:model="programaDescripcion"
                               maxlength="1000"
                               placeholder="Descripción general del programa..."></textarea>
                     <p class="mt-1 text-xs text-gray-500">{{ strlen($programaDescripcion) }}/1000 caracteres</p>
@@ -926,17 +1007,18 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('showProgramaModal', false)" class="mr-3">
+            <x-secondary-button wire:click="$set('showProgramaModal', false)">
                 Cancelar
             </x-secondary-button>
-            <x-button wire:click="savePrograma" class="bg-indigo-600 text-white">
+
+            <x-primary-button wire:click="savePrograma" class="ml-3">
                 {{ $programaMode === 'create' ? 'Crear Programa' : 'Guardar Cambios' }}
-            </x-button>
+            </x-primary-button>
         </x-slot>
     </x-dialog-modal>
 
     {{-- Modal: Crear/Editar Objetivo --}}
-    <x-dialog-modal wire:model="showObjetivoModal" maxWidth="md">
+    <x-dialog-modal wire:model="showObjetivoModal" max-width="md">
         <x-slot name="title">
             {{ $objetivoMode === 'create' ? 'Crear Objetivo' : 'Editar Objetivo' }}
         </x-slot>
@@ -944,7 +1026,7 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
         <x-slot name="content">
             @if($programaSeleccionado)
                 <p class="mb-4 text-sm text-gray-600">
-                    Programa: <strong>{{ $programaSeleccionado->nombre }}</strong>
+                    Programa: <strong class="text-gray-900">{{ $programaSeleccionado->nombre }}</strong>
                 </p>
             @endif
 
@@ -953,7 +1035,7 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
                     <x-label for="objetivoClave" value="Clave del Objetivo" />
                     <div class="mt-1 flex items-center space-x-2">
                         @if($programaSeleccionado)
-                            <span class="text-gray-500">{{ $programaSeleccionado->prefijoClave() }}.</span>
+                            <span class="text-gray-500 text-sm">{{ $programaSeleccionado->tipo->prefijo() }}.</span>
                         @endif
                         <x-input id="objetivoClave"
                                  type="text"
@@ -969,9 +1051,9 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
                 <div>
                     <x-label for="objetivoDescripcion" value="Descripción del Objetivo" />
                     <textarea id="objetivoDescripcion"
+                              wire:model="objetivoDescripcion"
                               class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                               rows="3"
-                              wire:model="objetivoDescripcion"
                               maxlength="500"></textarea>
                     <p class="mt-1 text-xs text-gray-500">{{ strlen($objetivoDescripcion) }}/500 caracteres</p>
                     @error('objetivoDescripcion')
@@ -982,17 +1064,18 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('showObjetivoModal', false)" class="mr-3">
+            <x-secondary-button wire:click="$set('showObjetivoModal', false)">
                 Cancelar
             </x-secondary-button>
-            <x-button wire:click="saveObjetivo" class="bg-indigo-600 text-white">
+
+            <x-primary-button wire:click="saveObjetivo" class="ml-3">
                 {{ $objetivoMode === 'create' ? 'Crear Objetivo' : 'Guardar Cambios' }}
-            </x-button>
+            </x-primary-button>
         </x-slot>
     </x-dialog-modal>
 
     {{-- Modal: Confirmar Eliminación --}}
-    <x-dialog-modal wire:model="showDeleteModal" maxWidth="sm">
+    <x-dialog-modal wire:model="showDeleteModal" max-width="sm">
         <x-slot name="title">
             Confirmar Eliminación
         </x-slot>
@@ -1007,14 +1090,13 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
                     <div class="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-4">
                         <div class="flex">
                             <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                                 </svg>
                             </div>
                             <div class="ml-3">
                                 <p class="text-sm text-yellow-700">
-                                    Este programa tiene <strong>{{ $programaSeleccionado->objetivos_count }} objetivos</strong>
-                                    que serán eliminados también.
+                                    Este programa tiene <strong>{{ $programaSeleccionado->objetivos_count }} objetivos</strong> que serán eliminados también.
                                 </p>
                             </div>
                         </div>
@@ -1024,10 +1106,11 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button wire:click="$set('showDeleteModal', false)" class="mr-3">
+            <x-secondary-button wire:click="$set('showDeleteModal', false)">
                 Cancelar
             </x-secondary-button>
-            <x-danger-button wire:click="deletePrograma">
+
+            <x-danger-button wire:click="deletePrograma" class="ml-3">
                 Eliminar Programa
             </x-danger-button>
         </x-slot>
@@ -1038,527 +1121,31 @@ Crear `resources/views/livewire/programas-derivados-manager.blade.php`:
 
 ---
 
-### 6. Agregar Método de Color al Enum
-
-Editar `app/Enums/TipoProgramaDerivado.php`:
-
-```php
-<?php
-
-namespace App\Enums;
-
-enum TipoProgramaDerivado: string
-{
-    case SECTORIAL = 'sectorial';
-    case ESPECIAL = 'especial';
-    case INSTITUCIONAL = 'institucional';
-    case REGIONAL = 'regional';
-
-    public function label(): string
-    {
-        return match($this) {
-            self::SECTORIAL => 'Programa Sectorial',
-            self::ESPECIAL => 'Programa Especial',
-            self::INSTITUCIONAL => 'Programa Institucional',
-            self::REGIONAL => 'Programa Regional',
-        };
-    }
-
-    public function descripcion(): string
-    {
-        return match($this) {
-            self::SECTORIAL => 'Programas que abordan temas sectoriales específicos del desarrollo estatal.',
-            self::ESPECIAL => 'Programas diseñados para atender problemáticas específicas o emergentes.',
-            self::INSTITUCIONAL => 'Programas que orientan la gestión interna de una institución.',
-            self::REGIONAL => 'Programas enfocados al desarrollo de regiones geográficas específicas.',
-        };
-    }
-
-    public function prefijo(): string
-    {
-        return match($this) {
-            self::SECTORIAL => 'OS',
-            self::ESPECIAL => 'OE',
-            self::INSTITUCIONAL => 'OI',
-            self::REGIONAL => 'OR',
-        };
-    }
-
-    public function colorClass(): string
-    {
-        return match($this) {
-            self::SECTORIAL => 'bg-blue-100 text-blue-800',
-            self::ESPECIAL => 'bg-green-100 text-green-800',
-            self::INSTITUCIONAL => 'bg-purple-100 text-purple-800',
-            self::REGIONAL => 'bg-orange-100 text-orange-800',
-        };
-    }
-
-    public static function values(): array
-    {
-        return array_column(self::cases(), 'value');
-    }
-}
-```
-
----
-
-### 7. Agregar Navegación al Menú
+### 7. Actualizar Navegación
 
 Editar `resources/views/navigation-menu.blade.php`:
 
 ```blade
 @can('gestionar_catalogos')
-    <x-nav-link href="{{ route('ped.index') }}" :active="request()->routeIs('ped.*')">
-        {{ __('Plan Estatal') }}
-    </x-nav-link>
-
-    <x-nav-link href="{{ route('programas-derivados.index') }}" :active="request()->routeIs('programas-derivados.*')">
-        {{ __('Programas Derivados') }}
+    <x-nav-link href="{{ route('cascade.ped.index') }}" :active="request()->routeIs('cascade.*')">
+        {{ __('Cascada de Planes') }}
     </x-nav-link>
 @endcan
 ```
 
 ---
 
-### 8. Crear Tests Funcionales
-
-```bash
-sail artisan make:test ProgramasDerivadosCrudTest
-```
-
-Editar `tests/Feature/ProgramasDerivadosCrudTest.php`:
-
-```php
-<?php
-
-namespace Tests\Feature;
-
-use App\Enums\TipoProgramaDerivado;
-use App\Models\PedPlan;
-use App\Models\ProgramaDerivado;
-use App\Models\ProgramaDerivadoObjetivo;
-use App\Models\User;
-use Database\Seeders\RolesAndPermissionsSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
-use Tests\TestCase;
-
-class ProgramasDerivadosCrudTest extends TestCase
-{
-    use RefreshDatabase;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->seed(RolesAndPermissionsSeeder::class);
-    }
-
-    // ============================================
-    // Tests de Autorización
-    // ============================================
-
-    public function test_usuario_sin_permiso_no_puede_acceder(): void
-    {
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user)->get(route('programas-derivados.index'));
-
-        $response->assertForbidden();
-    }
-
-    public function test_usuario_con_permiso_puede_acceder(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        // Crear PED activo
-        PedPlan::create([
-            'nombre' => 'Plan Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-            'activo' => true,
-        ]);
-
-        $response = $this->actingAs($user)->get(route('programas-derivados.index'));
-
-        $response->assertOk();
-        $response->assertSee('Programas Derivados');
-    }
-
-    public function test_sin_ped_activo_muestra_advertencia(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        $response = $this->actingAs($user)->get(route('programas-derivados.index'));
-
-        $response->assertOk();
-        $response->assertSee('No hay Plan Estatal de Desarrollo activo');
-    }
-
-    // ============================================
-    // Tests de CRUD de Programas
-    // ============================================
-
-    public function test_crear_programa_derivado(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        PedPlan::create([
-            'nombre' => 'Plan Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-            'activo' => true,
-        ]);
-
-        Livewire::actingAs($user)
-            ->test('programas-derivados-manager')
-            ->call('createPrograma')
-            ->set('programaNombre', 'Programa Sectorial de Educación')
-            ->set('programaTipo', TipoProgramaDerivado::SECTORIAL->value)
-            ->set('programaDescripcion', 'Descripción del programa')
-            ->call('savePrograma')
-            ->assertSessionHas('message');
-
-        $this->assertDatabaseHas('programas_derivados', [
-            'nombre' => 'Programa Sectorial de Educación',
-            'tipo' => TipoProgramaDerivado::SECTORIAL->value,
-        ]);
-    }
-
-    public function test_editar_programa_derivado(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        $plan = PedPlan::create([
-            'nombre' => 'Plan Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-            'activo' => true,
-        ]);
-
-        $programa = ProgramaDerivado::create([
-            'ped_plan_id' => $plan->id,
-            'nombre' => 'Programa Original',
-            'tipo' => TipoProgramaDerivado::SECTORIAL,
-        ]);
-
-        Livewire::actingAs($user)
-            ->test('programas-derivados-manager')
-            ->call('editPrograma', $programa->id)
-            ->set('programaNombre', 'Programa Editado')
-            ->call('savePrograma');
-
-        $this->assertEquals('Programa Editado', $programa->fresh()->nombre);
-    }
-
-    public function test_eliminar_programa_derivado(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        $plan = PedPlan::create([
-            'nombre' => 'Plan Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-            'activo' => true,
-        ]);
-
-        $programa = ProgramaDerivado::create([
-            'ped_plan_id' => $plan->id,
-            'nombre' => 'Programa a Eliminar',
-            'tipo' => TipoProgramaDerivado::SECTORIAL,
-        ]);
-
-        Livewire::actingAs($user)
-            ->test('programas-derivados-manager')
-            ->call('confirmDeletePrograma', $programa->id)
-            ->call('deletePrograma');
-
-        $this->assertDatabaseMissing('programas_derivados', ['id' => $programa->id]);
-    }
-
-    // ============================================
-    // Tests de CRUD de Objetivos
-    // ============================================
-
-    public function test_crear_objetivo_en_programa(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        $plan = PedPlan::create([
-            'nombre' => 'Plan Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-            'activo' => true,
-        ]);
-
-        $programa = ProgramaDerivado::create([
-            'ped_plan_id' => $plan->id,
-            'nombre' => 'Programa Test',
-            'tipo' => TipoProgramaDerivado::SECTORIAL,
-        ]);
-
-        Livewire::actingAs($user)
-            ->test('programas-derivados-manager')
-            ->call('createObjetivo', $programa->id)
-            ->set('objetivoClave', '1')
-            ->set('objetivoDescripcion', 'Objetivo de prueba')
-            ->call('saveObjetivo');
-
-        $this->assertDatabaseHas('programas_derivados_objetivos', [
-            'programa_derivado_id' => $programa->id,
-            'clave' => '1',
-            'descripcion' => 'Objetivo de prueba',
-        ]);
-    }
-
-    public function test_eliminar_objetivo(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        $plan = PedPlan::create([
-            'nombre' => 'Plan Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-            'activo' => true,
-        ]);
-
-        $programa = ProgramaDerivado::create([
-            'ped_plan_id' => $plan->id,
-            'nombre' => 'Programa Test',
-            'tipo' => TipoProgramaDerivado::SECTORIAL,
-        ]);
-
-        $objetivo = $programa->objetivos()->create([
-            'clave' => '1',
-            'descripcion' => 'Objetivo a eliminar',
-        ]);
-
-        Livewire::actingAs($user)
-            ->test('programas-derivados-manager')
-            ->call('deleteObjetivo', $objetivo->id);
-
-        $this->assertDatabaseMissing('programas_derivados_objetivos', ['id' => $objetivo->id]);
-    }
-
-    // ============================================
-    // Tests de Filtros
-    // ============================================
-
-    public function test_filtro_por_tipo_sectorial(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        $plan = PedPlan::create([
-            'nombre' => 'Plan Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-            'activo' => true,
-        ]);
-
-        $sectorial = ProgramaDerivado::create([
-            'ped_plan_id' => $plan->id,
-            'nombre' => 'Programa Sectorial',
-            'tipo' => TipoProgramaDerivado::SECTORIAL,
-        ]);
-
-        $especial = ProgramaDerivado::create([
-            'ped_plan_id' => $plan->id,
-            'nombre' => 'Programa Especial',
-            'tipo' => TipoProgramaDerivado::ESPECIAL,
-        ]);
-
-        Livewire::actingAs($user)
-            ->test('programas-derivados-manager')
-            ->set('filtroTipo', TipoProgramaDerivado::SECTORIAL->value)
-            ->assertSee('Programa Sectorial')
-            ->assertDontSee('Programa Especial');
-    }
-
-    // ============================================
-    // Tests de Validación
-    // ============================================
-
-    public function test_validacion_tipo_requerido(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        PedPlan::create([
-            'nombre' => 'Plan Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-            'activo' => true,
-        ]);
-
-        Livewire::actingAs($user)
-            ->test('programas-derivados-manager')
-            ->call('createPrograma')
-            ->set('programaNombre', 'Programa sin tipo')
-            ->set('programaTipo', '')
-            ->call('savePrograma')
-            ->assertHasErrors(['programaTipo']);
-    }
-
-    public function test_validacion_tipo_invalido(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        PedPlan::create([
-            'nombre' => 'Plan Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-            'activo' => true,
-        ]);
-
-        Livewire::actingAs($user)
-            ->test('programas-derivados-manager')
-            ->call('createPrograma')
-            ->set('programaNombre', 'Programa con tipo inválido')
-            ->set('programaTipo', 'tipo_inexistente')
-            ->call('savePrograma')
-            ->assertHasErrors(['programaTipo']);
-    }
-
-    public function test_validacion_descripcion_max_500_caracteres(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        $plan = PedPlan::create([
-            'nombre' => 'Plan Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-            'activo' => true,
-        ]);
-
-        $programa = ProgramaDerivado::create([
-            'ped_plan_id' => $plan->id,
-            'nombre' => 'Programa Test',
-            'tipo' => TipoProgramaDerivado::SECTORIAL,
-        ]);
-
-        Livewire::actingAs($user)
-            ->test('programas-derivados-manager')
-            ->call('createObjetivo', $programa->id)
-            ->set('objetivoClave', '1')
-            ->set('objetivoDescripcion', str_repeat('a', 501))
-            ->call('saveObjetivo')
-            ->assertHasErrors(['objetivoDescripcion']);
-    }
-
-    // ============================================
-    // Tests de Cascade Delete
-    // ============================================
-
-    public function test_eliminar_programa_elimina_objetivos(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('gestionar_catalogos');
-
-        $plan = PedPlan::create([
-            'nombre' => 'Plan Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-            'activo' => true,
-        ]);
-
-        $programa = ProgramaDerivado::create([
-            'ped_plan_id' => $plan->id,
-            'nombre' => 'Programa con Objetivos',
-            'tipo' => TipoProgramaDerivado::SECTORIAL,
-        ]);
-
-        $objetivo = $programa->objetivos()->create([
-            'clave' => '1',
-            'descripcion' => 'Objetivo test',
-        ]);
-
-        Livewire::actingAs($user)
-            ->test('programas-derivados-manager')
-            ->call('confirmDeletePrograma', $programa->id)
-            ->assertSet('programaSeleccionado.objetivos_count', 1)
-            ->call('deletePrograma');
-
-        $this->assertDatabaseMissing('programas_derivados', ['id' => $programa->id]);
-        $this->assertDatabaseMissing('programas_derivados_objetivos', ['id' => $objetivo->id]);
-    }
-}
-```
-
----
-
-### 9. Ejecutar y Verificar
-
-```bash
-# Compilar assets
-sail npm run build
-
-# Ejecutar tests
-sail artisan test --filter ProgramasDerivadosCrudTest
-
-# Acceder a la aplicación
-# http://localhost/programas-derivados
-```
-
-Verificación manual:
-
-1. Iniciar sesión como usuario con permiso `gestionar_catalogos`
-2. Verificar que sin PED activo se muestra advertencia
-3. Crear/activar un PED
-4. Crear programa derivado de cada tipo
-5. Agregar objetivos a cada programa
-6. Editar y eliminar programas y objetivos
-7. Probar filtros por tipo
-8. Verificar eliminación en cascada
-
----
-
-## Criterios de Aceptación
-
-- [ ] Ruta `/programas-derivados` protegida con middleware `permission:gestionar_catalogos`
-- [ ] Componente `ProgramasDerivadosManager` muestra listado con filtros
-- [ ] Filtro por tipo funciona correctamente (todos, sectorial, especial, institucional, regional)
-- [ ] CRUD completo de programas derivados
-- [ ] CRUD de objetivos anidados por programa
-- [ ] Vinculación automática al PED activo (`ped_plan_id`)
-- [ ] Validación: nombre requerido, tipo validado contra Enum PHP
-- [ ] Advertencia si no hay PED activo
-- [ ] Confirmación de eliminación con conteo de objetivos
-- [ ] Tests pasan (12 assertions)
-- [ ] Usuario sin permiso recibe 403
-- [ ] Responsive en pantallas >= 768px
-
----
-
-## Notas
-
-### Patrones Reutilizados de S2-T6
-
-| Patrón              | S2-T6 (PED)                  | S2-T7 (Programas Derivados)       |
-| ------------------- | ---------------------------- | --------------------------------- |
-| Modales Livewire    | `PedPlanForm`, `PedNodoForm` | Integrado en componente principal |
-| Validación reactiva | Form Requests + wire:model   | Igual                             |
-| Expansión de nodos  | Alpine.js x-show             | Livewire + Alpine híbrido         |
-| Cascade delete      | Advertencia de hijos         | Advertencia + conteo de objetivos |
-| Filtros             | No aplica                    | Tabs por tipo + dropdown          |
-
-### Diferencias con S2-T6
-
-| Aspecto             | S2-T6          | S2-T7                 |
-| ------------------- | -------------- | --------------------- |
-| Niveles jerárquicos | 6              | 2                     |
-| ENUM nativo         | No             | Sí (tipo de programa) |
-| Filtros             | No             | Por tipo              |
-| Vista               | Árbol completo | Lista expandible      |
-| Dependencia         | Ninguna        | PED activo            |
+## Resumen de Componentes Jetstream Correctos
+
+| Componente | Uso |
+|------------|-----|
+| `<x-dialog-modal>` | Modales de confirmación y formularios simples |
+| `<x-primary-button>` | Acción principal (Guardar, Crear) |
+| `<x-secondary-button>` | Acción secundaria (Cancelar) |
+| `<x-danger-button>` | Acción destructiva (Eliminar) |
+| `<x-label>` | Etiquetas de formulario |
+| `<x-input>` | Campos de texto |
+| `<x-checkbox>` | Casillas de verificación |
+| `<x-nav-link>` | Enlaces de navegación |
 
 ---

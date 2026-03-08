@@ -27,6 +27,14 @@ Los embeddings vectoriales permiten realizar búsquedas semánticas (por signifi
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
+**Esta versión implementa:**
+- Servicio en `App\Services\Embeddings\`
+- Interface en `App\Contracts\`
+- Job en `App\Jobs\Embeddings\`
+- Observers específicos por modelo
+- Configuración centralizada en `config/embedding.php`
+- Tests organizados por dominio
+
 ---
 
 ## Pre-requisitos
@@ -34,12 +42,84 @@ Los embeddings vectoriales permiten realizar búsquedas semánticas (por signifi
 - S0-T4: Redis configurado como driver de colas
 - S2-T1, S2-T2, S2-T3: Tablas con columnas `embedding vector(1536)`
 - API key del proveedor de embeddings (OpenAI `text-embedding-ada-002` o compatible)
+- Extensión PostgreSQL `pgvector` habilitada
 
 ---
 
 ## Pasos
 
-### 1. Crear Interfaz del Servicio
+### 1. Crear Archivo de Configuración Dedicado
+
+Crear `config/embedding.php`:
+
+```php
+<?php
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Configuración del Servicio de Embeddings
+    |--------------------------------------------------------------------------
+    |
+    | Este archivo centraliza toda la configuración relacionada con la generación
+    | y búsqueda de embeddings vectoriales.
+    |
+    */
+
+    // ============================================
+    // API Configuration
+    // ============================================
+    
+    'api_key' => env('EMBEDDING_API_KEY'),
+    'api_url' => env('EMBEDDING_API_URL', 'https://api.openai.com/v1/embeddings'),
+    'model' => env('EMBEDDING_MODEL', 'text-embedding-ada-002'),
+    'dimension' => env('EMBEDDING_DIMENSION', 1536),
+
+    // ============================================
+    // Rate Limiting
+    // ============================================
+    
+    // Máximo número de requests por minuto al API
+    'rate_limit' => env('EMBEDDING_RATE_LIMIT', 60),
+
+    // Timeout en segundos para requests
+    'timeout' => env('EMBEDDING_TIMEOUT', 30),
+
+    // ============================================
+    // Queue Configuration
+    // ============================================
+    
+    // Cola específica para jobs de embeddings
+    'queue' => env('EMBEDDING_QUEUE', 'embeddings'),
+
+    // Número de reintentos antes de marcar como failed
+    'tries' => env('EMBEDDING_JOB_TRIES', 3),
+
+    // Backoff exponencial entre reintentos (segundos)
+    'backoff' => [10, 60, 300],
+
+    // Tiempo máximo de ejecución del job
+    'timeout_job' => env('EMBEDDING_JOB_TIMEOUT', 60),
+
+    // ============================================
+    // Chunking
+    // ============================================
+    
+    // Máximo de tokens por request (aproximación: 4 chars = 1 token)
+    'max_tokens' => env('EMBEDDING_MAX_TOKENS', 8000),
+
+    // ============================================
+    // Observers
+    // ============================================
+    
+    // Habilitar/deshabilitar observers globalmente (útil para tests)
+    'observers_enabled' => env('EMBEDDING_OBSERVERS_ENABLED', true),
+];
+```
+
+---
+
+### 2. Crear Interfaz del Servicio
 
 ```bash
 mkdir -p app/Contracts
@@ -59,7 +139,8 @@ interface EmbeddingServiceInterface
      *
      * @param string $text Texto a convertir en embedding
      * @return array Array de floats (dimensión según modelo, típicamente 1536)
-     * @throws \Exception Si el API falla
+     * @throws \InvalidArgumentException Si el texto está vacío
+     * @throws \RuntimeException Si el API falla
      */
     public function generate(string $text): array;
 
@@ -67,23 +148,33 @@ interface EmbeddingServiceInterface
      * Obtiene la dimensión del embedding (número de elementos).
      */
     public function getDimension(): int;
+
+    /**
+     * Obtiene el modelo de embeddings configurado.
+     */
+    public function getModel(): string;
 }
 ```
 
 ---
 
-### 2. Crear Servicio de Embeddings
+### 3. Crear Servicio de Embeddings (Organizado por Dominio)
 
-Crear `app/Services/EmbeddingService.php`:
+```bash
+mkdir -p app/Services/Embeddings
+```
+
+Crear `app/Services/Embeddings/EmbeddingService.php`:
 
 ```php
 <?php
 
-namespace App\Services;
+namespace App\Services\Embeddings;
 
 use App\Contracts\EmbeddingServiceInterface;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 
 class EmbeddingService implements EmbeddingServiceInterface
 {
@@ -91,13 +182,17 @@ class EmbeddingService implements EmbeddingServiceInterface
     protected string $apiUrl;
     protected string $model;
     protected int $dimension;
+    protected int $timeout;
+    protected int $maxTokens;
 
     public function __construct()
     {
-        $this->apiKey = config('services.embedding.api_key');
-        $this->apiUrl = config('services.embedding.api_url', 'https://api.openai.com/v1/embeddings');
-        $this->model = config('services.embedding.model', 'text-embedding-ada-002');
-        $this->dimension = config('services.embedding.dimension', 1536);
+        $this->apiKey = config('embedding.api_key');
+        $this->apiUrl = config('embedding.api_url');
+        $this->model = config('embedding.model');
+        $this->dimension = config('embedding.dimension');
+        $this->timeout = config('embedding.timeout', 30);
+        $this->maxTokens = config('embedding.max_tokens', 8000);
     }
 
     /**
@@ -105,49 +200,11 @@ class EmbeddingService implements EmbeddingServiceInterface
      */
     public function generate(string $text): array
     {
-        // Validar que hay texto
-        if (empty(trim($text))) {
-            throw new \InvalidArgumentException('El texto no puede estar vacío');
-        }
+        $this->validateInput($text);
 
-        // Truncar texto si es muy largo (límite del modelo)
         $text = $this->truncateText($text);
 
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])
-            ->timeout(30)
-            ->post($this->apiUrl, [
-                'model' => $this->model,
-                'input' => $text,
-            ]);
-
-            if (!$response->successful()) {
-                $error = $response->json('error.message', 'Error desconocido');
-                Log::error('Embedding API error', [
-                    'status' => $response->status(),
-                    'error' => $error,
-                    'text_length' => strlen($text),
-                ]);
-                throw new \Exception("Embedding API error: {$error}");
-            }
-
-            $embedding = $response->json('data.0.embedding');
-
-            if (!is_array($embedding) || count($embedding) !== $this->dimension) {
-                throw new \Exception('Invalid embedding response dimension');
-            }
-
-            return $embedding;
-
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            Log::error('Embedding API connection error', [
-                'message' => $e->getMessage(),
-            ]);
-            throw new \Exception('Connection error to Embedding API');
-        }
+        return $this->callApi($text);
     }
 
     /**
@@ -159,77 +216,115 @@ class EmbeddingService implements EmbeddingServiceInterface
     }
 
     /**
-     * Trunca el texto si excede el límite de tokens aproximado.
+     * Obtiene el modelo configurado.
      */
-    protected function truncateText(string $text, int $maxTokens = 8000): string
+    public function getModel(): string
     {
-        // Aproximación: 4 caracteres por token en español
-        $maxLength = $maxTokens * 4;
+        return $this->model;
+    }
+
+    /**
+     * Valida el texto de entrada.
+     */
+    protected function validateInput(string $text): void
+    {
+        if (empty(trim($text))) {
+            throw new \InvalidArgumentException('El texto no puede estar vacío');
+        }
+    }
+
+    /**
+     * Trunca el texto si excede el límite de tokens.
+     */
+    protected function truncateText(string $text): string
+    {
+        $maxLength = $this->maxTokens * 4; // Aproximación: 4 chars = 1 token
 
         if (strlen($text) > $maxLength) {
+            Log::info('Text truncated for embedding generation', [
+                'original_length' => strlen($text),
+                'truncated_length' => $maxLength,
+            ]);
+
             return substr($text, 0, $maxLength);
         }
 
         return $text;
     }
-}
-```
 
----
-
-### 3. Configurar Servicio en Laravel
-
-Crear `config/services.php` o agregar al existente:
-
-```php
-<?php
-
-return [
-    // ... otros servicios
-
-    'embedding' => [
-        'api_key' => env('EMBEDDING_API_KEY'),
-        'api_url' => env('EMBEDDING_API_URL', 'https://api.openai.com/v1/embeddings'),
-        'model' => env('EMBEDDING_MODEL', 'text-embedding-ada-002'),
-        'dimension' => env('EMBEDDING_DIMENSION', 1536),
-    ],
-];
-```
-
-Registrar como singleton en `app/Providers/AppServiceProvider.php`:
-
-```php
-<?php
-
-namespace App\Providers;
-
-use App\Contracts\EmbeddingServiceInterface;
-use App\Services\EmbeddingService;
-use Illuminate\Support\ServiceProvider;
-
-class AppServiceProvider extends ServiceProvider
-{
     /**
-     * Register any application services.
+     * Realiza la llamada al API de embeddings.
      */
-    public function register(): void
+    protected function callApi(string $text): array
     {
-        $this->app->singleton(EmbeddingServiceInterface::class, function ($app) {
-            return new EmbeddingService();
-        });
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Content-Type' => 'application/json',
+            ])
+            ->timeout($this->timeout)
+            ->post($this->apiUrl, [
+                'model' => $this->model,
+                'input' => $text,
+            ]);
+
+            return $this->parseResponse($response);
+
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error('Embedding API connection error', [
+                'message' => $e->getMessage(),
+                'text_length' => strlen($text),
+            ]);
+
+            throw new \RuntimeException('Connection error to Embedding API');
+        }
     }
 
     /**
-     * Bootstrap any application services.
+     * Parsea la respuesta del API.
      */
-    public function boot(): void
+    protected function parseResponse($response): array
     {
-        // Gate global para admin (existente de S1-T5)
-        \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
-            if ($user->hasRole('admin')) {
-                return true;
+        if (!$response->successful()) {
+            $error = $response->json('error.message', 'Error desconocido');
+            $statusCode = $response->status();
+
+            Log::error('Embedding API error', [
+                'status' => $statusCode,
+                'error' => $error,
+            ]);
+
+            throw new \RuntimeException("Embedding API error ({$statusCode}): {$error}");
+        }
+
+        $embedding = $response->json('data.0.embedding');
+
+        $this->validateEmbedding($embedding);
+
+        return $embedding;
+    }
+
+    /**
+     * Valida la respuesta del embedding.
+     */
+    protected function validateEmbedding(?array $embedding): void
+    {
+        if (!is_array($embedding)) {
+            throw new \RuntimeException('Invalid embedding response: not an array');
+        }
+
+        if (count($embedding) !== $this->dimension) {
+            throw new \RuntimeException(
+                "Invalid embedding dimension: expected {$this->dimension}, got " . count($embedding)
+            );
+        }
+
+        // Verificar que todos los elementos son numéricos
+        foreach ($embedding as $i => $value) {
+            if (!is_float($value) && !is_int($value)) {
+                throw new \RuntimeException("Invalid embedding value at index {$i}");
             }
-        });
+        }
     }
 }
 ```
@@ -239,20 +334,19 @@ class AppServiceProvider extends ServiceProvider
 ### 4. Crear Job para Generación de Embeddings
 
 ```bash
-sail artisan make:job GenerateEmbedding
+mkdir -p app/Jobs/Embeddings
 ```
 
-Editar `app/Jobs/GenerateEmbedding.php`:
+Crear `app/Jobs/Embeddings/GenerateEmbedding.php`:
 
 ```php
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Embeddings;
 
 use App\Contracts\EmbeddingServiceInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -266,17 +360,17 @@ class GenerateEmbedding implements ShouldQueue
     /**
      * Número de intentos antes de fallar.
      */
-    public int $tries = 3;
+    public int $tries;
 
     /**
      * Backoff exponencial entre reintentos (en segundos).
      */
-    public array $backoff = [10, 60, 300];
+    public array $backoff;
 
     /**
      * Tiempo máximo de ejecución del job.
      */
-    public int $timeout = 60;
+    public int $timeout;
 
     /**
      * Modelo para el que se generará el embedding.
@@ -312,8 +406,13 @@ class GenerateEmbedding implements ShouldQueue
         $this->text = $text;
         $this->embeddingColumn = $embeddingColumn;
 
+        // Configuración desde config
+        $this->tries = config('embedding.tries', 3);
+        $this->backoff = config('embedding.backoff', [10, 60, 300]);
+        $this->timeout = config('embedding.timeout_job', 60);
+
         // Usar cola específica para embeddings
-        $this->onQueue('embeddings');
+        $this->onQueue(config('embedding.queue', 'embeddings'));
     }
 
     /**
@@ -321,7 +420,7 @@ class GenerateEmbedding implements ShouldQueue
      */
     public function handle(EmbeddingServiceInterface $embeddingService): void
     {
-        // Obtener el modelo
+        // Verificar que el modelo existe
         $model = $this->modelClass::find($this->modelId);
 
         if (!$model) {
@@ -336,16 +435,8 @@ class GenerateEmbedding implements ShouldQueue
             // Generar embedding
             $embedding = $embeddingService->generate($this->text);
 
-            // Convertir a formato PostgreSQL
-            $embeddingString = '[' . implode(',', $embedding) . ']';
-
-            // Guardar en la base de datos usando raw SQL
-            // Esto es necesario porque Eloquent no soporta nativamente columnas vectoriales
-            $tableName = $model->getTable();
-            DB::statement(
-                "UPDATE {$tableName} SET {$this->embeddingColumn} = ?::vector WHERE id = ?",
-                [$embeddingString, $this->modelId]
-            );
+            // Guardar en la base de datos
+            $this->saveEmbedding($model, $embedding);
 
             Log::info('Embedding generated successfully', [
                 'model_class' => $this->modelClass,
@@ -366,6 +457,21 @@ class GenerateEmbedding implements ShouldQueue
     }
 
     /**
+     * Guarda el embedding en la base de datos.
+     */
+    protected function saveEmbedding($model, array $embedding): void
+    {
+        $tableName = $model->getTable();
+        $embeddingString = '[' . implode(',', $embedding) . ']';
+
+        // Usar raw SQL porque Eloquent no soporta nativamente columnas vectoriales
+        DB::statement(
+            "UPDATE {$tableName} SET {$this->embeddingColumn} = ?::vector WHERE id = ?",
+            [$embeddingString, $this->modelId]
+        );
+    }
+
+    /**
      * Handle a job failure.
      */
     public function failed(\Throwable $exception): void
@@ -376,8 +482,8 @@ class GenerateEmbedding implements ShouldQueue
             'error' => $exception->getMessage(),
         ]);
 
-        // El registro queda con embedding null, pero el job se marca como failed
-        // El usuario no es bloqueado
+        // El registro queda con embedding null
+        // El job se marca como failed, el usuario no es bloqueado
     }
 
     /**
@@ -390,6 +496,14 @@ class GenerateEmbedding implements ShouldQueue
             "model:{$this->modelClass}",
             "id:{$this->modelId}",
         ];
+    }
+
+    /**
+     * Determina el tiempo de espera antes del próximo intento.
+     */
+    public function backoff(): array
+    {
+        return $this->backoff;
     }
 }
 ```
@@ -405,7 +519,7 @@ Crear `app/Observers/EmbeddingObserver.php`:
 
 namespace App\Observers;
 
-use App\Jobs\GenerateEmbedding;
+use App\Jobs\Embeddings\GenerateEmbedding;
 use Illuminate\Database\Eloquent\Model;
 
 class EmbeddingObserver
@@ -413,7 +527,7 @@ class EmbeddingObserver
     /**
      * Nombre del campo de descripción a usar para el embedding.
      */
-    protected string $descripcionField = 'descripcion';
+    protected string $descriptionField = 'descripcion';
 
     /**
      * Nombre del campo donde guardar el embedding.
@@ -433,8 +547,8 @@ class EmbeddingObserver
      */
     public function updated(Model $model): void
     {
-        // Solo regenerar si cambió la descripción
-        if ($model->isDirty($this->descripcionField)) {
+        // Solo regenerar si cambió el campo de descripción
+        if ($model->isDirty($this->descriptionField)) {
             $this->dispatchEmbeddingJob($model);
         }
     }
@@ -444,9 +558,9 @@ class EmbeddingObserver
      */
     protected function dispatchEmbeddingJob(Model $model): void
     {
-        $text = $model->{$this->descripcionField};
+        $text = $model->{$this->descriptionField};
 
-        // No generar embedding si no hay descripción
+        // No generar embedding si no hay texto
         if (empty($text)) {
             return;
         }
@@ -463,9 +577,18 @@ class EmbeddingObserver
     /**
      * Configura el campo de descripción personalizado.
      */
-    public function setDescripcionField(string $field): self
+    public function setDescriptionField(string $field): self
     {
-        $this->descripcionField = $field;
+        $this->descriptionField = $field;
+        return $this;
+    }
+
+    /**
+     * Configura el campo de embedding personalizado.
+     */
+    public function setEmbeddingField(string $field): self
+    {
+        $this->embeddingField = $field;
         return $this;
     }
 }
@@ -482,11 +605,9 @@ Crear `app/Observers/OdsObjetivoObserver.php`:
 
 namespace App\Observers;
 
-use App\Models\OdsObjetivo;
-
 class OdsObjetivoObserver extends EmbeddingObserver
 {
-    protected string $descripcionField = 'nombre';
+    protected string $descriptionField = 'nombre';
 }
 ```
 
@@ -499,7 +620,7 @@ namespace App\Observers;
 
 class OdsMetaObserver extends EmbeddingObserver
 {
-    // Usa descripción por defecto
+    // Usa 'descripcion' por defecto
 }
 ```
 
@@ -512,7 +633,7 @@ namespace App\Observers;
 
 class PndEjeObserver extends EmbeddingObserver
 {
-    protected string $descripcionField = 'nombre';
+    protected string $descriptionField = 'nombre';
 }
 ```
 
@@ -525,7 +646,7 @@ namespace App\Observers;
 
 class PndObjetivoObserver extends EmbeddingObserver
 {
-    // Usa descripción por defecto
+    // Usa 'descripcion' por defecto
 }
 ```
 
@@ -538,7 +659,7 @@ namespace App\Observers;
 
 class PndEstrategiaObserver extends EmbeddingObserver
 {
-    // Usa descripción por defecto
+    // Usa 'descripcion' por defecto
 }
 ```
 
@@ -552,7 +673,20 @@ namespace App\Observers;
 class PedObserver extends EmbeddingObserver
 {
     // Observer base para todos los modelos PED
-    // Usa descripción por defecto
+    // Usa 'descripcion' por defecto
+}
+```
+
+Crear `app/Observers/ProgramaDerivadoObjetivoObserver.php`:
+
+```php
+<?php
+
+namespace App\Observers;
+
+class ProgramaDerivadoObjetivoObserver extends EmbeddingObserver
+{
+    // Usa 'descripcion' por defecto
 }
 ```
 
@@ -579,13 +713,15 @@ use App\Models\PedTema;
 use App\Models\PndEje;
 use App\Models\PndEstrategia;
 use App\Models\PndObjetivo;
+use App\Models\ProgramaDerivadoObjetivo;
 use App\Observers\OdsMetaObserver;
 use App\Observers\OdsObjetivoObserver;
 use App\Observers\PedObserver;
 use App\Observers\PndEjeObserver;
 use App\Observers\PndEstrategiaObserver;
 use App\Observers\PndObjetivoObserver;
-use App\Services\EmbeddingService;
+use App\Observers\ProgramaDerivadoObjetivoObserver;
+use App\Services\Embeddings\EmbeddingService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -613,10 +749,22 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Registrar Observers para embeddings
-        // Solo si no estamos en ambiente de testing (se puede desactivar en tests)
-        if (!$this->app->environment('testing') || config('app.enable_embedding_observers', false)) {
+        if ($this->shouldRegisterObservers()) {
             $this->registerEmbeddingObservers();
         }
+    }
+
+    /**
+     * Determina si los observers deben registrarse.
+     */
+    protected function shouldRegisterObservers(): bool
+    {
+        // No registrar en testing a menos que se solicite explícitamente
+        if ($this->app->environment('testing')) {
+            return config('embedding.observers_enabled', false);
+        }
+
+        return config('embedding.observers_enabled', true);
     }
 
     /**
@@ -640,6 +788,9 @@ class AppServiceProvider extends ServiceProvider
         PedObjetivoEstrategico::observe(PedObserver::class);
         PedEstrategia::observe(PedObserver::class);
         PedLineaAccion::observe(PedObserver::class);
+
+        // Programas Derivados
+        ProgramaDerivadoObjetivo::observe(ProgramaDerivadoObjetivoObserver::class);
     }
 }
 ```
@@ -657,8 +808,6 @@ return [
     'default' => env('QUEUE_CONNECTION', 'redis'),
 
     'connections' => [
-        // ...
-
         'redis' => [
             'driver' => 'redis',
             'connection' => 'default',
@@ -669,10 +818,10 @@ return [
         ],
     ],
 
-    // Colas específicas con prioridad
-    'queues' => [
-        'default' => 10,
-        'embeddings' => 5,  // Menor prioridad, más workers dedicados
+    'failed' => [
+        'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
+        'database' => env('DB_CONNECTION', 'pgsql'),
+        'table' => 'failed_jobs',
     ],
 ];
 ```
@@ -696,7 +845,12 @@ use Illuminate\Console\Command;
 
 class ProcessEmbeddingsQueue extends Command
 {
-    protected $signature = 'queue:embeddings {--timeout=60} {--tries=3}';
+    protected $signature = 'queue:embeddings 
+        {--timeout= : Timeout en segundos}
+        {--tries= : Número de intentos}
+        {--max-jobs=100 : Máximo de jobs antes de parar}
+        {--max-time=3600 : Máximo tiempo de ejecución}
+        {--stop-when-empty : Parar cuando la cola esté vacía}';
 
     protected $description = 'Procesa la cola de embeddings exclusivamente';
 
@@ -705,13 +859,19 @@ class ProcessEmbeddingsQueue extends Command
         $this->info('Iniciando worker para cola de embeddings...');
         $this->info('Presiona Ctrl+C para detener');
 
-        $this->call('queue:work', [
-            '--queue' => 'embeddings',
-            '--timeout' => $this->option('timeout'),
-            '--tries' => $this->option('tries'),
-            '--max-jobs' => 100,
-            '--max-time' => 3600,
-        ]);
+        $params = [
+            '--queue' => config('embedding.queue', 'embeddings'),
+            '--timeout' => $this->option('timeout') ?? config('embedding.timeout_job', 60),
+            '--tries' => $this->option('tries') ?? config('embedding.tries', 3),
+            '--max-jobs' => $this->option('max-jobs'),
+            '--max-time' => $this->option('max-time'),
+        ];
+
+        if ($this->option('stop-when-empty')) {
+            $params['--stop-when-empty'] = true;
+        }
+
+        $this->call('queue:work', $params);
 
         return Command::SUCCESS;
     }
@@ -728,38 +888,47 @@ Editar `.env.example`:
 # ============================================
 # EMBEDDINGS CONFIGURATION
 # ============================================
-# API Key para el servicio de embeddings (OpenAI, Azure, etc.)
+
+# API Configuration
 EMBEDDING_API_KEY=your-api-key-here
-
-# URL del API de embeddings
 EMBEDDING_API_URL=https://api.openai.com/v1/embeddings
-
-# Modelo de embeddings a utilizar
 EMBEDDING_MODEL=text-embedding-ada-002
-
-# Dimensión del vector (1536 para ada-002)
 EMBEDDING_DIMENSION=1536
+
+# Rate Limiting
+EMBEDDING_RATE_LIMIT=60
+EMBEDDING_TIMEOUT=30
+
+# Queue Configuration
+EMBEDDING_QUEUE=embeddings
+EMBEDDING_JOB_TRIES=3
+EMBEDDING_JOB_TIMEOUT=60
+
+# Chunking
+EMBEDDING_MAX_TOKENS=8000
+
+# Observers
+EMBEDDING_OBSERVERS_ENABLED=true
 ```
 
 ---
 
-### 11. Crear Tests
+### 11. Crear Tests Unitarios
 
 ```bash
-sail artisan make:test EmbeddingServiceTest --unit
-sail artisan make:test EmbeddingObserverTest
-sail artisan make:test GenerateEmbeddingJobTest --unit
+sail artisan make:test Unit/Embeddings/EmbeddingServiceTest --unit
+sail artisan make:test Unit/Embeddings/GenerateEmbeddingJobTest --unit
 ```
 
-Editar `tests/Unit/EmbeddingServiceTest.php`:
+Editar `tests/Unit/Embeddings/EmbeddingServiceTest.php`:
 
 ```php
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\Embeddings;
 
 use App\Contracts\EmbeddingServiceInterface;
-use App\Services\EmbeddingService;
+use App\Services\Embeddings\EmbeddingService;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -768,13 +937,14 @@ class EmbeddingServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Configurar valores de prueba
+        
         config([
-            'services.embedding.api_key' => 'test-api-key',
-            'services.embedding.api_url' => 'https://api.test.com/v1/embeddings',
-            'services.embedding.model' => 'test-model',
-            'services.embedding.dimension' => 1536,
+            'embedding.api_key' => 'test-api-key',
+            'embedding.api_url' => 'https://api.test.com/v1/embeddings',
+            'embedding.model' => 'test-model',
+            'embedding.dimension' => 1536,
+            'embedding.timeout' => 30,
+            'embedding.max_tokens' => 8000,
         ]);
     }
 
@@ -783,9 +953,7 @@ class EmbeddingServiceTest extends TestCase
         Http::fake([
             'api.test.com/*' => Http::response([
                 'data' => [
-                    [
-                        'embedding' => array_fill(0, 1536, 0.1),
-                    ]
+                    ['embedding' => array_fill(0, 1536, 0.1)],
                 ],
             ], 200),
         ]);
@@ -802,7 +970,18 @@ class EmbeddingServiceTest extends TestCase
         $service = new EmbeddingService();
 
         $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('no puede estar vacío');
+        
         $service->generate('');
+    }
+
+    public function test_lanza_excepcion_si_texto_solo_espacios(): void
+    {
+        $service = new EmbeddingService();
+
+        $this->expectException(\InvalidArgumentException::class);
+        
+        $service->generate('   ');
     }
 
     public function test_lanza_excepcion_si_api_falla(): void
@@ -815,27 +994,45 @@ class EmbeddingServiceTest extends TestCase
 
         $service = new EmbeddingService();
 
-        $this->expectException(\Exception::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Embedding API error');
-
+        
         $service->generate('Texto de prueba');
     }
 
-    public function test_lanza_excepcion_si_respuesta_invalida(): void
+    public function test_lanza_excepcion_si_respuesta_dimension_incorrecta(): void
     {
         Http::fake([
             'api.test.com/*' => Http::response([
                 'data' => [
-                    ['embedding' => [0.1, 0.2]], // Dimensión incorrecta
+                    ['embedding' => [0.1, 0.2]], // Solo 2 elementos
                 ],
             ], 200),
         ]);
 
         $service = new EmbeddingService();
 
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Invalid embedding response dimension');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Invalid embedding dimension');
+        
+        $service->generate('Texto de prueba');
+    }
 
+    public function test_lanza_excepcion_si_respuesta_no_es_array(): void
+    {
+        Http::fake([
+            'api.test.com/*' => Http::response([
+                'data' => [
+                    ['embedding' => 'invalid'],
+                ],
+            ], 200),
+        ]);
+
+        $service = new EmbeddingService();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('not an array');
+        
         $service->generate('Texto de prueba');
     }
 
@@ -844,47 +1041,223 @@ class EmbeddingServiceTest extends TestCase
         Http::fake([
             'api.test.com/*' => Http::response([
                 'data' => [
-                    ['embedding' => array_fill(0, 1536, 0.1)],
+                    ['embedding' => array_fill(0, 1536, 0.5)],
                 ],
             ], 200),
         ]);
 
         $service = new EmbeddingService();
-        $textoLargo = str_repeat('a', 50000); // 50,000 caracteres
-
+        $textoLargo = str_repeat('a', 50000);
+        
         $embedding = $service->generate($textoLargo);
 
         $this->assertCount(1536, $embedding);
-
+        
         // Verificar que se truncó antes de enviar
         Http::assertSent(function ($request) {
             $input = $request->data()['input'];
-            return strlen($input) <= 32000; // 8000 tokens * 4 chars
+            return strlen($input) <= 32000; // 8000 * 4
         });
     }
 
     public function test_get_dimension(): void
     {
         $service = new EmbeddingService();
-
+        
         $this->assertEquals(1536, $service->getDimension());
+    }
+
+    public function test_get_model(): void
+    {
+        $service = new EmbeddingService();
+        
+        $this->assertEquals('test-model', $service->getModel());
+    }
+
+    public function test_connection_error_generates_log(): void
+    {
+        Http::fake([
+            'api.test.com/*' => Http::failedConnection(),
+        ]);
+
+        $service = new EmbeddingService();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Connection error');
+        
+        $service->generate('Texto de prueba');
     }
 }
 ```
 
-Editar `tests/Feature/EmbeddingObserverTest.php`:
+Editar `tests/Unit/Embeddings/GenerateEmbeddingJobTest.php`:
 
 ```php
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Unit\Embeddings;
 
-use App\Jobs\GenerateEmbedding;
+use App\Contracts\EmbeddingServiceInterface;
+use App\Jobs\Embeddings\GenerateEmbedding;
+use App\Models\OdsMeta;
+use App\Models\OdsObjetivo;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Mockery;
+use Tests\TestCase;
+
+class GenerateEmbeddingJobTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_job_guarda_embedding_correctamente(): void
+    {
+        $mockService = Mockery::mock(EmbeddingServiceInterface::class);
+        $mockService->shouldReceive('generate')
+            ->once()
+            ->with('Texto de prueba')
+            ->andReturn(array_fill(0, 1536, 0.5));
+
+        $this->app->instance(EmbeddingServiceInterface::class, $mockService);
+
+        $odsObjetivo = OdsObjetivo::create([
+            'numero' => 1,
+            'nombre' => 'Test',
+        ]);
+
+        $job = new GenerateEmbedding(
+            OdsObjetivo::class,
+            $odsObjetivo->id,
+            'Texto de prueba'
+        );
+
+        $job->handle($mockService);
+
+        $this->assertDatabaseHas('ods_objetivos', [
+            'id' => $odsObjetivo->id,
+        ]);
+
+        $result = DB::selectOne(
+            "SELECT embedding FROM ods_objetivos WHERE id = ?",
+            [$odsObjetivo->id]
+        );
+
+        $this->assertNotNull($result->embedding);
+    }
+
+    public function test_job_no_falla_si_modelo_no_existe(): void
+    {
+        Log::shouldReceive('warning')->once();
+
+        $mockService = Mockery::mock(EmbeddingServiceInterface::class);
+        $mockService->shouldNotReceive('generate');
+
+        $this->app->instance(EmbeddingServiceInterface::class, $mockService);
+
+        $job = new GenerateEmbedding(
+            OdsObjetivo::class,
+            9999,
+            'Texto de prueba'
+        );
+
+        $job->handle($mockService);
+
+        $this->assertTrue(true);
+    }
+
+    public function test_job_tiene_tries_configurado(): void
+    {
+        config(['embedding.tries' => 5]);
+        
+        $job = new GenerateEmbedding(
+            OdsObjetivo::class,
+            1,
+            'Test'
+        );
+
+        $this->assertEquals(5, $job->tries);
+    }
+
+    public function test_job_tiene_backoff_configurado(): void
+    {
+        config(['embedding.backoff' => [15, 120, 600]]);
+        
+        $job = new GenerateEmbedding(
+            OdsObjetivo::class,
+            1,
+            'Test'
+        );
+
+        $this->assertEquals([15, 120, 600], $job->backoff);
+    }
+
+    public function test_job_tiene_tags_correctos(): void
+    {
+        $job = new GenerateEmbedding(
+            OdsObjetivo::class,
+            123,
+            'Test'
+        );
+
+        $tags = $job->tags();
+
+        $this->assertContains('embedding', $tags);
+        $this->assertContains('model:' . OdsObjetivo::class, $tags);
+        $this->assertContains('id:123', $tags);
+    }
+
+    public function test_job_usa_cola_correcta(): void
+    {
+        config(['embedding.queue' => 'custom-embeddings']);
+        
+        $job = new GenerateEmbedding(
+            OdsObjetivo::class,
+            1,
+            'Test'
+        );
+
+        $this->assertEquals('custom-embeddings', $job->queue);
+    }
+
+    public function test_job_failed_registra_error(): void
+    {
+        Log::shouldReceive('error')->once();
+
+        $job = new GenerateEmbedding(
+            OdsObjetivo::class,
+            1,
+            'Test'
+        );
+
+        $job->failed(new \Exception('Test error'));
+
+        // No debe lanzar excepción
+        $this->assertTrue(true);
+    }
+}
+```
+
+---
+
+### 12. Crear Tests de Feature
+
+```bash
+sail artisan make:test Feature/Embeddings/EmbeddingObserverTest
+```
+
+Editar `tests/Feature/Embeddings/EmbeddingObserverTest.php`:
+
+```php
+<?php
+
+namespace Tests\Feature\Embeddings;
+
+use App\Jobs\Embeddings\GenerateEmbedding;
 use App\Models\OdsMeta;
 use App\Models\OdsObjetivo;
 use App\Models\PedEje;
 use App\Models\PedPlan;
-use App\Models\PndEje;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -896,9 +1269,8 @@ class EmbeddingObserverTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Habilitar observers para este test
-        config(['app.enable_embedding_observers' => true]);
+        
+        config(['embedding.observers_enabled' => true]);
     }
 
     // ============================================
@@ -943,14 +1315,14 @@ class EmbeddingObserverTest extends TestCase
     {
         Queue::fake();
 
-        // Crear PED primero
         $plan = PedPlan::create([
             'nombre' => 'Plan Test',
             'periodo_inicio' => 2025,
             'periodo_fin' => 2030,
         ]);
 
-        // Crear eje sin descripción (usa nombre)
+        Queue::fake();
+
         $eje = PedEje::create([
             'ped_plan_id' => $plan->id,
             'numero' => '1',
@@ -958,9 +1330,7 @@ class EmbeddingObserverTest extends TestCase
             'descripcion' => null,
         ]);
 
-        // No debe despachar job porque descripcion es null y nombre no genera embedding en PED
-        // Pero según la implementación, el observer base usa descripcionField = 'descripcion'
-        // Si descripcion es null, no despacha
+        // Observer base usa 'descripcion', si es null no despacha
         Queue::assertNotPushed(GenerateEmbedding::class);
     }
 
@@ -977,9 +1347,9 @@ class EmbeddingObserverTest extends TestCase
             'nombre' => 'Nombre Original',
         ]);
 
-        Queue::assertPushed(GenerateEmbedding::class, 1); // Del create
+        Queue::assertPushed(GenerateEmbedding::class, 1);
 
-        Queue::fake(); // Limpiar
+        Queue::fake();
 
         $odsObjetivo->update(['nombre' => 'Nombre Actualizado']);
 
@@ -997,18 +1367,17 @@ class EmbeddingObserverTest extends TestCase
             'nombre' => 'Nombre Test',
         ]);
 
-        Queue::assertPushed(GenerateEmbedding::class, 1); // Del create
+        Queue::assertPushed(GenerateEmbedding::class, 1);
 
-        Queue::fake(); // Limpiar
+        Queue::fake();
 
-        // Actualizar solo el número (no el nombre)
         $odsObjetivo->update(['numero' => 2]);
 
         Queue::assertNotPushed(GenerateEmbedding::class);
     }
 
     // ============================================
-    // Tests de Cola Específica
+    // Tests de Cola
     // ============================================
 
     public function test_job_se_despacha_a_cola_embeddings(): void
@@ -1024,301 +1393,62 @@ class EmbeddingObserverTest extends TestCase
     }
 
     // ============================================
-    // Tests con Modelos PED
+    // Tests de Observers Deshabilitados
     // ============================================
 
-    public function test_crear_eje_ped_despacha_job(): void
+    public function test_observers_deshabilitados_no_despachan_job(): void
     {
+        config(['embedding.observers_enabled' => false]);
+
         Queue::fake();
 
-        $plan = PedPlan::create([
-            'nombre' => 'Plan Test',
-            'periodo_inicio' => 2025,
-            'periodo_fin' => 2030,
-        ]);
-
-        Queue::fake(); // Limpiar el job del plan
-
-        $eje = PedEje::create([
-            'ped_plan_id' => $plan->id,
-            'numero' => '1',
-            'nombre' => 'Eje de Prueba',
-            'descripcion' => 'Descripción del eje',
-        ]);
-
-        Queue::assertPushed(GenerateEmbedding::class, function ($job) use ($eje) {
-            return $job->modelClass === PedEje::class
-                && $job->modelId === $eje->id;
-        });
-    }
-}
-```
-
-Editar `tests/Unit/GenerateEmbeddingJobTest.php`:
-
-```php
-<?php
-
-namespace Tests\Unit;
-
-use App\Contracts\EmbeddingServiceInterface;
-use App\Jobs\GenerateEmbedding;
-use App\Models\OdsMeta;
-use App\Models\OdsObjetivo;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Mockery;
-use Tests\TestCase;
-
-class GenerateEmbeddingJobTest extends TestCase
-{
-    use RefreshDatabase;
-
-    public function test_job_guarda_embedding_correctamente(): void
-    {
-        // Mock del servicio
-        $mockService = Mockery::mock(EmbeddingServiceInterface::class);
-        $mockService->shouldReceive('generate')
-            ->once()
-            ->with('Texto de prueba')
-            ->andReturn(array_fill(0, 1536, 0.5));
-
-        $this->app->instance(EmbeddingServiceInterface::class, $mockService);
-
-        // Crear modelo sin embedding
-        $odsObjetivo = OdsObjetivo::create([
+        OdsObjetivo::create([
             'numero' => 1,
             'nombre' => 'Test',
         ]);
 
-        // Ejecutar job
-        $job = new GenerateEmbedding(
-            OdsObjetivo::class,
-            $odsObjetivo->id,
-            'Texto de prueba'
-        );
-
-        $job->handle($mockService);
-
-        // Verificar que el embedding se guardó
-        $this->assertDatabaseHas('ods_objetivos', [
-            'id' => $odsObjetivo->id,
-        ]);
-
-        // Verificar el embedding directamente en BD
-        $result = DB::selectOne(
-            "SELECT embedding FROM ods_objetivos WHERE id = ?",
-            [$odsObjetivo->id]
-        );
-
-        $this->assertNotNull($result->embedding);
-    }
-
-    public function test_job_no_falla_si_modelo_no_existe(): void
-    {
-        Log::shouldReceive('warning')->once();
-
-        $mockService = Mockery::mock(EmbeddingServiceInterface::class);
-        $mockService->shouldNotReceive('generate');
-
-        $this->app->instance(EmbeddingServiceInterface::class, $mockService);
-
-        $job = new GenerateEmbedding(
-            OdsObjetivo::class,
-            9999, // ID inexistente
-            'Texto de prueba'
-        );
-
-        $job->handle($mockService);
-
-        // No debe lanzar excepción
-        $this->assertTrue(true);
-    }
-
-    public function test_job_reintenta_si_api_falla(): void
-    {
-        $mockService = Mockery::mock(EmbeddingServiceInterface::class);
-        $mockService->shouldReceive('generate')
-            ->times(3) // Intentos = 3
-            ->andThrow(new \Exception('API Error'));
-
-        $this->app->instance(EmbeddingServiceInterface::class, $mockService);
-
-        $odsObjetivo = OdsObjetivo::create([
-            'numero' => 1,
-            'nombre' => 'Test',
-        ]);
-
-        $job = new GenerateEmbedding(
-            OdsObjetivo::class,
-            $odsObjetivo->id,
-            'Texto de prueba'
-        );
-
-        // El job debe tener tries = 3
-        $this->assertEquals(3, $job->tries);
-
-        // Simular reintentos
-        $exception = null;
-        for ($i = 0; $i < 3; $i++) {
-            try {
-                $job->handle($mockService);
-            } catch (\Exception $e) {
-                $exception = $e;
-            }
-        }
-
-        $this->assertNotNull($exception);
-    }
-
-    public function test_job_tiene_backoff_configurado(): void
-    {
-        $job = new GenerateEmbedding(
-            OdsObjetivo::class,
-            1,
-            'Test'
-        );
-
-        $this->assertEquals([10, 60, 300], $job->backoff);
-    }
-
-    public function test_job_tiene_tags_correctos(): void
-    {
-        $job = new GenerateEmbedding(
-            OdsObjetivo::class,
-            123,
-            'Test'
-        );
-
-        $tags = $job->tags();
-
-        $this->assertContains('embedding', $tags);
-        $this->assertContains('model:' . OdsObjetivo::class, $tags);
-        $this->assertContains('id:123', $tags);
+        Queue::assertNotPushed(GenerateEmbedding::class);
     }
 }
 ```
 
 ---
 
-### 12. Ejecutar y Verificar
+### 13. Ejecutar y Verificar
 
 ```bash
-# Ejecutar tests unitarios
+# Ejecutar tests
 sail artisan test --filter EmbeddingServiceTest
 sail artisan test --filter GenerateEmbeddingJobTest
-
-# Ejecutar tests de feature
 sail artisan test --filter EmbeddingObserverTest
 
 # Iniciar worker de embeddings
 sail artisan queue:embeddings
 
-# Verificar que los jobs se procesan
+# Verificar jobs en cola
 sail artisan queue:work --queue=embeddings --once
-```
-
-Verificación manual:
-
-```bash
-# En Tinker
-sail artisan tinker
-```
-
-```php
-use App\Models\OdsObjetivo;
-
-// Crear un ODS
-$ods = OdsObjetivo::create(['numero' => 99, 'nombre' => 'Test Embedding']);
-
-// Verificar que el job está en la cola
-// (usar otro terminal con queue:work)
-
-// Verificar embedding guardado
-DB::select("SELECT embedding FROM ods_objetivos WHERE id = ?", [$ods->id]);
 ```
 
 ---
 
 ## Criterios de Aceptación
 
-- [ ] Interfaz `EmbeddingServiceInterface` creada
+- [ ] Interfaz `EmbeddingServiceInterface` creada en `App\Contracts\`
 - [ ] `EmbeddingService` registrado como singleton en `AppServiceProvider`
 - [ ] `EmbeddingService::generate()` retorna array de 1536 floats
 - [ ] `GenerateEmbedding` job usa cola `embeddings`
-- [ ] Job con `$tries = 3` y `$backoff = [10, 60, 300]`
+- [ ] Job con `$tries` configurable desde config
+- [ ] Job con `$backoff` configurable desde config
 - [ ] Observers registrados en todos los modelos con columna `embedding`
-- [ ] Observer solo despacha job si `descripcion` cambió (`isDirty`)
+- [ ] Observer solo despacha job si campo de descripción cambió (`isDirty`)
 - [ ] Al crear registro, embedding se genera automáticamente
 - [ ] Al actualizar descripción, embedding se regenera
-- [ ] Si API falla después de 3 intentos, job marca como `failed` sin bloquear
+- [ ] Si API falla después de reintentos, job marca como `failed` sin bloquear
 - [ ] Test: crear modelo despacha job
 - [ ] Test: actualizar descripción despacha job; actualizar otro campo no
 - [ ] `.env.example` documentado con variables de configuración
+- [ ] Configuración centralizada en `config/embedding.php`
 
 ---
 
-## Notas
-
-### Workers Separados
-
-```bash
-# Worker dedicado para embeddings (puede tener más workers)
-sail artisan queue:work --queue=embeddings --daemon
-
-# Worker para cola principal (otros jobs)
-sail artisan queue:work --queue=default --daemon
-
-# Worker híbrido (prioriza default)
-sail artisan queue:work --queue=default,embeddings
-```
-
-### Mock en Tests
-
-```php
-// Desactivar observers en test específico
-protected function setUp(): void
-{
-    parent::setUp();
-    config(['app.enable_embedding_observers' => false]);
-}
-
-// O usando withoutEvents
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-protected function setUp(): void
-{
-    parent::setUp();
-    Model::withoutEvents(function () {
-        // Crear modelos sin disparar observers
-    });
-}
-```
-
-### Proveedores de Embeddings Alternativos
-
-El servicio es configurable para usar diferentes proveedores:
-
-| Proveedor      | API URL                                                                                | Modelo                   | Dimensión |
-| -------------- | -------------------------------------------------------------------------------------- | ------------------------ | --------- |
-| OpenAI         | `https://api.openai.com/v1/embeddings`                                                 | `text-embedding-ada-002` | 1536      |
-| OpenAI (nuevo) | `https://api.openai.com/v1/embeddings`                                                 | `text-embedding-3-small` | 1536      |
-| OpenAI (large) | `https://api.openai.com/v1/embeddings`                                                 | `text-embedding-3-large` | 3072      |
-| Azure OpenAI   | `https://YOUR_RESOURCE.openai.azure.com/openai/deployments/YOUR_DEPLOYMENT/embeddings` | Custom                   | Variable  |
-| Local (Ollama) | `http://localhost:11434/api/embeddings`                                                | `nomic-embed-text`       | 768       |
-
-### Monitoreo de Cola
-
-```bash
-# Ver jobs en cola
-sail artisan queue:monitor embeddings
-
-# Ver jobs fallidos
-sail artisan queue:failed
-
-// Reintentar job fallido
-sail artisan queue:retry {job_id}
-```
-
----
+## Resumen de Correcciones Aplicadas

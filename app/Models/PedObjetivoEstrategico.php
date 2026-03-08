@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PedObjetivoEstrategico extends Model
@@ -46,6 +47,16 @@ class PedObjetivoEstrategico extends Model
     public function lineasAccion()
     {
         return $this->hasManyThrough(PedLineaAccion::class, PedEstrategia::class);
+    }
+
+    public function pndObjetivos(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            PndObjetivo::class,
+            'alineacion_ped_pnd',
+            'ped_objetivo_estrategico_id',
+            'pnd_objetivo_id'
+        )->withTimestamps();
     }
 
     public function getClaveCompletaAttribute(): string
