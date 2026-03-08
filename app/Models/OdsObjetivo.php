@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasEmbedding;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OdsObjetivo extends Model
 {
+    use HasEmbedding;
+
     protected $fillable = [
         'numero',
         'nombre',

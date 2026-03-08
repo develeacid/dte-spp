@@ -1,0 +1,488 @@
+<?php
+
+namespace App\Livewire\Mml;
+
+use App\Contracts\LlmServiceInterface;
+use App\Enums\TipoNivelMir;
+use App\Models\Evaluation\AnexoTransversal;
+use App\Models\Mml\CremaaValidacion;
+use App\Models\Mml\Indicador;
+use App\Models\Mml\IndicadorVariable;
+use App\Models\Mml\MedioVerificacion;
+use App\Models\Mml\MirNivel;
+use App\Models\CatalogoUnidadMedida;
+use App\Models\ProgramaPresupuestario;
+use App\Services\Embeddings\SemanticSearchService;
+use App\Services\Mml\IndicadorReglasService;
+use App\Services\Mml\MirLogicaValidacionService;
+use App\Services\Mml\MirPrellenadoService;
+use App\Services\Mml\MirSnapshotService;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+#[Layout('layouts.app')]
+#[Title('Etapa 5 — Matriz de Indicadores para Resultados')]
+class MirEditor extends Component
+{
+    public ProgramaPresupuestario $programa;
+    public array $hallazgosLogica = [];
+    public bool $validacionLogicaEjecutada = false;
+    public array $sugerenciasAlineacion = [];
+    public ?int $nivelAlineacionActivo = null;
+    public string $snapshotEtiqueta = '';
+    public bool $mostrarVersiones = false;
+
+    public function mount(ProgramaPresupuestario $programa): void
+    {
+        $this->programa = $programa;
+
+        // Prellenar desde EAP si no hay niveles
+        (new MirPrellenadoService())->prellenar($programa);
+    }
+
+    public function guardarNivel(int $nivelId, string $campo, string $valor): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+
+        if (in_array($campo, ['resumen_narrativo', 'supuestos'])) {
+            $nivel->update([$campo => $valor]);
+        }
+    }
+
+    public function agregarComponente(): void
+    {
+        $maxOrden = $this->programa->mirNiveles()
+            ->where('tipo_nivel', TipoNivelMir::COMPONENTE->value)
+            ->max('orden') ?? 0;
+
+        MirNivel::create([
+            'programa_presupuestario_id' => $this->programa->id,
+            'tipo_nivel' => TipoNivelMir::COMPONENTE->value,
+            'orden' => $maxOrden + 1,
+        ]);
+    }
+
+    public function agregarActividad(int $componenteId): void
+    {
+        $maxOrden = MirNivel::where('componente_id', $componenteId)->max('orden') ?? 0;
+
+        MirNivel::create([
+            'programa_presupuestario_id' => $this->programa->id,
+            'tipo_nivel' => TipoNivelMir::ACTIVIDAD->value,
+            'componente_id' => $componenteId,
+            'orden' => $maxOrden + 1,
+        ]);
+    }
+
+    public function eliminarNivel(int $nivelId): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+
+        // Only allow deleting Componente/Actividad (not Fin/Propósito)
+        if (in_array($nivel->tipo_nivel, [TipoNivelMir::COMPONENTE, TipoNivelMir::ACTIVIDAD])) {
+            $nivel->delete();
+        }
+    }
+
+    public function agregarIndicador(int $nivelId): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+        $reglas = IndicadorReglasService::reglasParaNivel($nivel->tipo_nivel);
+        $maxOrden = $nivel->indicadores()->max('orden') ?? 0;
+
+        Indicador::create([
+            'mir_nivel_id' => $nivelId,
+            'nombre' => '',
+            'tipo' => $reglas['tipo_default'],
+            'dimension' => $reglas['dimensiones'][0],
+            'frecuencia' => $reglas['frecuencias'][0],
+            'orden' => $maxOrden + 1,
+        ]);
+    }
+
+    public function guardarIndicador(int $indicadorId, array $data): void
+    {
+        $indicador = Indicador::findOrFail($indicadorId);
+        $nivel = $indicador->mirNivel;
+        $reglas = IndicadorReglasService::reglasParaNivel($nivel->tipo_nivel);
+
+        $validated = validator($data, [
+            'nombre' => 'required|string|max:255',
+            'tipo' => 'required|in:' . implode(',', $reglas['tipos']),
+            'dimension' => 'required|in:' . implode(',', $reglas['dimensiones']),
+            'frecuencia' => 'required|in:' . implode(',', $reglas['frecuencias']),
+        ])->validate();
+
+        $indicador->update($validated);
+    }
+
+    public function syncAnexosTransversales(int $indicadorId, array $anexoIds): void
+    {
+        $indicador = Indicador::findOrFail($indicadorId);
+        $indicador->anexosTransversales()->sync(array_map('intval', $anexoIds));
+    }
+
+    public function eliminarIndicador(int $indicadorId): void
+    {
+        Indicador::findOrFail($indicadorId)->delete();
+    }
+
+    public function agregarMedioVerificacion(int $indicadorId): void
+    {
+        $maxOrden = MedioVerificacion::where('indicador_id', $indicadorId)->max('orden') ?? 0;
+
+        MedioVerificacion::create([
+            'indicador_id' => $indicadorId,
+            'nombre' => '',
+            'orden' => $maxOrden + 1,
+        ]);
+    }
+
+    public function guardarMedioVerificacion(int $medioId, string $nombre, ?string $fuente = null): void
+    {
+        MedioVerificacion::findOrFail($medioId)->update([
+            'nombre' => $nombre,
+            'fuente' => $fuente,
+        ]);
+    }
+
+    public function eliminarMedioVerificacion(int $medioId): void
+    {
+        MedioVerificacion::findOrFail($medioId)->delete();
+    }
+
+    public function extraerVariables(int $indicadorId): void
+    {
+        $indicador = Indicador::findOrFail($indicadorId);
+
+        if (empty($indicador->formula_texto)) {
+            return;
+        }
+
+        $promptText = view('prompts.mir.extraer-variables', [
+            'formula' => $indicador->formula_texto,
+        ])->render();
+
+        try {
+            $llm = app(LlmServiceInterface::class);
+            $result = $llm->suggest($promptText);
+            $data = json_decode($result, true);
+
+            if (!is_array($data)) {
+                return;
+            }
+
+            // Clear existing variables and recreate
+            $indicador->variables()->delete();
+
+            foreach ($data as $i => $var) {
+                IndicadorVariable::create([
+                    'indicador_id' => $indicadorId,
+                    'simbolo' => $var['simbolo'] ?? chr(65 + $i),
+                    'nombre' => $var['nombre'] ?? '',
+                    'descripcion' => $var['descripcion'] ?? null,
+                    'orden' => $i + 1,
+                ]);
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudieron extraer las variables con IA.');
+        }
+    }
+
+    public function agregarVariable(int $indicadorId): void
+    {
+        $maxOrden = IndicadorVariable::where('indicador_id', $indicadorId)->max('orden') ?? 0;
+        $nextSymbol = chr(65 + $maxOrden); // A, B, C...
+
+        IndicadorVariable::create([
+            'indicador_id' => $indicadorId,
+            'simbolo' => $nextSymbol,
+            'nombre' => '',
+            'orden' => $maxOrden + 1,
+        ]);
+    }
+
+    public function guardarVariable(int $variableId, array $data): void
+    {
+        $variable = IndicadorVariable::findOrFail($variableId);
+
+        $validated = validator($data, [
+            'simbolo' => 'required|string|max:5',
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string|max:500',
+            'unidad_medida_id' => 'nullable|integer|exists:catalogo_unidades_medida,id',
+        ])->validate();
+
+        $variable->update($validated);
+    }
+
+    public function eliminarVariable(int $variableId): void
+    {
+        IndicadorVariable::findOrFail($variableId)->delete();
+    }
+
+    public function guardarFormulaTexto(int $indicadorId, string $formula): void
+    {
+        Indicador::findOrFail($indicadorId)->update(['formula_texto' => $formula]);
+    }
+
+    public function validarSintaxis(int $nivelId): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+
+        if (empty($nivel->resumen_narrativo)) {
+            return;
+        }
+
+        $promptView = 'prompts.mir.validar-sintaxis-' . $nivel->tipo_nivel->value;
+        $promptText = view($promptView, ['texto' => $nivel->resumen_narrativo])->render();
+
+        try {
+            $llm = app(LlmServiceInterface::class);
+            $result = $llm->validate($promptText, []);
+
+            $nivel->update([
+                'sintaxis_valida' => $result->isValid,
+                'sintaxis_observacion' => implode('; ', $result->issues),
+                'sintaxis_sugerencia' => $result->suggestion,
+                'sintaxis_validada_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudo validar la sintaxis con IA.');
+        }
+    }
+
+    public function validarCremaa(int $indicadorId): void
+    {
+        $indicador = Indicador::with('mirNivel')->findOrFail($indicadorId);
+
+        if (empty($indicador->nombre)) {
+            return;
+        }
+
+        $promptText = view('prompts.mir.validar-cremaa', [
+            'nombre' => $indicador->nombre,
+            'formula' => $indicador->formula_texto,
+            'tipo' => $indicador->tipo?->label() ?? '',
+            'dimension' => $indicador->dimension?->label() ?? '',
+            'frecuencia' => $indicador->frecuencia?->label() ?? '',
+            'resumenNarrativo' => $indicador->mirNivel->resumen_narrativo,
+        ])->render();
+
+        try {
+            $llm = app(LlmServiceInterface::class);
+            $result = $llm->suggest($promptText);
+            $data = json_decode($result, true);
+
+            if (!is_array($data)) {
+                return;
+            }
+
+            $cremaaFields = ['claro', 'relevante', 'economico', 'monitoreable', 'adecuado', 'aportante'];
+            $upsertData = ['indicador_id' => $indicadorId];
+
+            foreach ($cremaaFields as $field) {
+                $upsertData[$field] = (bool) ($data[$field] ?? false);
+                $upsertData[$field . '_observacion'] = $data[$field . '_observacion'] ?? null;
+            }
+
+            CremaaValidacion::updateOrCreate(
+                ['indicador_id' => $indicadorId],
+                $upsertData
+            );
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudo validar CREMAA con IA.');
+        }
+    }
+
+    public function buscarAlineacion(int $nivelId): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+
+        if (empty($nivel->resumen_narrativo)) {
+            return;
+        }
+
+        $this->nivelAlineacionActivo = $nivelId;
+
+        try {
+            $search = app(SemanticSearchService::class);
+
+            // Fin/Propósito → Objetivos Estratégicos PED
+            // Componente/Actividad → Líneas de Acción
+            if (in_array($nivel->tipo_nivel, [TipoNivelMir::FIN, TipoNivelMir::PROPOSITO])) {
+                $results = $search->findSimilar(
+                    $nivel->resumen_narrativo,
+                    \App\Models\PedObjetivoEstrategico::class,
+                    5
+                );
+            } else {
+                $results = $search->findSimilar(
+                    $nivel->resumen_narrativo,
+                    \App\Models\PedLineaAccion::class,
+                    5
+                );
+            }
+
+            $this->sugerenciasAlineacion = $results->map(fn ($r) => [
+                'id' => $r->model->id,
+                'tipo' => class_basename($r->model),
+                'descripcion' => $r->model->descripcion ?? $r->model->nombre ?? '',
+                'score' => round($r->score * 100, 1),
+            ])->toArray();
+        } catch (\Exception $e) {
+            $this->sugerenciasAlineacion = [];
+            session()->flash('error', 'No se pudo buscar alineación: ' . $e->getMessage());
+        }
+    }
+
+    public function seleccionarAlineacion(int $nivelId, string $tipo, int $entidadId): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+
+        $updateData = [];
+        if ($tipo === 'PedObjetivoEstrategico') {
+            $updateData['ped_objetivo_estrategico_id'] = $entidadId;
+        } elseif ($tipo === 'PedLineaAccion') {
+            $updateData['ped_linea_accion_id'] = $entidadId;
+        }
+
+        $nivel->update($updateData);
+        $this->sugerenciasAlineacion = [];
+        $this->nivelAlineacionActivo = null;
+    }
+
+    public function validarMirCompleta(): void
+    {
+        try {
+            $servicio = app(MirLogicaValidacionService::class);
+            $resultado = $servicio->validarCompleta($this->programa);
+            $this->hallazgosLogica = $resultado['hallazgos'] ?? [];
+            $this->validacionLogicaEjecutada = true;
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudo ejecutar la validación lógica.');
+        }
+    }
+
+    public function aceptarSugerencia(int $nivelId): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+
+        if ($nivel->sintaxis_sugerencia) {
+            $nivel->update([
+                'resumen_narrativo' => $nivel->sintaxis_sugerencia,
+                'sintaxis_valida' => null,
+                'sintaxis_observacion' => null,
+                'sintaxis_sugerencia' => null,
+                'sintaxis_validada_at' => null,
+            ]);
+        }
+    }
+
+    public function asignarUrCoadyuvante(int $nivelId, ?int $teamId): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+
+        if (!in_array($nivel->tipo_nivel, [TipoNivelMir::COMPONENTE, TipoNivelMir::ACTIVIDAD])) {
+            return;
+        }
+
+        $oldTeamId = $nivel->team_id;
+        $nivel->update(['team_id' => $teamId ?: null]);
+
+        if ($teamId) {
+            $this->programa->equipos()->syncWithoutDetaching([
+                $teamId => ['rol' => 'coadyuvante'],
+            ]);
+        }
+
+        // If old UR was removed, check if it still has other niveles
+        if ($oldTeamId && $oldTeamId !== $teamId) {
+            $otrosNiveles = MirNivel::where('programa_presupuestario_id', $this->programa->id)
+                ->where('team_id', $oldTeamId)
+                ->exists();
+
+            if (!$otrosNiveles) {
+                $this->programa->equipos()
+                    ->wherePivot('rol', 'coadyuvante')
+                    ->detach($oldTeamId);
+            }
+        }
+    }
+
+    public function crearSnapshot(): void
+    {
+        if (empty($this->snapshotEtiqueta)) {
+            return;
+        }
+
+        $service = app(MirSnapshotService::class);
+        $service->crear($this->programa, $this->snapshotEtiqueta, auth()->id());
+
+        $this->snapshotEtiqueta = '';
+        session()->flash('success', 'Snapshot creado correctamente.');
+    }
+
+    public function restaurarVersion(int $versionId): void
+    {
+        $version = $this->programa->mirVersiones()->findOrFail($versionId);
+
+        $service = app(MirSnapshotService::class);
+        $service->restaurar($version);
+
+        session()->flash('success', 'MIR restaurada desde snapshot.');
+    }
+
+    public function toggleVersiones(): void
+    {
+        $this->mostrarVersiones = !$this->mostrarVersiones;
+    }
+
+    public function render()
+    {
+        $fin = $this->programa->mirNiveles()
+            ->where('tipo_nivel', TipoNivelMir::FIN->value)
+            ->first();
+
+        $proposito = $this->programa->mirNiveles()
+            ->where('tipo_nivel', TipoNivelMir::PROPOSITO->value)
+            ->first();
+
+        $componentes = $this->programa->mirNiveles()
+            ->where('tipo_nivel', TipoNivelMir::COMPONENTE->value)
+            ->with(['actividades.indicadores.mediosVerificacion', 'actividades.indicadores.cremaaValidacion', 'actividades.indicadores.variables', 'actividades.indicadores.anexosTransversales', 'actividades.pedObjetivoEstrategico', 'actividades.pedLineaAccion', 'actividades.team', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'indicadores.anexosTransversales', 'pedObjetivoEstrategico', 'pedLineaAccion', 'team'])
+            ->orderBy('orden')
+            ->get();
+
+        // Load indicadores and alignment for fin and proposito
+        $fin?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'indicadores.anexosTransversales', 'pedObjetivoEstrategico', 'pedLineaAccion']);
+        $proposito?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'indicadores.anexosTransversales', 'pedObjetivoEstrategico', 'pedLineaAccion']);
+
+        // Build rules map for each nivel type
+        $reglasMap = [];
+        foreach (TipoNivelMir::cases() as $tipo) {
+            $reglasMap[$tipo->value] = IndicadorReglasService::reglasParaNivel($tipo);
+        }
+
+        $unidadesMedida = CatalogoUnidadMedida::orderBy('nombre')->get();
+
+        $versiones = $this->mostrarVersiones
+            ? $this->programa->mirVersiones()->with('creador')->latest()->get()
+            : collect();
+
+        $teams = \App\Models\Team::orderBy('name')->get();
+        $anexosTransversales = AnexoTransversal::activos()->get();
+
+        return view('livewire.mml.mir-editor', [
+            'fin' => $fin,
+            'proposito' => $proposito,
+            'componentes' => $componentes,
+            'reglasMap' => $reglasMap,
+            'unidadesMedida' => $unidadesMedida,
+            'versiones' => $versiones,
+            'teams' => $teams,
+            'anexosTransversales' => $anexosTransversales,
+        ]);
+    }
+}

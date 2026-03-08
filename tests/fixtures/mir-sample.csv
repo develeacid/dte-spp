@@ -1,0 +1,6 @@
+Nivel,Resumen Narrativo,Indicador,Fórmula,Tipo,Dimensión,Frecuencia,Medio Verificación,Supuestos
+Fin,Contribuir a mejorar la calidad de vida,Índice de desarrollo humano,(Salud + Educación + Ingreso) / 3,Estratégico,Eficacia,Anual,Informe PNUD,Condiciones estables
+Propósito,Población accede a servicios educativos,Tasa de cobertura,Atendidos / Objetivo * 100,Estratégico,Eficacia,Semestral,Registros escolares,Demanda se mantiene
+Componente,Infraestructura mejorada,Porcentaje rehabilitadas,Rehabilitadas / Total * 100,Gestión,Eficiencia,Trimestral,Reportes de obra,Recursos disponibles
+Actividad,Realizar diagnóstico,Diagnósticos realizados,,,,Trimestral,,Personal disponible
+Actividad,Ejecutar obras,Avance físico,Terminadas / Programadas * 100,Gestión,Eficiencia,Mensual,Bitácora de obra,

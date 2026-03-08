@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasEmbedding;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class PedLineaAccion extends Model
 {
+    use HasEmbedding;
+
     protected $table = 'ped_lineas_accion';
 
     protected $fillable = [

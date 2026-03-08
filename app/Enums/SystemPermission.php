@@ -12,4 +12,5 @@ enum SystemPermission: string
     case APROBAR_AVANCE = 'aprobar_avance';
     case EXPORTAR_REPORTES = 'exportar_reportes';
     case ADMINISTRAR_USUARIOS = 'administrar_usuarios';
+    case INVITAR_USUARIOS = 'invitar_usuarios';
 }

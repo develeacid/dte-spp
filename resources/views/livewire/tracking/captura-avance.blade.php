@@ -1,0 +1,163 @@
+<div>
+    <x-page.header>
+        <x-slot name="title">Captura de avance</x-slot>
+    </x-page.header>
+
+    <x-page.container>
+        @if (session()->has('message'))
+            <div class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                {{ session('message') }}
+            </div>
+        @endif
+
+        {{-- Indicator info --}}
+        <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 class="text-lg font-medium text-gray-900">{{ $avance->indicador->nombre }}</h3>
+            <dl class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Formula</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ $avance->indicador->formula_texto ?? 'Sin formula' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Meta del periodo</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ $avance->metaPeriodo?->meta_periodo ?? '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Sentido</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ $avance->indicador->sentido?->label() ?? '—' }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        @if($avance->estaCongelado() || ! $avance->estado->esEditable())
+            <div class="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+                Este avance no se puede editar porque esta
+                @if($avance->estaCongelado()) congelado @else en un estado no editable @endif.
+            </div>
+        @endif
+
+        <form wire:submit="guardar" class="space-y-6">
+            {{-- Variable inputs --}}
+            <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h3 class="mb-4 text-lg font-medium text-gray-900">Variables del indicador</h3>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    @foreach($avance->indicador->variables as $variable)
+                        <div>
+                            <label for="var-{{ $variable->id }}" class="block text-sm font-medium text-gray-700">
+                                {{ $variable->nombre }}
+                                <span class="text-gray-400">({{ $variable->simbolo }})</span>
+                            </label>
+                            <input
+                                type="number"
+                                step="any"
+                                id="var-{{ $variable->id }}"
+                                wire:model="valores.{{ $variable->id }}"
+                                wire:change="calcular"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                placeholder="Valor de {{ $variable->simbolo }}"
+                                @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
+                            />
+                            @error("valores.{$variable->id}")
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- Result display --}}
+            <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h3 class="mb-4 text-lg font-medium text-gray-900">Resultado calculado</h3>
+
+                <div class="flex items-center gap-6">
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Resultado</span>
+                        <p class="mt-1 text-2xl font-bold text-gray-900">
+                            {{ $resultado !== null ? number_format($resultado, 4) : '—' }}
+                        </p>
+                    </div>
+
+                    @if($semaforoCalculado)
+                        <div>
+                            <span class="text-sm font-medium text-gray-500">Semaforo</span>
+                            <div class="mt-1 flex items-center gap-2">
+                                <span @class([
+                                    'inline-block h-6 w-6 rounded-full',
+                                    'bg-green-500' => $semaforoCalculado === 'verde',
+                                    'bg-yellow-500' => $semaforoCalculado === 'amarillo',
+                                    'bg-red-500' => $semaforoCalculado === 'rojo',
+                                ])></span>
+                                <span class="text-sm font-medium capitalize text-gray-700">{{ $semaforoCalculado }}</span>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Justification --}}
+            @if(in_array($semaforoCalculado, ['amarillo', 'rojo']))
+                <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-900">Justificacion</h3>
+                        @unless($avance->estaCongelado() || ! $avance->estado->esEditable())
+                            <button
+                                type="button"
+                                wire:click="generarJustificacionIa"
+                                wire:loading.attr="disabled"
+                                wire:target="generarJustificacionIa"
+                                class="inline-flex items-center rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                            >
+                                <div wire:loading wire:target="generarJustificacionIa" class="mr-2">
+                                    <svg class="h-4 w-4 animate-spin text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                    </svg>
+                                </div>
+                                {{ $justificacionIa ? 'Regenerar con IA' : 'Generar con IA' }}
+                            </button>
+                        @endunless
+                    </div>
+
+                    @if($justificacionIa)
+                        <p class="mb-2 text-xs text-gray-400">
+                            Borrador generado por IA. Revise y edite antes de guardar.
+                        </p>
+                    @endif
+
+                    <p class="mb-2 text-sm text-gray-500">
+                        Es obligatorio proporcionar una justificacion cuando el semaforo es amarillo o rojo.
+                    </p>
+                    <textarea
+                        wire:model="justificacion"
+                        rows="6"
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="Explique las causas del resultado y las acciones correctivas..."
+                        @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
+                    ></textarea>
+                    @error('justificacion')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            @endif
+
+            {{-- Actions --}}
+            @unless($avance->estaCongelado() || ! $avance->estado->esEditable())
+                <div class="flex justify-end">
+                    <button
+                        type="submit"
+                        class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    >
+                        <div wire:loading wire:target="guardar" class="mr-2">
+                            <svg class="h-4 w-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        </div>
+                        Guardar avance
+                    </button>
+                </div>
+            @endunless
+        </form>
+    </x-page.container>
+</div>

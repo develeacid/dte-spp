@@ -45,12 +45,12 @@
 
     </x-forms.section>
 
-    <div class="flex justify-end space-x-3">
-        <x-ui.button.secondary href="{{ route('cascade.ped.index') }}">
+    <x-page.form-footer>
+        <x-ui.button.secondary href="{{ route('cascade.ped.index') }}" type="button">
             Cancelar
         </x-ui.button.secondary>
         <x-ui.button.primary wire:click="save" type="button">
             {{ $plan && $plan->exists ? 'Guardar Cambios' : 'Crear Plan' }}
         </x-ui.button.primary>
-    </div>
+    </x-page.form-footer>
 </div>

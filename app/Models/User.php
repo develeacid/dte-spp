@@ -33,6 +33,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'activated_at',
+        'active',
+        'invitation_token',
+        'invitation_sent_at',
     ];
 
     /**
@@ -66,6 +70,38 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'activated_at' => 'datetime',
+            'active' => 'boolean',
+            'invitation_sent_at' => 'datetime',
         ];
+    }
+
+    public function isActivated(): bool
+    {
+        return $this->activated_at !== null;
+    }
+
+    public function isPendingActivation(): bool
+    {
+        return $this->activated_at === null && $this->invitation_token !== null;
+    }
+
+    public function isInvitationExpired(): bool
+    {
+        if (! $this->invitation_sent_at) {
+            return true;
+        }
+
+        return $this->invitation_sent_at->addHours(72)->isPast();
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
+
+    public function scopePendingActivation($query)
+    {
+        return $query->whereNull('activated_at')->whereNotNull('invitation_token');
     }
 }

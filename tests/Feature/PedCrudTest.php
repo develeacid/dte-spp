@@ -45,6 +45,69 @@ class PedCrudTest extends TestCase
     }
 
     // ============================================
+    // Tests de Páginas GET (formularios)
+    // ============================================
+
+    public function test_puede_acceder_pagina_crear_plan(): void
+    {
+        $user = User::factory()->withPersonalTeam()->create();
+        $user->givePermissionTo('gestionar_catalogos');
+
+        $response = $this->actingAs($user)
+            ->get(route('cascade.ped.plan.create'));
+
+        $response->assertStatus(200)
+            ->assertSeeLivewire('cascade.ped-plan-form');
+    }
+
+    public function test_puede_acceder_pagina_editar_plan(): void
+    {
+        $user = User::factory()->withPersonalTeam()->create();
+        $user->givePermissionTo('gestionar_catalogos');
+
+        $plan = PedPlan::create([
+            'nombre' => 'Plan Test',
+            'periodo_inicio' => 2025,
+            'periodo_fin' => 2030,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('cascade.ped.plan.edit', $plan));
+
+        $response->assertStatus(200)
+            ->assertSeeLivewire('cascade.ped-plan-form');
+    }
+
+    public function test_puede_acceder_pagina_crear_nodo(): void
+    {
+        $user = User::factory()->withPersonalTeam()->create();
+        $user->givePermissionTo('gestionar_catalogos');
+
+        $plan = PedPlan::create([
+            'nombre' => 'Plan Test',
+            'periodo_inicio' => 2025,
+            'periodo_fin' => 2030,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('cascade.ped.nodo.create', ['tipo' => 'eje', 'parent_id' => $plan->id]));
+
+        $response->assertStatus(200)
+            ->assertSeeLivewire('cascade.ped-nodo-form');
+    }
+
+    public function test_crear_nodo_con_tipo_invalido_retorna_400(): void
+    {
+        $user = User::factory()->withPersonalTeam()->create();
+        $user->givePermissionTo('gestionar_catalogos');
+
+        $response = $this->actingAs($user)
+            ->get(route('cascade.ped.nodo.create', ['tipo' => 'invalido', 'parent_id' => 1]));
+
+        $response->assertStatus(400);
+    }
+
+    // ============================================
     // Tests de Plan
     // ============================================
 
@@ -55,13 +118,12 @@ class PedCrudTest extends TestCase
 
         Livewire::actingAs($user)
             ->test('cascade.ped-plan-form')
-            ->call('create')
             ->set('nombre', 'Plan de Prueba 2025-2030')
             ->set('periodo_inicio', 2025)
             ->set('periodo_fin', 2030)
             ->set('activo', true)
             ->call('save')
-            ->assertDispatched('planCreated');
+            ->assertRedirect(route('cascade.ped.index'));
 
         $this->assertDatabaseHas('ped_planes', [
             'nombre' => 'Plan de Prueba 2025-2030',
@@ -76,17 +138,17 @@ class PedCrudTest extends TestCase
 
         $plan = PedPlan::create([
             'nombre' => 'Plan Original',
+            'nivel_gobierno' => 'estatal',
             'periodo_inicio' => 2025,
             'periodo_fin' => 2030,
             'activo' => false,
         ]);
 
         Livewire::actingAs($user)
-            ->test('cascade.ped-plan-form')
-            ->call('edit', $plan)
+            ->test('cascade.ped-plan-form', ['plan' => $plan])
             ->set('nombre', 'Plan Editado')
             ->call('save')
-            ->assertDispatched('planUpdated');
+            ->assertRedirect(route('cascade.ped.index'));
 
         $this->assertEquals('Plan Editado', $plan->fresh()->nombre);
     }
@@ -102,12 +164,10 @@ class PedCrudTest extends TestCase
             'periodo_fin' => 2030,
         ]);
 
-        Livewire::actingAs($user)
-            ->test('cascade.ped-plan-form')
-            ->call('edit', $plan)
-            ->call('delete')
-            ->assertDispatched('planDeleted');
+        $response = $this->actingAs($user)
+            ->delete(route('cascade.ped.plan.destroy', $plan));
 
+        $response->assertRedirect();
         $this->assertDatabaseMissing('ped_planes', ['id' => $plan->id]);
     }
 
@@ -127,13 +187,15 @@ class PedCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test('cascade.ped-nodo-form')
-            ->call('create', 'eje', $plan->id)
+            ->test('cascade.ped-nodo-form', [
+                'tipo' => 'eje',
+                'parentId' => $plan->id,
+            ])
             ->set('numero', '1')
             ->set('nombre', 'Eje de Prueba')
             ->set('descripcion', 'Descripción del eje')
             ->call('save')
-            ->assertDispatched('nodeCreated');
+            ->assertRedirect(route('cascade.ped.index'));
 
         $this->assertDatabaseHas('ped_ejes', [
             'ped_plan_id' => $plan->id,
@@ -165,8 +227,10 @@ class PedCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test('cascade.ped-nodo-form')
-            ->call('edit', 'eje', $eje->id)
+            ->test('cascade.ped-nodo-form', [
+                'tipo' => 'eje',
+                'nodoId' => $eje->id,
+            ])
             ->call('delete');
 
         $this->assertDatabaseMissing('ped_ejes', ['id' => $eje->id]);
@@ -184,7 +248,6 @@ class PedCrudTest extends TestCase
 
         Livewire::actingAs($user)
             ->test('cascade.ped-plan-form')
-            ->call('create')
             ->set('nombre', 'Plan Test')
             ->set('periodo_inicio', 2030)
             ->set('periodo_fin', 2025)
@@ -204,8 +267,10 @@ class PedCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test('cascade.ped-nodo-form')
-            ->call('create', 'eje', $plan->id)
+            ->test('cascade.ped-nodo-form', [
+                'tipo' => 'eje',
+                'parentId' => $plan->id,
+            ])
             ->set('numero', '1')
             ->set('nombre', 'Eje Test')
             ->set('descripcion', str_repeat('a', 501))

@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --color-primary: 5 150 105;
+    --color-primary-hover: 4 120 87;
+    --color-primary-light: 236 253 245;
+    --color-primary-dark: 6 95 70;
+    --color-danger: 220 38 38;
+    --color-warning: 245 158 11;
+    --color-info: 14 165 233;
+    --color-surface: 255 255 255;
+    --color-background: 249 250 251;
+    --color-border: 229 231 235;
+    --color-text: 17 24 39;
+    --color-text-muted: 107 114 128;
+
+    --sidebar-width: 240px;
+    --sidebar-collapsed-width: 64px;
+    --font-sans: 'Inter', sans-serif;
+  }
+}
+
 [x-cloak] {
     display: none;
 }
