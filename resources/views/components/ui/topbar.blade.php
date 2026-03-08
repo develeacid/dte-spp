@@ -18,8 +18,11 @@
         @endif
     </div>
 
-    {{-- Right: user dropdown --}}
-    <div class="flex items-center">
+    {{-- Right: notifications + user dropdown --}}
+    <div class="flex items-center space-x-2">
+        @auth
+            @livewire('notification-bell')
+        @endauth
         @if($user)
             <x-dropdown align="right" width="60">
                 <x-slot name="trigger">
