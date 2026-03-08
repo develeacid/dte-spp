@@ -22,8 +22,10 @@ use App\Observers\PndEjeObserver;
 use App\Observers\PndEstrategiaObserver;
 use App\Observers\PndObjetivoObserver;
 use App\Observers\ProgramaDerivadoObjetivoObserver;
+use App\Contracts\LlmServiceInterface;
 use App\Services\Embeddings\EmbeddingService;
 use App\Services\Embeddings\SemanticSearchService;
+use App\Services\Llm\LlmService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -41,6 +43,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SemanticSearchService::class, function ($app) {
             return new SemanticSearchService($app->make(EmbeddingServiceInterface::class));
         });
+
+        $this->app->singleton(LlmServiceInterface::class, LlmService::class);
     }
 
     /**
