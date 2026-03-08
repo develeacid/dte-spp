@@ -4,8 +4,10 @@ use App\Http\Controllers\Tracking\EvidenciaController;
 use App\Livewire\Tracking\CapturaAvance;
 use App\Livewire\Tracking\EvidenciaAvance;
 use App\Livewire\Tracking\FlujosAvance;
+use App\Livewire\Tracking\GestionarDesbloqueos;
 use App\Livewire\Tracking\IndicadoresVencidos;
 use App\Livewire\Tracking\MisIndicadoresPendientes;
+use App\Livewire\Tracking\SolicitarDesbloqueo;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('seguimiento')
@@ -23,4 +25,8 @@ Route::prefix('seguimiento')
             ->name('tracking.evidencia.download');
         Route::get('/flujo/{avance}', FlujosAvance::class)
             ->name('tracking.flujo');
+        Route::get('/desbloqueo/{avance}', SolicitarDesbloqueo::class)
+            ->name('tracking.desbloqueo.solicitar');
+        Route::get('/desbloqueos', GestionarDesbloqueos::class)
+            ->name('tracking.desbloqueos');
     });
