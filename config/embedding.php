@@ -59,4 +59,41 @@ return [
 
     // Habilitar/deshabilitar observers globalmente (útil para tests)
     'observers_enabled' => env('EMBEDDING_OBSERVERS_ENABLED', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Semantic Search Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuración para el servicio de búsqueda semántica.
+    |
+    */
+
+    // Umbral mínimo de similitud para considerar un resultado relevante (0-1)
+    'similarity_threshold' => env('EMBEDDING_SIMILARITY_THRESHOLD', 0.7),
+
+    // Número máximo de resultados por defecto
+    'max_results' => env('EMBEDDING_MAX_RESULTS', 5),
+
+    /*
+    |--------------------------------------------------------------------------
+    | HNSW Index Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Parámetros para índices Hierarchical Navigable Small World (HNSW).
+    | Optimizados para búsquedas vectoriales de alta velocidad.
+    |
+    */
+
+    // Parámetro M: número de conexiones bidireccionales por nodo
+    // Valores más altos = mejor recall, más memoria
+    'hnsw_m' => env('EMBEDDING_HNSW_M', 16),
+
+    // Parámetro ef_construction: tamaño de la lista de candidatos dinámicos
+    // Valores más altos = mejor calidad de índice, construcción más lenta
+    'hnsw_ef_construction' => env('EMBEDDING_HNSW_EF_CONSTRUCTION', 64),
+
+    // Parámetro ef_search: tamaño de la lista de candidatos durante búsqueda
+    // Valores más altos = mejor recall, búsqueda más lenta
+    'hnsw_ef_search' => env('EMBEDDING_HNSW_EF_SEARCH', 40),
 ];
