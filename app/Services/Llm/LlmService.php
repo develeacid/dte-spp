@@ -418,9 +418,17 @@ class LlmService implements LlmServiceInterface
                 'completion_tokens' => $usage['completion_tokens'] ?? null,
                 'total_tokens' => $usage['total_tokens'] ?? null,
                 'duration_ms' => $durationMs,
+                'prompt_version' => $promptVersion,
             ];
 
             $log->update($updateData);
+
+            // Update cost and check budgets
+            try {
+                app(LlmBudgetService::class)->checkAndAlert($log);
+            } catch (\Throwable $e) {
+                Log::warning('LLM budget check failed', ['error' => $e->getMessage()]);
+            }
 
             return trim($content);
 

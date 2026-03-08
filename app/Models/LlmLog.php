@@ -11,12 +11,14 @@ class LlmLog extends Model
         'user_id',
         'method',
         'prompt_template',
+        'prompt_version',
         'prompt_text',
         'response_text',
         'prompt_tokens',
         'completion_tokens',
         'total_tokens',
         'duration_ms',
+        'cost_usd',
         'model',
         'status',
         'error_message',
@@ -29,6 +31,7 @@ class LlmLog extends Model
             'completion_tokens' => 'integer',
             'total_tokens' => 'integer',
             'duration_ms' => 'integer',
+            'cost_usd' => 'decimal:6',
         ];
     }
 
