@@ -7,9 +7,11 @@ use App\Enums\SystemRole;
 use App\Enums\TipoNivelMir;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\MetaPeriodo;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -511,7 +513,79 @@ class QaTestingSeeder extends Seeder
 
     private function crearMetaPeriodos(): void
     {
-        // Stub — se implementará en Task 5
+        $indicadores = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->whereIn('clave', ['FER-001', 'DP-002', 'SP-003']))
+            ->get();
+
+        foreach ($indicadores as $indicador) {
+            $frecuencia = $indicador->frecuencia->value ?? $indicador->frecuencia;
+            $periodos = match ($frecuencia) {
+                'trimestral' => $this->generarPeriodosTrimestral($indicador),
+                'semestral' => $this->generarPeriodosSemestral($indicador),
+                'anual' => $this->generarPeriodosAnual($indicador),
+                default => [],
+            };
+
+            foreach ($periodos as $periodo) {
+                MetaPeriodo::firstOrCreate(
+                    [
+                        'indicador_id' => $indicador->id,
+                        'periodo' => $periodo['periodo'],
+                        'ejercicio_fiscal' => 2026,
+                    ],
+                    [
+                        'meta_periodo' => $periodo['meta_periodo'],
+                        'activo' => true,
+                        'fecha_apertura' => $periodo['fecha_apertura'],
+                        'fecha_cierre' => $periodo['fecha_cierre'],
+                    ]
+                );
+            }
+        }
+
+        // Make DP-002 "Kilómetros de carretera pavimentados" P1 overdue (fecha_cierre in the past)
+        // This meta period should have NO avance associated, so it counts as "vencido" in dashboard
+        $indVencido = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->where('clave', 'DP-002'))
+            ->where('nombre', 'Kilómetros de carretera pavimentados')->first();
+
+        if ($indVencido) {
+            $metaP1 = MetaPeriodo::where('indicador_id', $indVencido->id)
+                ->where('periodo', 1)
+                ->where('ejercicio_fiscal', 2026)
+                ->first();
+
+            if ($metaP1) {
+                $metaP1->update(['fecha_cierre' => Carbon::parse('2026-02-28')]);
+            }
+        }
+    }
+
+    private function generarPeriodosTrimestral(Indicador $indicador): array
+    {
+        $metaPorPeriodo = $indicador->meta / 4;
+
+        return [
+            ['periodo' => 1, 'meta_periodo' => $metaPorPeriodo, 'fecha_apertura' => '2026-01-01', 'fecha_cierre' => '2026-03-31'],
+            ['periodo' => 2, 'meta_periodo' => $metaPorPeriodo, 'fecha_apertura' => '2026-04-01', 'fecha_cierre' => '2026-06-30'],
+            ['periodo' => 3, 'meta_periodo' => $metaPorPeriodo, 'fecha_apertura' => '2026-07-01', 'fecha_cierre' => '2026-09-30'],
+            ['periodo' => 4, 'meta_periodo' => $metaPorPeriodo, 'fecha_apertura' => '2026-10-01', 'fecha_cierre' => '2026-12-31'],
+        ];
+    }
+
+    private function generarPeriodosSemestral(Indicador $indicador): array
+    {
+        $metaPorPeriodo = $indicador->meta / 2;
+
+        return [
+            ['periodo' => 1, 'meta_periodo' => $metaPorPeriodo, 'fecha_apertura' => '2026-01-01', 'fecha_cierre' => '2026-06-30'],
+            ['periodo' => 2, 'meta_periodo' => $metaPorPeriodo, 'fecha_apertura' => '2026-07-01', 'fecha_cierre' => '2026-12-31'],
+        ];
+    }
+
+    private function generarPeriodosAnual(Indicador $indicador): array
+    {
+        return [
+            ['periodo' => 1, 'meta_periodo' => $indicador->meta, 'fecha_apertura' => '2026-01-01', 'fecha_cierre' => '2026-12-31'],
+        ];
     }
 
     private function crearAvances(): void
