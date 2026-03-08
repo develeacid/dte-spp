@@ -1,6 +1,6 @@
 # Resultados Esperados — QA Testing
 
-> Generado automáticamente por QaTestingSeeder el 2026-03-08 17:10
+> Generado automáticamente por QaTestingSeeder el 2026-03-08 18:04
 
 ## Semáforos Esperados por Avance
 
@@ -12,13 +12,13 @@
 | SP-003 | Porcentaje de cobertura de vacunación en población objetivo | 18.0000 | 20.0000 | ascendente | verde | aprobado |
 | DP-002 | Porcentaje de cosas | 3.7500 | 25.0000 | ascendente | rojo | observado |
 
-## Dashboard Admin — SE-001 (team_id=309)
+## Dashboard Admin — SE-001 (team_id=318)
 
 - **Programas:** 2
 - **Indicadores con seguimiento:** 7
 - **Vencidos (metas sin avance con fecha pasada):** 1
 
-## Dashboard Admin — SS-002 (team_id=310)
+## Dashboard Admin — SS-002 (team_id=319)
 
 - **Programas:** 1
 - **Indicadores con seguimiento:** 2
