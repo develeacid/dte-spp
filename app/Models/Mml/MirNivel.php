@@ -9,9 +9,12 @@ use App\Models\ProgramaPresupuestario;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class MirNivel extends Model
 {
+    use LogsActivity;
     protected $table = 'mir_niveles';
 
     protected $fillable = [
@@ -31,6 +34,20 @@ class MirNivel extends Model
             'sintaxis_valida' => 'boolean',
             'sintaxis_validada_at' => 'datetime',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'programa_presupuestario_id', 'tipo_nivel', 'resumen_narrativo',
+                'supuestos', 'orden', 'ped_objetivo_estrategico_id',
+                'ped_linea_accion_id', 'team_id',
+                'sintaxis_valida', 'sintaxis_observacion',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn (string $eventName) => "MirNivel {$eventName}");
     }
 
     public function programa(): BelongsTo
