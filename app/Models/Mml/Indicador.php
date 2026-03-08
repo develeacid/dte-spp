@@ -10,9 +10,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Indicador extends Model
 {
+    use LogsActivity;
     protected $table = 'indicadores';
 
     protected $fillable = [
@@ -36,6 +39,22 @@ class Indicador extends Model
             'orden' => 'integer',
             'activo_seguimiento' => 'boolean',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'mir_nivel_id', 'nombre', 'formula_texto', 'tipo', 'dimension',
+                'frecuencia', 'sentido', 'linea_base', 'meta',
+                'rango_verde_min', 'rango_verde_max',
+                'rango_amarillo_min', 'rango_amarillo_max',
+                'rango_rojo_min', 'rango_rojo_max',
+                'unidad_medida_id', 'activo_seguimiento',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn (string $eventName) => "Indicador {$eventName}");
     }
 
     public function mirNivel(): BelongsTo

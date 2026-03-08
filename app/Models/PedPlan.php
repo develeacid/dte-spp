@@ -4,9 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class PedPlan extends Model
 {
+    use LogsActivity;
+
     protected $table = 'ped_planes';
 
     protected $fillable = [
@@ -24,6 +28,15 @@ class PedPlan extends Model
             'periodo_fin' => 'integer',
             'activo' => 'boolean',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['nombre', 'nivel_gobierno', 'periodo_inicio', 'periodo_fin', 'activo'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn (string $eventName) => "PedPlan {$eventName}");
     }
 
     // ============================================

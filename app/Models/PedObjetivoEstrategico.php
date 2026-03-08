@@ -7,10 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class PedObjetivoEstrategico extends Model
 {
     use HasEmbedding;
+    use LogsActivity;
 
     protected $table = 'ped_objetivos_estrategicos';
 
@@ -25,6 +28,15 @@ class PedObjetivoEstrategico extends Model
         return [
             'ped_tema_id' => 'integer',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['ped_tema_id', 'clave', 'descripcion'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn (string $eventName) => "PedObjetivoEstrategico {$eventName}");
     }
 
     public function tema(): BelongsTo
