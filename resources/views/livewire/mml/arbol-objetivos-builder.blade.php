@@ -36,7 +36,11 @@
                 {{-- Vista lado a lado --}}
                 <div class="grid grid-cols-2 gap-4">
                     <div class="text-center">
-                        <h3 class="text-sm font-semibold text-red-700 uppercase tracking-wide">Problema (Original)</h3>
+                        <h3 class="text-sm font-semibold text-red-700 uppercase tracking-wide">
+                            <x-ui.help-label glossary="problema_central" class="text-sm font-semibold text-red-700 uppercase tracking-wide">
+                                Problema (Original)
+                            </x-ui.help-label>
+                        </h3>
                     </div>
                     <div class="text-center">
                         <h3 class="text-sm font-semibold text-green-700 uppercase tracking-wide">Objetivo (Transformado)</h3>
