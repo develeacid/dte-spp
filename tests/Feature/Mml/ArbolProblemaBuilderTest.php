@@ -1,0 +1,160 @@
+<?php
+
+namespace Tests\Feature\Mml;
+
+use App\Enums\TipoArbol;
+use App\Enums\TipoNodo;
+use App\Livewire\Mml\ArbolProblemaBuilder;
+use App\Models\Mml\Arbol;
+use App\Models\Mml\ArbolNodo;
+use App\Models\ProgramaPresupuestario;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
+use Tests\TestCase;
+
+class ArbolProblemaBuilderTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $user;
+    private ProgramaPresupuestario $programa;
+    private Arbol $arbol;
+    private ArbolNodo $problemaCentral;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->user = User::factory()->withPersonalTeam()->create();
+        $this->programa = ProgramaPresupuestario::create([
+            'nombre' => 'Test', 'clave' => 'PT-001',
+            'team_id' => $this->user->currentTeam->id,
+        ]);
+        $this->arbol = Arbol::create([
+            'programa_presupuestario_id' => $this->programa->id,
+            'tipo' => TipoArbol::PROBLEMA->value,
+        ]);
+        $this->problemaCentral = ArbolNodo::create([
+            'arbol_id' => $this->arbol->id,
+            'tipo_nodo' => TipoNodo::PROBLEMA_CENTRAL->value,
+            'descripcion' => 'Alto índice de deserción escolar',
+        ]);
+    }
+
+    public function test_componente_se_renderiza_con_problema_central(): void
+    {
+        Livewire::actingAs($this->user)
+            ->test(ArbolProblemaBuilder::class, ['programa' => $this->programa])
+            ->assertStatus(200)
+            ->assertSee('Alto índice de deserción escolar');
+    }
+
+    public function test_agregar_causa_directa(): void
+    {
+        Livewire::actingAs($this->user)
+            ->test(ArbolProblemaBuilder::class, ['programa' => $this->programa])
+            ->call('agregarNodo', $this->problemaCentral->id, 'causa_directa')
+            ->set('nuevoNodoDescripcion', 'Falta de recursos económicos en las familias')
+            ->call('guardarNuevoNodo')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('arbol_nodos', [
+            'arbol_id' => $this->arbol->id,
+            'parent_id' => $this->problemaCentral->id,
+            'tipo_nodo' => 'causa_directa',
+            'descripcion' => 'Falta de recursos económicos en las familias',
+        ]);
+    }
+
+    public function test_agregar_causa_indirecta_bajo_causa_directa(): void
+    {
+        $causaDirecta = ArbolNodo::create([
+            'arbol_id' => $this->arbol->id,
+            'parent_id' => $this->problemaCentral->id,
+            'tipo_nodo' => TipoNodo::CAUSA_DIRECTA->value,
+            'descripcion' => 'Causa directa',
+            'orden' => 1,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(ArbolProblemaBuilder::class, ['programa' => $this->programa])
+            ->call('agregarNodo', $causaDirecta->id, 'causa_indirecta')
+            ->set('nuevoNodoDescripcion', 'Causa indirecta de prueba')
+            ->call('guardarNuevoNodo')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('arbol_nodos', [
+            'parent_id' => $causaDirecta->id,
+            'tipo_nodo' => 'causa_indirecta',
+        ]);
+    }
+
+    public function test_agregar_efecto_directo(): void
+    {
+        Livewire::actingAs($this->user)
+            ->test(ArbolProblemaBuilder::class, ['programa' => $this->programa])
+            ->call('agregarNodo', $this->problemaCentral->id, 'efecto_directo')
+            ->set('nuevoNodoDescripcion', 'Baja competitividad laboral')
+            ->call('guardarNuevoNodo')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('arbol_nodos', [
+            'parent_id' => $this->problemaCentral->id,
+            'tipo_nodo' => 'efecto_directo',
+        ]);
+    }
+
+    public function test_editar_nodo(): void
+    {
+        $causa = ArbolNodo::create([
+            'arbol_id' => $this->arbol->id,
+            'parent_id' => $this->problemaCentral->id,
+            'tipo_nodo' => TipoNodo::CAUSA_DIRECTA->value,
+            'descripcion' => 'Descripción original',
+            'orden' => 1,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(ArbolProblemaBuilder::class, ['programa' => $this->programa])
+            ->call('editarNodo', $causa->id)
+            ->set('editNodoDescripcion', 'Descripción actualizada')
+            ->call('actualizarNodo')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('arbol_nodos', [
+            'id' => $causa->id,
+            'descripcion' => 'Descripción actualizada',
+        ]);
+    }
+
+    public function test_eliminar_nodo(): void
+    {
+        $causa = ArbolNodo::create([
+            'arbol_id' => $this->arbol->id,
+            'parent_id' => $this->problemaCentral->id,
+            'tipo_nodo' => TipoNodo::CAUSA_DIRECTA->value,
+            'descripcion' => 'A eliminar',
+            'orden' => 1,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(ArbolProblemaBuilder::class, ['programa' => $this->programa])
+            ->call('eliminarNodo', $causa->id)
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseMissing('arbol_nodos', ['id' => $causa->id]);
+    }
+
+    public function test_no_puede_eliminar_problema_central(): void
+    {
+        Livewire::actingAs($this->user)
+            ->test(ArbolProblemaBuilder::class, ['programa' => $this->programa])
+            ->call('eliminarNodo', $this->problemaCentral->id)
+            ->assertDispatched('notify', function ($name, $params) {
+                return str_contains($params['message'] ?? $params[0] ?? '', 'no se puede eliminar')
+                    || str_contains($params['message'] ?? $params[0] ?? '', 'central');
+            });
+
+        $this->assertDatabaseHas('arbol_nodos', ['id' => $this->problemaCentral->id]);
+    }
+}
