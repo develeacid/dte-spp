@@ -24,4 +24,17 @@ Route::prefix('evaluacion')
                 Route::get('/descargar/{filename}', [\App\Http\Controllers\Evaluation\ExportController::class, 'descargar'])
                     ->name('evaluation.exportar.descargar');
             });
+
+        Route::middleware('can:exportar_reportes')
+            ->prefix('datos-abiertos')
+            ->group(function () {
+                Route::get('/csv/{ejercicio}', [\App\Http\Controllers\Evaluation\DatosAbiertosController::class, 'csv'])
+                    ->name('evaluation.datos-abiertos.csv');
+                Route::get('/json/{ejercicio}', [\App\Http\Controllers\Evaluation\DatosAbiertosController::class, 'json'])
+                    ->name('evaluation.datos-abiertos.json');
+                Route::get('/diccionario', [\App\Http\Controllers\Evaluation\DatosAbiertosController::class, 'diccionario'])
+                    ->name('evaluation.datos-abiertos.diccionario');
+                Route::get('/zip/{ejercicio}', [\App\Http\Controllers\Evaluation\DatosAbiertosController::class, 'zip'])
+                    ->name('evaluation.datos-abiertos.zip');
+            });
     });
