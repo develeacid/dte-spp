@@ -248,6 +248,20 @@ class PedController extends Controller
     }
 
     // ============================================
+    // IMPORTADOR
+    // ============================================
+
+    public function importForm(): View
+    {
+        return view('cascade.ped.import');
+    }
+
+    public function import()
+    {
+        return redirect()->route('cascade.ped.import');
+    }
+
+    // ============================================
     // LÍNEA DE ACCIÓN
     // ============================================
 

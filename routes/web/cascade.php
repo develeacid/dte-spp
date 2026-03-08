@@ -46,6 +46,10 @@ Route::middleware([
         // Páginas de formulario (GET) — Nodo (eje, tema, objetivo, estrategia, linea)
         Route::get('/nodo/create', [PedController::class, 'createNodo'])->name('nodo.create');
         Route::get('/nodo/{tipo}/{id}/edit', [PedController::class, 'editNodo'])->name('nodo.edit');
+
+        // Importador
+        Route::get('/import', [PedController::class, 'importForm'])->name('import');
+        Route::post('/import', [PedController::class, 'import'])->name('import.store');
     });
 
     // ============================================
