@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\EstadoAvance;
 use App\Enums\SentidoIndicador;
 use App\Enums\SystemRole;
 use App\Enums\TipoNivelMir;
@@ -10,7 +11,9 @@ use App\Models\Mml\MirNivel;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
+use App\Models\Tracking\Avance;
 use App\Models\User;
+use App\Services\Tracking\SemaforoService;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -590,7 +593,132 @@ class QaTestingSeeder extends Seeder
 
     private function crearAvances(): void
     {
-        // Stub — se implementará en Task 6
+        $semaforoService = app(SemaforoService::class);
+
+        $operador = User::where('email', 'ele.operador@gmail.com')->first();
+        $operador2 = User::where('email', 'ele.operador2@gmail.com')->first();
+
+        // === PROG1 FER-001 ===
+
+        // Ind1: "Tasa de crecimiento del PIB estatal" (ascendente, meta=80, meta_periodo=20)
+        // Resultado=19 → (19/20)*100 = 95% → ≥90% → VERDE
+        $this->crearAvance(
+            programaClave: 'FER-001',
+            indicadorNombre: 'Tasa de crecimiento del PIB estatal',
+            periodo: 1,
+            resultado: 19,
+            estado: EstadoAvance::APROBADO,
+            capturadoPor: $operador,
+            semaforoService: $semaforoService,
+        );
+
+        // Ind2: "Tasa de desempleo en MiPyMEs beneficiadas" (descendente, meta=30, meta_periodo=7.5)
+        // Resultado=9 → 9 > 7.5 but 9 ≤ 7.5*1.3=9.75 → AMARILLO
+        $this->crearAvance(
+            programaClave: 'FER-001',
+            indicadorNombre: 'Tasa de desempleo en MiPyMEs beneficiadas',
+            periodo: 1,
+            resultado: 9,
+            estado: EstadoAvance::EN_REVISION,
+            capturadoPor: $operador,
+            semaforoService: $semaforoService,
+        );
+
+        // === PROG2 DP-002 ===
+
+        // Ind1: "Porcentaje de cosas" (ascendente, meta=100, meta_periodo=25)
+        // Resultado=3.75 → (3.75/25)*100 = 15% → <70% → ROJO
+        $this->crearAvance(
+            programaClave: 'DP-002',
+            indicadorNombre: 'Porcentaje de cosas',
+            periodo: 1,
+            resultado: 3.75,
+            estado: EstadoAvance::OBSERVADO,
+            capturadoPor: $operador,
+            semaforoService: $semaforoService,
+            observacion: 'El indicador no cumple criterios CREMAA. Favor de revisar nombre y método de cálculo.',
+        );
+
+        // Ind2: "Número de productores beneficiados" (anual, meta=500, meta_periodo=500)
+        // No result yet — en_captura
+        $this->crearAvance(
+            programaClave: 'DP-002',
+            indicadorNombre: 'Número de productores beneficiados',
+            periodo: 1,
+            resultado: null,
+            estado: EstadoAvance::EN_CAPTURA,
+            capturadoPor: $operador,
+            semaforoService: $semaforoService,
+        );
+
+        // === PROG3 SP-003 ===
+
+        // Ind1: "Porcentaje de cobertura de vacunación" (ascendente, meta=80, meta_periodo=20)
+        // Resultado=18 → (18/20)*100 = 90% → ≥90% → VERDE
+        $this->crearAvance(
+            programaClave: 'SP-003',
+            indicadorNombre: 'Porcentaje de cobertura de vacunación en población objetivo',
+            periodo: 1,
+            resultado: 18,
+            estado: EstadoAvance::APROBADO,
+            capturadoPor: $operador2,
+            semaforoService: $semaforoService,
+        );
+    }
+
+    private function crearAvance(
+        string $programaClave,
+        string $indicadorNombre,
+        int $periodo,
+        ?float $resultado,
+        EstadoAvance $estado,
+        User $capturadoPor,
+        SemaforoService $semaforoService,
+        ?string $observacion = null,
+    ): void {
+        $indicador = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->where('clave', $programaClave))
+            ->where('nombre', $indicadorNombre)->first();
+
+        if (! $indicador) {
+            return;
+        }
+
+        $meta = MetaPeriodo::where('indicador_id', $indicador->id)
+            ->where('periodo', $periodo)
+            ->where('ejercicio_fiscal', 2026)
+            ->first();
+
+        if (! $meta) {
+            return;
+        }
+
+        $semaforo = null;
+        if ($resultado !== null) {
+            $semaforo = $semaforoService->calcular($resultado, $indicador, $meta->meta_periodo);
+        }
+
+        $historial = [];
+        if ($observacion) {
+            $historial[] = [
+                'fecha' => now()->toISOString(),
+                'observacion' => $observacion,
+                'por' => 'Sistema QA',
+            ];
+        }
+
+        Avance::updateOrCreate(
+            [
+                'meta_periodo_id' => $meta->id,
+                'indicador_id' => $indicador->id,
+            ],
+            [
+                'resultado' => $resultado,
+                'semaforo_calculado' => $semaforo,
+                'estado' => $estado->value,
+                'capturado_por' => $capturadoPor->id,
+                'historial_observaciones' => $historial ?: [],
+            ]
+        );
     }
 
     private function generarResultadosEsperados(): void
