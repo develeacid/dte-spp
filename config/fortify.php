@@ -144,7 +144,7 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Features::registration(), // Deshabilitado — registro solo por invitación (futuro sprint)
         Features::resetPasswords(),
         // Features::emailVerification(),
         Features::updateProfileInformation(),
