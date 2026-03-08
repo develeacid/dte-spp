@@ -175,8 +175,11 @@ class ArbolObjetivosBuilder extends Component
             }
         }
 
+        $tieneMir = $this->programa->mirNiveles()->exists();
+
         return view('livewire.mml.arbol-objetivos-builder', [
             'paresNodos' => $paresNodos,
+            'tieneMir' => $tieneMir,
         ]);
     }
 }

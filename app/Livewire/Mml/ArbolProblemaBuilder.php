@@ -178,8 +178,11 @@ class ArbolProblemaBuilder extends Component
     {
         $arbol = $this->arbolId ? Arbol::with('nodos')->find($this->arbolId) : null;
 
+        $tieneMir = $this->programa->mirNiveles()->exists();
+
         return view('livewire.mml.arbol-problema-builder', [
             'arbol' => $arbol,
+            'tieneMir' => $tieneMir,
         ]);
     }
 }
