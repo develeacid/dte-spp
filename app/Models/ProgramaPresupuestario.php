@@ -7,6 +7,7 @@ use App\Enums\OrigenPrograma;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProgramaPresupuestario extends Model
@@ -49,6 +50,21 @@ class ProgramaPresupuestario extends Model
         return $this->belongsToMany(Team::class, 'programa_team')
                     ->withPivot('rol')
                     ->withTimestamps();
+    }
+
+    public function arboles(): HasMany
+    {
+        return $this->hasMany(\App\Models\Mml\Arbol::class, 'programa_presupuestario_id');
+    }
+
+    public function arbolProblema()
+    {
+        return $this->arboles()->where('tipo', 'problema')->first();
+    }
+
+    public function arbolObjetivos()
+    {
+        return $this->arboles()->where('tipo', 'objetivos')->first();
     }
 
     // --- Scopes ---
