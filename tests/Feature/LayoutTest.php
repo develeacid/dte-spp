@@ -100,8 +100,8 @@ class LayoutTest extends TestCase
 
         $response = $this->actingAs($user)->get('/dashboard');
 
-        $response->assertSee('Profile');
-        $response->assertSee('Log Out');
+        $response->assertSee('Mi Perfil');
+        $response->assertSee('Cerrar Sesión');
     }
 
     public function test_guest_redirected_to_login(): void

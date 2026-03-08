@@ -13,28 +13,28 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
+                        Inicio
                     </x-nav-link>
                     <x-nav-link href="{{ route('mml.programas') }}" :active="request()->routeIs('mml.programas') || request()->routeIs('mml.etapa*') || request()->routeIs('mml.mir')">
-                        {{ __('Programas') }}
+                        Programas
                     </x-nav-link>
                     <x-nav-link href="{{ route('mml.importaciones') }}" :active="request()->routeIs('mml.importar*') || request()->routeIs('mml.importaciones')">
-                        {{ __('Importaciones') }}
+                        Importaciones
                     </x-nav-link>
                     @can('revisar_avance')
                         <x-nav-link href="{{ route('tracking.panel') }}" :active="request()->routeIs('tracking.*')">
-                            {{ __('Seguimiento') }}
+                            Seguimiento
                         </x-nav-link>
                     @endcan
                     @can('gestionar_catalogos')
                         <x-nav-link href="{{ route('cascade.ped.index') }}" :active="request()->routeIs('cascade.ped.*')">
-                            {{ __('Plan Estatal') }}
+                            Plan Estatal
                         </x-nav-link>
                         <x-nav-link href="{{ route('cascade.programas-derivados.index') }}" :active="request()->routeIs('cascade.programas-derivados.*')">
-                            {{ __('Programas Derivados') }}
+                            Programas Derivados
                         </x-nav-link>
                         <x-nav-link href="{{ route('cascade.alineacion.index') }}" :active="request()->routeIs('cascade.alineacion.*')">
-                            {{ __('Matriz de Alineación') }}
+                            Matriz de Alineación
                         </x-nav-link>
                     @endcan
                 </div>
@@ -61,17 +61,17 @@
                                 <div class="w-60">
                                     <!-- Team Management -->
                                     <div class="block px-4 py-2 text-xs text-gray-400">
-                                        {{ __('Manage Team') }}
+                                        Gestionar Unidad
                                     </div>
 
                                     <!-- Team Settings -->
                                     <x-dropdown-link href="{{ route('teams.show', Auth::user()->currentTeam->id) }}">
-                                        {{ __('Team Settings') }}
+                                        Configuración de la Unidad
                                     </x-dropdown-link>
 
                                     @can('create', Laravel\Jetstream\Jetstream::newTeamModel())
                                         <x-dropdown-link href="{{ route('teams.create') }}">
-                                            {{ __('Create New Team') }}
+                                            Crear Unidad Responsable
                                         </x-dropdown-link>
                                     @endcan
 
@@ -80,7 +80,7 @@
                                         <div class="border-t border-gray-200"></div>
 
                                         <div class="block px-4 py-2 text-xs text-gray-400">
-                                            {{ __('Switch Teams') }}
+                                            Cambiar de Unidad
                                         </div>
 
                                         @foreach (Auth::user()->allTeams() as $team)
@@ -117,16 +117,16 @@
                         <x-slot name="content">
                             <!-- Account Management -->
                             <div class="block px-4 py-2 text-xs text-gray-400">
-                                {{ __('Manage Account') }}
+                                Mi Cuenta
                             </div>
 
                             <x-dropdown-link href="{{ route('profile.show') }}">
-                                {{ __('Profile') }}
+                                Mi Perfil
                             </x-dropdown-link>
 
                             @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
                                 <x-dropdown-link href="{{ route('api-tokens.index') }}">
-                                    {{ __('API Tokens') }}
+                                    Tokens de API
                                 </x-dropdown-link>
                             @endif
 
@@ -138,7 +138,7 @@
 
                                 <x-dropdown-link href="{{ route('logout') }}"
                                          @click.prevent="$root.submit();">
-                                    {{ __('Log Out') }}
+                                    Cerrar Sesión
                                 </x-dropdown-link>
                             </form>
                         </x-slot>
@@ -162,17 +162,17 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
+                Inicio
             </x-responsive-nav-link>
             <x-responsive-nav-link href="{{ route('mml.programas') }}" :active="request()->routeIs('mml.programas') || request()->routeIs('mml.etapa*') || request()->routeIs('mml.mir')">
-                {{ __('Programas') }}
+                Programas
             </x-responsive-nav-link>
             <x-responsive-nav-link href="{{ route('mml.importaciones') }}" :active="request()->routeIs('mml.importar*') || request()->routeIs('mml.importaciones')">
-                {{ __('Importaciones') }}
+                Importaciones
             </x-responsive-nav-link>
             @can('revisar_avance')
                 <x-responsive-nav-link href="{{ route('tracking.panel') }}" :active="request()->routeIs('tracking.*')">
-                    {{ __('Seguimiento') }}
+                    Seguimiento
                 </x-responsive-nav-link>
             @endcan
         </div>
@@ -195,12 +195,12 @@
             <div class="mt-3 space-y-1">
                 <!-- Account Management -->
                 <x-responsive-nav-link href="{{ route('profile.show') }}" :active="request()->routeIs('profile.show')">
-                    {{ __('Profile') }}
+                    Mi Perfil
                 </x-responsive-nav-link>
 
                 @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
                     <x-responsive-nav-link href="{{ route('api-tokens.index') }}" :active="request()->routeIs('api-tokens.index')">
-                        {{ __('API Tokens') }}
+                        Tokens de API
                     </x-responsive-nav-link>
                 @endif
 
@@ -210,7 +210,7 @@
 
                     <x-responsive-nav-link href="{{ route('logout') }}"
                                    @click.prevent="$root.submit();">
-                        {{ __('Log Out') }}
+                        Cerrar Sesión
                     </x-responsive-nav-link>
                 </form>
 
@@ -219,17 +219,17 @@
                     <div class="border-t border-gray-200"></div>
 
                     <div class="block px-4 py-2 text-xs text-gray-400">
-                        {{ __('Manage Team') }}
+                        Gestionar Unidad
                     </div>
 
                     <!-- Team Settings -->
                     <x-responsive-nav-link href="{{ route('teams.show', Auth::user()->currentTeam->id) }}" :active="request()->routeIs('teams.show')">
-                        {{ __('Team Settings') }}
+                        Configuración de la Unidad
                     </x-responsive-nav-link>
 
                     @can('create', Laravel\Jetstream\Jetstream::newTeamModel())
                         <x-responsive-nav-link href="{{ route('teams.create') }}" :active="request()->routeIs('teams.create')">
-                            {{ __('Create New Team') }}
+                            Crear Unidad Responsable
                         </x-responsive-nav-link>
                     @endcan
 
@@ -238,7 +238,7 @@
                         <div class="border-t border-gray-200"></div>
 
                         <div class="block px-4 py-2 text-xs text-gray-400">
-                            {{ __('Switch Teams') }}
+                            Cambiar de Unidad
                         </div>
 
                         @foreach (Auth::user()->allTeams() as $team)

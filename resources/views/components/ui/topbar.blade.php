@@ -21,44 +21,44 @@
     {{-- Right: user dropdown --}}
     <div class="flex items-center">
         @if($user)
-            <x-dropdown align="right" width="48">
+            <x-dropdown align="right" width="60">
                 <x-slot name="trigger">
-                    <button class="flex items-center space-x-2 text-sm text-gray-500 hover:text-gray-700 focus:outline-none transition">
+                    <button class="flex items-center space-x-3 text-sm text-gray-600 hover:text-gray-900 focus:outline-none transition">
                         <x-ui.avatar :name="$user->name" :src="Laravel\Jetstream\Jetstream::managesProfilePhotos() ? $user->profile_photo_url : null" size="sm" />
-                        <span class="hidden md:inline font-medium">{{ $user->name }}</span>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="hidden md:block text-left">
+                            <div class="font-medium text-gray-700">{{ $user->name }}</div>
+                            <div class="text-xs text-gray-400">
+                                {{ $user->roles->first()?->name ?? 'usuario' }} · {{ $user->currentTeam?->clave_ur ?? $user->currentTeam?->name ?? '' }}
+                            </div>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
                         </svg>
                     </button>
                 </x-slot>
 
                 <x-slot name="content">
-                    <div class="block px-4 py-2 text-xs text-gray-400">{{ __('Manage Account') }}</div>
+                    {{-- User info header --}}
+                    <div class="px-4 py-3 border-b border-gray-100">
+                        <div class="flex items-center space-x-3">
+                            <x-ui.avatar :name="$user->name" :src="Laravel\Jetstream\Jetstream::managesProfilePhotos() ? $user->profile_photo_url : null" size="md" />
+                            <div>
+                                <div class="font-medium text-gray-900">{{ $user->name }}</div>
+                                <div class="text-xs text-gray-500">{{ $user->email }}</div>
+                            </div>
+                        </div>
+                    </div>
 
                     <x-dropdown-link href="{{ route('profile.show') }}">
-                        {{ __('Profile') }}
+                        Mi Perfil
                     </x-dropdown-link>
 
-                    @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
-                        <x-dropdown-link href="{{ route('api-tokens.index') }}">
-                            {{ __('API Tokens') }}
-                        </x-dropdown-link>
-                    @endif
-
-                    @if (Laravel\Jetstream\Jetstream::hasTeamFeatures())
-                        <div class="border-t border-gray-200"></div>
-                        <div class="block px-4 py-2 text-xs text-gray-400">{{ __('Switch Teams') }}</div>
-                        @foreach (Auth::user()->allTeams() as $team)
-                            <x-switchable-team :team="$team" />
-                        @endforeach
-                    @endif
-
-                    <div class="border-t border-gray-200"></div>
+                    <div class="border-t border-gray-100"></div>
 
                     <form method="POST" action="{{ route('logout') }}" x-data>
                         @csrf
                         <x-dropdown-link href="{{ route('logout') }}" @click.prevent="$root.submit();">
-                            {{ __('Log Out') }}
+                            Cerrar Sesión
                         </x-dropdown-link>
                     </form>
                 </x-slot>
