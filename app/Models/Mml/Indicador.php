@@ -67,4 +67,9 @@ class Indicador extends Model
     {
         return $this->hasMany(MetaPeriodo::class)->orderBy('periodo');
     }
+
+    public function avances(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\Tracking\Avance::class);
+    }
 }

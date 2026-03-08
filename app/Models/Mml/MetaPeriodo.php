@@ -15,6 +15,8 @@ class MetaPeriodo extends Model
         'meta_periodo',
         'ejercicio_fiscal',
         'activo',
+        'fecha_apertura',
+        'fecha_cierre',
     ];
 
     protected function casts(): array
@@ -24,11 +26,18 @@ class MetaPeriodo extends Model
             'meta_periodo' => 'decimal:4',
             'ejercicio_fiscal' => 'integer',
             'activo' => 'boolean',
+            'fecha_apertura' => 'date',
+            'fecha_cierre' => 'date',
         ];
     }
 
     public function indicador(): BelongsTo
     {
         return $this->belongsTo(Indicador::class);
+    }
+
+    public function avance(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Models\Tracking\Avance::class);
     }
 }
