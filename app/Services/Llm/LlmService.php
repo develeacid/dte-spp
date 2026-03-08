@@ -430,7 +430,7 @@ class LlmService implements LlmServiceInterface
                 Log::warning('LLM budget check failed', ['error' => $e->getMessage()]);
             }
 
-            return trim($content);
+            return $this->stripCodeFences(trim($content));
 
         } catch (LlmException $e) {
             throw $e;
@@ -548,6 +548,15 @@ class LlmService implements LlmServiceInterface
             'status' => 'cache_hit',
             'duration_ms' => 0,
         ]);
+    }
+
+    private function stripCodeFences(string $text): string
+    {
+        if (preg_match('/^```(?:json)?\s*\n(.*)\n```\s*$/s', $text, $matches)) {
+            return trim($matches[1]);
+        }
+
+        return $text;
     }
 
     // ─── Manifest Helpers ────────────────────────────────────────────
