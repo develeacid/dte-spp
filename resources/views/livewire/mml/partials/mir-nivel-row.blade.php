@@ -75,6 +75,73 @@
                 @endif
             @endif
         </div>
+
+        {{-- Alineación PED --}}
+        <div class="mt-2 space-y-1">
+            @php
+                $alineacionActual = null;
+                if (in_array($tipoEnum, [\App\Enums\TipoNivelMir::FIN, \App\Enums\TipoNivelMir::PROPOSITO])) {
+                    $alineacionActual = $nivel->pedObjetivoEstrategico;
+                } else {
+                    $alineacionActual = $nivel->pedLineaAccion;
+                }
+            @endphp
+
+            @if ($alineacionActual)
+                <div class="rounded border border-green-200 bg-green-50 p-1.5 text-xs" x-data="{ showChain: false }">
+                    <span class="font-medium text-green-700">Alineado:</span>
+                    <span class="text-green-800">{{ $alineacionActual->descripcion ?? $alineacionActual->nombre ?? '' }}</span>
+                    <button @click="showChain = !showChain" class="ml-1 text-green-600 hover:text-green-800 underline">
+                        <span x-show="!showChain">Ver cadena</span>
+                        <span x-show="showChain">Ocultar</span>
+                    </button>
+                    <div x-show="showChain" x-cloak class="mt-1 space-y-0.5 text-xs text-gray-600">
+                        @if ($alineacionActual instanceof \App\Models\PedObjetivoEstrategico)
+                            <p>Tema: {{ $alineacionActual->tema?->descripcion ?? '' }}</p>
+                            <p>Eje: {{ $alineacionActual->tema?->eje?->nombre ?? '' }}</p>
+                            @foreach ($alineacionActual->pndObjetivos as $pnd)
+                                <p>PND: {{ $pnd->descripcion ?? $pnd->nombre ?? '' }}</p>
+                            @endforeach
+                        @elseif ($alineacionActual instanceof \App\Models\PedLineaAccion)
+                            <p>Estrategia: {{ $alineacionActual->estrategia?->descripcion ?? '' }}</p>
+                            <p>Obj. Estratégico: {{ $alineacionActual->estrategia?->objetivoEstrategico?->descripcion ?? '' }}</p>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
+            <button
+                wire:click="buscarAlineacion({{ $nivel->id }})"
+                wire:loading.attr="disabled"
+                wire:target="buscarAlineacion({{ $nivel->id }})"
+                class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 hover:bg-gray-200"
+            >
+                <span wire:loading.remove wire:target="buscarAlineacion({{ $nivel->id }})">Buscar alineación</span>
+                <span wire:loading wire:target="buscarAlineacion({{ $nivel->id }})">Buscando...</span>
+            </button>
+
+            @if ($nivelAlineacionActivo === $nivel->id && count($sugerenciasAlineacion) > 0)
+                <div class="mt-1 rounded border border-indigo-200 bg-indigo-50 p-2 space-y-1">
+                    <p class="text-xs font-medium text-indigo-700">Sugerencias de alineación:</p>
+                    @foreach ($sugerenciasAlineacion as $sug)
+                        <div class="flex items-center justify-between gap-2 rounded bg-white p-1.5 text-xs">
+                            <div>
+                                <span class="font-medium">{{ $sug['descripcion'] }}</span>
+                                <span class="ml-1 text-gray-400">({{ $sug['score'] }}%)</span>
+                            </div>
+                            <button
+                                wire:click="seleccionarAlineacion({{ $nivel->id }}, '{{ $sug['tipo'] }}', {{ $sug['id'] }})"
+                                class="shrink-0 rounded bg-indigo-600 px-2 py-0.5 text-white hover:bg-indigo-700"
+                            >
+                                Seleccionar
+                            </button>
+                        </div>
+                    @endforeach
+                </div>
+            @elseif ($nivelAlineacionActivo === $nivel->id && count($sugerenciasAlineacion) === 0)
+                <p class="mt-1 text-xs text-gray-500">No se encontraron coincidencias.</p>
+            @endif
+        </div>
     </td>
 
     {{-- Indicadores --}}
