@@ -47,6 +47,9 @@
             <p style="color: #9ca3af; font-size: 12px; margin: 0;">
                 &copy; {{ date('Y') }} — Dirección de Tecnología y Evaluación
             </p>
+            <p style="color: #c0c5cc; font-size: 10px; margin: 4px 0 0;">
+                Desarrollado por eleacid — Ing. en Sistemas Computacionales, Especialista en TALL
+            </p>
         </div>
     </div>
 </body>
