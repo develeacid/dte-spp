@@ -24,6 +24,7 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/dashboard', \App\Livewire\Dashboard::class)->name('dashboard');
+    Route::get('/notifications', \App\Livewire\NotificationsIndex::class)->name('notifications.index');
 });
 
 require __DIR__ . '/web/admin.php';
