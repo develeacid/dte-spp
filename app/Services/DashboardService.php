@@ -166,6 +166,48 @@ class DashboardService
         });
     }
 
+    public function getAvancesPorRevisar(int $teamId, int $limit = 10): \Illuminate\Database\Eloquent\Collection
+    {
+        return Avance::where('estado', EstadoAvance::EN_REVISION)
+            ->whereHas('indicador.mirNivel.programa', fn ($q) => $q->paraTeam($teamId))
+            ->with(['indicador', 'metaPeriodo', 'capturador'])
+            ->orderBy('updated_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
+
+    public function getGlobalAdminStats(): object
+    {
+        return Cache::remember('dashboard:global-admin-stats', self::TTL, function () {
+            $programasEvaluados = ProgramaPresupuestario::whereHas('mirNiveles.indicadores', fn ($q) => $q->where('activo_seguimiento', true))
+                ->count();
+
+            $eficaciaPromedio = $this->calcularEficaciaGlobal();
+
+            $vencidosCrossTeam = Avance::where('estado', EstadoAvance::VENCIDO)->count();
+
+            return (object) compact('programasEvaluados', 'eficaciaPromedio', 'vencidosCrossTeam');
+        });
+    }
+
+    private function calcularEficaciaGlobal(): float
+    {
+        $avances = Avance::whereIn('estado', [EstadoAvance::APROBADO])
+            ->with('metaPeriodo')
+            ->get();
+
+        if ($avances->isEmpty()) {
+            return 0;
+        }
+
+        $percentages = $avances->map(function ($avance) {
+            $meta = $avance->metaPeriodo?->meta_periodo ?? 0;
+            return $meta > 0 ? min(($avance->resultado / $meta) * 100, 200) : 0;
+        });
+
+        return round($percentages->avg(), 1);
+    }
+
     private function calcularAvancePromedio(int $teamId): float
     {
         $avances = Avance::whereHas('indicador.mirNivel.programa', fn ($q) => $q->paraTeam($teamId))

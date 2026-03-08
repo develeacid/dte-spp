@@ -151,11 +151,12 @@ class DashboardTest extends TestCase
             ->assertDontSee('Avance por Programa');
     }
 
-    public function test_activity_placeholder_visible(): void
+    public function test_admin_sees_admin_dashboard_role(): void
     {
         $this->actingAs($this->admin);
         Livewire::test(Dashboard::class)
-            ->assertSee('Actividad Reciente');
+            ->assertSee('Monitoreo IA')
+            ->assertSee('Gestion de usuarios');
     }
 
     public function test_guest_redirected(): void
