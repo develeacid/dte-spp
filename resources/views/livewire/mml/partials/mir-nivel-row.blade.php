@@ -1,0 +1,145 @@
+@php
+    $tipoEnum = $nivel->tipo_nivel instanceof \App\Enums\TipoNivelMir
+        ? $nivel->tipo_nivel
+        : \App\Enums\TipoNivelMir::tryFrom($nivel->tipo_nivel);
+    $deletable = $deletable ?? false;
+@endphp
+
+<tr class="{{ $colorClass }}" wire:key="nivel-{{ $nivel->id }}">
+    {{-- Nivel --}}
+    <td class="px-3 py-3 align-top">
+        <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold {{ $tipoEnum?->colorClass() }}">
+            {{ $tipoEnum?->label() }}
+        </span>
+        @if ($deletable)
+            <button
+                wire:click="eliminarNivel({{ $nivel->id }})"
+                wire:confirm="¿Eliminar este nivel y todos sus datos?"
+                class="mt-1 block text-xs text-red-500 hover:text-red-700"
+            >
+                Eliminar
+            </button>
+        @endif
+    </td>
+
+    {{-- Resumen Narrativo --}}
+    <td class="px-3 py-3 align-top">
+        <textarea
+            wire:change="guardarNivel({{ $nivel->id }}, 'resumen_narrativo', $event.target.value)"
+            class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            rows="3"
+            placeholder="Resumen narrativo..."
+        >{{ $nivel->resumen_narrativo }}</textarea>
+    </td>
+
+    {{-- Indicadores --}}
+    <td class="px-3 py-3 align-top">
+        <div class="space-y-3">
+            @foreach ($nivel->indicadores as $indicador)
+                <div class="rounded-md border border-gray-200 bg-white p-2 space-y-2" wire:key="indicador-{{ $indicador->id }}"
+                     x-data="{ reglas: @js($reglas) }">
+                    <input
+                        type="text"
+                        value="{{ $indicador->nombre }}"
+                        wire:change="guardarIndicador({{ $indicador->id }}, {
+                            nombre: $event.target.value,
+                            tipo: $event.target.closest('[x-data]').querySelector('[name=tipo]')?.value || '{{ $indicador->tipo?->value ?? $reglas['tipo_default'] }}',
+                            dimension: $event.target.closest('[x-data]').querySelector('[name=dimension]')?.value || '{{ $indicador->dimension?->value ?? $reglas['dimensiones'][0] }}',
+                            frecuencia: $event.target.closest('[x-data]').querySelector('[name=frecuencia]')?.value || '{{ $indicador->frecuencia?->value ?? $reglas['frecuencias'][0] }}'
+                        })"
+                        class="w-full rounded border-gray-300 text-sm"
+                        placeholder="Nombre del indicador"
+                    />
+
+                    <div class="grid grid-cols-3 gap-1">
+                        {{-- Tipo --}}
+                        @if ($reglas['tipo_fijo'])
+                            <span class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
+                                {{ \App\Enums\TipoIndicador::tryFrom($reglas['tipo_default'])?->label() }}
+                            </span>
+                            <input type="hidden" name="tipo" value="{{ $reglas['tipo_default'] }}" />
+                        @else
+                            <select name="tipo" class="rounded border-gray-300 text-xs">
+                                @foreach ($reglas['tipos'] as $tipo)
+                                    <option value="{{ $tipo }}" @selected(($indicador->tipo?->value ?? '') === $tipo)>
+                                        {{ \App\Enums\TipoIndicador::tryFrom($tipo)?->label() }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @endif
+
+                        {{-- Dimensión --}}
+                        <select name="dimension" class="rounded border-gray-300 text-xs">
+                            @foreach ($reglas['dimensiones'] as $dim)
+                                <option value="{{ $dim }}" @selected(($indicador->dimension?->value ?? '') === $dim)>
+                                    {{ \App\Enums\DimensionIndicador::tryFrom($dim)?->label() }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        {{-- Frecuencia --}}
+                        <select name="frecuencia" class="rounded border-gray-300 text-xs">
+                            @foreach ($reglas['frecuencias'] as $freq)
+                                <option value="{{ $freq }}" @selected(($indicador->frecuencia?->value ?? '') === $freq)>
+                                    {{ \App\Enums\FrecuenciaMedicion::tryFrom($freq)?->label() }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Medios de Verificación inline --}}
+                    <div class="border-t border-gray-100 pt-1">
+                        <span class="text-xs font-medium text-gray-500">Medios:</span>
+                        @foreach ($indicador->mediosVerificacion as $medio)
+                            <div class="flex items-center gap-1 mt-1" wire:key="medio-{{ $medio->id }}">
+                                <input
+                                    type="text"
+                                    value="{{ $medio->nombre }}"
+                                    wire:change="guardarMedioVerificacion({{ $medio->id }}, $event.target.value)"
+                                    class="flex-1 rounded border-gray-300 text-xs"
+                                    placeholder="Medio de verificación"
+                                />
+                                <button wire:click="eliminarMedioVerificacion({{ $medio->id }})" class="text-red-400 hover:text-red-600">
+                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        @endforeach
+                        <button wire:click="agregarMedioVerificacion({{ $indicador->id }})" class="mt-1 text-xs text-blue-500 hover:text-blue-700">+ Medio</button>
+                    </div>
+
+                    <button wire:click="eliminarIndicador({{ $indicador->id }})" class="text-xs text-red-400 hover:text-red-600">Eliminar indicador</button>
+                </div>
+            @endforeach
+
+            <button
+                wire:click="agregarIndicador({{ $nivel->id }})"
+                class="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800"
+            >
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                Indicador
+            </button>
+        </div>
+    </td>
+
+    {{-- Medios de Verificación (column kept for layout, actual medios are inside indicators) --}}
+    <td class="px-3 py-3 align-top text-xs text-gray-400">
+        <span class="italic">Ver dentro de cada indicador</span>
+    </td>
+
+    {{-- Supuestos --}}
+    <td class="px-3 py-3 align-top">
+        <textarea
+            wire:change="guardarNivel({{ $nivel->id }}, 'supuestos', $event.target.value)"
+            class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            rows="3"
+            placeholder="Supuestos..."
+        >{{ $nivel->supuestos }}</textarea>
+
+        {{-- UR Coadyuvante placeholder (S4-T12) --}}
+        @if (in_array($tipoEnum, [\App\Enums\TipoNivelMir::COMPONENTE, \App\Enums\TipoNivelMir::ACTIVIDAD]))
+            <div class="mt-2 rounded border border-dashed border-gray-300 p-2 text-xs text-gray-400">
+                UR Coadyuvante (pendiente)
+            </div>
+        @endif
+    </td>
+</tr>
