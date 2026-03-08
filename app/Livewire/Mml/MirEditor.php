@@ -9,6 +9,7 @@ use App\Models\Mml\Indicador;
 use App\Models\Mml\MedioVerificacion;
 use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
+use App\Services\Embeddings\SemanticSearchService;
 use App\Services\Mml\IndicadorReglasService;
 use App\Services\Mml\MirLogicaValidacionService;
 use App\Services\Mml\MirPrellenadoService;
@@ -23,6 +24,8 @@ class MirEditor extends Component
     public ProgramaPresupuestario $programa;
     public array $hallazgosLogica = [];
     public bool $validacionLogicaEjecutada = false;
+    public array $sugerenciasAlineacion = [];
+    public ?int $nivelAlineacionActivo = null;
 
     public function mount(ProgramaPresupuestario $programa): void
     {
@@ -206,6 +209,63 @@ class MirEditor extends Component
         }
     }
 
+    public function buscarAlineacion(int $nivelId): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+
+        if (empty($nivel->resumen_narrativo)) {
+            return;
+        }
+
+        $this->nivelAlineacionActivo = $nivelId;
+
+        try {
+            $search = app(SemanticSearchService::class);
+
+            // Fin/Propósito → Objetivos Estratégicos PED
+            // Componente/Actividad → Líneas de Acción
+            if (in_array($nivel->tipo_nivel, [TipoNivelMir::FIN, TipoNivelMir::PROPOSITO])) {
+                $results = $search->findSimilar(
+                    $nivel->resumen_narrativo,
+                    \App\Models\PedObjetivoEstrategico::class,
+                    5
+                );
+            } else {
+                $results = $search->findSimilar(
+                    $nivel->resumen_narrativo,
+                    \App\Models\PedLineaAccion::class,
+                    5
+                );
+            }
+
+            $this->sugerenciasAlineacion = $results->map(fn ($r) => [
+                'id' => $r->model->id,
+                'tipo' => class_basename($r->model),
+                'descripcion' => $r->model->descripcion ?? $r->model->nombre ?? '',
+                'score' => round($r->score * 100, 1),
+            ])->toArray();
+        } catch (\Exception $e) {
+            $this->sugerenciasAlineacion = [];
+            session()->flash('error', 'No se pudo buscar alineación: ' . $e->getMessage());
+        }
+    }
+
+    public function seleccionarAlineacion(int $nivelId, string $tipo, int $entidadId): void
+    {
+        $nivel = MirNivel::findOrFail($nivelId);
+
+        $updateData = [];
+        if ($tipo === 'PedObjetivoEstrategico') {
+            $updateData['ped_objetivo_estrategico_id'] = $entidadId;
+        } elseif ($tipo === 'PedLineaAccion') {
+            $updateData['ped_linea_accion_id'] = $entidadId;
+        }
+
+        $nivel->update($updateData);
+        $this->sugerenciasAlineacion = [];
+        $this->nivelAlineacionActivo = null;
+    }
+
     public function validarMirCompleta(): void
     {
         try {
@@ -245,13 +305,13 @@ class MirEditor extends Component
 
         $componentes = $this->programa->mirNiveles()
             ->where('tipo_nivel', TipoNivelMir::COMPONENTE->value)
-            ->with(['actividades.indicadores.mediosVerificacion', 'actividades.indicadores.cremaaValidacion', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion'])
+            ->with(['actividades.indicadores.mediosVerificacion', 'actividades.indicadores.cremaaValidacion', 'actividades.pedObjetivoEstrategico', 'actividades.pedLineaAccion', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'pedObjetivoEstrategico', 'pedLineaAccion'])
             ->orderBy('orden')
             ->get();
 
-        // Load indicadores for fin and proposito
-        $fin?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion']);
-        $proposito?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion']);
+        // Load indicadores and alignment for fin and proposito
+        $fin?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'pedObjetivoEstrategico', 'pedLineaAccion']);
+        $proposito?->load(['indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'pedObjetivoEstrategico', 'pedLineaAccion']);
 
         // Build rules map for each nivel type
         $reglasMap = [];

@@ -3,6 +3,8 @@
 namespace App\Models\Mml;
 
 use App\Enums\TipoNivelMir;
+use App\Models\PedLineaAccion;
+use App\Models\PedObjetivoEstrategico;
 use App\Models\ProgramaPresupuestario;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -59,5 +61,15 @@ class MirNivel extends Model
     public function indicadores(): HasMany
     {
         return $this->hasMany(Indicador::class)->orderBy('orden');
+    }
+
+    public function pedObjetivoEstrategico(): BelongsTo
+    {
+        return $this->belongsTo(PedObjetivoEstrategico::class);
+    }
+
+    public function pedLineaAccion(): BelongsTo
+    {
+        return $this->belongsTo(PedLineaAccion::class);
     }
 }
