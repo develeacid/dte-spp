@@ -190,3 +190,147 @@ El análisis de los casos de uso anteriores llevó a las siguientes decisiones d
 | Pipeline de importación INEGI manual | Los datos de referencia se actualizan ~anualmente, no en tiempo real |
 
 El documento de diseño completo se encuentra en [docs/plans/2026-03-08-padron-beneficiarios-design.md](../plans/2026-03-08-padron-beneficiarios-design.md).
+
+---
+
+## 8. Integración MIR ↔ Padrón: Los Tres Momentos
+
+La comunicación entre el sistema MIR y el Padrón Único no es continua ni genérica — ocurre en tres momentos precisos del ciclo presupuestario, cada uno con una naturaleza técnica distinta.
+
+### Momento 1 — Diseño (Programación): El Enlace Lógico
+
+**Cuándo ocurre:** Durante la etapa de programación, cuando el Planeador arma la matriz 4×4 en el sistema MIR.
+
+**Qué sucede:**
+1. El Planeador define un Componente (ej. "Créditos a MIPYMES entregados").
+2. El sistema detecta que es un bien/servicio directo y pregunta: "¿Este componente requiere Padrón de Beneficiarios?"
+3. Al indicar que sí, el Planeador vincula ese Componente con su ID correspondiente en el Padrón.
+4. Al configurar las variables de las fórmulas de los indicadores, en lugar de campos de texto libre, el Planeador selecciona del **Diccionario de Variables** una variable estandarizada que apunta a un endpoint del Padrón:
+   ```
+   Variable A: "Número de mujeres con crédito"
+   → endpoint: /api/v1/padron/stats
+   → params estáticos: { sex: "F", catalog_keys: [30, 52] }
+   → params dinámicos: component_id, trimestre, año  (los aporta el contexto de la MIR)
+   ```
+
+**En este momento:** Ambos sistemas saben que están vinculados. No se intercambian datos de ciudadanos. La API ya tiene la ruta lista aunque el padrón tenga 0 registros.
+
+**Por qué el Diccionario de Variables es clave:** Sin él, cada Planeador nombra la variable a su criterio ("mujeres apoyadas", "beneficiarias femeninas", "nro_mujeres"). En el año 3, los reportes de distintas URs ya no son comparables. Con variables estandarizadas como entidades del sistema, una variable creada hoy sirve en los reportes de los próximos seis años y puede reutilizarse en otros programas.
+
+---
+
+### Momento 2 — Reporte (Seguimiento): El Enlace Operativo
+
+**Cuándo ocurre:** Durante la etapa de seguimiento, cuando el Operador reporta el avance trimestral.
+
+**Qué sucede:**
+1. Se abre el periodo de captura del trimestre en la MIR.
+2. El Operador entra a reportar el indicador "Porcentaje de mujeres apoyadas".
+3. El campo del valor **está bloqueado (read-only)** — el Operador no puede escribir en él.
+4. La MIR usa su token (`padron:read`) y consulta en tiempo real al Padrón.
+5. El Padrón cuenta los `enrollments` aprobados con los filtros de la variable y devuelve el número exacto.
+6. La MIR recibe el dato, calcula la fórmula, pinta el semáforo (Verde/Amarillo/Rojo).
+7. Al presionar "Cerrar Trimestre", ocurre el **Corte de Caja** (ver sección 9).
+
+**Por qué el campo read-only es la decisión más importante:** En un sistema tradicional el Operador teclea el número manualmente. Eso permite inflar cifras. Con el campo bloqueado, la MIR solo acepta lo que existe en el Padrón como registros georreferenciados y aprobados. Es un control anticorrupción arquitectónico, no de supervisión.
+
+---
+
+### Momento 3 — Auditoría (Evaluación): El Medio de Verificación
+
+**Cuándo ocurre:** Al cierre del ejercicio fiscal, cuando entra la Contraloría o el Instituto de Transparencia.
+
+**Qué sucede:**
+1. El auditor revisa la MIR y ve que el indicador dice "1,200 apoyos entregados".
+2. En la columna de Medios de Verificación encuentra: *"Padrón Único de Beneficiarios — Corte al 31 de Marzo. [Descargar Evidencia]"*.
+3. Ese enlace apunta al archivo generado en el Corte de Caja: un CSV con los 1,200 registros exactos.
+4. El auditor descarga el CSV, calcula su SHA-256 y lo compara contra el hash guardado en la MIR. Si coinciden, la evidencia es íntegra. Si no, hay una alerta de alteración.
+
+---
+
+## 9. El Corte de Caja: Snapshot Criptográfico
+
+### Por qué es la única solución legalmente válida
+
+El Padrón es un ente vivo (beneficiarios fallecen, se detectan fraudes, se corrigen errores). La MIR alimenta la **Cuenta Pública**, que es un instrumento legal firmado electrónicamente por el titular de la UR. Una vez cerrado un trimestre, ese reporte es inmutable por ley.
+
+Si la MIR consultara el Padrón en tiempo real después del cierre, un cambio posterior en el Padrón alteraría retroactivamente un documento oficial — equivalente a alterar un instrumento legal. La Opción A (snapshot al cierre) es la única arquitectónicamente correcta.
+
+### Implementación técnica
+
+**Paso 1 — Queries point-in-time en el Padrón**
+
+El Padrón nunca hace `DELETE` ni `UPDATE` destructivos. Usa soft deletes y una tabla de historial de estados:
+
+```
+enrollment_status_history
+├── enrollment_id  (FK)
+├── status         (aprobado | rechazado | observado)
+├── reason
+├── changed_by
+└── changed_at
+```
+
+Un enrollment no hace `UPDATE status = 'rechazado'`. Inserta una fila en `enrollment_status_history`. Esto permite reconstruir el estado exacto del padrón en cualquier fecha pasada:
+
+```sql
+-- ¿Cuántas mujeres estaban aprobadas al 31 de marzo?
+SELECT COUNT(*) FROM enrollments e
+WHERE e.created_at <= '2026-03-31 23:59:59'
+  AND (e.deleted_at IS NULL OR e.deleted_at > '2026-03-31 23:59:59')
+  AND (
+    SELECT status FROM enrollment_status_history
+    WHERE enrollment_id = e.id
+      AND changed_at <= '2026-03-31 23:59:59'
+    ORDER BY changed_at DESC LIMIT 1
+  ) = 'aprobado'
+```
+
+El resultado siempre será 500, sin importar qué correcciones se hicieron en abril. El soft delete no es suficiente porque no captura cambios de estado — ambos mecanismos son necesarios.
+
+**Paso 2 — El handshake del cierre**
+
+Cuando el Operador presiona "Cerrar Trimestre" en la MIR:
+
+```
+MIR → POST /api/v1/padron/snapshot
+      { component_id: 12, period: "2026-Q1", cutoff_date: "2026-03-31 23:59:59" }
+
+Padrón → ejecuta query point-in-time
+       → genera CSV con los registros exactos
+       → calcula SHA-256 del archivo
+       → guarda en MinIO (almacenamiento local, no nube extranjera)
+       → responde: { valor_oficial: 500, snapshot_hash: "a1b2c3...", evidencia_url: "..." }
+
+MIR → guarda en su propia DB: entero 500 + hash + url
+    → congela el campo — ningún actor puede modificarlo
+```
+
+El endpoint es **idempotente**: si se llama dos veces con el mismo `component_id + period`, devuelve el snapshot existente sin regenerarlo. Esto protege contra doble clic o reintentos por error de red.
+
+**Paso 3 — Las correcciones se absorben en el siguiente trimestre**
+
+Los 30 enrollments corregidos después del cierre de Q1 no "deshacen" el Q1. Cuando la MIR haga el corte de Q2, el Padrón calculará el total vigente. Si entraron 100 nuevas pero salieron 30 por corrección, el Q2 reportará el neto real. La historia del Q1 queda intacta.
+
+**¿Por qué MinIO y no AWS S3?** Los archivos de evidencia del Padrón son documentos oficiales que respaldan la Cuenta Pública. Deben residir en infraestructura bajo control de la dependencia, no en servidores extranjeros. MinIO es compatible con la API de S3 y corre en el mismo stack Docker del sistema.
+
+### Flujo completo consolidado
+
+```
+PROGRAMACIÓN
+    Planeador vincula Componente MIR → ID en Padrón
+    Configura variables desde Diccionario de Variables estandarizado
+
+SEGUIMIENTO (periodo abierto)
+    MIR consulta Padrón en tiempo real (campo read-only para el operador)
+
+SEGUIMIENTO (cierre de trimestre)
+    Operador cierra → MIR dispara POST /api/v1/padron/snapshot
+    Padrón: query point-in-time → CSV → SHA-256 → MinIO
+    MIR recibe y congela: valor + hash + url
+
+EVALUACIÓN (auditoría)
+    Contraloría descarga CSV desde MinIO vía enlace en MIR
+    Recalcula SHA-256 → compara contra hash en MIR
+    Coinciden → evidencia íntegra / No coinciden → alerta de alteración
+```
