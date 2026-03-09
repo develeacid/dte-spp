@@ -193,7 +193,139 @@ El documento de diseño completo se encuentra en [docs/plans/2026-03-08-padron-b
 
 ---
 
-## 8. Integración MIR ↔ Padrón: Los Tres Momentos
+## 8. Ecosistema de Sistemas Satélite (MDM)
+
+### El principio: Master Data Management
+
+El Padrón Único aplica el principio de **Gestión de Datos Maestros (MDM)**: cada sistema hace exclusivamente aquello para lo que es experto, sin reinventar la infraestructura del otro.
+
+| Sistema | Responsabilidad |
+|---------|----------------|
+| Satélites (Artesanos, PYMEs, etc.) | Flujos de negocio: solicitudes, inspecciones, comités, certificados |
+| Padrón Único | Identidad, georreferencia, deduplicación, snapshots de auditoría |
+
+Los satélites nunca configuran PostGIS, nunca importan capas INEGI, nunca implementan lógica de snapshots. Delegan todo eso al Padrón vía API.
+
+### Contrato de integración de un sistema satélite
+
+**Fase A — Alta y validación geográfica (tiempo real)**
+
+```
+Sistema Artesanos → POST /api/v1/padron/beneficiaries
+                    { curp, datos_demograficos, coordenadas }
+
+Padrón → ejecuta ST_Contains (poka-yoke geográfico)
+       → verifica duplicidad por CURP
+
+Caso CURP nueva:     { beneficiary_id: 8492, created: true }
+Caso CURP existente: { beneficiary_id: 3201, created: false,
+                       active_enrollments: [{ system: "pymes", status: "aprobado" }] }
+```
+
+El upsert por CURP es la detección de duplicidad cruzada. Si la CURP ya existe, el satélite recibe el ID del registro maestro y una alerta de enrollments activos en otros sistemas. El satélite decide qué hacer según su política — el Padrón informa, no bloquea.
+
+**Fase B — Proceso de negocio (interno al satélite)**
+
+El satélite maneja el workflow durante semanas o meses. El Padrón no se entera. El único vínculo es `padron_beneficiary_id` almacenado localmente:
+
+```
+artisan_applications
+├── id
+├── padron_beneficiary_id   ← único vínculo al Padrón
+├── inspection_date
+├── committee_decision
+└── certificate_pdf_url
+```
+
+El satélite no replica nombre, CURP, domicilio ni coordenadas. Si necesita mostrar datos del beneficiario, los consulta al Padrón en tiempo real. Esto garantiza que el Padrón es la única fuente de verdad.
+
+**Fase C — Otorgamiento del beneficio**
+
+```
+Sistema Artesanos → POST /api/v1/padron/enrollments
+                    { beneficiary_id: 8492, component_id: 45, monto: 0 }
+
+Padrón → crea enrollment con status "aprobado"
+       → el registro ya está disponible para la MIR y para Metabase
+```
+
+**Fase D — Corte de caja (trimestral)**
+
+El satélite no hace nada. La MIR solicita el snapshot al Padrón exactamente como se define en la Sección 9. El satélite solo avisó cuándo se otorgó el beneficio; la evidencia la genera el Padrón.
+
+### Scopes por tipo de sistema
+
+```
+padron:register          → crear/actualizar beneficiarios (POST /beneficiaries)
+padron:enroll            → registrar beneficio otorgado (POST /enrollments)
+padron:read              → consultar beneficiarios y enrollments propios
+padron:validate          → solo verificar duplicidad por CURP, sin PII
+padron:update-identity   → modificar datos maestros (requiere comprobante documental)
+
+MIR:              padron:read, padron:snapshot
+Artesanos / PYMEs: padron:register, padron:enroll, padron:read, padron:update-identity
+Sistema ligero:   padron:validate
+```
+
+### Actualización de datos maestros y el Efecto Dominó
+
+**Marco legal:** La LGPDPPSO obliga al gobierno al Principio de Calidad (datos exactos y actualizados) y garantiza el Derecho de Rectificación (ARCO). La Estrategia Digital Nacional dicta el principio Once-Only: el ciudadano actualiza su domicilio una sola vez y debe propagarse a todo el ecosistema.
+
+**El problema:** Si un artesano actualiza su domicilio después de haber recibido un crédito PYME condicionado a vivir en una zona de alta marginación, y la nueva dirección cae fuera de esa zona, el crédito queda en una situación de irregularidad legal — y el Sistema PYME no se enteraría.
+
+**La solución — PATCH con gobernanza:**
+
+El operador (con el ciudadano enfrente y el recibo de luz en mano) inicia el cambio desde el sistema satélite, pero el PATCH no es un simple `UPDATE`. Es una transacción de negocio compleja dentro del Padrón:
+
+```
+Sistema Artesanos → PATCH /api/v1/padron/beneficiaries/8492
+                    { nueva_direccion, coordenadas, comprobante_pdf (obligatorio) }
+
+Padrón → valida comprobante (formato, no vencido)
+       → actualiza registro maestro
+       → guarda domicilio anterior en beneficiary_data_history
+       → guarda PDF del comprobante en MinIO
+       → responde 200 OK inmediatamente
+
+       → encola job: RevaluateBeneficiaryEligibility(beneficiary_id: 8492)
+```
+
+La re-evaluación corre en background (no bloquea la ventanilla):
+
+```
+Job RevaluateBeneficiaryEligibility:
+    → recupera todos los enrollments activos del beneficiario
+    → por cada enrollment con restricción geográfica:
+         ST_Contains(poligono_programa, nueva_coordenada)
+         Pasa  → sin cambio
+         Falla → status = 'observado_por_cambio_domicilio'
+    → por cada enrollment afectado:
+         dispara webhook al sistema satélite correspondiente
+```
+
+El webhook notifica al Sistema PYME: "El beneficiario 3201 cambió de domicilio y ya no cumple las reglas geográficas del componente 12. Requiere revisión." El sistema satélite recibe la alerta y la gestiona según su propio flujo de trabajo.
+
+**Tabla `beneficiary_data_history`** — registra todos los cambios a datos maestros:
+
+```
+beneficiary_data_history
+├── beneficiary_id   (FK)
+├── field_changed    (domicilio, coordenadas, nombre, etc.)
+├── old_value
+├── new_value
+├── supporting_doc   (URL del comprobante en MinIO)
+├── changed_by       (operador que ejecutó el cambio)
+├── system_origin    (qué sistema satélite inició el PATCH)
+└── changed_at
+```
+
+**Por qué no el portal propio del Padrón (Opción B):** Es el ideal a largo plazo (equivalente a Llave CDMX o identidad digital estatal), pero requiere presupuesto y tiempo adicional. La API queda diseñada para soportarlo en fase 2 sin cambios arquitectónicos.
+
+**Por qué no solo admins (Opción C):** Crea un cuello de botella burocrático. Los operadores de ventanilla de las URs son quienes tienen al ciudadano enfrente con el comprobante en mano — ellos deben poder ejecutar el PATCH con el scope `padron:update-identity`.
+
+---
+
+## 9. Integración MIR ↔ Padrón: Los Tres Momentos
 
 La comunicación entre el sistema MIR y el Padrón Único no es continua ni genérica — ocurre en tres momentos precisos del ciclo presupuestario, cada uno con una naturaleza técnica distinta.
 
