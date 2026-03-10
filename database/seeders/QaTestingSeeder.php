@@ -92,6 +92,14 @@ class QaTestingSeeder extends Seeder
                 'teams' => [$ss],
                 'team_role' => 'operador',
             ],
+            // ele.leader@gmail.com — NO seedear, crear via flujo de invitación
+            // [
+            //     'name'  => 'QA Leader',
+            //     'email' => 'ele.leader@gmail.com',
+            //     'role'  => SystemRole::PLANEADOR,
+            //     'teams' => [$se],
+            //     'team_role' => 'planeador',
+            // ],
         ];
 
         $tableRows = [];
