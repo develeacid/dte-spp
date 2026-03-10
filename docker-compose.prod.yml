@@ -1,0 +1,68 @@
+services:
+    laravel.test:
+        build:
+            context: .
+            dockerfile: docker/8.2/Dockerfile
+            args:
+                WWWGROUP: '${WWWGROUP:-1000}'
+        image: 'dte-spp-app'
+        ports:
+            - '${APP_PORT:-8080}:80'
+        environment:
+            WWWUSER: '${WWWUSER:-1000}'
+            SUPERVISOR_PHP_COMMAND: '${SUPERVISOR_PHP_COMMAND:-/usr/bin/php -d variables_order=EGPCS /var/www/html/artisan serve --host=0.0.0.0 --port=80}'
+            SUPERVISOR_PHP_USER: '${SUPERVISOR_PHP_USER:-sail}'
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - dte-spp
+        depends_on:
+            - pgsql
+            - redis
+
+    pgsql:
+        image: 'postgres:17'
+        environment:
+            PGPASSWORD: '${DB_PASSWORD:-secret}'
+            POSTGRES_DB: '${DB_DATABASE:-laravel}'
+            POSTGRES_USER: '${DB_USERNAME:-sail}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
+        volumes:
+            - 'dte-spp-pgsql:/var/lib/postgresql/data'
+        networks:
+            - dte-spp
+        healthcheck:
+            test:
+                - CMD
+                - pg_isready
+                - '-q'
+                - '-d'
+                - '${DB_DATABASE:-laravel}'
+                - '-U'
+                - '${DB_USERNAME:-sail}'
+            retries: 3
+            timeout: 5s
+
+    redis:
+        image: 'redis:alpine'
+        volumes:
+            - 'dte-spp-redis:/data'
+        networks:
+            - dte-spp
+        healthcheck:
+            test:
+                - CMD
+                - redis-cli
+                - ping
+            retries: 3
+            timeout: 5s
+
+networks:
+    dte-spp:
+        driver: bridge
+
+volumes:
+    dte-spp-pgsql:
+        driver: local
+    dte-spp-redis:
+        driver: local
