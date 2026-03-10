@@ -21,7 +21,7 @@ services:
             - redis
 
     pgsql:
-        image: 'postgres:17'
+        image: 'pgvector/pgvector:pg16'
         environment:
             PGPASSWORD: '${DB_PASSWORD:-secret}'
             POSTGRES_DB: '${DB_DATABASE:-laravel}'
