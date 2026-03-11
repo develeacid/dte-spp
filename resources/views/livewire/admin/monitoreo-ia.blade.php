@@ -1,9 +1,99 @@
 <div>
     <x-page.header>
         <x-slot name="title">Monitoreo de IA</x-slot>
+
+        <button
+            wire:click="probarConexion"
+            wire:loading.attr="disabled"
+            wire:target="probarConexion"
+            class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+        >
+            <svg wire:loading.remove wire:target="probarConexion" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <svg wire:loading wire:target="probarConexion" class="h-4 w-4 animate-spin text-gray-500" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span wire:loading.remove wire:target="probarConexion">Probar conexión</span>
+            <span wire:loading wire:target="probarConexion">Probando...</span>
+        </button>
     </x-page.header>
 
     <x-page.container>
+        @if($resultadoConexion !== null)
+            <div class="mb-6 rounded-lg border {{ $resultadoConexion['estado'] === 'ok' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50' }} p-4">
+                <div class="flex items-start gap-3">
+                    @if($resultadoConexion['estado'] === 'ok')
+                        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/>
+                        </svg>
+                    @else
+                        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
+                        </svg>
+                    @endif
+
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold {{ $resultadoConexion['estado'] === 'ok' ? 'text-green-800' : 'text-red-800' }}">
+                            {{ $resultadoConexion['estado'] === 'ok' ? 'Conexión exitosa' : 'Error de conexión' }}
+                        </p>
+
+                        <dl class="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3 lg:grid-cols-4">
+                            <div>
+                                <dt class="font-medium text-gray-600">URL</dt>
+                                <dd class="text-gray-800 truncate">{{ $resultadoConexion['url'] }}</dd>
+                            </div>
+                            <div>
+                                <dt class="font-medium text-gray-600">API Key</dt>
+                                <dd class="font-mono text-gray-800">{{ $resultadoConexion['api_key_preview'] }}</dd>
+                            </div>
+                            <div>
+                                <dt class="font-medium text-gray-600">Latencia</dt>
+                                <dd class="text-gray-800">{{ $resultadoConexion['latencia_ms'] }} ms</dd>
+                            </div>
+
+                            @if($resultadoConexion['estado'] === 'ok')
+                                <div>
+                                    <dt class="font-medium text-gray-600">Modelo</dt>
+                                    <dd class="text-gray-800">{{ $resultadoConexion['modelo'] }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-medium text-gray-600">Dimensiones</dt>
+                                    <dd class="text-gray-800">{{ number_format($resultadoConexion['dimensiones']) }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-medium text-gray-600">Tokens usados</dt>
+                                    <dd class="text-gray-800">{{ $resultadoConexion['tokens_usados'] }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-medium text-gray-600">Costo estimado</dt>
+                                    <dd class="text-gray-800">${{ $resultadoConexion['costo_usd'] }}</dd>
+                                </div>
+                            @else
+                                @if(isset($resultadoConexion['http_status']))
+                                    <div>
+                                        <dt class="font-medium text-gray-600">HTTP Status</dt>
+                                        <dd class="text-gray-800">{{ $resultadoConexion['http_status'] }}</dd>
+                                    </div>
+                                @endif
+                                <div class="col-span-2">
+                                    <dt class="font-medium text-gray-600">Error</dt>
+                                    <dd class="text-red-700">{{ $resultadoConexion['mensaje_error'] }}</dd>
+                                </div>
+                            @endif
+                        </dl>
+                    </div>
+
+                    <button wire:click="$set('resultadoConexion', null)" class="text-gray-400 hover:text-gray-600">
+                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        @endif
+
         {{-- Filtros de periodo --}}
         <div class="mb-6 flex items-center gap-4">
             <label class="text-sm font-medium text-gray-700">Periodo:</label>
