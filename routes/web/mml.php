@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Mml\AlineacionEstrategica;
+use App\Livewire\Mml\EmbudoPoblaciones;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('mml')
@@ -39,7 +41,11 @@ Route::prefix('mml')
                     ->name('mml.etapa3');
                 Route::get('/etapa/4', \App\Livewire\Mml\SeleccionAlternativas::class)
                     ->name('mml.etapa4');
-                Route::get('/etapa/5/mir', \App\Livewire\Mml\MirEditor::class)
+                Route::get('/etapa/5', EmbudoPoblaciones::class)
+                    ->name('mml.etapa5');
+                Route::get('/etapa/6', AlineacionEstrategica::class)
+                    ->name('mml.etapa6');
+                Route::get('/etapa/7/mir', \App\Livewire\Mml\MirEditor::class)
                     ->name('mml.mir');
             });
     });
