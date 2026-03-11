@@ -10,6 +10,7 @@ use App\Notifications\LlmBudgetAlertNotification;
 use App\Services\Llm\LlmBudgetService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -244,5 +245,51 @@ class MonitoreoIaTest extends TestCase
         // 500/1M * 0.60 = 0.000300
         // Total = 0.000450
         $this->assertEquals(0.00045, $cost);
+    }
+
+    public function test_probar_conexion_returns_success_result(): void
+    {
+        Http::fake([
+            'https://api.openai.com/v1/embeddings' => Http::response([
+                'data' => [['embedding' => array_fill(0, 1536, 0.1)]],
+                'usage' => ['prompt_tokens' => 2, 'total_tokens' => 2],
+                'model' => 'text-embedding-ada-002',
+            ], 200),
+        ]);
+
+        $component = Livewire::actingAs($this->admin)
+            ->test(MonitoreoIa::class)
+            ->call('probarConexion');
+
+        $component->assertSet('resultadoConexion.estado', 'ok');
+        $component->assertSet('resultadoConexion.modelo', 'text-embedding-ada-002');
+        $component->assertSet('resultadoConexion.dimensiones', 1536);
+        $this->assertArrayHasKey('latencia_ms', $component->get('resultadoConexion'));
+        $this->assertArrayHasKey('api_key_preview', $component->get('resultadoConexion'));
+        $this->assertArrayHasKey('url', $component->get('resultadoConexion'));
+    }
+
+    public function test_probar_conexion_returns_error_on_api_failure(): void
+    {
+        Http::fake([
+            'https://api.openai.com/v1/embeddings' => Http::response([
+                'error' => ['message' => 'Incorrect API key provided', 'type' => 'invalid_request_error'],
+            ], 401),
+        ]);
+
+        $component = Livewire::actingAs($this->admin)
+            ->test(MonitoreoIa::class)
+            ->call('probarConexion');
+
+        $component->assertSet('resultadoConexion.estado', 'error');
+        $this->assertArrayHasKey('mensaje_error', $component->get('resultadoConexion'));
+    }
+
+    public function test_probar_conexion_requires_admin(): void
+    {
+        Livewire::actingAs($this->regularUser)
+            ->test(MonitoreoIa::class)
+            ->call('probarConexion')
+            ->assertForbidden();
     }
 }

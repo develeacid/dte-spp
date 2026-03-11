@@ -6,6 +6,7 @@ use App\Models\LlmBudget;
 use App\Models\LlmLog;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -22,10 +23,10 @@ class MonitoreoIa extends Component
     #[Url]
     public string $fechaHasta = '';
 
+    public ?array $resultadoConexion = null;
+
     public function mount(): void
     {
-        abort_unless(auth()->user()->can('administrar_usuarios'), 403);
-
         if (empty($this->fechaDesde) || empty($this->fechaHasta)) {
             $this->applyPeriodo();
         }
@@ -179,6 +180,67 @@ class MonitoreoIa extends Component
             ])
             ->values()
             ->toArray();
+    }
+
+    public function probarConexion(): void
+    {
+        abort_unless(auth()->user()->can('administrar_usuarios'), 403);
+
+        $apiKey  = config('services.embedding.api_key', env('EMBEDDING_API_KEY', ''));
+        $apiUrl  = config('services.embedding.url', env('EMBEDDING_API_URL', 'https://api.openai.com/v1/embeddings'));
+        $model   = config('services.embedding.model', env('EMBEDDING_MODEL', 'text-embedding-ada-002'));
+
+        $keyPreview = strlen($apiKey) >= 6
+            ? '...' . substr($apiKey, -6)
+            : '(no configurada)';
+
+        $inicio = microtime(true);
+
+        try {
+            $response = Http::withToken($apiKey)
+                ->timeout(15)
+                ->post($apiUrl, [
+                    'model' => $model,
+                    'input' => 'test',
+                ]);
+
+            $latencia = (int) round((microtime(true) - $inicio) * 1000);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $embedding = $data['data'][0]['embedding'] ?? [];
+
+                $this->resultadoConexion = [
+                    'estado'          => 'ok',
+                    'modelo'          => $data['model'] ?? $model,
+                    'dimensiones'     => count($embedding),
+                    'latencia_ms'     => $latencia,
+                    'tokens_usados'   => $data['usage']['total_tokens'] ?? 0,
+                    'costo_usd'       => round(($data['usage']['total_tokens'] ?? 0) * 0.0000001, 8),
+                    'api_key_preview' => $keyPreview,
+                    'url'             => $apiUrl,
+                ];
+            } else {
+                $error = $response->json('error.message') ?? $response->body();
+                $this->resultadoConexion = [
+                    'estado'          => 'error',
+                    'latencia_ms'     => $latencia,
+                    'api_key_preview' => $keyPreview,
+                    'url'             => $apiUrl,
+                    'http_status'     => $response->status(),
+                    'mensaje_error'   => $error,
+                ];
+            }
+        } catch (\Throwable $e) {
+            $latencia = (int) round((microtime(true) - $inicio) * 1000);
+            $this->resultadoConexion = [
+                'estado'          => 'error',
+                'latencia_ms'     => $latencia,
+                'api_key_preview' => $keyPreview,
+                'url'             => $apiUrl,
+                'mensaje_error'   => $e->getMessage(),
+            ];
+        }
     }
 
     public function render()
