@@ -1,14 +1,6 @@
 @props(['team' => null, 'user' => null])
 
-<div x-data="{
-        collapsed: localStorage.getItem('sidebar-collapsed') === 'true',
-        mobileOpen: false,
-        toggle() {
-            this.collapsed = !this.collapsed;
-            localStorage.setItem('sidebar-collapsed', this.collapsed);
-        }
-     }"
-     x-on:keydown.escape.window="mobileOpen = false"
+<div x-on:keydown.escape.window="mobileOpen = false"
      class="relative">
 
     {{-- Mobile backdrop --}}
