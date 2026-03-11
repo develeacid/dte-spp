@@ -186,9 +186,9 @@ class MonitoreoIa extends Component
     {
         abort_unless(auth()->user()->can('administrar_usuarios'), 403);
 
-        $apiKey  = config('services.embedding.api_key', env('EMBEDDING_API_KEY', ''));
-        $apiUrl  = config('services.embedding.url', env('EMBEDDING_API_URL', 'https://api.openai.com/v1/embeddings'));
-        $model   = config('services.embedding.model', env('EMBEDDING_MODEL', 'text-embedding-ada-002'));
+        $apiKey  = config('services.embedding.api_key', '');
+        $apiUrl  = config('services.embedding.url', 'https://api.openai.com/v1/embeddings');
+        $model   = config('services.embedding.model', 'text-embedding-ada-002');
 
         $keyPreview = strlen($apiKey) >= 6
             ? '...' . substr($apiKey, -6)

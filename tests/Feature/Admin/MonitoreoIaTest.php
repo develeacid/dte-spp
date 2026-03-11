@@ -287,9 +287,13 @@ class MonitoreoIaTest extends TestCase
 
     public function test_probar_conexion_requires_admin(): void
     {
+        Http::fake();
+
         Livewire::actingAs($this->regularUser)
             ->test(MonitoreoIa::class)
             ->call('probarConexion')
             ->assertForbidden();
+
+        Http::assertNothingSent();
     }
 }
