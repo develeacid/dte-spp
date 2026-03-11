@@ -22,7 +22,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Etapa 5 — Matriz de Indicadores para Resultados')]
+#[Title('Etapa 7 — Matriz de Indicadores para Resultados')]
 class MirEditor extends Component
 {
     public ProgramaPresupuestario $programa;
