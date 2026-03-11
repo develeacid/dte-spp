@@ -50,11 +50,20 @@
                 </x-ui.topbar>
 
                 {{-- Page Content --}}
-                <main id="main-content">
+                <main id="main-content" class="pb-[var(--bottom-nav-height)] lg:pb-0">
                     {{ $slot }}
                 </main>
             </div>
         </div>
+
+        {{-- Bottom Action Bar (mobile only) --}}
+        @if(isset($mobileActions))
+            <x-ui.bottom-action-bar>
+                {{ $mobileActions }}
+            </x-ui.bottom-action-bar>
+        @endif
+
+        <x-ui.bottom-nav />
 
         @stack('modals')
 
