@@ -1,6 +1,6 @@
 {{-- Global Admin KPIs --}}
 @if($this->globalAdminStats)
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6">
         <x-ui.widget title="Eficacia Promedio" :value="$this->globalAdminStats->eficaciaPromedio . '%'" subtitle="Indicadores aprobados (global)">
             <x-slot:icon>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
@@ -27,7 +27,7 @@
 @include('livewire.dashboard.partials._planeador')
 
 {{-- Admin Quick Links --}}
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-6">
     <a href="{{ route('admin.monitoreo-ia') }}" class="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-200 hover:border-brand hover:shadow-sm transition">
         <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 14.5M14.25 3.104c.251.023.501.05.75.082M19.8 14.5a2.25 2.25 0 010 3l-3 3a2.25 2.25 0 01-3 0l-1.5-1.5a2.25 2.25 0 010-3l4.5-4.5zm-14.6 0a2.25 2.25 0 000 3l3 3a2.25 2.25 0 003 0l1.5-1.5a2.25 2.25 0 000-3L5.2 14.5z"/></svg>

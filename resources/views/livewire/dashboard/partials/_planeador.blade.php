@@ -1,6 +1,6 @@
 {{-- ===== Planeador/Admin KPI Cards ===== --}}
 @if($this->adminStats && $this->adminStats->programas > 0)
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <x-ui.widget title="Programas" :value="$this->adminStats->programas" subtitle="Activos en tu unidad">
             <x-slot:icon>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
@@ -94,9 +94,9 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Indicador</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Periodo</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Operador</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Enviado</th>
+                        <th class="hidden sm:table-cell px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Periodo</th>
+                        <th class="hidden md:table-cell px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Operador</th>
+                        <th class="hidden md:table-cell px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Enviado</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Accion</th>
                     </tr>
                 </thead>
@@ -104,9 +104,9 @@
                     @foreach($this->avancesPorRevisar as $avance)
                         <tr>
                             <td class="px-4 py-3 text-sm text-gray-900">{{ Str::limit($avance->indicador->nombre, 40) }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500">{{ $avance->metaPeriodo->periodo }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500">{{ $avance->capturador?->name ?? '—' }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-400">{{ $avance->updated_at->diffForHumans() }}</td>
+                            <td class="hidden sm:table-cell px-4 py-3 text-sm text-gray-500">{{ $avance->metaPeriodo->periodo }}</td>
+                            <td class="hidden md:table-cell px-4 py-3 text-sm text-gray-500">{{ $avance->capturador?->name ?? '—' }}</td>
+                            <td class="hidden md:table-cell px-4 py-3 text-sm text-gray-400">{{ $avance->updated_at->diffForHumans() }}</td>
                             <td class="px-4 py-3 text-sm">
                                 <a href="{{ route('tracking.flujo', $avance) }}" class="text-brand hover:underline">Revisar</a>
                             </td>
