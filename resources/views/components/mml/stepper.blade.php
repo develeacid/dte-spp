@@ -65,60 +65,47 @@
     ];
 @endphp
 
-<nav class="mb-8" aria-label="Progreso de planeación">
-    <ol class="flex items-center w-full">
-        @foreach ($pasos as $numero => $label)
-            @php
-                $esCompletado = $completado[$numero];
-                $esActual = $numero === $pasoActual;
-                $esAccesible = $accesible[$numero];
+<nav aria-label="Progreso de planeación" class="mb-6">
+    <ol class="flex items-center justify-between sm:justify-start sm:space-x-0 w-full">
+        @foreach($pasos as $numero => $label)
+            <li class="flex items-center {{ !$loop->last ? 'flex-1' : '' }}">
+                @if($accesible[$numero])
+                    <a href="{{ $rutaPaso[$numero] }}"
+                       class="flex flex-col items-center group">
+                @else
+                    <span class="flex flex-col items-center opacity-50 cursor-not-allowed">
+                @endif
 
-                $circleClass = match (true) {
-                    $esCompletado => 'bg-green-600 text-white',
-                    $esActual     => 'bg-blue-600 text-white',
-                    $esAccesible  => 'bg-gray-200 text-gray-500',
-                    default       => 'bg-gray-100 text-gray-400',
-                };
-
-                $labelClass = match (true) {
-                    $esCompletado => 'text-green-700 font-medium',
-                    $esActual     => 'text-blue-700 font-semibold',
-                    $esAccesible  => 'text-gray-500',
-                    default       => 'text-gray-400',
-                };
-
-                $clickable = ($esCompletado || $esAccesible) && ! $esActual;
-            @endphp
-
-            <li class="flex items-center {{ $loop->last ? '' : 'flex-1' }}">
-                <div class="flex flex-col items-center">
-                    @if ($clickable)
-                        <a href="{{ $rutaPaso[$numero] }}" class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium {{ $circleClass }} hover:ring-2 hover:ring-offset-1 hover:ring-indigo-300 transition-shadow">
-                    @else
-                        <span class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium {{ $circleClass }}">
-                    @endif
-                        @if ($esCompletado)
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
-                        @elseif (! $esAccesible && ! $esActual)
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                            </svg>
+                    <span class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full text-xs sm:text-sm font-semibold transition-all
+                        {{ $completado[$numero] ? 'bg-green-600 text-white' : '' }}
+                        {{ $pasoActual === $numero && !$completado[$numero] ? 'bg-blue-600 text-white ring-2 ring-blue-300' : '' }}
+                        {{ !$completado[$numero] && $pasoActual !== $numero && $accesible[$numero] ? 'bg-gray-200 text-gray-600' : '' }}
+                        {{ !$accesible[$numero] ? 'bg-gray-100 text-gray-400' : '' }}
+                        {{ $accesible[$numero] ? 'group-hover:ring-2 group-hover:ring-offset-1 group-hover:ring-indigo-300' : '' }}">
+                        @if($completado[$numero])
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                        @elseif(!$accesible[$numero])
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
                         @else
                             {{ $numero }}
                         @endif
-                    @if ($clickable)
-                        </a>
-                    @else
-                        </span>
-                    @endif
-                    <span class="mt-1 text-xs {{ $labelClass }} whitespace-nowrap">{{ $label }}</span>
-                </div>
+                    </span>
 
-                @unless ($loop->last)
-                    <div class="flex-1 mx-2 h-0.5 {{ $esCompletado ? 'bg-green-400' : 'bg-gray-200' }}"></div>
-                @endunless
+                    {{-- Label: always show on sm+, on mobile only show for current step --}}
+                    <span class="mt-1 text-[10px] sm:text-xs whitespace-nowrap {{ $pasoActual === $numero ? '' : 'hidden sm:block' }} {{ $completado[$numero] ? 'text-green-700 font-medium' : 'text-gray-500' }}">
+                        {{ $label }}
+                    </span>
+
+                @if($accesible[$numero])
+                    </a>
+                @else
+                    </span>
+                @endif
+
+                {{-- Connector --}}
+                @if(!$loop->last)
+                    <div class="flex-1 mx-1 sm:mx-2 h-0.5 {{ $completado[$numero] ? 'bg-green-300' : 'bg-gray-200' }}"></div>
+                @endif
             </li>
         @endforeach
     </ol>

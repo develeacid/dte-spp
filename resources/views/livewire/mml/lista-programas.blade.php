@@ -61,8 +61,8 @@
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clave</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ejercicio</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Origen</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Ejercicio</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Origen</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                         <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                     </tr>
@@ -72,8 +72,8 @@
                         <tr>
                             <td class="px-4 py-3 text-sm font-mono text-gray-900">{{ $programa->clave }}</td>
                             <td class="px-4 py-3 text-sm text-gray-900">{{ $programa->nombre }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500">{{ $programa->ejercicio_fiscal ?? '-' }}</td>
-                            <td class="px-4 py-3 text-sm">
+                            <td class="px-4 py-3 text-sm text-gray-500 hidden md:table-cell">{{ $programa->ejercicio_fiscal ?? '-' }}</td>
+                            <td class="px-4 py-3 text-sm hidden md:table-cell">
                                 @if($programa->origen)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $programa->origen === \App\Enums\OrigenPrograma::IMPORTADO ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' }}">
                                         {{ $programa->origen->label() }}
@@ -91,17 +91,19 @@
                                     <span class="text-gray-400">-</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-sm text-right space-x-2">
-                                <a href="{{ route('mml.etapa1', $programa) }}"
-                                   class="text-blue-600 hover:text-blue-800 font-medium text-sm">
-                                    MML
-                                </a>
-                                @if($programa->mirNiveles()->exists())
-                                    <a href="{{ route('mml.mir', $programa) }}"
-                                       class="text-emerald-600 hover:text-emerald-800 font-medium text-sm">
-                                        MIR
+                            <td class="px-4 py-3 text-sm text-right">
+                                <div class="flex flex-col sm:flex-row sm:justify-end gap-1 sm:space-x-2">
+                                    <a href="{{ route('mml.etapa1', $programa) }}"
+                                       class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                                        MML
                                     </a>
-                                @endif
+                                    @if($programa->mirNiveles()->exists())
+                                        <a href="{{ route('mml.mir', $programa) }}"
+                                           class="text-emerald-600 hover:text-emerald-800 font-medium text-sm">
+                                            MIR
+                                        </a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @endforeach
