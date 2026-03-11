@@ -21,6 +21,7 @@ class ProgramaPresupuestario extends Model
         'ejercicio_fiscal',
         'origen',
         'estado',
+        'planeacion_completada_at',
         'created_by',
     ];
 
@@ -30,6 +31,7 @@ class ProgramaPresupuestario extends Model
             'ejercicio_fiscal' => 'integer',
             'origen' => OrigenPrograma::class,
             'estado' => EstadoPrograma::class,
+            'planeacion_completada_at' => 'datetime',
         ];
     }
 
