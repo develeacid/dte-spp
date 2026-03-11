@@ -20,9 +20,9 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Indicador</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Operador</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Motivo</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Fecha</th>
+                            <th class="hidden md:table-cell px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Operador</th>
+                            <th class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Motivo</th>
+                            <th class="hidden md:table-cell px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Fecha</th>
                             <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Acciones</th>
                         </tr>
                     </thead>
@@ -32,13 +32,13 @@
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                                     {{ \Illuminate\Support\Str::limit($desbloqueo->avance->indicador->nombre, 40) }}
                                 </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                <td class="hidden md:table-cell whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                                     {{ $desbloqueo->solicitante?->name ?? '—' }}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-500">
+                                <td class="hidden sm:table-cell px-6 py-4 text-sm text-gray-500">
                                     {{ \Illuminate\Support\Str::limit($desbloqueo->motivo, 60) }}
                                 </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                <td class="hidden md:table-cell whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                                     {{ $desbloqueo->created_at->format('d/m/Y H:i') }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-right text-sm">

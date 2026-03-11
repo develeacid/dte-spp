@@ -36,7 +36,7 @@
                 </p>
 
                 {{-- Vista lado a lado --}}
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="text-center">
                         <h3 class="text-sm font-semibold text-red-700 uppercase tracking-wide">
                             <x-ui.help-label glossary="problema_central" class="text-sm font-semibold text-red-700 uppercase tracking-wide">
@@ -59,7 +59,7 @@
                         $esPendiente = str_starts_with($nodoObj->descripcion, '[Pendiente');
                     @endphp
 
-                    <div class="grid grid-cols-2 gap-4 items-start">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
                         {{-- Columna Problema --}}
                         <div class="rounded-md border border-red-200 bg-red-50 p-3">
                             @php

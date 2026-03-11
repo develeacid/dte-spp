@@ -49,11 +49,11 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Programa</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Nivel</th>
+                            <th scope="col" class="hidden sm:table-cell px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Programa</th>
+                            <th scope="col" class="hidden sm:table-cell px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Nivel</th>
                             <th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Indicador</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">Meta</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">Avance</th>
+                            <th scope="col" class="hidden md:table-cell px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">Meta</th>
+                            <th scope="col" class="hidden md:table-cell px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">Avance</th>
                             <th scope="col" class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">Semaforo</th>
                             <th scope="col" class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">Estado</th>
                         </tr>
@@ -62,10 +62,10 @@
                         @foreach($filas as $fila)
                             <tr wire:click="toggleExpandir({{ $fila['indicador_id'] }})"
                                 class="cursor-pointer hover:bg-gray-50 transition-colors">
-                                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
+                                <td class="hidden sm:table-cell whitespace-nowrap px-4 py-3 text-sm text-gray-900">
                                     {{ $fila['programa_clave'] }}
                                 </td>
-                                <td class="whitespace-nowrap px-4 py-3 text-sm">
+                                <td class="hidden sm:table-cell whitespace-nowrap px-4 py-3 text-sm">
                                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $fila['nivel_tipo']->colorClass() }}">
                                         {{ $fila['nivel_tipo']->label() }}
                                     </span>
@@ -82,10 +82,10 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td class="whitespace-nowrap px-4 py-3 text-center text-sm text-gray-700">
+                                <td class="hidden md:table-cell whitespace-nowrap px-4 py-3 text-center text-sm text-gray-700">
                                     {{ $fila['meta'] !== null ? number_format((float) $fila['meta'], 2) : '—' }}
                                 </td>
-                                <td class="whitespace-nowrap px-4 py-3 text-center text-sm text-gray-700">
+                                <td class="hidden md:table-cell whitespace-nowrap px-4 py-3 text-center text-sm text-gray-700">
                                     {{ $fila['resultado'] !== null ? number_format((float) $fila['resultado'], 2) : '—' }}
                                 </td>
                                 <td class="whitespace-nowrap px-4 py-3 text-center">
