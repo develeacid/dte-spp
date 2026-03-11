@@ -6,6 +6,15 @@
         />
     </x-slot>
 
+    <x-slot:mobileActions>
+        <button wire:click="guardar" class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-xs font-semibold text-gray-700">
+            Guardar
+        </button>
+        <button wire:click="guardarYContinuar" class="inline-flex items-center px-3 py-1.5 bg-indigo-600 rounded-md text-xs font-semibold text-white">
+            Siguiente
+        </button>
+    </x-slot:mobileActions>
+
     <x-page.container :breadcrumbs="[
         ['label' => 'Inicio', 'url' => route('dashboard')],
         ['label' => $programa->nombre, 'url' => route('dashboard')],
