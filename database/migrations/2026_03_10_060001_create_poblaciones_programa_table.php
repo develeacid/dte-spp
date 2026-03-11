@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('poblaciones_programa', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('programa_id')->constrained('programas_presupuestarios')->cascadeOnDelete();
+            $table->foreignId('programa_id')->constrained('programa_presupuestarios')->cascadeOnDelete();
             $table->string('unidad_medida', 100);
             $table->unsignedInteger('referencia_cantidad');
             $table->text('referencia_fuente')->nullable();

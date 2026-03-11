@@ -7,9 +7,9 @@
     </x-slot>
 
     <x-page.container :breadcrumbs="[
-        ['label' => 'Programas', 'url' => route('mml.programas')],
-        ['label' => $programa->nombre],
-        ['label' => 'Etapa 6 — Alineación'],
+        ['label' => 'Inicio', 'url' => route('dashboard')],
+        ['label' => $programa->nombre, 'url' => route('dashboard')],
+        ['label' => 'Etapa 6: Alineación'],
     ]">
         <x-mml.stepper :programa="$programa" :paso-actual="6" />
 

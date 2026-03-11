@@ -8,14 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('programas_presupuestarios', function (Blueprint $table) {
+        Schema::table('programa_presupuestarios', function (Blueprint $table) {
             $table->timestamp('planeacion_completada_at')->nullable()->after('estado');
         });
     }
 
     public function down(): void
     {
-        Schema::table('programas_presupuestarios', function (Blueprint $table) {
+        Schema::table('programa_presupuestarios', function (Blueprint $table) {
             $table->dropColumn('planeacion_completada_at');
         });
     }

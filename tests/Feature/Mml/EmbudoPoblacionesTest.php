@@ -25,6 +25,7 @@ class EmbudoPoblacionesTest extends TestCase
             'nombre' => 'Programa Test',
             'clave' => 'PT-001',
             'team_id' => $this->user->currentTeam->id,
+            'ejercicio_fiscal' => 2026,
         ]);
     }
 
