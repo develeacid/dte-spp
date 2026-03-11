@@ -47,7 +47,7 @@ class DefinicionProblema extends Component
 
         try {
             $llm = app(LlmServiceInterface::class);
-            $result = $llm->validate($this->descripcion, ['no_verbos_solucion', 'situacion_no_deseada', 'claro_concreto']);
+            $result = $llm->validateProblema($this->descripcion);
 
             $this->resultadoValidacion = $result->toArray();
             $this->sugerenciaIa = $result->suggestion;

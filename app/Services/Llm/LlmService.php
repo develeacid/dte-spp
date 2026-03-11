@@ -104,6 +104,41 @@ class LlmService implements LlmServiceInterface
 
     // ─── Domain Methods ──────────────────────────────────────────────
 
+    public function validateProblema(string $texto): LlmValidationResult
+    {
+        if ($this->isDegraded()) {
+            return $this->degradedValidationResult();
+        }
+
+        $templateKey = 'mml/validar-problema';
+        $prompt = $this->renderPrompt('prompts.mml.validar-problema', ['texto' => $texto]);
+        $version = $this->getPromptVersion($templateKey);
+
+        $cacheKey = $this->cacheKey('validateProblema', $prompt);
+
+        if ($cached = $this->fromCache($cacheKey)) {
+            $this->logCacheHit('validateProblema', $prompt);
+
+            return LlmValidationResult::fromArray(json_decode($cached, true));
+        }
+
+        $messages = [
+            ['role' => 'system', 'content' => 'Eres un experto en Metodología de Marco Lógico para el sector público mexicano. Siempre responde en JSON válido.'],
+            ['role' => 'user', 'content' => $prompt],
+        ];
+
+        $responseText = $this->call('validateProblema', $messages, $prompt, $templateKey, $version);
+        $data = json_decode($responseText, true);
+
+        if (!is_array($data)) {
+            throw LlmException::invalidResponse('Response is not valid JSON');
+        }
+
+        $this->toCache($cacheKey, $responseText);
+
+        return LlmValidationResult::fromArray($data);
+    }
+
     public function suggestNarrativeSyntax(string $nivel, string $texto): LlmValidationResult
     {
         if ($this->isDegraded()) {

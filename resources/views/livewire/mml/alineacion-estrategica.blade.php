@@ -50,19 +50,27 @@
                     <div class="rounded-md border border-indigo-200 bg-indigo-50 p-3 space-y-2">
                         <p class="text-xs font-medium text-indigo-700">Sugerencias de alineación:</p>
                         @foreach ($sugerenciasIa as $sug)
-                            <div class="flex items-center justify-between gap-2 rounded bg-white p-2 text-sm">
+                            @php $isSelected = $objetivoEstrategicoId === $sug['id']; @endphp
+                            <div class="flex items-center justify-between gap-2 rounded p-2 text-sm {{ $isSelected ? 'bg-green-50 ring-2 ring-green-400' : 'bg-white' }}">
                                 <div>
                                     <span class="font-medium text-gray-900">{{ $sug['clave'] }}</span>
                                     <span class="ml-1 text-gray-600">{{ $sug['descripcion'] }}</span>
                                     <span class="ml-1 text-xs text-gray-400">({{ $sug['score'] }}%)</span>
-                                    <p class="text-xs text-gray-500">{{ $sug['eje'] }} → {{ $sug['tema'] }}</p>
+                                    <p class="text-xs text-gray-500">{{ $sug['eje'] }} &rarr; {{ $sug['tema'] }}</p>
                                 </div>
-                                <button
-                                    wire:click="seleccionarSugerencia({{ $sug['id'] }})"
-                                    class="shrink-0 rounded bg-indigo-600 px-3 py-1 text-xs text-white hover:bg-indigo-700"
-                                >
-                                    Seleccionar
-                                </button>
+                                @if ($isSelected)
+                                    <span class="shrink-0 inline-flex items-center gap-1 rounded bg-green-600 px-3 py-1 text-xs text-white">
+                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                        Seleccionado
+                                    </span>
+                                @else
+                                    <button
+                                        wire:click="seleccionarSugerencia({{ $sug['id'] }})"
+                                        class="shrink-0 rounded bg-indigo-600 px-3 py-1 text-xs text-white hover:bg-indigo-700"
+                                    >
+                                        Seleccionar
+                                    </button>
+                                @endif
                             </div>
                         @endforeach
                     </div>

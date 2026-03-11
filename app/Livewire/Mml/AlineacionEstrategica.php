@@ -79,16 +79,24 @@ class AlineacionEstrategica extends Component
             }
 
             $search = app(SemanticSearchService::class);
-            $resultados = $search->search($problema->descripcion, PedObjetivoEstrategico::class, 5);
+            $resultados = $search->findSimilar($problema->descripcion, PedObjetivoEstrategico::class, 5, 0.0);
 
-            $this->sugerenciasIa = collect($resultados)->map(fn ($r) => [
-                'id' => $r['model']->id,
-                'descripcion' => $r['model']->descripcion,
-                'clave' => $r['model']->clave_completa,
-                'tema' => $r['model']->tema?->nombre ?? '',
-                'eje' => $r['model']->tema?->eje?->nombre ?? '',
-                'score' => round($r['score'] * 100),
-            ])->toArray();
+            // Cargar relaciones para los modelos devueltos por la búsqueda vectorial
+            $ids = $resultados->pluck('model.id')->all();
+            $objetivos = PedObjetivoEstrategico::with('tema.eje')->whereIn('id', $ids)->get()->keyBy('id');
+
+            $this->sugerenciasIa = $resultados->map(function ($r) use ($objetivos) {
+                $obj = $objetivos->get($r->model->id);
+
+                return [
+                    'id' => $r->model->id,
+                    'descripcion' => $obj?->descripcion ?? $r->model->descripcion,
+                    'clave' => $obj?->clave_completa ?? '',
+                    'tema' => $obj?->tema?->nombre ?? '',
+                    'eje' => $obj?->tema?->eje?->nombre ?? '',
+                    'score' => round($r->score * 100),
+                ];
+            })->toArray();
         } catch (\Throwable $e) {
             session()->flash('error', 'Error al buscar alineación con IA: ' . $e->getMessage());
         } finally {
@@ -104,7 +112,6 @@ class AlineacionEstrategica extends Component
             $this->ejeId = $objetivo->tema->eje->id;
             $this->temaId = $objetivo->tema->id;
             $this->objetivoEstrategicoId = $objetivo->id;
-            $this->sugerenciasIa = [];
         }
     }
 

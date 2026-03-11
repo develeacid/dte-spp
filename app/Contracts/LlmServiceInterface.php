@@ -16,6 +16,8 @@ interface LlmServiceInterface
 
     public function isDegraded(): bool;
 
+    public function validateProblema(string $texto): LlmValidationResult;
+
     public function suggestNarrativeSyntax(string $nivel, string $texto): LlmValidationResult;
 
     public function validateCremaa(array $indicadorData): LlmValidationResult;
