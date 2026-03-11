@@ -133,6 +133,22 @@ class ArbolObjetivosBuilder extends Component
         }
     }
 
+    public function transformarTodosConIa(): void
+    {
+        if (!$this->arbolObjetivosId) {
+            return;
+        }
+
+        $nodosPendientes = ArbolNodo::where('arbol_id', $this->arbolObjetivosId)
+            ->where('descripcion', 'like', '[Pendiente%')
+            ->whereNotNull('nodo_origen_id')
+            ->get();
+
+        foreach ($nodosPendientes as $nodo) {
+            $this->transformarConIa($nodo->id);
+        }
+    }
+
     public function editarNodo(int $nodoId): void
     {
         $nodo = ArbolNodo::findOrFail($nodoId);
