@@ -11,6 +11,8 @@
         ['label' => $programa->nombre, 'url' => route('dashboard')],
         ['label' => 'Etapa 2: Árbol del Problema'],
     ]">
+        <x-mml.stepper :programa="$programa" :paso-actual="2" />
+
         @if (session('error'))
             <div class="mb-4 rounded-md bg-red-50 p-4">
                 <p class="text-sm text-red-700">{{ session('error') }}</p>
@@ -224,6 +226,10 @@
             <x-ui.button.secondary href="{{ route('mml.etapa1', $programa) }}">
                 Etapa anterior
             </x-ui.button.secondary>
+            <a href="{{ route('mml.etapa3', $programa) }}"
+               class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 disabled:opacity-50">
+                Siguiente: Árbol de Objetivos →
+            </a>
         </x-slot:footer>
     </x-page.container>
 </div>

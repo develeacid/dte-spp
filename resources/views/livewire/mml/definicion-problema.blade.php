@@ -11,6 +11,8 @@
         ['label' => $programa->nombre, 'url' => route('dashboard')],
         ['label' => 'Etapa 1: Problema'],
     ]">
+        <x-mml.stepper :programa="$programa" :paso-actual="1" />
+
         @if (session('success'))
             <div class="mb-4 rounded-md bg-green-50 p-4">
                 <p class="text-sm text-green-700">{{ session('success') }}</p>
@@ -105,6 +107,10 @@
             <button wire:click="guardar" wire:loading.attr="disabled" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 disabled:opacity-50">
                 Guardar Problema
             </button>
+            <a href="{{ route('mml.etapa2', $programa) }}"
+               class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 disabled:opacity-50">
+                Siguiente: Árbol de Problemas →
+            </a>
         </x-slot:footer>
     </x-page.container>
 </div>
