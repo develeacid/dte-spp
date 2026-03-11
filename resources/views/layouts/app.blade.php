@@ -56,6 +56,13 @@
             </div>
         </div>
 
+        {{-- Bottom Action Bar (mobile only) --}}
+        @if(isset($mobileActions))
+            <x-ui.bottom-action-bar>
+                {{ $mobileActions }}
+            </x-ui.bottom-action-bar>
+        @endif
+
         <x-ui.bottom-nav />
 
         @stack('modals')
