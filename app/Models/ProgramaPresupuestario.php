@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProgramaPresupuestario extends Model
@@ -82,6 +83,11 @@ class ProgramaPresupuestario extends Model
     public function mirVersiones(): HasMany
     {
         return $this->hasMany(Mml\MirVersion::class);
+    }
+
+    public function poblacion(): HasOne
+    {
+        return $this->hasOne(\App\Models\Mml\PoblacionPrograma::class, 'programa_id');
     }
 
     // --- Scopes ---
