@@ -94,9 +94,9 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Indicador</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Periodo</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Operador</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Enviado</th>
+                        <th class="hidden sm:table-cell px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Periodo</th>
+                        <th class="hidden md:table-cell px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Operador</th>
+                        <th class="hidden md:table-cell px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Enviado</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Accion</th>
                     </tr>
                 </thead>
@@ -104,9 +104,9 @@
                     @foreach($this->avancesPorRevisar as $avance)
                         <tr>
                             <td class="px-4 py-3 text-sm text-gray-900">{{ Str::limit($avance->indicador->nombre, 40) }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500">{{ $avance->metaPeriodo->periodo }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500">{{ $avance->capturador?->name ?? '—' }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-400">{{ $avance->updated_at->diffForHumans() }}</td>
+                            <td class="hidden sm:table-cell px-4 py-3 text-sm text-gray-500">{{ $avance->metaPeriodo->periodo }}</td>
+                            <td class="hidden md:table-cell px-4 py-3 text-sm text-gray-500">{{ $avance->capturador?->name ?? '—' }}</td>
+                            <td class="hidden md:table-cell px-4 py-3 text-sm text-gray-400">{{ $avance->updated_at->diffForHumans() }}</td>
                             <td class="px-4 py-3 text-sm">
                                 <a href="{{ route('tracking.flujo', $avance) }}" class="text-brand hover:underline">Revisar</a>
                             </td>
