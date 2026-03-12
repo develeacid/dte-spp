@@ -84,7 +84,7 @@
 
             {{-- Right: AI Results Panel (Notion-style sidebar) --}}
             {{-- Right: AI Results Panel (Notion-style sidebar) --}}
-            <div class="mt-6 lg:mt-0 lg:w-80 xl:w-96 lg:shrink-0 min-w-0">
+            <div class="mt-6 lg:mt-0 lg:w-80 xl:w-96 shrink-0">
                 <div class="sticky top-24">
                 @if ($resultadoValidacion)
                     <div class="rounded-xl border {{ $resultadoValidacion['is_valid'] ? 'border-green-200 bg-green-50/50' : 'border-amber-200 bg-amber-50/50' }} overflow-hidden shadow-sm">
