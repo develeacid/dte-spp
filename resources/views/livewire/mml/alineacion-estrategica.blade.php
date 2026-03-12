@@ -33,7 +33,7 @@
                 title="Plan Estatal de Desarrollo (PED)"
                 description="Selecciona el Eje, Tema y Objetivo Estratégico al que contribuye tu programa."
             >
-                <div class="space-y-5">
+                <div class="col-span-6 space-y-5">
                     {{-- AI Search --}}
                     <div class="rounded-xl border border-purple-200 bg-purple-50/50 p-4">
                         <div class="flex items-center justify-between gap-3 flex-wrap">
@@ -180,7 +180,7 @@
                     title="Objetivos de Desarrollo Sostenible (ODS)"
                     description="Selecciona los ODS a los que contribuye tu programa. Opcional pero recomendado."
                 >
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                    <div class="col-span-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                         @foreach ($odsObjetivos as $ods)
                             @php
                                 $isChecked = in_array($ods->id, $odsSeleccionados);
@@ -223,7 +223,7 @@
                     title="Anexos Transversales"
                     description="Indica si tu programa se vincula con algún anexo transversal del PEF."
                 >
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div class="col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
                         @foreach ($anexos as $anexo)
                             @php $isChecked = in_array($anexo->id, $anexosSeleccionados); @endphp
                             <label class="flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all

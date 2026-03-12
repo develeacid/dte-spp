@@ -99,7 +99,7 @@
                     title="Poblaciones del programa"
                     description="Define las poblaciones de referencia, potencial y objetivo. Las cantidades deben cumplir: Objetivo ≤ Potencial ≤ Referencia."
                 >
-                    <div class="space-y-5">
+                    <div class="col-span-6 space-y-5">
                         {{-- Unit of measure --}}
                         <div>
                             <label for="unidad_medida" class="block text-sm font-medium text-gray-700">Unidad de medida</label>
