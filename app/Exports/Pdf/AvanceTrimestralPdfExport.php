@@ -28,6 +28,7 @@ class AvanceTrimestralPdfExport
             ->get();
 
         $encabezado = config('evaluation.exports.encabezado');
+        $team = $this->programa->team;
 
         $pdf = Pdf::loadView('exports.pdf.avance-trimestral', [
             'programa' => $this->programa,
@@ -36,6 +37,9 @@ class AvanceTrimestralPdfExport
             'trimestre' => $this->trimestre,
             'encabezado' => $encabezado,
             'generadoEn' => now()->format('d/m/Y H:i'),
+            'titular' => $team->titular,
+            'dependencia' => $team->name,
+            'fecha' => now()->format('d/m/Y'),
         ]);
 
         $pdf->setPaper('letter', 'landscape');

@@ -63,5 +63,10 @@
             @endforeach
         </tbody>
     </table>
+    @include('exports.pdf.partials.vobo', [
+        'titular' => $titular,
+        'dependencia' => $dependencia,
+        'fecha' => $fecha,
+    ])
 </body>
 </html>
