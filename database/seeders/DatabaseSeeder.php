@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Database\Seeders\Cascade\PedSeeder;
+use Database\Seeders\Cascade\AlineacionesSeeder;
 use Database\Seeders\Cascade\ProgramasDerivadosSeeder;
 use Database\Seeders\Mml\OdsSeeder;
 use Database\Seeders\Mml\PndSeeder;
@@ -23,6 +24,7 @@ class DatabaseSeeder extends Seeder
             PndSeeder::class,                 // Catálogo Plan Nacional de Desarrollo
             PedSeeder::class,
             ProgramasDerivadosSeeder::class,  // Programas derivados del PED
+            AlineacionesSeeder::class,       // Alineaciones PED↔PND↔ODS + Líneas↔Programas
             AnexosTransversalesSeeder::class, // Catálogo Anexos Transversales
             QaTestingSeeder::class,           // Datos de prueba QA
         ]);
