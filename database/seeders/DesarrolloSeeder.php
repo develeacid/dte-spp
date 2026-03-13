@@ -68,6 +68,7 @@ class DesarrolloSeeder extends Seeder
         $urEducacion = $crearUR('Secretaría de Educación', 'SE-001', 'Dr. Juan Pérez', TipoUnidadResponsable::SUSTANTIVA);
         $urSalud     = $crearUR('Secretaría de Salud', 'SS-002', 'Dra. María López', TipoUnidadResponsable::APOYO);
         $urSeguridad = $crearUR('Secretaría de Seguridad', 'SEG-003', 'Lic. Roberto Sánchez', TipoUnidadResponsable::SUSTANTIVA);
+        $urTurismo   = $crearUR('Secretaría de Turismo', 'SECTUR-004', 'Lic. Ana García Mendoza', TipoUnidadResponsable::SUSTANTIVA);
 
         // 4. Crear Programa Transversal (Requerido para el testeo del Middleware S1-T5)
         $programaTransversal = ProgramaPresupuestario::firstOrCreate(
@@ -100,6 +101,8 @@ class DesarrolloSeeder extends Seeder
                 ['Operador Salud', 'operador.ss-002@sistema.test', 'operador', 'Salud'],
                 ['Planeador Seg', 'planeador.seg-003@sistema.test', 'planeador', 'Seguridad'],
                 ['Operador Seg', 'operador.seg-003@sistema.test', 'operador', 'Seguridad'],
+                ['Planeador Turismo', 'planeador.sectur-004@sistema.test', 'planeador', 'Turismo'],
+                ['Operador Turismo', 'operador.sectur-004@sistema.test', 'operador', 'Turismo'],
             ]
         );
         $this->command->info('Contraseña para todos los usuarios: password');
