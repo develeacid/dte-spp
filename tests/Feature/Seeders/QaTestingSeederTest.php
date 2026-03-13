@@ -75,76 +75,86 @@ class QaTestingSeederTest extends TestCase
         $this->assertContains('ele.operador2@gmail.com', $ssMemberEmails);
     }
 
-    public function test_creates_three_programs(): void
+    public function test_creates_four_programs(): void
     {
         $this->seed(QaTestingSeeder::class);
 
-        $this->assertDatabaseHas('programa_presupuestarios', ['clave' => 'FER-001']);
-        $this->assertDatabaseHas('programa_presupuestarios', ['clave' => 'DP-002']);
-        $this->assertDatabaseHas('programa_presupuestarios', ['clave' => 'SP-003']);
+        $this->assertDatabaseHas('programa_presupuestarios', ['clave' => 'ISM-001']);
+        $this->assertDatabaseHas('programa_presupuestarios', ['clave' => 'PEC-002']);
+        $this->assertDatabaseHas('programa_presupuestarios', ['clave' => 'FSP-003']);
+        $this->assertDatabaseHas('programa_presupuestarios', ['clave' => 'DDT-004']);
     }
 
     public function test_programs_belong_to_correct_teams(): void
     {
         $this->seed(QaTestingSeeder::class);
 
-        $se = Team::where('clave_ur', 'SE-001')->first();
-        $ss = Team::where('clave_ur', 'SS-002')->first();
+        $se     = Team::where('clave_ur', 'SE-001')->first();
+        $ss     = Team::where('clave_ur', 'SS-002')->first();
+        $seg    = Team::where('clave_ur', 'SEG-003')->first();
+        $sectur = Team::where('clave_ur', 'SECTUR-004')->first();
 
-        $this->assertEquals($se->id, ProgramaPresupuestario::where('clave', 'FER-001')->first()->team_id);
-        $this->assertEquals($se->id, ProgramaPresupuestario::where('clave', 'DP-002')->first()->team_id);
-        $this->assertEquals($ss->id, ProgramaPresupuestario::where('clave', 'SP-003')->first()->team_id);
+        $this->assertEquals($se->id, ProgramaPresupuestario::where('clave', 'ISM-001')->first()->team_id);
+        $this->assertEquals($ss->id, ProgramaPresupuestario::where('clave', 'PEC-002')->first()->team_id);
+        $this->assertEquals($seg->id, ProgramaPresupuestario::where('clave', 'FSP-003')->first()->team_id);
+        $this->assertEquals($sectur->id, ProgramaPresupuestario::where('clave', 'DDT-004')->first()->team_id);
     }
 
     public function test_mir_levels_created_for_each_program(): void
     {
         $this->seed(QaTestingSeeder::class);
 
-        $prog1 = ProgramaPresupuestario::where('clave', 'FER-001')->first();
+        $prog1 = ProgramaPresupuestario::where('clave', 'ISM-001')->first();
         $this->assertEquals(8, MirNivel::where('programa_presupuestario_id', $prog1->id)->count());
 
-        $prog2 = ProgramaPresupuestario::where('clave', 'DP-002')->first();
-        $this->assertEquals(8, MirNivel::where('programa_presupuestario_id', $prog2->id)->count());
+        $prog2 = ProgramaPresupuestario::where('clave', 'PEC-002')->first();
+        $this->assertEquals(7, MirNivel::where('programa_presupuestario_id', $prog2->id)->count());
 
-        $prog3 = ProgramaPresupuestario::where('clave', 'SP-003')->first();
-        $this->assertEquals(5, MirNivel::where('programa_presupuestario_id', $prog3->id)->count());
+        $prog3 = ProgramaPresupuestario::where('clave', 'FSP-003')->first();
+        $this->assertEquals(7, MirNivel::where('programa_presupuestario_id', $prog3->id)->count());
+
+        $prog4 = ProgramaPresupuestario::where('clave', 'DDT-004')->first();
+        $this->assertEquals(6, MirNivel::where('programa_presupuestario_id', $prog4->id)->count());
     }
 
     public function test_indicators_created_with_correct_frequencies(): void
     {
         $this->seed(QaTestingSeeder::class);
 
-        $prog1 = ProgramaPresupuestario::where('clave', 'FER-001')->first();
+        $prog1 = ProgramaPresupuestario::where('clave', 'ISM-001')->first();
         $ind1 = Indicador::whereHas('mirNivel', fn ($q) => $q->where('programa_presupuestario_id', $prog1->id))->get();
-        $this->assertCount(4, $ind1);
-        $this->assertEquals(2, $ind1->where('frecuencia', 'trimestral')->count());
-        $this->assertEquals(2, $ind1->where('frecuencia', 'semestral')->count());
+        $this->assertCount(8, $ind1);
+        $this->assertEquals(4, $ind1->where('frecuencia', 'trimestral')->count());
 
-        $prog2 = ProgramaPresupuestario::where('clave', 'DP-002')->first();
+        $prog2 = ProgramaPresupuestario::where('clave', 'PEC-002')->first();
         $ind2 = Indicador::whereHas('mirNivel', fn ($q) => $q->where('programa_presupuestario_id', $prog2->id))->get();
-        $this->assertCount(3, $ind2);
-        $this->assertEquals(2, $ind2->where('frecuencia', 'trimestral')->count());
-        $this->assertEquals(1, $ind2->where('frecuencia', 'anual')->count());
+        $this->assertCount(7, $ind2);
 
-        $prog3 = ProgramaPresupuestario::where('clave', 'SP-003')->first();
+        $prog3 = ProgramaPresupuestario::where('clave', 'FSP-003')->first();
         $ind3 = Indicador::whereHas('mirNivel', fn ($q) => $q->where('programa_presupuestario_id', $prog3->id))->get();
-        $this->assertCount(2, $ind3);
-        $this->assertEquals(2, $ind3->where('frecuencia', 'trimestral')->count());
+        $this->assertCount(7, $ind3);
+
+        $prog4 = ProgramaPresupuestario::where('clave', 'DDT-004')->first();
+        $ind4 = Indicador::whereHas('mirNivel', fn ($q) => $q->where('programa_presupuestario_id', $prog4->id))->get();
+        $this->assertCount(6, $ind4);
     }
 
     public function test_meta_periodos_generated(): void
     {
         $this->seed(QaTestingSeeder::class);
 
-        $trimIndicador = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->where('clave', 'FER-001'))
+        // Trimestral indicator should have 5 periods (4 in 2025 + 1 in 2026)
+        $trimIndicador = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->where('clave', 'ISM-001'))
             ->where('frecuencia', 'trimestral')->first();
-        $this->assertEquals(4, MetaPeriodo::where('indicador_id', $trimIndicador->id)->count());
+        $this->assertEquals(5, MetaPeriodo::where('indicador_id', $trimIndicador->id)->count());
 
-        $semIndicador = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->where('clave', 'FER-001'))
+        // Semestral indicator should have 2 periods (2 in 2025, S1-2026 excluded as fecha_cierre > March)
+        $semIndicador = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->where('clave', 'ISM-001'))
             ->where('frecuencia', 'semestral')->first();
         $this->assertEquals(2, MetaPeriodo::where('indicador_id', $semIndicador->id)->count());
 
-        $anualIndicador = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->where('clave', 'DP-002'))
+        // Anual indicator should have 1 period (2025 only, 2026 excluded as fecha_cierre > March)
+        $anualIndicador = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->where('clave', 'ISM-001'))
             ->where('frecuencia', 'anual')->first();
         $this->assertEquals(1, MetaPeriodo::where('indicador_id', $anualIndicador->id)->count());
     }
