@@ -33,12 +33,16 @@ class RolesAndPermissionsSeeder extends Seeder
             SystemPermission::REVISAR_AVANCE->value,
             SystemPermission::APROBAR_AVANCE->value,
             SystemPermission::EXPORTAR_REPORTES->value,
+            SystemPermission::VER_SABANA_CAPTURA->value,
+            SystemPermission::VER_CONCENTRADO_CAPTURA->value,
         ]);
 
         $operador = Role::findOrCreate(SystemRole::OPERADOR->value, 'web');
         $operador->givePermissionTo([
             SystemPermission::CAPTURAR_AVANCE->value,
             SystemPermission::EXPORTAR_REPORTES->value,
+            SystemPermission::VER_SABANA_CAPTURA->value,
+            SystemPermission::VER_CONCENTRADO_CAPTURA->value,
         ]);
     }
 }

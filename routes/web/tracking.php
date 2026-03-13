@@ -31,4 +31,7 @@ Route::prefix('seguimiento')
             ->name('tracking.desbloqueo.solicitar');
         Route::get('/desbloqueos', GestionarDesbloqueos::class)
             ->name('tracking.desbloqueos');
+        Route::get('/sabana-captura', \App\Livewire\Tracking\SabanaCaptura::class)
+            ->name('tracking.sabana-captura')
+            ->middleware('can:ver_sabana_captura');
     });
