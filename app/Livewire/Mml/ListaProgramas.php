@@ -44,7 +44,11 @@ class ListaProgramas extends Component
 
     public function render()
     {
-        $programas = ProgramaPresupuestario::paraTeam(auth()->user()->currentTeam->id)
+        $query = auth()->user()->hasRole('admin')
+            ? ProgramaPresupuestario::query()
+            : ProgramaPresupuestario::paraTeam(auth()->user()->currentTeam->id);
+
+        $programas = $query
             ->with('creador')
             ->orderByDesc('updated_at')
             ->get();
