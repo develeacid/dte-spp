@@ -9,6 +9,7 @@ use App\Exports\Excel\TransversalExcelExport;
 use App\Exports\Pdf\AvanceTrimestralPdfExport;
 use App\Exports\Pdf\EvaluacionAnualPdfExport;
 use App\Exports\Pdf\FichaTecnicaPdfExport;
+use App\Exports\Pdf\FmyePdfExport;
 use App\Exports\Pdf\MirPdfExport;
 use App\Exports\Pdf\TransversalPdfExport;
 use App\Http\Controllers\Controller;
@@ -32,6 +33,7 @@ class ExportController extends Controller
             'avance-trimestral' => $this->avanceTrimestralPdf($request, $id),
             'evaluacion-anual' => $this->evaluacionAnualPdf($id),
             'transversal' => $this->transversalPdf($request),
+            'fmye' => $this->fmyePdf($request, $id),
             default => abort(404, 'Tipo de reporte no encontrado'),
         };
 
@@ -130,6 +132,16 @@ class ExportController extends Controller
         $evaluacion = EvaluacionPrograma::findOrFail($id);
 
         return (new EvaluacionAnualPdfExport($evaluacion))->generate();
+    }
+
+    private function fmyePdf(Request $request, ?int $id): string
+    {
+        $programa = ProgramaPresupuestario::findOrFail($id);
+
+        return (new FmyePdfExport(
+            $programa,
+            (int) $request->input('ejercicio_fiscal', date('Y')),
+        ))->generate();
     }
 
     private function transversalPdf(Request $request): string
