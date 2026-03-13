@@ -31,7 +31,7 @@
 @endcanany
 
 {{-- Seguimiento --}}
-@canany(['revisar_avance', 'capturar_avance'])
+@canany(['revisar_avance', 'capturar_avance', 'ver_sabana_captura', 'ver_concentrado_captura'])
 <x-ui.sidebar-group label="Seguimiento" :active="request()->routeIs('tracking.*')">
     <x-slot:icon>
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
@@ -39,6 +39,8 @@
     <x-slot:tooltip>
         @can('revisar_avance')<a href="{{ route('tracking.panel') }}" class="block py-1 hover:text-brand-light">Panel</a>@endcan
         @can('capturar_avance')<a href="{{ route('tracking.pendientes') }}" class="block py-1 hover:text-brand-light">Mis Indicadores</a>@endcan
+        @can('ver_sabana_captura')<a href="{{ route('tracking.sabana-captura') }}" class="block py-1 hover:text-brand-light">Sábana de Captura</a>@endcan
+        @can('ver_concentrado_captura')<a href="{{ route('tracking.concentrado-captura') }}" class="block py-1 hover:text-brand-light">Concentrado</a>@endcan
     </x-slot:tooltip>
 
     @can('revisar_avance')
@@ -54,6 +56,16 @@
     @can('revisar_avance')
         <x-ui.sidebar-item href="{{ route('tracking.vencidos') }}" :active="request()->routeIs('tracking.vencidos')">
             Vencidos
+        </x-ui.sidebar-item>
+    @endcan
+    @can('ver_sabana_captura')
+        <x-ui.sidebar-item href="{{ route('tracking.sabana-captura') }}" :active="request()->routeIs('tracking.sabana-captura')">
+            Sábana de Captura
+        </x-ui.sidebar-item>
+    @endcan
+    @can('ver_concentrado_captura')
+        <x-ui.sidebar-item href="{{ route('tracking.concentrado-captura') }}" :active="request()->routeIs('tracking.concentrado-captura')">
+            Concentrado
         </x-ui.sidebar-item>
     @endcan
 </x-ui.sidebar-group>
