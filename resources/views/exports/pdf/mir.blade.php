@@ -77,5 +77,12 @@
             @endforeach
         </tbody>
     </table>
+
+    <div style="margin-top: 20px; text-align: center; font-size: 8px; color: #999; border-top: 1px solid #ccc; padding-top: 6px;">
+        @if($programa->planeacion_completada_at)
+            Fecha de aprobación: {{ $programa->planeacion_completada_at->format('d/m/Y') }}<br>
+        @endif
+        Documento público conforme al Art. 70 LGTAIP — Información disponible para cualquier persona.
+    </div>
 </body>
 </html>

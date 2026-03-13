@@ -12,6 +12,21 @@ Route::prefix('evaluacion')
             ->name('evaluation.transversal')
             ->middleware('can:exportar_reportes');
 
+        Route::get('/mir-publica/{id}', function (\Illuminate\Http\Request $request, int $id) {
+            $programa = \App\Models\ProgramaPresupuestario::findOrFail($id);
+            $contenido = (new \App\Exports\Pdf\MirPdfExport(
+                $programa,
+                (int) $request->input('ejercicio_fiscal', date('Y')),
+            ))->generate();
+
+            $filename = "mir-{$programa->clave}-" . now()->format('Ymd') . '.pdf';
+
+            return new \Illuminate\Http\Response($contenido, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => "inline; filename=\"{$filename}\"",
+            ]);
+        })->name('evaluation.mir-publica');
+
         Route::middleware('can:exportar_reportes')
             ->prefix('exportar')
             ->group(function () {
