@@ -34,4 +34,7 @@ Route::prefix('seguimiento')
         Route::get('/sabana-captura', \App\Livewire\Tracking\SabanaCaptura::class)
             ->name('tracking.sabana-captura')
             ->middleware('can:ver_sabana_captura');
+        Route::get('/concentrado-captura', \App\Livewire\Tracking\ConcentradoCaptura::class)
+            ->name('tracking.concentrado-captura')
+            ->middleware('can:ver_concentrado_captura');
     });
