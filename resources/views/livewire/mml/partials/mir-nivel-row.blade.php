@@ -239,16 +239,21 @@
         <div class="space-y-3">
             @foreach ($nivel->indicadores as $indicador)
                 <div class="rounded-md border border-gray-200 bg-white p-2 space-y-2" wire:key="indicador-{{ $indicador->id }}"
-                     x-data="{ reglas: @js($reglas) }">
+                     x-data="{
+                        ind: {
+                            nombre: @js($indicador->nombre ?? ''),
+                            tipo: @js($indicador->tipo?->value ?? $reglas['tipo_default']),
+                            dimension: @js($indicador->dimension?->value ?? $reglas['dimensiones'][0]),
+                            frecuencia: @js($indicador->frecuencia?->value ?? $reglas['frecuencias'][0]),
+                        },
+                        guardar() {
+                            $wire.guardarIndicador({{ $indicador->id }}, { ...this.ind });
+                        }
+                     }">
                     <input
                         type="text"
-                        value="{{ $indicador->nombre }}"
-                        wire:change="guardarIndicador({{ $indicador->id }}, {
-                            nombre: $event.target.value,
-                            tipo: $event.target.closest('[x-data]').querySelector('[name=tipo]')?.value || '{{ $indicador->tipo?->value ?? $reglas['tipo_default'] }}',
-                            dimension: $event.target.closest('[x-data]').querySelector('[name=dimension]')?.value || '{{ $indicador->dimension?->value ?? $reglas['dimensiones'][0] }}',
-                            frecuencia: $event.target.closest('[x-data]').querySelector('[name=frecuencia]')?.value || '{{ $indicador->frecuencia?->value ?? $reglas['frecuencias'][0] }}'
-                        })"
+                        x-model="ind.nombre"
+                        @change="guardar()"
                         class="w-full rounded border-gray-300 text-sm"
                         placeholder="Nombre del indicador"
                     />
@@ -259,11 +264,10 @@
                             <span class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
                                 {{ \App\Enums\TipoIndicador::tryFrom($reglas['tipo_default'])?->label() }}
                             </span>
-                            <input type="hidden" name="tipo" value="{{ $reglas['tipo_default'] }}" />
                         @else
-                            <select name="tipo" class="rounded border-gray-300 text-xs">
+                            <select x-model="ind.tipo" @change="guardar()" class="rounded border-gray-300 text-xs">
                                 @foreach ($reglas['tipos'] as $tipo)
-                                    <option value="{{ $tipo }}" @selected(($indicador->tipo?->value ?? '') === $tipo)>
+                                    <option value="{{ $tipo }}">
                                         {{ \App\Enums\TipoIndicador::tryFrom($tipo)?->label() }}
                                     </option>
                                 @endforeach
@@ -271,18 +275,18 @@
                         @endif
 
                         {{-- Dimensión --}}
-                        <select name="dimension" class="rounded border-gray-300 text-xs">
+                        <select x-model="ind.dimension" @change="guardar()" class="rounded border-gray-300 text-xs">
                             @foreach ($reglas['dimensiones'] as $dim)
-                                <option value="{{ $dim }}" @selected(($indicador->dimension?->value ?? '') === $dim)>
+                                <option value="{{ $dim }}">
                                     {{ \App\Enums\DimensionIndicador::tryFrom($dim)?->label() }}
                                 </option>
                             @endforeach
                         </select>
 
                         {{-- Frecuencia --}}
-                        <select name="frecuencia" class="rounded border-gray-300 text-xs">
+                        <select x-model="ind.frecuencia" @change="guardar()" class="rounded border-gray-300 text-xs">
                             @foreach ($reglas['frecuencias'] as $freq)
-                                <option value="{{ $freq }}" @selected(($indicador->frecuencia?->value ?? '') === $freq)>
+                                <option value="{{ $freq }}">
                                     {{ \App\Enums\FrecuenciaMedicion::tryFrom($freq)?->label() }}
                                 </option>
                             @endforeach
