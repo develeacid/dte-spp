@@ -227,7 +227,7 @@
                                             <p class="text-sm text-gray-700 leading-relaxed">{{ $sugerencia }}</p>
                                             @if ($problemaCentral)
                                                 <button
-                                                    wire:click="agregarSugerencia('{{ addslashes($sugerencia) }}', {{ $problemaCentral->id }}, 'causa_directa')"
+                                                    wire:click="agregarSugerencia('{{ addslashes($sugerencia) }}', {{ $problemaCentral->id }}, '{{ $tipoSugerencia }}')"
                                                     class="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
                                                 >
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>

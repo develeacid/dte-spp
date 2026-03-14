@@ -145,6 +145,44 @@ class ArbolProblemaBuilderTest extends TestCase
         $this->assertDatabaseMissing('arbol_nodos', ['id' => $causa->id]);
     }
 
+    public function test_sugerir_efectos_agrega_como_efecto_directo(): void
+    {
+        $this->mock(\App\Contracts\LlmServiceInterface::class, function ($mock) {
+            $mock->shouldReceive('isDegraded')->andReturn(false);
+            $mock->shouldReceive('suggest')->once()->andReturn("1. Efecto sugerido por IA");
+        });
+
+        Livewire::actingAs($this->user)
+            ->test(ArbolProblemaBuilder::class, ['programa' => $this->programa])
+            ->call('sugerirConIa', 'efecto')
+            ->call('agregarSugerencia', 'Efecto sugerido por IA', $this->problemaCentral->id, 'efecto_directo');
+
+        $this->assertDatabaseHas('arbol_nodos', [
+            'arbol_id' => $this->arbol->id,
+            'tipo_nodo' => 'efecto_directo',
+            'descripcion' => 'Efecto sugerido por IA',
+        ]);
+    }
+
+    public function test_sugerir_causas_agrega_como_causa_directa(): void
+    {
+        $this->mock(\App\Contracts\LlmServiceInterface::class, function ($mock) {
+            $mock->shouldReceive('isDegraded')->andReturn(false);
+            $mock->shouldReceive('suggest')->once()->andReturn("1. Causa sugerida por IA");
+        });
+
+        Livewire::actingAs($this->user)
+            ->test(ArbolProblemaBuilder::class, ['programa' => $this->programa])
+            ->call('sugerirConIa', 'causa')
+            ->call('agregarSugerencia', 'Causa sugerida por IA', $this->problemaCentral->id, 'causa_directa');
+
+        $this->assertDatabaseHas('arbol_nodos', [
+            'arbol_id' => $this->arbol->id,
+            'tipo_nodo' => 'causa_directa',
+            'descripcion' => 'Causa sugerida por IA',
+        ]);
+    }
+
     public function test_no_puede_eliminar_problema_central(): void
     {
         Livewire::actingAs($this->user)

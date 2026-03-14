@@ -32,6 +32,7 @@ class ArbolProblemaBuilder extends Component
     // Estado de IA
     public bool $sugiriendoConIa = false;
     public array $sugerenciasIa = [];
+    public string $tipoSugerencia = 'causa_directa';
 
     public function mount(ProgramaPresupuestario $programa): void
     {
@@ -120,6 +121,11 @@ class ArbolProblemaBuilder extends Component
     {
         $this->sugiriendoConIa = true;
         $this->sugerenciasIa = [];
+        $this->tipoSugerencia = match($tipoSugerencia) {
+            'causa' => 'causa_directa',
+            'efecto' => 'efecto_directo',
+            default => $tipoSugerencia,
+        };
 
         try {
             $llm = app(LlmServiceInterface::class);
