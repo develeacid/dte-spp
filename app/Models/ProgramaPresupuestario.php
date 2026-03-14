@@ -95,6 +95,22 @@ class ProgramaPresupuestario extends Model
         return $this->hasMany(\App\Models\Presupuesto\PartidaPresupuestal::class);
     }
 
+    public function sustentosLegales(): HasMany
+    {
+        return $this->hasMany(\App\Models\Juridico\SustentoLegalPrograma::class);
+    }
+
+    public function documentosNormativos(): HasMany
+    {
+        return $this->hasMany(\App\Models\Juridico\DocumentoNormativo::class);
+    }
+
+    public function validacionJuridica(): HasOne
+    {
+        return $this->hasOne(\App\Models\Juridico\ValidacionJuridicaPrograma::class)
+            ->where('ejercicio_fiscal', config('presupuesto.ejercicio_default'));
+    }
+
     // --- Scopes ---
 
     public function scopeParaTeam(Builder $query, int $teamId): Builder

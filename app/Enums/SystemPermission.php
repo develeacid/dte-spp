@@ -21,4 +21,10 @@ enum SystemPermission: string
     case CAPTURAR_AVANCE_FINANCIERO = 'capturar_avance_financiero';
     case VER_DATOS_FINANCIEROS = 'ver_datos_financieros';
     case EXPORTAR_CUENTA_PUBLICA = 'exportar_cuenta_publica';
+
+    // Jurídico
+    case GESTIONAR_SUSTENTO_LEGAL = 'gestionar_sustento_legal';
+    case VALIDAR_SUSTENTO_LEGAL = 'validar_sustento_legal';
+    case VER_SUSTENTO_LEGAL = 'ver_sustento_legal';
+    case GESTIONAR_REGLAS_OPERACION = 'gestionar_reglas_operacion';
 }

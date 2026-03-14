@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\EstadoValidacionPrograma;
 use App\Models\Mml\MirNivel;
+use App\Models\Juridico\ValidacionJuridicaPrograma;
 use App\Models\Presupuesto\PartidaPresupuestal;
 use App\Models\ProgramaPresupuestario;
 use Illuminate\Support\Collection;
@@ -25,9 +26,11 @@ class EstadoConsolidadoService
         $estado->planeacion_detalle = $planeacion['detalle'];
         $estado->planeacion_actualizado_at = now();
 
-        // --- Jurídico (stub Fase 1) ---
-        $estado->juridico_estado = 'no_implementado';
-        $estado->juridico_detalle = ['nota' => 'Módulo jurídico pendiente de implementación (Fase 3)'];
+        // --- Jurídico (Fase 3 — activado) ---
+        $juridico = $this->calcularJuridico($programaId, $ejercicio);
+        $estado->juridico_estado = $juridico['estado'];
+        $estado->juridico_detalle = $juridico['detalle'];
+        $estado->juridico_actualizado_at = now();
 
         // --- Financiero ---
         $financiero = $this->calcularFinanciero($programaId, $ejercicio);
@@ -40,14 +43,16 @@ class EstadoConsolidadoService
         if (in_array($estado->planeacion_estado, ['mir_completa', 'mir_validada'])) {
             $completas++;
         }
-        // Jurídico no cuenta en Fase 1
+        if ($estado->juridico_estado === 'validado') {
+            $completas++;
+        }
         if (in_array($estado->financiero_estado, ['costeado', 'calendarizado'])) {
             $completas++;
         }
 
         $estado->validaciones_completas = $completas;
         $estado->consolidado = match (true) {
-            $completas >= 2 => 'completo',
+            $completas >= 3 => 'completo',
             $completas >= 1 => 'parcial',
             default => 'critico',
         };
@@ -80,7 +85,7 @@ class EstadoConsolidadoService
                 ],
                 'juridico' => [
                     'estado' => $estado->juridico_estado,
-                    'label' => 'No implementado',
+                    'label' => $this->labelJuridico($estado->juridico_estado),
                 ],
                 'financiero' => [
                     'estado' => $estado->financiero_estado,
@@ -102,6 +107,8 @@ class EstadoConsolidadoService
 
         if ($area === 'planeacion') {
             $query->whereNotIn('planeacion_estado', ['mir_completa', 'mir_validada']);
+        } elseif ($area === 'juridico') {
+            $query->where('juridico_estado', '!=', 'validado');
         } elseif ($area === 'financiero') {
             $query->whereNotIn('financiero_estado', ['costeado', 'calendarizado']);
         }
@@ -194,6 +201,44 @@ class EstadoConsolidadoService
             'mir_borrador' => 'MIR borrador',
             'mir_completa' => 'MIR completa',
             'mir_validada' => 'MIR validada',
+            default => $estado,
+        };
+    }
+
+    private function calcularJuridico(int $programaId, int $ejercicio): array
+    {
+        $validacion = ValidacionJuridicaPrograma::where('programa_presupuestario_id', $programaId)
+            ->where('ejercicio_fiscal', $ejercicio)
+            ->first();
+
+        if (! $validacion) {
+            return [
+                'estado' => 'sin_registro',
+                'detalle' => ['nota' => 'Sin registro de validación jurídica'],
+            ];
+        }
+
+        return [
+            'estado' => $validacion->estado->value,
+            'detalle' => [
+                'tiene_facultad_ur' => $validacion->tiene_facultad_ur,
+                'tiene_mandato_gasto' => $validacion->tiene_mandato_gasto,
+                'tiene_rop' => $validacion->tiene_rop,
+                'checklist_completo' => $validacion->checklist_completo,
+            ],
+        ];
+    }
+
+    private function labelJuridico(string $estado): string
+    {
+        return match ($estado) {
+            'sin_registro' => 'Sin registro',
+            'pendiente' => 'Pendiente',
+            'en_revision' => 'En revisión',
+            'validado' => 'Validado',
+            'rechazado' => 'Rechazado',
+            'vencido' => 'Vencido',
+            'no_implementado' => 'No implementado',
             default => $estado,
         };
     }

@@ -8,4 +8,5 @@ enum SystemRole: string
     case PLANEADOR = 'planeador';
     case OPERADOR = 'operador';
     case ANALISTA_FINANCIERO = 'analista_financiero';
+    case ANALISTA_JURIDICO = 'analista_juridico';
 }

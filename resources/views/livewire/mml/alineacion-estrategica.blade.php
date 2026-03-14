@@ -334,6 +334,15 @@
             @endif
         </div>
 
+        {{-- Alineación normativa (Jurídico) --}}
+        @can('ver_sustento_legal')
+        <x-forms.section title="Alineación normativa" description="Estado del sustento legal del programa">
+            <div class="col-span-6">
+                <x-programa.estado-juridico :programa="$programa" />
+            </div>
+        </x-forms.section>
+        @endcan
+
         <x-slot:footer>
             <x-ui.button.secondary href="{{ route('mml.etapa5', $programa) }}">
                 Etapa anterior

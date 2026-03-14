@@ -2,6 +2,7 @@
 
 namespace App\Services\Presupuesto;
 
+use App\Models\Juridico\ValidacionJuridicaPrograma;
 use App\Models\ProgramaPresupuestario;
 use Illuminate\Support\Collection;
 
@@ -92,11 +93,24 @@ class CuentaPublicaService
     }
 
     /**
-     * Stub para estado jurídico — será reemplazado en Fase 3.
+     * Estado jurídico de un programa para el reporte de Cuenta Pública.
      */
-    public function estadoJuridicoPrograma(int $programaId): string
+    public function estadoJuridicoPrograma(int $programaId): array
     {
-        return 'no_implementado';
+        $programa = ProgramaPresupuestario::with(['validacionJuridica', 'sustentosLegales'])->find($programaId);
+
+        if (! $programa) {
+            return ['estado' => 'Sin registro', 'fundamentos' => []];
+        }
+
+        return [
+            'estado' => $programa->validacionJuridica?->estado->label() ?? 'Sin registro',
+            'fundamentos' => $programa->sustentosLegales->map(fn ($s) => [
+                'tipo' => $s->tipo->label(),
+                'cita' => $s->cita_completa,
+                'nivel' => $s->nivel_jerarquia->label(),
+            ])->toArray(),
+        ];
     }
 
     /**

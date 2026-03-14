@@ -22,6 +22,10 @@ use App\Observers\PndEjeObserver;
 use App\Observers\PndEstrategiaObserver;
 use App\Observers\PndObjetivoObserver;
 use App\Observers\ProgramaDerivadoObjetivoObserver;
+use App\Observers\SustentoLegalObserver;
+use App\Observers\DocumentoNormativoObserver;
+use App\Models\Juridico\SustentoLegalPrograma;
+use App\Models\Juridico\DocumentoNormativo;
 use App\Contracts\LlmServiceInterface;
 use App\Services\Embeddings\EmbeddingService;
 use App\Services\Embeddings\SemanticSearchService;
@@ -57,6 +61,10 @@ class AppServiceProvider extends ServiceProvider
                 return true;
             }
         });
+
+        // Registrar Observers Jurídico (siempre activos)
+        SustentoLegalPrograma::observe(SustentoLegalObserver::class);
+        DocumentoNormativo::observe(DocumentoNormativoObserver::class);
 
         // Registrar Observers para embeddings
         if ($this->shouldRegisterObservers()) {
