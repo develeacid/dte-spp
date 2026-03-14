@@ -33,6 +33,8 @@ class MirEditor extends Component
     public string $snapshotEtiqueta = '';
     public bool $mostrarVersiones = false;
     public ?int $editandoNivelId = null;
+    public ?int $viendoVersionId = null;
+    public ?array $snapshotData = null;
 
     public function mount(ProgramaPresupuestario $programa): void
     {
@@ -226,6 +228,28 @@ class MirEditor extends Component
     public function guardarFormulaTexto(int $indicadorId, string $formula): void
     {
         Indicador::findOrFail($indicadorId)->update(['formula_texto' => $formula]);
+    }
+
+    public function sugerirFormula(int $indicadorId): void
+    {
+        $indicador = Indicador::with('mirNivel')->findOrFail($indicadorId);
+        $nivel = $indicador->mirNivel;
+
+        $llm = app(LlmServiceInterface::class);
+        $prompt = "Para el indicador \"{$indicador->nombre}\" "
+            . "(tipo: {$indicador->tipo->value}, dimensión: {$indicador->dimension->value}) "
+            . "del nivel MIR \"{$nivel->tipo_nivel->label()}: {$nivel->resumen_narrativo}\", "
+            . "sugiere una fórmula de cálculo clara y precisa. "
+            . "La fórmula debe usar nombres de variables descriptivos. "
+            . "Responde SOLO con la fórmula, sin explicaciones.";
+
+        try {
+            $formula = $llm->suggest($prompt);
+            $indicador->update(['formula_texto' => trim($formula)]);
+        } catch (\Throwable $e) {
+            report($e);
+            session()->flash('error', 'No se pudo generar la fórmula.');
+        }
     }
 
     public function validarSintaxis(int $nivelId): void
@@ -440,6 +464,24 @@ class MirEditor extends Component
         $this->editandoNivelId = $this->editandoNivelId === $nivelId ? null : $nivelId;
     }
 
+    public function cargarVersion(?int $versionId): void
+    {
+        if (!$versionId) {
+            $this->viendoVersionId = null;
+            $this->snapshotData = null;
+            return;
+        }
+        $version = $this->programa->mirVersiones()->findOrFail($versionId);
+        $this->viendoVersionId = $versionId;
+        $this->snapshotData = $version->snapshot;
+    }
+
+    public function volverAVersionActual(): void
+    {
+        $this->viendoVersionId = null;
+        $this->snapshotData = null;
+    }
+
     public function toggleVersiones(): void
     {
         $this->mostrarVersiones = !$this->mostrarVersiones;
@@ -473,9 +515,7 @@ class MirEditor extends Component
 
         $unidadesMedida = CatalogoUnidadMedida::orderBy('nombre')->get();
 
-        $versiones = $this->mostrarVersiones
-            ? $this->programa->mirVersiones()->with('creador')->latest()->get()
-            : collect();
+        $versiones = $this->programa->mirVersiones()->with('creador')->latest()->get();
 
         $teams = \App\Models\Team::orderBy('name')->get();
         $anexosTransversales = AnexoTransversal::activos()->get();

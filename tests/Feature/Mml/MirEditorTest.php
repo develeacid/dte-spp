@@ -194,6 +194,38 @@ class MirEditorTest extends TestCase
         ]);
     }
 
+    public function test_sugerir_formula_genera_formula_para_indicador(): void
+    {
+        $fin = MirNivel::create([
+            'programa_presupuestario_id' => $this->programa->id,
+            'tipo_nivel' => TipoNivelMir::FIN->value,
+            'resumen_narrativo' => 'Contribuir al crecimiento del sector agroindustrial',
+            'orden' => 1,
+        ]);
+        $indicador = $fin->indicadores()->create([
+            'nombre' => 'Tasa de crecimiento del PIB agroindustrial',
+            'tipo' => 'estrategico',
+            'dimension' => 'eficacia',
+            'frecuencia' => 'anual',
+            'orden' => 1,
+        ]);
+
+        $this->mock(\App\Contracts\LlmServiceInterface::class, function ($mock) {
+            $mock->shouldReceive('isDegraded')->andReturn(false);
+            $mock->shouldReceive('suggest')->once()->andReturn(
+                '((PIB agroindustrial año actual - PIB agroindustrial año anterior) / PIB agroindustrial año anterior) × 100'
+            );
+        });
+
+        Livewire::actingAs($this->user)
+            ->test(MirEditor::class, ['programa' => $this->programa])
+            ->call('sugerirFormula', $indicador->id);
+
+        $indicador->refresh();
+        $this->assertNotNull($indicador->formula_texto);
+        $this->assertStringContainsString('PIB agroindustrial', $indicador->formula_texto);
+    }
+
     public function test_aceptar_sugerencia_limpia_estado_validacion(): void
     {
         $fin = MirNivel::create([
@@ -247,6 +279,33 @@ class MirEditorTest extends TestCase
             ->test(MirEditor::class, ['programa' => $this->programa])
             ->call('toggleEditarNivel', $fin->id)
             ->assertSet('editandoNivelId', $fin->id);
+    }
+
+    public function test_puede_ver_version_historica_en_modo_lectura(): void
+    {
+        $fin = MirNivel::create([
+            'programa_presupuestario_id' => $this->programa->id,
+            'tipo_nivel' => TipoNivelMir::FIN->value,
+            'resumen_narrativo' => 'Texto actual',
+            'orden' => 1,
+        ]);
+
+        $version = \App\Models\Mml\MirVersion::create([
+            'programa_presupuestario_id' => $this->programa->id,
+            'etiqueta' => 'v1 — Borrador inicial',
+            'snapshot' => [
+                'niveles' => [
+                    ['tipo_nivel' => 'fin', 'resumen_narrativo' => 'Texto anterior', 'orden' => 1],
+                ],
+            ],
+            'created_by' => $this->user->id,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(MirEditor::class, ['programa' => $this->programa])
+            ->call('cargarVersion', $version->id)
+            ->assertSet('viendoVersionId', $version->id)
+            ->assertSet('snapshotData', fn ($val) => $val['niveles'][0]['resumen_narrativo'] === 'Texto anterior');
     }
 
     public function test_no_prellenar_si_mir_tiene_niveles(): void

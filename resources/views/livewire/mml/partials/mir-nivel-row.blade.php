@@ -303,6 +303,17 @@
                                 placeholder="Ej: (A / B) x 100"
                             />
                             <button
+                                wire:click="sugerirFormula({{ $indicador->id }})"
+                                wire:loading.attr="disabled"
+                                wire:target="sugerirFormula({{ $indicador->id }})"
+                                class="shrink-0 inline-flex items-center gap-1 rounded bg-purple-50 px-2 py-1 text-xs text-purple-600 hover:bg-purple-100"
+                                title="Sugerir fórmula con IA"
+                            >
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                                <span wire:loading.remove wire:target="sugerirFormula({{ $indicador->id }})">Sugerir</span>
+                                <span wire:loading wire:target="sugerirFormula({{ $indicador->id }})">...</span>
+                            </button>
+                            <button
                                 wire:click="extraerVariables({{ $indicador->id }})"
                                 wire:loading.attr="disabled"
                                 wire:target="extraerVariables({{ $indicador->id }})"
