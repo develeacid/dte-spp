@@ -32,6 +32,7 @@ class MirEditor extends Component
     public ?int $nivelAlineacionActivo = null;
     public string $snapshotEtiqueta = '';
     public bool $mostrarVersiones = false;
+    public ?int $editandoNivelId = null;
 
     public function mount(ProgramaPresupuestario $programa): void
     {
@@ -432,6 +433,11 @@ class MirEditor extends Component
         $service->restaurar($version);
 
         session()->flash('success', 'MIR restaurada desde snapshot.');
+    }
+
+    public function toggleEditarNivel(?int $nivelId): void
+    {
+        $this->editandoNivelId = $this->editandoNivelId === $nivelId ? null : $nivelId;
     }
 
     public function toggleVersiones(): void

@@ -194,6 +194,61 @@ class MirEditorTest extends TestCase
         ]);
     }
 
+    public function test_aceptar_sugerencia_limpia_estado_validacion(): void
+    {
+        $fin = MirNivel::create([
+            'programa_presupuestario_id' => $this->programa->id,
+            'tipo_nivel' => TipoNivelMir::FIN->value,
+            'resumen_narrativo' => 'Texto original con errores',
+            'sintaxis_valida' => false,
+            'sintaxis_observacion' => 'No cumple estructura',
+            'sintaxis_sugerencia' => 'Contribuir a mejorar X mediante Y',
+            'sintaxis_validada_at' => now(),
+            'orden' => 1,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(MirEditor::class, ['programa' => $this->programa])
+            ->call('aceptarSugerencia', $fin->id);
+
+        $fin->refresh();
+        $this->assertEquals('Contribuir a mejorar X mediante Y', $fin->resumen_narrativo);
+        $this->assertNull($fin->sintaxis_valida);
+        $this->assertNull($fin->sintaxis_observacion);
+        $this->assertNull($fin->sintaxis_sugerencia);
+        $this->assertNull($fin->sintaxis_validada_at);
+    }
+
+    public function test_mir_editor_defaults_to_read_mode(): void
+    {
+        $fin = MirNivel::create([
+            'programa_presupuestario_id' => $this->programa->id,
+            'tipo_nivel' => TipoNivelMir::FIN->value,
+            'resumen_narrativo' => 'Contribuir al desarrollo',
+            'orden' => 1,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(MirEditor::class, ['programa' => $this->programa])
+            ->assertSet('editandoNivelId', null)
+            ->assertSeeHtml('Contribuir al desarrollo');
+    }
+
+    public function test_toggle_editar_nivel_activa_modo_edicion(): void
+    {
+        $fin = MirNivel::create([
+            'programa_presupuestario_id' => $this->programa->id,
+            'tipo_nivel' => TipoNivelMir::FIN->value,
+            'resumen_narrativo' => 'Contribuir al desarrollo',
+            'orden' => 1,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(MirEditor::class, ['programa' => $this->programa])
+            ->call('toggleEditarNivel', $fin->id)
+            ->assertSet('editandoNivelId', $fin->id);
+    }
+
     public function test_no_prellenar_si_mir_tiene_niveles(): void
     {
         // Create existing level
