@@ -15,4 +15,10 @@ enum SystemPermission: string
     case INVITAR_USUARIOS = 'invitar_usuarios';
     case VER_SABANA_CAPTURA = 'ver_sabana_captura';
     case VER_CONCENTRADO_CAPTURA = 'ver_concentrado_captura';
+
+    // Presupuesto
+    case GESTIONAR_PRESUPUESTO = 'gestionar_presupuesto';
+    case CAPTURAR_AVANCE_FINANCIERO = 'capturar_avance_financiero';
+    case VER_DATOS_FINANCIEROS = 'ver_datos_financieros';
+    case EXPORTAR_CUENTA_PUBLICA = 'exportar_cuenta_publica';
 }
