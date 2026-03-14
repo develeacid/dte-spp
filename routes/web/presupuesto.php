@@ -3,7 +3,7 @@
 use App\Http\Controllers\Presupuesto\PresupuestalController;
 use App\Livewire\Presupuesto;
 
-Route::middleware(['auth:sanctum', 'jetstream.auth_session', 'verified'])->prefix('presupuesto')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->prefix('presupuesto')->group(function () {
 
     // --- Dashboard financiero (lectura) ---
     Route::get('/', Presupuesto\PanelPresupuestal::class)

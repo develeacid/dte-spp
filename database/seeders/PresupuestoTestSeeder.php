@@ -18,7 +18,7 @@ class PresupuestoTestSeeder extends Seeder
             return;
         }
 
-        $programas = ProgramaPresupuestario::take(3)->get();
+        $programas = ProgramaPresupuestario::whereNotNull('team_id')->take(3)->get();
 
         if ($programas->count() < 3) {
             $this->command->warn('Se necesitan al menos 3 programas presupuestarios. Ejecuta QaTestingSeeder primero.');
