@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Presupuesto\PresupuestalController;
 use App\Livewire\Presupuesto;
 
 Route::middleware(['auth:sanctum', 'jetstream.auth_session', 'verified'])->prefix('presupuesto')->group(function () {
@@ -33,5 +34,9 @@ Route::middleware(['auth:sanctum', 'jetstream.auth_session', 'verified'])->prefi
     Route::middleware('can:exportar_cuenta_publica')->group(function () {
         Route::get('/cuenta-publica', Presupuesto\CuentaPublicaView::class)
             ->name('presupuesto.cuenta-publica');
+        Route::get('/exportar/pdf/{ejercicio}', [PresupuestalController::class, 'exportarPdf'])
+            ->name('presupuesto.exportar.pdf');
+        Route::get('/exportar/excel/{ejercicio}', [PresupuestalController::class, 'exportarExcel'])
+            ->name('presupuesto.exportar.excel');
     });
 });
