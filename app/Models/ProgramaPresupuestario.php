@@ -90,6 +90,11 @@ class ProgramaPresupuestario extends Model
         return $this->hasOne(\App\Models\Mml\PoblacionPrograma::class, 'programa_id');
     }
 
+    public function partidasPresupuestales(): HasMany
+    {
+        return $this->hasMany(\App\Models\Presupuesto\PartidaPresupuestal::class);
+    }
+
     // --- Scopes ---
 
     public function scopeParaTeam(Builder $query, int $teamId): Builder
