@@ -9,5 +9,8 @@
             @include('livewire.dashboard.partials._operador')
         @endif
 
+        {{-- Partial presupuestal — visible para cualquier rol con permiso financiero --}}
+        @include('livewire.dashboard.partials._analista_financiero')
+
     </x-page.container>
 </div>

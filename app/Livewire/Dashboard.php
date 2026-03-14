@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Enums\SystemRole;
 use App\Services\DashboardService;
+use App\Services\Presupuesto\PresupuestoResumenService;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -116,6 +117,42 @@ class Dashboard extends Component
         }
 
         return app(DashboardService::class)->getGlobalAdminStats();
+    }
+
+    #[Computed]
+    public function financieroStats(): ?object
+    {
+        if (! auth()->user()->can('ver_datos_financieros')) {
+            return null;
+        }
+
+        $teamId = $this->teamId();
+        $ejercicio = config('presupuesto.ejercicio_default');
+        $service = app(PresupuestoResumenService::class);
+
+        $programas = \App\Models\ProgramaPresupuestario::paraTeam($teamId)
+            ->ejercicio($ejercicio)
+            ->with(['partidasPresupuestales' => fn ($q) => $q->with('avancesFinancieros')])
+            ->get();
+
+        $totalAprobado = 0;
+        $totalEjercido = 0;
+
+        foreach ($programas as $programa) {
+            foreach ($programa->partidasPresupuestales as $partida) {
+                $totalAprobado += $partida->monto_efectivo;
+                $totalEjercido += $partida->avancesFinancieros->sum('monto_pagado');
+            }
+        }
+
+        $alertas = $service->alertasSubejercicio($teamId, $ejercicio);
+
+        return (object) [
+            'total_aprobado' => $totalAprobado,
+            'total_ejercido' => $totalEjercido,
+            'pct_ejercido' => $totalAprobado > 0 ? round(($totalEjercido / $totalAprobado) * 100, 2) : 0,
+            'alertas_subejercicio' => $alertas->count(),
+        ];
     }
 
     private function teamId(): int
