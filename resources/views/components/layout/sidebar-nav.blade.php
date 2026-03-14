@@ -71,6 +71,46 @@
 </x-ui.sidebar-group>
 @endcanany
 
+{{-- Presupuesto --}}
+@canany(['ver_datos_financieros', 'gestionar_presupuesto', 'capturar_avance_financiero', 'exportar_cuenta_publica'])
+<x-ui.sidebar-group label="Presupuesto" :active="request()->routeIs('presupuesto.*')">
+    <x-slot:icon>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </x-slot:icon>
+    <x-slot:tooltip>
+        @can('ver_datos_financieros')<a href="{{ route('presupuesto.panel') }}" class="block py-1 hover:text-brand-light">Panel</a>@endcan
+        @can('gestionar_presupuesto')<a href="{{ route('presupuesto.partidas') }}" class="block py-1 hover:text-brand-light">Partidas</a>@endcan
+        @can('exportar_cuenta_publica')<a href="{{ route('presupuesto.cuenta-publica') }}" class="block py-1 hover:text-brand-light">Cuenta Pública</a>@endcan
+    </x-slot:tooltip>
+
+    @can('ver_datos_financieros')
+        <x-ui.sidebar-item href="{{ route('presupuesto.panel') }}" :active="request()->routeIs('presupuesto.panel')">
+            Panel
+        </x-ui.sidebar-item>
+    @endcan
+    @can('gestionar_presupuesto')
+        <x-ui.sidebar-item href="{{ route('presupuesto.partidas') }}" :active="request()->routeIs('presupuesto.partidas*')">
+            Partidas
+        </x-ui.sidebar-item>
+    @endcan
+    @can('capturar_avance_financiero')
+        <x-ui.sidebar-item href="{{ route('presupuesto.panel') }}" :active="request()->routeIs('presupuesto.captura*')">
+            Captura Avance
+        </x-ui.sidebar-item>
+    @endcan
+    @can('gestionar_presupuesto')
+        <x-ui.sidebar-item href="{{ route('presupuesto.importar') }}" :active="request()->routeIs('presupuesto.importar')">
+            Importar
+        </x-ui.sidebar-item>
+    @endcan
+    @can('exportar_cuenta_publica')
+        <x-ui.sidebar-item href="{{ route('presupuesto.cuenta-publica') }}" :active="request()->routeIs('presupuesto.cuenta-publica')">
+            Cuenta Pública
+        </x-ui.sidebar-item>
+    @endcan
+</x-ui.sidebar-group>
+@endcanany
+
 {{-- Catálogos --}}
 @can('gestionar_catalogos')
 <x-ui.sidebar-group label="Catálogos" :active="request()->routeIs('cascade.*')">
