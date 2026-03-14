@@ -153,6 +153,39 @@
                         </div>
                     </div>
 
+                    {{-- PND/ODS reference badges --}}
+                    @if($objetivoEstrategicoId && ($pndRelacionados->isNotEmpty() || $odsRelacionados->isNotEmpty()))
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Alineaciones de referencia</h4>
+
+                        @if($pndRelacionados->isNotEmpty())
+                        <div class="mb-3">
+                            <span class="text-xs font-semibold text-blue-700 uppercase tracking-wide">PND</span>
+                            <div class="mt-1 flex flex-wrap gap-2">
+                                @foreach($pndRelacionados as $pnd)
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ $pnd->clave ?? $pnd->nombre ?? $pnd->descripcion ?? '' }}
+                                </span>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+
+                        @if($odsRelacionados->isNotEmpty())
+                        <div>
+                            <span class="text-xs font-semibold text-emerald-700 uppercase tracking-wide">ODS</span>
+                            <div class="mt-1 flex flex-wrap gap-2">
+                                @foreach($odsRelacionados as $ods)
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                    {{ $ods->numero ?? '' }}. {{ $ods->nombre }}
+                                </span>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+
                     {{-- Save button --}}
                     <div class="flex justify-end">
                         <button

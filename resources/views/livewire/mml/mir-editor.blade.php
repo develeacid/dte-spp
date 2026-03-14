@@ -51,6 +51,7 @@
                             'nivel' => $fin,
                             'reglas' => $reglasMap['fin'],
                             'colorClass' => 'bg-blue-50 border-l-4 border-l-blue-400',
+                            'editando' => $editandoNivelId === $fin->id,
                         ])
                     @endif
 
@@ -60,6 +61,7 @@
                             'nivel' => $proposito,
                             'reglas' => $reglasMap['proposito'],
                             'colorClass' => 'bg-emerald-50 border-l-4 border-l-emerald-400',
+                            'editando' => $editandoNivelId === $proposito->id,
                         ])
                     @endif
 
@@ -70,6 +72,7 @@
                             'reglas' => $reglasMap['componente'],
                             'colorClass' => 'bg-amber-50 border-l-4 border-l-amber-400',
                             'deletable' => true,
+                            'editando' => $editandoNivelId === $componente->id,
                         ])
 
                         {{-- ACTIVIDADES del componente --}}
@@ -79,6 +82,7 @@
                                 'reglas' => $reglasMap['actividad'],
                                 'colorClass' => 'bg-violet-50 border-l-4 border-l-violet-400 pl-6',
                                 'deletable' => true,
+                                'editando' => $editandoNivelId === $actividad->id,
                             ])
                         @endforeach
 

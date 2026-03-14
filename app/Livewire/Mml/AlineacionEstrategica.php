@@ -147,12 +147,30 @@ class AlineacionEstrategica extends Component
             return;
         }
 
+        // Validate all prerequisites
+        $arbolObjetivos = $this->programa->arboles()->where('tipo', 'objetivos')->first();
+        if (!$arbolObjetivos || $arbolObjetivos->nodos()->count() === 0) {
+            $this->addError('finalizacion', 'El árbol de objetivos debe estar completo antes de finalizar.');
+            return;
+        }
+
+        $alternativa = $this->programa->alternativas()->where('seleccionada', true)->first();
+        if (!$alternativa) {
+            $this->addError('finalizacion', 'Debe seleccionar una alternativa antes de finalizar.');
+            return;
+        }
+
+        if (!$this->programa->poblacion) {
+            $this->addError('finalizacion', 'Debe completar el embudo de poblaciones antes de finalizar.');
+            return;
+        }
+
         // Marcar planeación como completada
         $this->programa->update(['planeacion_completada_at' => now()]);
 
         // Pre-llenar MIR desde el EAP
         app(\App\Services\Mml\MirPrellenadoService::class)
-            ->prellenarDesdeEAP($this->programa);
+            ->prellenar($this->programa);
 
         // Redirigir a la MIR
         $this->redirect(route('mml.mir', $this->programa));
@@ -166,8 +184,20 @@ class AlineacionEstrategica extends Component
         $odsObjetivos = OdsObjetivo::orderBy('numero')->get();
         $anexos = AnexoTransversal::activos()->get();
 
+        // Load PND/ODS references when a PED objective is selected
+        $pndRelacionados = collect();
+        $odsRelacionados = collect();
+
+        if ($this->objetivoEstrategicoId) {
+            $pedObj = PedObjetivoEstrategico::with('pndObjetivos.odsMetas')->find($this->objetivoEstrategicoId);
+            if ($pedObj) {
+                $pndRelacionados = $pedObj->pndObjetivos ?? collect();
+                $odsRelacionados = $pndRelacionados->flatMap(fn ($pnd) => $pnd->odsMetas ?? collect())->unique('id');
+            }
+        }
+
         return view('livewire.mml.alineacion-estrategica', compact(
-            'ejes', 'temas', 'objetivos', 'odsObjetivos', 'anexos'
+            'ejes', 'temas', 'objetivos', 'odsObjetivos', 'anexos', 'pndRelacionados', 'odsRelacionados'
         ));
     }
 }

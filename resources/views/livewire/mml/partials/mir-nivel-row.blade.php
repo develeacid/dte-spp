@@ -3,6 +3,7 @@
         ? $nivel->tipo_nivel
         : \App\Enums\TipoNivelMir::tryFrom($nivel->tipo_nivel);
     $deletable = $deletable ?? false;
+    $editando = $editando ?? false;
 @endphp
 
 <tr class="{{ $colorClass }}" wire:key="nivel-{{ $nivel->id }}">
@@ -26,6 +27,54 @@
 
     {{-- Resumen Narrativo --}}
     <td class="px-3 py-3 align-top">
+        @if(!$editando)
+        {{-- READ MODE --}}
+        <div class="flex items-start justify-between gap-2">
+            <p class="text-sm text-gray-800 leading-relaxed">{{ $nivel->resumen_narrativo ?: '-' }}</p>
+            <button
+                wire:click="toggleEditarNivel({{ $nivel->id }})"
+                class="shrink-0 inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 hover:bg-gray-200"
+            >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                Editar
+            </button>
+        </div>
+
+        {{-- Read-mode alignment badges --}}
+        @php
+            $alineacionActual = null;
+            if (in_array($tipoEnum, [\App\Enums\TipoNivelMir::FIN, \App\Enums\TipoNivelMir::PROPOSITO])) {
+                $alineacionActual = $nivel->pedObjetivoEstrategico;
+            } else {
+                $alineacionActual = $nivel->pedLineaAccion;
+            }
+        @endphp
+        @if ($alineacionActual)
+            <span class="mt-1 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                {{ Str::limit($alineacionActual->descripcion ?? $alineacionActual->nombre ?? '', 60) }}
+            </span>
+        @endif
+
+        {{-- Syntax validation badge --}}
+        @if ($nivel->sintaxis_validada_at)
+            @if ($nivel->sintaxis_valida)
+                <span class="mt-1 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Sintaxis OK</span>
+            @else
+                <span class="mt-1 inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">Sintaxis: revisar</span>
+            @endif
+        @endif
+        @else
+        {{-- EDIT MODE --}}
+        <div class="space-y-2">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-gray-500">Editando</span>
+                <button
+                    wire:click="toggleEditarNivel(null)"
+                    class="inline-flex items-center gap-1 rounded bg-indigo-600 px-2 py-1 text-xs text-white hover:bg-indigo-700"
+                >
+                    Guardar y cerrar
+                </button>
+            </div>
         <textarea
             wire:change="guardarNivel({{ $nivel->id }}, 'resumen_narrativo', $event.target.value)"
             class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -144,10 +193,49 @@
                 <p class="mt-1 text-xs text-gray-500">No se encontraron coincidencias.</p>
             @endif
         </div>
+        </div>
+        @endif
     </td>
 
     {{-- Indicadores --}}
     <td class="px-3 py-3 align-top">
+        @if(!$editando)
+        {{-- READ MODE: compact indicator table --}}
+        @if($nivel->indicadores->count() > 0)
+        <div class="space-y-1.5">
+            @foreach ($nivel->indicadores as $indicador)
+                <div class="text-xs" wire:key="indicador-read-{{ $indicador->id }}">
+                    <p class="font-medium text-gray-800">{{ $indicador->nombre ?: '(sin nombre)' }}</p>
+                    <div class="flex flex-wrap gap-1 mt-0.5">
+                        <span class="inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-600">{{ $indicador->tipo?->label() ?? '-' }}</span>
+                        <span class="inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-600">{{ $indicador->dimension?->label() ?? '-' }}</span>
+                        <span class="inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-600">{{ $indicador->frecuencia?->label() ?? '-' }}</span>
+                    </div>
+                    @if($indicador->formula_texto)
+                        <p class="text-[10px] text-gray-500 mt-0.5">F: {{ $indicador->formula_texto }}</p>
+                    @endif
+                    @if($indicador->mediosVerificacion->count() > 0)
+                        <p class="text-[10px] text-gray-400 mt-0.5">MV: {{ $indicador->mediosVerificacion->pluck('nombre')->filter()->implode(', ') }}</p>
+                    @endif
+                    @if($indicador->cremaaValidacion)
+                        @php
+                            $cremaa = $indicador->cremaaValidacion;
+                            $cremaaLetters = collect(['claro','relevante','economico','monitoreable','adecuado','aportante']);
+                        @endphp
+                        <div class="flex gap-0.5 mt-0.5">
+                            @foreach(['C'=>'claro','R'=>'relevante','E'=>'economico','M'=>'monitoreable','A'=>'adecuado','A'=>'aportante'] as $l => $campo)
+                                <span class="inline-flex h-4 w-4 items-center justify-center rounded text-[9px] font-bold {{ $cremaa->{$campo} ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">{{ $l }}</span>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+        @else
+            <span class="text-xs text-gray-400 italic">Sin indicadores</span>
+        @endif
+        @else
+        {{-- EDIT MODE: full interface --}}
         <div class="space-y-3">
             @foreach ($nivel->indicadores as $indicador)
                 <div class="rounded-md border border-gray-200 bg-white p-2 space-y-2" wire:key="indicador-{{ $indicador->id }}"
@@ -214,6 +302,17 @@
                                 class="flex-1 rounded border-gray-300 text-xs"
                                 placeholder="Ej: (A / B) x 100"
                             />
+                            <button
+                                wire:click="sugerirFormula({{ $indicador->id }})"
+                                wire:loading.attr="disabled"
+                                wire:target="sugerirFormula({{ $indicador->id }})"
+                                class="shrink-0 inline-flex items-center gap-1 rounded bg-purple-50 px-2 py-1 text-xs text-purple-600 hover:bg-purple-100"
+                                title="Sugerir fórmula con IA"
+                            >
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                                <span wire:loading.remove wire:target="sugerirFormula({{ $indicador->id }})">Sugerir</span>
+                                <span wire:loading wire:target="sugerirFormula({{ $indicador->id }})">...</span>
+                            </button>
                             <button
                                 wire:click="extraerVariables({{ $indicador->id }})"
                                 wire:loading.attr="disabled"
@@ -373,6 +472,7 @@
                 Indicador
             </button>
         </div>
+        @endif
     </td>
 
     {{-- Medios de Verificación (column kept for layout, actual medios are inside indicators) --}}
@@ -382,6 +482,16 @@
 
     {{-- Supuestos --}}
     <td class="px-3 py-3 align-top">
+        @if(!$editando)
+        {{-- READ MODE --}}
+        <p class="text-sm text-gray-800">{{ $nivel->supuestos ?: '-' }}</p>
+        @if ($nivel->team)
+            <span class="mt-1 inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700">
+                UR: {{ $nivel->team->name }}
+            </span>
+        @endif
+        @else
+        {{-- EDIT MODE --}}
         <textarea
             wire:change="guardarNivel({{ $nivel->id }}, 'supuestos', $event.target.value)"
             class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -410,6 +520,7 @@
                     </span>
                 @endif
             </div>
+        @endif
         @endif
     </td>
 </tr>
