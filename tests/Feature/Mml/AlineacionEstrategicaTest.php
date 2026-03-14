@@ -92,6 +92,64 @@ class AlineacionEstrategicaTest extends TestCase
             ->assertSet('objetivoEstrategicoId', null);
     }
 
+    public function test_finalizar_planeacion_creates_mir_and_redirects(): void
+    {
+        $objetivo = $this->createPedChain();
+
+        // Setup: poblacion
+        $this->programa->poblacion()->create([
+            'referencia_cantidad' => 10000,
+            'potencial_cantidad' => 5000,
+            'objetivo_cantidad' => 2000,
+            'unidad_medida' => 'personas',
+            'anio_ejercicio' => 2026,
+        ]);
+
+        // Create objectives tree with required nodes
+        $arbolObj = \App\Models\Mml\Arbol::create([
+            'programa_presupuestario_id' => $this->programa->id,
+            'tipo' => 'objetivos',
+        ]);
+        $objetivoCentral = \App\Models\Mml\ArbolNodo::create([
+            'arbol_id' => $arbolObj->id,
+            'tipo_nodo' => 'objetivo_central',
+            'descripcion' => 'Objetivo central de prueba',
+            'orden' => 1,
+        ]);
+        $medioDirecto = \App\Models\Mml\ArbolNodo::create([
+            'arbol_id' => $arbolObj->id,
+            'parent_id' => $objetivoCentral->id,
+            'tipo_nodo' => 'medio_directo',
+            'descripcion' => 'Medio directo de prueba',
+            'orden' => 1,
+        ]);
+
+        // Create selected alternative
+        $alternativa = \App\Models\Mml\Alternativa::create([
+            'programa_presupuestario_id' => $this->programa->id,
+            'nombre' => 'Alternativa 1',
+            'seleccionada' => true,
+        ]);
+        $alternativa->nodos()->attach($medioDirecto->id);
+
+        // Create PED alignment on FIN level
+        $this->programa->mirNiveles()->create([
+            'tipo_nivel' => 'fin',
+            'resumen_narrativo' => 'FIN placeholder',
+            'orden' => 1,
+            'ped_objetivo_estrategico_id' => $objetivo->id,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(AlineacionEstrategica::class, ['programa' => $this->programa])
+            ->set('objetivoEstrategicoId', $objetivo->id)
+            ->call('finalizarPlaneacion')
+            ->assertRedirect(route('mml.mir', $this->programa));
+
+        $this->programa->refresh();
+        $this->assertNotNull($this->programa->planeacion_completada_at);
+    }
+
     public function test_carga_alineacion_existente_al_montar(): void
     {
         $objetivo = $this->createPedChain();
