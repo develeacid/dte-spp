@@ -7,6 +7,7 @@ use App\Livewire\Tracking\FlujosAvance;
 use App\Livewire\Tracking\GestionarDesbloqueos;
 use App\Livewire\Tracking\IndicadoresVencidos;
 use App\Livewire\Tracking\MisIndicadoresPendientes;
+use App\Livewire\Tracking\DashboardIndicadores;
 use App\Livewire\Tracking\SolicitarDesbloqueo;
 use Illuminate\Support\Facades\Route;
 
@@ -37,4 +38,6 @@ Route::prefix('seguimiento')
         Route::get('/concentrado-captura', \App\Livewire\Tracking\ConcentradoCaptura::class)
             ->name('tracking.concentrado-captura')
             ->middleware('can:ver_concentrado_captura');
+        Route::get('/{programa}/dashboard-indicadores', DashboardIndicadores::class)
+            ->name('tracking.dashboard-indicadores');
     });
