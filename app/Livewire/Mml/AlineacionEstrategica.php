@@ -184,8 +184,20 @@ class AlineacionEstrategica extends Component
         $odsObjetivos = OdsObjetivo::orderBy('numero')->get();
         $anexos = AnexoTransversal::activos()->get();
 
+        // Load PND/ODS references when a PED objective is selected
+        $pndRelacionados = collect();
+        $odsRelacionados = collect();
+
+        if ($this->objetivoEstrategicoId) {
+            $pedObj = PedObjetivoEstrategico::with('pndObjetivos.odsMetas')->find($this->objetivoEstrategicoId);
+            if ($pedObj) {
+                $pndRelacionados = $pedObj->pndObjetivos ?? collect();
+                $odsRelacionados = $pndRelacionados->flatMap(fn ($pnd) => $pnd->odsMetas ?? collect())->unique('id');
+            }
+        }
+
         return view('livewire.mml.alineacion-estrategica', compact(
-            'ejes', 'temas', 'objetivos', 'odsObjetivos', 'anexos'
+            'ejes', 'temas', 'objetivos', 'odsObjetivos', 'anexos', 'pndRelacionados', 'odsRelacionados'
         ));
     }
 }

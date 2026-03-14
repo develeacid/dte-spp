@@ -150,6 +150,19 @@ class AlineacionEstrategicaTest extends TestCase
         $this->assertNotNull($this->programa->planeacion_completada_at);
     }
 
+    public function test_seleccionar_objetivo_carga_relaciones_pnd_ods(): void
+    {
+        $objetivo = $this->createPedChain();
+
+        Livewire::actingAs($this->user)
+            ->test(AlineacionEstrategica::class, ['programa' => $this->programa])
+            ->set('ejeId', $objetivo->tema->eje->id)
+            ->set('temaId', $objetivo->tema->id)
+            ->set('objetivoEstrategicoId', $objetivo->id)
+            ->assertViewHas('pndRelacionados')
+            ->assertViewHas('odsRelacionados');
+    }
+
     public function test_carga_alineacion_existente_al_montar(): void
     {
         $objetivo = $this->createPedChain();
