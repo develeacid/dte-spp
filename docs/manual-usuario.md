@@ -160,17 +160,19 @@ Gestión de programas sectoriales, especiales, institucionales o regionales con 
 
 ### 5.2 Etapas del MML
 
-Cada programa sigue 5 etapas secuenciales:
+Cada programa sigue 7 etapas secuenciales. Las primeras 6 conforman la planeación (con un stepper visual de progreso) y la séptima es la construcción de la MIR:
 
 | Etapa | Nombre | Descripción |
 |-------|--------|-------------|
 | 1 | Definición del Problema | Identificar el problema central |
-| 2 | Árbol de Problema | Construir causas y efectos |
+| 2 | Árbol de Problemas | Construir causas y efectos |
 | 3 | Árbol de Objetivos | Transformar problemas en objetivos |
 | 4 | Selección de Alternativas | Elegir la mejor alternativa |
-| 5 | Matriz MIR | Construir la Matriz de Indicadores |
+| 5 | Embudo de Poblaciones | Definir poblaciones de referencia, potencial y objetivo |
+| 6 | Alineación Estratégica | Vincular con PED, ODS y anexos transversales |
+| 7 | Matriz MIR | Construir la Matriz de Indicadores para Resultados |
 
-### 5.3 Árbol de Problema (Etapa 2)
+### 5.3 Árbol de Problemas (Etapa 2)
 
 1. Se parte del problema central definido en Etapa 1
 2. Agregar causas directas e indirectas (abajo)
@@ -183,7 +185,24 @@ Cada programa sigue 5 etapas secuenciales:
 2. Los problemas se convierten en medios y fines
 3. Se puede editar el texto transformado
 
-### 5.5 Matriz MIR (Etapa 5)
+### 5.5 Embudo de Poblaciones (Etapa 5)
+
+1. Definir la unidad de medida (ej. "Niños", "Familias", "MIPYMES")
+2. Registrar la Población de Referencia (total, con fuente opcional)
+3. Registrar la Población Potencial (afectada por el problema, con fuente opcional)
+4. Registrar la Población Objetivo (que el programa atenderá, con justificación opcional)
+5. El sistema valida que Objetivo <= Potencial <= Referencia
+
+### 5.6 Alineación Estratégica (Etapa 6)
+
+1. Seleccionar Eje, Tema y Objetivo Estratégico del PED (selects dependientes)
+2. Opcionalmente vincular con ODS (Agenda 2030)
+3. Marcar Anexos Transversales aplicables (Igualdad de Género, Discapacidad, Infancia, etc.)
+4. Se puede usar la búsqueda semántica con IA para que el sistema sugiera el Objetivo Estratégico más afín al problema central del programa
+
+Al completar las 6 etapas de planeación, el sistema permite finalizar la planeación y generar automáticamente la estructura de la MIR.
+
+### 5.7 Matriz MIR (Etapa 7)
 
 La MIR es una tabla con 4 niveles: **Fin → Propósito → Componente → Actividad**
 
@@ -254,6 +273,20 @@ Lista de indicadores cuya fecha de cierre pasó sin captura. Los administradores
 
 - **Operador:** Solicitar desbloqueo en `/seguimiento/desbloqueo/{avance}` indicando motivo
 - **Admin/Planeador:** Gestionar solicitudes en `/seguimiento/desbloqueos` (aprobar/rechazar)
+
+### 6.7 Sábana de Captura
+
+**Ruta:** `/seguimiento/sabana`
+**Permiso:** `ver_sabana_captura`
+
+Vista tabular completa de todas las metas por periodo con sus avances. Permite filtrar por programa, trimestre y estado de captura. Los administradores ven todos los programas; los planeadores ven solo los de su equipo.
+
+### 6.8 Concentrado de Captura
+
+**Ruta:** `/seguimiento/concentrado`
+**Permiso:** `ver_concentrado_captura`
+
+Resumen consolidado de avances capturados en un rango de fechas. Permite filtrar por fecha de inicio y fin. Útil para generar reportes de actividad de captura por periodo.
 
 ---
 

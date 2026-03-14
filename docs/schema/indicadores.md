@@ -21,6 +21,7 @@ Ficha técnica de cada indicador vinculado a un nivel MIR.
 | rango_rojo_min/max | decimal(8,2) | sí | Semaforización roja |
 | unidad_medida_id | FK → catalogo_unidades_medida | sí | Unidad de medida |
 | orden | smallint | no | Orden (default 0) |
+| activo_seguimiento | boolean | no | Indica si el indicador está activo para seguimiento (default true) |
 
 ## Tabla: `indicador_variables`
 
@@ -82,9 +83,29 @@ Validación CREMAA (Claro, Relevante, Económico, Monitoreable, Adecuado, Aporta
 | aportante | boolean | no | ¿Es aportante? (default false) |
 | aportante_observacion | text | sí | Observación |
 
+## Tabla pivote: `indicador_anexo_transversal`
+
+Vinculación N:N entre indicadores y anexos transversales.
+
+| Campo | Tipo | Nullable | Descripción |
+|---|---|---|---|
+| indicador_id | FK → indicadores | no | Cascade on delete |
+| anexo_transversal_id | FK → anexos_transversales | no | Cascade on delete |
+| timestamps | | | created_at, updated_at |
+
+**Constraint UNIQUE:** `(indicador_id, anexo_transversal_id)`
+
 ## Modelos Eloquent
 
-- `App\Models\Mml\Indicador` — relaciones: mirNivel, variables, mediosVerificacion, cremaaValidacion, unidadMedida
+- `App\Models\Mml\Indicador` — relaciones:
+  - `mirNivel()` → BelongsTo MirNivel
+  - `variables()` → HasMany IndicadorVariable (ordenadas por `orden`)
+  - `mediosVerificacion()` → HasMany MedioVerificacion (ordenados por `orden`)
+  - `cremaaValidacion()` → HasOne CremaaValidacion
+  - `unidadMedida()` → BelongsTo CatalogoUnidadMedida
+  - `metasPeriodo()` → HasMany MetaPeriodo (ordenadas por `periodo`)
+  - `avances()` → HasMany Avance (`App\Models\Tracking\Avance`)
+  - `anexosTransversales()` → BelongsToMany AnexoTransversal (`App\Models\Evaluation\AnexoTransversal`) vía `indicador_anexo_transversal`
 - `App\Models\Mml\IndicadorVariable` — relaciones: indicador, unidadMedida
 - `App\Models\Mml\MedioVerificacion` — relaciones: indicador
 - `App\Models\Mml\CremaaValidacion` — relaciones: indicador
@@ -96,3 +117,7 @@ Validación CREMAA (Claro, Relevante, Económico, Monitoreable, Adecuado, Aporta
 - `App\Enums\DimensionIndicador` — eficacia, eficiencia, calidad, economia
 - `App\Enums\FrecuenciaMedicion` — mensual, trimestral, semestral, anual, bianual, sexenal
 - `App\Enums\SentidoIndicador` — ascendente, descendente, regular
+
+## Auditoría
+
+`Indicador` usa `Spatie\Activitylog\Traits\LogsActivity` para registrar cambios en campos clave, incluyendo `activo_seguimiento`.

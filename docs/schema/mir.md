@@ -18,6 +18,10 @@ Almacena los 4 niveles jerárquicos de la MIR: Fin, Propósito, Componente, Acti
 | programa_derivado_objetivo_id | FK → programas_derivados_objetivos | sí | Alineación con Programa Derivado |
 | ped_linea_accion_id | FK → ped_lineas_accion | sí | Alineación con línea de acción |
 | team_id | FK → teams | sí | UR Coadyuvante |
+| sintaxis_valida | boolean | sí | Resultado de validación de sintaxis |
+| sintaxis_observacion | text | sí | Observación de la validación de sintaxis |
+| sintaxis_sugerencia | text | sí | Sugerencia de mejora de sintaxis |
+| sintaxis_validada_at | timestamp | sí | Fecha/hora de la última validación de sintaxis |
 | timestamps | | | created_at, updated_at |
 
 ### Índices
@@ -29,6 +33,7 @@ Almacena los 4 niveles jerárquicos de la MIR: Fin, Propósito, Componente, Acti
 - Componente: múltiples por programa
 - Actividad: múltiples por componente, requiere `componente_id`
 - Cascade delete: eliminar programa elimina todos los niveles; eliminar componente elimina sus actividades
+- Las FKs de alineación (`ped_objetivo_estrategico_id`, `programa_derivado_objetivo_id`, `ped_linea_accion_id`, `team_id`) usan `nullOnDelete`
 
 ## Tabla: `mir_versiones`
 
@@ -43,7 +48,30 @@ Snapshots completos de la MIR en un momento dado.
 | created_by | FK → users | sí | Usuario que creó la versión |
 | timestamps | | | created_at, updated_at |
 
-### Modelos Eloquent
-- `App\Models\Mml\MirNivel` — relaciones: programa, componente, actividades, nodoOrigen, team
-- `App\Models\Mml\MirVersion` — relaciones: programa, creador
-- `App\Enums\TipoNivelMir` — backed enum con label(), orden(), colorClass()
+## Modelos Eloquent
+
+- `App\Models\Mml\MirNivel` — relaciones:
+  - `programa()` → BelongsTo ProgramaPresupuestario
+  - `componente()` → BelongsTo MirNivel (componente padre)
+  - `actividades()` → HasMany MirNivel (actividades hijas, ordenadas por `orden`)
+  - `nodoOrigen()` → BelongsTo ArbolNodo
+  - `team()` → BelongsTo Team (UR Coadyuvante)
+  - `indicadores()` → HasMany Indicador (ordenados por `orden`)
+  - `pedObjetivoEstrategico()` → BelongsTo PedObjetivoEstrategico
+  - `programaDerivadoObjetivo()` → BelongsTo ProgramaDerivadoObjetivo (implícita vía FK `programa_derivado_objetivo_id`)
+  - `pedLineaAccion()` → BelongsTo PedLineaAccion
+- `App\Models\Mml\MirVersion` — relaciones:
+  - `programa()` → BelongsTo ProgramaPresupuestario
+  - `creador()` → BelongsTo User
+
+## Enums
+
+- `App\Enums\TipoNivelMir` — backed enum: fin, proposito, componente, actividad
+  - `label()` — etiqueta legible ("Fin", "Propósito", "Componente", "Actividad")
+  - `orden()` — orden numérico (1–4)
+  - `colorClass()` — clases Tailwind para badge de color
+  - `values()` — array de valores string
+
+## Auditoría
+
+`MirNivel` usa `Spatie\Activitylog\Traits\LogsActivity` para registrar cambios en campos clave, incluyendo `sintaxis_valida` y `sintaxis_observacion`.

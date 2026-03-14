@@ -1,4 +1,4 @@
-# Diseño UX: Wizard de Planeación MML (6 Pasos Guiados)
+# Diseño UX: Wizard de Planeación MML (7 Etapas: 6 de Planeación + MIR)
 
 > Principio rector: **La IA sugiere, el usuario decide.**
 > El sistema nunca impone — propone, valida y guía. El planeador conserva
@@ -20,13 +20,17 @@ Cada paso desbloquea el siguiente solo cuando cumple requisitos metodológicos m
 
 ## Arquitectura del Wizard
 
-### Stepper Visual (componente compartido en todas las etapas)
+### Stepper Visual (componente `x-mml.stepper`, compartido en etapas 1-6)
 
 ```
-[1 Problema] ──→ [2 Árbol ─] ──→ [3 Árbol +] ──→ [4 Alternativa] ──→ [5 Poblaciones] ──→ [6 Alineación]
-     ✓                ✓                ○                  ○                   ○                  ○
-  completado       completado       activo              bloqueado          bloqueado          bloqueado
+[1 Problema] ──→ [2 Árbol −] ──→ [3 Árbol +] ──→ [4 Alternativa] ──→ [5 Poblaciones] ──→ [6 Alineación]  ──→  [7 MIR]
+     ✓                ✓                ○                  ○                   ○                  ○                  ○
+  completado       completado       activo              bloqueado          bloqueado          bloqueado         (separado)
 ```
+
+> El stepper visual (`x-mml.stepper`) muestra los pasos 1-6 de planeación.
+> La Etapa 7 (MIR) se accede tras finalizar la planeación desde el Paso 6
+> y tiene su propia interfaz independiente (`MirEditor`).
 
 **Estados de cada paso:**
 - `completado` — Círculo verde con checkmark. Clickeable (el usuario puede regresar).
@@ -52,15 +56,15 @@ el estado de cada paso consultando la DB (`arbol_problemas`, `arbol_objetivos`,
 ### UX objetivo (mejoras)
 - **Redacción guiada:** El campo muestra el placeholder
   `"Ej: Alta tasa de desnutrición infantil en comunidades rurales del estado"`
-- **Validación IA en tiempo real** (al perder foco, no solo al presionar botón):
+- **Validación IA al hacer clic** (botón "Validar con IA", no al perder foco):
   - Detecta si el problema está redactado como **estado negativo** (correcto)
   - Advierte si está redactado como **solución** ("Implementar programa de...") — el error
     más común en planeación pública
   - Advierte si describe **ausencia de recurso** ("Falta de presupuesto...") — trampa MML
-- **Documento diagnóstico (opcional pero recomendado):**
-  - Campo URL o upload de PDF (INEGI, CONEVAL, diagnóstico propio)
-  - El sistema muestra badge "Con evidencia" / "Sin evidencia empírica" en el stepper
-  - No bloquea el avance, pero lo registra para la evaluación posterior
+- **Documento diagnóstico (opcional pero recomendado):** *(no implementado aún)*
+  - ~Campo URL o upload de PDF (INEGI, CONEVAL, diagnóstico propio)~
+  - ~El sistema muestra badge "Con evidencia" / "Sin evidencia empírica" en el stepper~
+  - ~No bloquea el avance, pero lo registra para la evaluación posterior~
 
 **IA en este paso:**
 - `validate()` → detecta tipo de redacción (estado negativo / solución / ausencia recurso)
@@ -103,12 +107,12 @@ el estado de cada paso consultando la DB (`arbol_problemas`, `arbol_objetivos`,
 - **Explicación visual:** Mostrar lado a lado problema (rojo) → objetivo (verde)
   con flecha de transformación entre ellos
 - **Generación masiva con IA:** Botón "Transformar todos con IA" que procesa
-  todos los nodos pendientes en secuencia (hoy solo se hace nodo por nodo)
+  todos los nodos pendientes en secuencia (implementado en `transformarTodosConIa()`)
 - **Botón "Siguiente: Selección de Alternativa"** en el footer
 
 **IA en este paso:**
 - `transformarConIa(nodoId)` → ya implementado
-- Nueva: `transformarTodosConIa()` → itera todos los nodos `[Pendiente]` en secuencia
+- `transformarTodosConIa()` → itera todos los nodos `[Pendiente]` en secuencia (implementado)
 
 **Criterio para completar el paso:** Ningún nodo en estado `[Pendiente de transformación]`.
 
@@ -134,10 +138,10 @@ el estado de cada paso consultando la DB (`arbol_problemas`, `arbol_objetivos`,
 
 ---
 
-## Paso 5 — Embudo de Poblaciones (NUEVO)
+## Paso 5 — Embudo de Poblaciones (implementado)
 
-**Ruta:** `/mml/{programa}/etapa/5` *(nueva ruta — el MIR pasa a etapa/6)*
-**Componente:** `EmbudoPoblaciones` (crear)
+**Ruta:** `/mml/{programa}/etapa/5`
+**Componente:** `EmbudoPoblaciones`
 
 > Ver `docs/architecture/embudo-poblaciones-padron-beneficiarios.md` para la
 > arquitectura de datos completa y la conexión con el Padrón de Beneficiarios.
@@ -197,10 +201,10 @@ Objetivo ≤ Potencial ≤ Referencia
 
 ---
 
-## Paso 6 — Alineación Estratégica (REUBICADO)
+## Paso 6 — Alineación Estratégica (implementado)
 
-**Ruta:** `/mml/{programa}/etapa/6` *(antes estaba dentro del MIR Editor)*
-**Componente:** `AlineacionEstrategica` (extraer del MIR Editor o crear nuevo)
+**Ruta:** `/mml/{programa}/etapa/6`
+**Componente:** `AlineacionEstrategica`
 
 ### UX: Selects dependientes
 
@@ -229,42 +233,47 @@ Anexos Transversales
 
 ---
 
-## Botón Final: "Finalizar Planeación y Crear MIR"
+## Botón Final: "Finalizar Planeación y Crear MIR" (implementado)
 
-Al completar los 6 pasos, aparece el CTA principal:
-
-```
-┌─────────────────────────────────────────────────┐
-│  ✅ Planeación completa (6/6 pasos)             │
-│                                                 │
-│  [  Finalizar Planeación y Crear MIR  →  ]      │
-│                                                 │
-│  Esto generará automáticamente:                 │
-│  • La estructura Fin/Propósito/Componentes      │
-│  • El Propósito vendrá de tu alternativa        │
-│    seleccionada en el Paso 4                    │
-│  • Los niveles pre-poblados desde el EAP        │
-└─────────────────────────────────────────────────┘
-```
+Al completar los 6 pasos de planeación, aparece el CTA en la vista de Alineación Estratégica
+(Paso 6), implementado en `AlineacionEstrategica::finalizarPlaneacion()`:
 
 **Acción del sistema al confirmar:**
-1. Marca `programa.planeacion_completada_at = now()`
-2. Llama `MirPrellenadoService::prellenarDesdeEAP($programa)` (ya existe)
-3. Redirige a `/mml/{programa}/etapa/7/mir` (MIR Editor, renumerado)
+1. Valida que todos los prerrequisitos estén completos (árbol de objetivos, alternativa seleccionada, poblaciones)
+2. Marca `programa.planeacion_completada_at = now()`
+3. Llama `MirPrellenadoService::prellenar($programa)`
+4. Redirige a la ruta `mml.mir` (MIR Editor)
 
 ---
 
-## Impacto en Rutas (reordenamiento)
+## Paso 7 — Matriz de Indicadores para Resultados (MIR)
 
-| Antes | Después | Componente |
+**Ruta:** `/mml/{programa}/mir`
+**Componente:** `MirEditor` (implementado)
+
+El MIR Editor permite construir la Matriz de Indicadores completa con niveles
+Fin, Propósito, Componentes y Actividades. Incluye validación de sintaxis con IA,
+validación CREMAA, búsqueda semántica de alineación, gestión de snapshots/versiones
+y asignación de URs coadyuvantes.
+
+> **Nota:** Actualmente la Etapa 7 (MIR) no tiene gate de completitud (completion gate).
+> El usuario puede trabajar en la MIR sin restricción de que todos los campos
+> estén completos. No hay un botón de "finalizar MIR" que bloquee hasta cumplir
+> requisitos mínimos.
+
+---
+
+## Rutas Actuales
+
+| Ruta | Componente | Estado |
 |---|---|---|
-| `/etapa/1` | `/etapa/1` | `DefinicionProblema` (extender) |
-| `/etapa/2` | `/etapa/2` | `ArbolProblemaBuilder` (extender) |
-| `/etapa/3` | `/etapa/3` | `ArbolObjetivosBuilder` (extender) |
-| `/etapa/4` | `/etapa/4` | `SeleccionAlternativas` (extender) |
-| ❌ no existe | `/etapa/5` | `EmbudoPoblaciones` (crear) |
-| ❌ en MIR | `/etapa/6` | `AlineacionEstrategica` (crear/extraer) |
-| `/etapa/5/mir` | `/etapa/7/mir` | `MirEditor` (renumerar ruta) |
+| `/mml/{programa}/etapa/1` | `DefinicionProblema` | Implementado |
+| `/mml/{programa}/etapa/2` | `ArbolProblemaBuilder` | Implementado |
+| `/mml/{programa}/etapa/3` | `ArbolObjetivosBuilder` | Implementado |
+| `/mml/{programa}/etapa/4` | `SeleccionAlternativas` | Implementado |
+| `/mml/{programa}/etapa/5` | `EmbudoPoblaciones` | Implementado |
+| `/mml/{programa}/etapa/6` | `AlineacionEstrategica` | Implementado |
+| `/mml/{programa}/mir` | `MirEditor` | Implementado |
 
 ---
 
@@ -291,12 +300,14 @@ Al completar los 6 pasos, aparece el CTA principal:
 
 | Componente | Estado |
 |---|---|
-| Stepper visual `x-mml.stepper` | ❌ Crear |
-| Paso 1 — mejoras IA en tiempo real | ⚠️ Extender |
-| Paso 2 — tooltip metodológico + botón Siguiente | ⚠️ Extender |
-| Paso 3 — transformar todos con IA + botón Siguiente | ⚠️ Extender |
-| Paso 4 — badge enlace MIR + botón Siguiente | ⚠️ Extender |
-| Paso 5 — `EmbudoPoblaciones` (migración + componente + vista) | ❌ Crear |
-| Paso 6 — `AlineacionEstrategica` (extraer del MIR + ruta nueva) | ❌ Crear |
-| CTA "Finalizar Planeación y Crear MIR" | ❌ Crear |
-| Reordenamiento de rutas (etapa/5→7) | ❌ Requiere PR coordinado |
+| Stepper visual `x-mml.stepper` (6 pasos de planeación) | ✅ Implementado |
+| Paso 1 — Validación IA on-click + placeholder guiado | ✅ Implementado |
+| Paso 1 — Documento diagnóstico (upload/URL) | ❌ No implementado |
+| Paso 2 — Árbol de problemas con sugerencias IA | ✅ Implementado |
+| Paso 3 — Transformar nodos con IA (individual y masivo) | ✅ Implementado |
+| Paso 4 — Selección de alternativas con evaluación IA | ✅ Implementado |
+| Paso 5 — `EmbudoPoblaciones` (formulario + validación embudo) | ✅ Implementado |
+| Paso 6 — `AlineacionEstrategica` (PED + ODS + anexos + búsqueda semántica) | ✅ Implementado |
+| CTA "Finalizar Planeación y Crear MIR" (en Paso 6) | ✅ Implementado |
+| Paso 7 — `MirEditor` (MIR completa con validaciones IA) | ✅ Implementado |
+| Paso 7 — Gate de completitud (bloqueo hasta cumplir mínimos) | ❌ No implementado |

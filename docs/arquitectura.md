@@ -54,39 +54,53 @@ El SPP 2026 es una aplicación web monolítica basada en Laravel 12 que implemen
 
 ```
 app/
-├── Console/Commands/       # 7 comandos artisan programados
-├── Enums/                  # 15 enums PHP 8.1 (estados, tipos)
+├── Actions/
+│   ├── Fortify/             # 5 acciones: CreateNewUser, passwords, profile
+│   └── Jetstream/           # 7 acciones: Teams (CRUD, invite, members)
+├── Console/Commands/        # 7 comandos artisan programados
+├── Contracts/               # 2 interfaces: EmbeddingServiceInterface, LlmServiceInterface
+├── DTOs/                    # 3 DTOs: ImportedMirData, LlmValidationResult, SimilarityResult
+├── Enums/                   # 15 enums PHP 8.1 (estados, tipos)
+├── Exceptions/              # 2 excepciones: LlmException, TransicionInvalidaException
+├── Exports/
+│   ├── Excel/               # 9 exports: MIR, avance trimestral, concentrado, sábana, evaluación, transversal
+│   └── Pdf/                 # 8 exports: MIR, ficha técnica, FMyE, avance, concentrado, sábana, evaluación, transversal
 ├── Http/
-│   ├── Controllers/        # Controllers por dominio
-│   │   ├── Cascade/        # PED, Alineación, Programas Derivados
-│   │   ├── Evaluation/     # Export, Datos Abiertos
-│   │   ├── Tracking/       # Evidencias
-│   │   └── OnboardingController.php
-│   └── Middleware/          # 4 middleware custom
-├── Livewire/               # 37 componentes Livewire
-│   ├── Admin/              # MonitoreoIa, GestionUsuarios, Auditoria
-│   ├── Cascade/            # PED tree, alineación, importador
-│   ├── Mml/                # MIR editor, árboles, importación
-│   ├── Tracking/           # Captura, flujos, desbloqueos
-│   ├── Evaluation/         # Evaluación, panel transversal
-│   ├── Dashboard.php       # Dashboard role-based
+│   ├── Controllers/         # Controllers por dominio (ver 3.3)
+│   ├── Middleware/           # 4 middleware custom
+│   └── Requests/            # 10 Form Requests (validación)
+│       ├── Cascade/         # 7: StorePedPlan/Eje/Tema/Objetivo/Estrategia/LineaAccion/NodoRequest
+│       ├── Mml/             # 1: StoreIndicadorRequest
+│       └── [root]           # 2: StoreProgramaDerivado/ObjetivoRequest
+├── Jobs/                    # 4 jobs
+│   ├── Embeddings/          # GenerateEmbedding
+│   └── [root]               # GenerarReporteExcelJob, GenerarReportePdfJob, ProcessLlmRequest
+├── Livewire/                # 42 componentes Livewire (ver 3.4)
+│   ├── Admin/               # MonitoreoIa, GestionUsuarios, Auditoría
+│   ├── Cascade/             # PED tree, alineación, importador, programas derivados
+│   ├── Mml/                 # MIR editor, árboles, importación, poblaciones
+│   ├── Tracking/            # Captura, flujos, desbloqueos, sábana, concentrado
+│   ├── Evaluation/          # Evaluación, panel transversal
+│   ├── Dashboard.php        # Dashboard role-based
 │   ├── NotificationBell.php
 │   └── NotificationsIndex.php
-├── Models/                 # 38 modelos Eloquent
-│   ├── Mml/                # Arbol, Indicador, MirNivel, MetaPeriodo...
-│   ├── Tracking/           # Avance, AvanceEvidencia, Desbloqueo
-│   ├── Evaluation/         # EvaluacionPrograma, AnexoTransversal
-│   └── [root]              # User, Team, PED models, ODS, PND
-├── Notifications/          # Notificaciones del sistema
-└── Services/               # Lógica de negocio
-    ├── DashboardService.php
-    ├── InvitacionUsuarioService.php
-    ├── PedMarkdownParser.php
-    ├── Embeddings/         # Generación y búsqueda semántica
-    ├── Evaluation/         # Cálculo de índices
-    ├── Llm/                # Integración OpenAI
-    ├── Mml/                # Lógica MML (árboles, MIR)
-    └── Tracking/           # Semáforo, workflows
+├── Mail/                    # 1: InvitacionUsuario
+├── Models/                  # 39 modelos Eloquent
+│   ├── Mml/                 # Arbol, Indicador, MirNivel, MetaPeriodo, MirVersion...
+│   ├── Tracking/            # Avance, AvanceEvidencia, AvanceVariable, Desbloqueo
+│   ├── Evaluation/          # EvaluacionPrograma, AnexoTransversal
+│   └── [root]               # User, Team, PED models, ODS, PND, LlmLog...
+├── Notifications/           # 6 notificaciones del sistema
+├── Observers/               # 8 observers: PED, PND, ODS, ProgramaDerivadoObjetivo, Embedding
+├── Policies/                # 1: TeamPolicy
+├── Services/                # 23 servicios de lógica de negocio (ver 3.5)
+│   ├── Embeddings/          # EmbeddingService, SemanticSearchService
+│   ├── Evaluation/          # IndiceEficaciaService, LogicaVerticalService, DatosAbiertosService
+│   ├── Llm/                 # LlmService, LlmBudgetService
+│   ├── Mml/                 # 7 servicios: parser, persistencia, snapshot, prellenado, diagnóstico, validación, calendarización
+│   ├── Tracking/            # 5 servicios: semáforo, estado, fórmula, calendario, justificación
+│   └── [root]               # DashboardService, InvitacionUsuarioService, PedMarkdownParser
+└── Traits/                  # 1: HasEmbedding
 ```
 
 ### 3.2 Dominios Funcionales
@@ -98,6 +112,48 @@ app/
 | **Tracking** | Seguimiento de avances | Avance, AvanceEvidencia, MetaPeriodo, Desbloqueo |
 | **Evaluation** | Evaluación y reportes | EvaluacionPrograma, AnexoTransversal |
 | **Admin** | Usuarios, IA, auditoría | User, Team, LlmLog, ActivityLog |
+
+### 3.3 Controllers
+
+```
+Http/Controllers/
+├── Cascade/
+│   ├── PedController.php               # CRUD completo del árbol PED (plan, ejes, temas, objetivos, estrategias, líneas)
+│   ├── MatrizAlineacionController.php   # Vista de matriz de alineación PED-PND-ODS
+│   └── ProgramaDerivadoController.php   # CRUD de programas derivados y sus objetivos
+├── Evaluation/
+│   ├── ExportController.php             # Generación y descarga de reportes PDF/Excel
+│   └── DatosAbiertosController.php      # API pública de datos abiertos (JSON/CSV)
+├── Tracking/
+│   └── EvidenciaController.php          # Descarga controlada de archivos de evidencia
+├── OnboardingController.php             # Flujo de activación de cuenta post-invitación
+└── Controller.php                       # Base controller
+```
+
+### 3.4 Componentes Livewire (42)
+
+| Subdominio | Componentes | Descripción |
+|------------|------------|-------------|
+| `Admin/` | 3 | MonitoreoIa, GestionUsuarios, Auditoría |
+| `Cascade/` | 9 | PedTree, PedPlanForm, PedNodoForm, PedImporter, AlineacionPedPnd, AlineacionPndOds, AlineacionLineaPrograma, CadenaAlineacion, MatrizAlineacionManager, ProgramasDerivadosManager |
+| `Mml/` | 13 | ListaProgramas, DefinicionProblema, ArbolProblemaBuilder, ArbolObjetivosBuilder, SeleccionAlternativas, MirEditor, CalendarizarMetas, AlineacionEstrategica, VincularAlineacion, ImportarPrograma, DashboardImportaciones, CompletarHuecos, EmbudoPoblaciones |
+| `Tracking/` | 11 | PanelSeguimiento, CapturaAvance, EvidenciaAvance, FlujosAvance, GestionarDesbloqueos, SolicitarDesbloqueo, IndicadoresVencidos, MisIndicadoresPendientes, DashboardIndicadores, SábanaCaptura, ConcentradoCaptura |
+| `Evaluation/` | 2 | EvaluacionProgramaView, PanelTransversal |
+| [root] | 3 | Dashboard, NotificationBell, NotificationsIndex |
+
+### 3.5 Servicios de Lógica de Negocio
+
+Servicios clave:
+- `DashboardService`: Estadísticas, semáforo, tendencias (cacheado 10 min)
+- `InvitacionUsuarioService`: Flujo de activación de cuentas
+- `PedMarkdownParser`: Parser de archivos Markdown para importar PED
+- `Tracking/SemaforoService`: Cálculo de semáforo (verde/amarillo/rojo)
+- `Tracking/FormulaEvaluatorService`: Evaluación segura de fórmulas con Symfony Expression Language
+- `Tracking/AvanceEstadoService`: Máquina de estados para transiciones de avance
+- `Evaluation/IndiceEficaciaService`: Cálculo ponderado de eficacia
+- `Evaluation/LogicaVerticalService`: Validación de lógica vertical MIR
+- `Mml/MirParserService`: Parseo de archivos Excel para importación MIR
+- `Mml/MirSnapshotService`: Versionado de snapshots MIR (JSONB)
 
 ---
 
@@ -133,14 +189,35 @@ Livewire Component → Service → Model/Query
    Vista            Cache (Redis)
 ```
 
-Servicios clave:
-- `DashboardService`: Estadísticas, semáforo, tendencias (cacheado 10 min)
-- `InvitacionUsuarioService`: Flujo de activación de cuentas
-- `PedMarkdownParser`: Parser de archivos Markdown para importar PED
-- `Tracking/SemaforoService`: Cálculo de semáforo (verde/amarillo/rojo)
-- `Evaluation/IndiceEficaciaService`: Cálculo ponderado de eficacia
+### 4.4 DTOs para Transferencia de Datos
 
-### 4.4 Computed Properties (Livewire)
+Data Transfer Objects tipados para comunicación entre capas:
+- `ImportedMirData`: Estructura de datos parseados de Excel para importación MIR
+- `LlmValidationResult`: Resultado de validación de sintaxis vía IA
+- `SimilarityResult`: Resultado de búsqueda semántica con score de similitud
+
+### 4.5 Jobs para Procesos Asíncronos
+
+Tareas pesadas delegadas a la cola de Redis:
+- `GenerarReporteExcelJob` / `GenerarReportePdfJob`: Generación de reportes en background
+- `ProcessLlmRequest`: Llamadas a OpenAI API
+- `Embeddings/GenerateEmbedding`: Generación de embeddings vectoriales
+
+### 4.6 Observers para Efectos Secundarios
+
+Observers registrados para mantener consistencia:
+- `PedObserver`, `PndEjeObserver`, `PndObjetivoObserver`, `PndEstrategiaObserver`: Invalidación de cache en cascada
+- `OdsObjetivoObserver`, `OdsMetaObserver`: Sincronización de datos ODS
+- `ProgramaDerivadoObjetivoObserver`: Actualización de relaciones
+- `EmbeddingObserver`: Regeneración de embeddings al modificar modelos
+
+### 4.7 Exports (PDF y Excel)
+
+Capa dedicada para generación de reportes exportables:
+- **Excel/** (9 clases): Usa Maatwebsite/Excel con sheets múltiples (MIR, avance trimestral, concentrado, sábana, evaluación, transversal)
+- **Pdf/** (8 clases): Usa barryvdh/dompdf (MIR, ficha técnica, FMyE, avance, concentrado, sábana, evaluación, transversal)
+
+### 4.8 Computed Properties (Livewire)
 
 El Dashboard usa `#[Computed]` properties con lógica condicional por permisos:
 
@@ -153,7 +230,7 @@ public function adminStats(): ?object
 }
 ```
 
-### 4.5 Multi-Tenancy por Teams
+### 4.9 Multi-Tenancy por Teams
 
 Aislamiento de datos usando Jetstream Teams:
 
@@ -270,7 +347,8 @@ Layout (x-app-layout)
 | `page/` | container, header, form-footer |
 | `ui/` | topbar, sidebar, tooltip, help-label |
 | `forms/` | section, inputs |
-| `data/` | Tablas, listas |
+| `charts/` | bar-horizontal, donut, line (gráficas Alpine.js) |
+| `mml/` | stepper (navegación por pasos MML) |
 | `modals/` | confirm (con focus trap) |
 
 ### 7.3 Dashboard Role-Based

@@ -73,11 +73,11 @@
 | PUT | `/cascade/ped/tema/{tema}` | PedController@updateTema | cascade.ped.tema.update | ✓ | ✓ | — |
 | DELETE | `/cascade/ped/tema/{tema}` | PedController@destroyTema | cascade.ped.tema.destroy | ✓ | ✓ | — |
 | POST | `/cascade/ped/objetivo` | PedController@storeObjetivo | cascade.ped.objetivo.store | ✓ | ✓ | — |
-| PUT | `/cascade/ped/objetivo/{obj}` | PedController@updateObjetivo | cascade.ped.objetivo.update | ✓ | ✓ | — |
-| DELETE | `/cascade/ped/objetivo/{obj}` | PedController@destroyObjetivo | cascade.ped.objetivo.destroy | ✓ | ✓ | — |
+| PUT | `/cascade/ped/objetivo/{objetivo}` | PedController@updateObjetivo | cascade.ped.objetivo.update | ✓ | ✓ | — |
+| DELETE | `/cascade/ped/objetivo/{objetivo}` | PedController@destroyObjetivo | cascade.ped.objetivo.destroy | ✓ | ✓ | — |
 | POST | `/cascade/ped/estrategia` | PedController@storeEstrategia | cascade.ped.estrategia.store | ✓ | ✓ | — |
-| PUT | `/cascade/ped/estrategia/{e}` | PedController@updateEstrategia | cascade.ped.estrategia.update | ✓ | ✓ | — |
-| DELETE | `/cascade/ped/estrategia/{e}` | PedController@destroyEstrategia | cascade.ped.estrategia.destroy | ✓ | ✓ | — |
+| PUT | `/cascade/ped/estrategia/{estrategia}` | PedController@updateEstrategia | cascade.ped.estrategia.update | ✓ | ✓ | — |
+| DELETE | `/cascade/ped/estrategia/{estrategia}` | PedController@destroyEstrategia | cascade.ped.estrategia.destroy | ✓ | ✓ | — |
 | POST | `/cascade/ped/linea` | PedController@storeLinea | cascade.ped.linea.store | ✓ | ✓ | — |
 | PUT | `/cascade/ped/linea/{linea}` | PedController@updateLinea | cascade.ped.linea.update | ✓ | ✓ | — |
 | DELETE | `/cascade/ped/linea/{linea}` | PedController@destroyLinea | cascade.ped.linea.destroy | ✓ | ✓ | — |
@@ -92,13 +92,13 @@
 |--------|-----|-------------------|--------|:-----:|:---------:|:--------:|
 | GET | `/cascade/alineacion` | MatrizAlineacionController@index | cascade.alineacion.index | ✓ | ✓ | — |
 | POST | `/cascade/alineacion/ped-pnd` | @storePedPnd | cascade.alineacion.ped-pnd.store | ✓ | ✓ | — |
-| DELETE | `/cascade/alineacion/ped-pnd/{p}/{n}` | @destroyPedPnd | cascade.alineacion.ped-pnd.destroy | ✓ | ✓ | — |
+| DELETE | `/cascade/alineacion/ped-pnd/{pedObjetivo}/{pndObjetivo}` | @destroyPedPnd | cascade.alineacion.ped-pnd.destroy | ✓ | ✓ | — |
 | POST | `/cascade/alineacion/pnd-ods` | @storePndOds | cascade.alineacion.pnd-ods.store | ✓ | ✓ | — |
-| DELETE | `/cascade/alineacion/pnd-ods/{p}/{o}` | @destroyPndOds | cascade.alineacion.pnd-ods.destroy | ✓ | ✓ | — |
+| DELETE | `/cascade/alineacion/pnd-ods/{pndObjetivo}/{odsMeta}` | @destroyPndOds | cascade.alineacion.pnd-ods.destroy | ✓ | ✓ | — |
 | POST | `/cascade/alineacion/linea-programa` | @storeLineaPrograma | cascade.alineacion.linea-programa.store | ✓ | ✓ | — |
-| DELETE | `/cascade/alineacion/linea-programa/{l}/{p}` | @destroyLineaPrograma | cascade.alineacion.linea-programa.destroy | ✓ | ✓ | — |
+| DELETE | `/cascade/alineacion/linea-programa/{linea}/{programaObjetivo}` | @destroyLineaPrograma | cascade.alineacion.linea-programa.destroy | ✓ | ✓ | — |
 | GET | `/cascade/alineacion/search/*` | @search* | cascade.alineacion.search.* | ✓ | ✓ | — |
-| GET | `/cascade/alineacion/cadena/{linea}` | @showCadena | cascade.alineacion.cadena.show | ✓ | ✓ | — |
+| GET | `/cascade/alineacion/cadena/{lineaAccion}` | @showCadena | cascade.alineacion.cadena.show | ✓ | ✓ | — |
 
 ### 4.3 Programas Derivados
 
@@ -106,11 +106,11 @@
 |--------|-----|-------------------|--------|:-----:|:---------:|:--------:|
 | GET | `/cascade/programas-derivados` | ProgramaDerivadoController@index | cascade.programas-derivados.index | ✓ | ✓ | — |
 | POST | `/cascade/programas-derivados` | @store | cascade.programas-derivados.store | ✓ | ✓ | — |
-| PUT | `/cascade/programas-derivados/{p}` | @update | cascade.programas-derivados.update | ✓ | ✓ | — |
-| DELETE | `/cascade/programas-derivados/{p}` | @destroy | cascade.programas-derivados.destroy | ✓ | ✓ | — |
-| POST | `/cascade/programas-derivados/{p}/objetivos` | @storeObjetivo | cascade.programas-derivados.objetivos.store | ✓ | ✓ | — |
-| PUT | `/cascade/programas-derivados/{p}/objetivos/{o}` | @updateObjetivo | cascade.programas-derivados.objetivos.update | ✓ | ✓ | — |
-| DELETE | `/cascade/programas-derivados/{p}/objetivos/{o}` | @destroyObjetivo | cascade.programas-derivados.objetivos.destroy | ✓ | ✓ | — |
+| PUT | `/cascade/programas-derivados/{programa}` | @update | cascade.programas-derivados.update | ✓ | ✓ | — |
+| DELETE | `/cascade/programas-derivados/{programa}` | @destroy | cascade.programas-derivados.destroy | ✓ | ✓ | — |
+| POST | `/cascade/programas-derivados/{programa}/objetivos` | @storeObjetivo | cascade.programas-derivados.objetivos.store | ✓ | ✓ | — |
+| PUT | `/cascade/programas-derivados/{programa}/objetivos/{objetivo}` | @updateObjetivo | cascade.programas-derivados.objetivos.update | ✓ | ✓ | — |
+| DELETE | `/cascade/programas-derivados/{programa}/objetivos/{objetivo}` | @destroyObjetivo | cascade.programas-derivados.objetivos.destroy | ✓ | ✓ | — |
 
 ---
 
@@ -123,14 +123,16 @@
 | GET | `/mml/programas` | Mml\ListaProgramas | mml.programas | ✓ | ✓ | ✓ |
 | GET | `/mml/importar` | Mml\DashboardImportaciones | mml.importaciones | ✓ | ✓ | ✓ |
 | GET | `/mml/importar/nuevo` | Mml\ImportarPrograma | mml.importar.nuevo | ✓ | ✓ | ✓ |
-| GET | `/mml/importar/{imp}/completar` | Mml\CompletarHuecos | mml.importar.completar | ✓ | ✓ | ✓ |
-| GET | `/mml/importar/{imp}/vincular` | Mml\VincularAlineacion | mml.importar.vincular | ✓ | ✓ | ✓ |
-| GET | `/mml/importar/{imp}/calendarizar` | Mml\CalendarizarMetas | mml.importar.calendarizar | ✓ | ✓ | ✓ |
+| GET | `/mml/importar/{importacion}/completar` | Mml\CompletarHuecos | mml.importar.completar | ✓ | ✓ | ✓ |
+| GET | `/mml/importar/{importacion}/vincular` | Mml\VincularAlineacion | mml.importar.vincular | ✓ | ✓ | ✓ |
+| GET | `/mml/importar/{importacion}/calendarizar` | Mml\CalendarizarMetas | mml.importar.calendarizar | ✓ | ✓ | ✓ |
 | GET | `/mml/{programa}/etapa/1` | Mml\DefinicionProblema | mml.etapa1 | ✓ | ✓ | ✓ |
 | GET | `/mml/{programa}/etapa/2` | Mml\ArbolProblemaBuilder | mml.etapa2 | ✓ | ✓ | ✓ |
 | GET | `/mml/{programa}/etapa/3` | Mml\ArbolObjetivosBuilder | mml.etapa3 | ✓ | ✓ | ✓ |
 | GET | `/mml/{programa}/etapa/4` | Mml\SeleccionAlternativas | mml.etapa4 | ✓ | ✓ | ✓ |
-| GET | `/mml/{programa}/etapa/5/mir` | Mml\MirEditor | mml.mir | ✓ | ✓ | ✓ |
+| GET | `/mml/{programa}/etapa/5` | Mml\EmbudoPoblaciones | mml.etapa5 | ✓ | ✓ | ✓ |
+| GET | `/mml/{programa}/etapa/6` | Mml\AlineacionEstrategica | mml.etapa6 | ✓ | ✓ | ✓ |
+| GET | `/mml/{programa}/etapa/7/mir` | Mml\MirEditor | mml.mir | ✓ | ✓ | ✓ |
 
 ---
 
@@ -138,17 +140,20 @@
 
 **Middleware:** `auth:sanctum`, `jetstream.auth_session`, `verified`
 
-| Método | URI | Componente/Controller | Nombre | Admin | Planeador | Operador |
-|--------|-----|----------------------|--------|:-----:|:---------:|:--------:|
-| GET | `/seguimiento` | Tracking\PanelSeguimiento | tracking.panel | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/pendientes` | Tracking\MisIndicadoresPendientes | tracking.pendientes | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/vencidos` | Tracking\IndicadoresVencidos | tracking.vencidos | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/captura/{avance}` | Tracking\CapturaAvance | tracking.captura | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/avance/{avance}/evidencias` | Tracking\EvidenciaAvance | tracking.evidencia.index | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/evidencia/{evidencia}/download` | EvidenciaController@download | tracking.evidencia.download | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/flujo/{avance}` | Tracking\FlujosAvance | tracking.flujo | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/desbloqueo/{avance}` | Tracking\SolicitarDesbloqueo | tracking.desbloqueo.solicitar | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/desbloqueos` | Tracking\GestionarDesbloqueos | tracking.desbloqueos | ✓ | ✓ | ✓ |
+| Método | URI | Componente/Controller | Nombre | Permiso | Admin | Planeador | Operador |
+|--------|-----|----------------------|--------|---------|:-----:|:---------:|:--------:|
+| GET | `/seguimiento` | Tracking\PanelSeguimiento | tracking.panel | (auth) | ✓ | ✓ | ✓ |
+| GET | `/seguimiento/pendientes` | Tracking\MisIndicadoresPendientes | tracking.pendientes | (auth) | ✓ | ✓ | ✓ |
+| GET | `/seguimiento/vencidos` | Tracking\IndicadoresVencidos | tracking.vencidos | (auth) | ✓ | ✓ | ✓ |
+| GET | `/seguimiento/captura/{avance}` | Tracking\CapturaAvance | tracking.captura | (auth) | ✓ | ✓ | ✓ |
+| GET | `/seguimiento/avance/{avance}/evidencias` | Tracking\EvidenciaAvance | tracking.evidencia.index | (auth) | ✓ | ✓ | ✓ |
+| GET | `/seguimiento/evidencia/{evidencia}/download` | EvidenciaController@download | tracking.evidencia.download | (auth) | ✓ | ✓ | ✓ |
+| GET | `/seguimiento/flujo/{avance}` | Tracking\FlujosAvance | tracking.flujo | (auth) | ✓ | ✓ | ✓ |
+| GET | `/seguimiento/desbloqueo/{avance}` | Tracking\SolicitarDesbloqueo | tracking.desbloqueo.solicitar | (auth) | ✓ | ✓ | ✓ |
+| GET | `/seguimiento/desbloqueos` | Tracking\GestionarDesbloqueos | tracking.desbloqueos | (auth) | ✓ | ✓ | ✓ |
+| GET | `/seguimiento/sabana-captura` | Tracking\SabanaCaptura | tracking.sabana-captura | ver_sabana_captura | ✓ | ✓ | ✓ |
+| GET | `/seguimiento/concentrado-captura` | Tracking\ConcentradoCaptura | tracking.concentrado-captura | ver_concentrado_captura | ✓ | ✓ | ✓ |
+| GET | `/seguimiento/{programa}/dashboard-indicadores` | Tracking\DashboardIndicadores | tracking.dashboard-indicadores | (auth) | ✓ | ✓ | ✓ |
 
 ---
 
@@ -158,16 +163,17 @@
 
 | Método | URI | Componente/Controller | Nombre | Permiso | Admin | Planeador | Operador |
 |--------|-----|----------------------|--------|---------|:-----:|:---------:|:--------:|
-| GET | `/evaluacion/programa/{eval}` | Evaluation\EvaluacionProgramaView | evaluation.programa | (auth) | ✓ | ✓ | ✓ |
+| GET | `/evaluacion/programa/{evaluacion}` | Evaluation\EvaluacionProgramaView | evaluation.programa | (auth) | ✓ | ✓ | ✓ |
 | GET | `/evaluacion/transversal` | Evaluation\PanelTransversal | evaluation.transversal | exportar_reportes | ✓ | ✓ | ✓ |
+| GET | `/evaluacion/mir-publica/{id}` | Closure (MirPdfExport) | evaluation.mir-publica | (auth) | ✓ | ✓ | ✓ |
 | GET | `/evaluacion/exportar/pdf/{tipo}/{id?}` | ExportController@pdf | evaluation.exportar.pdf | exportar_reportes | ✓ | ✓ | ✓ |
 | GET | `/evaluacion/exportar/excel/{tipo}/{id?}` | ExportController@excel | evaluation.exportar.excel | exportar_reportes | ✓ | ✓ | ✓ |
-| POST | `/evaluacion/exportar/async/{fmt}/{tipo}` | ExportController@async | evaluation.exportar.async | exportar_reportes | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/exportar/descargar/{file}` | ExportController@descargar | evaluation.exportar.descargar | exportar_reportes | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/datos-abiertos/csv/{ej}` | DatosAbiertosController@csv | evaluation.datos-abiertos.csv | exportar_reportes | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/datos-abiertos/json/{ej}` | DatosAbiertosController@json | evaluation.datos-abiertos.json | exportar_reportes | ✓ | ✓ | ✓ |
+| POST | `/evaluacion/exportar/async/{formato}/{tipo}` | ExportController@async | evaluation.exportar.async | exportar_reportes | ✓ | ✓ | ✓ |
+| GET | `/evaluacion/exportar/descargar/{filename}` | ExportController@descargar | evaluation.exportar.descargar | exportar_reportes | ✓ | ✓ | ✓ |
+| GET | `/evaluacion/datos-abiertos/csv/{ejercicio}` | DatosAbiertosController@csv | evaluation.datos-abiertos.csv | exportar_reportes | ✓ | ✓ | ✓ |
+| GET | `/evaluacion/datos-abiertos/json/{ejercicio}` | DatosAbiertosController@json | evaluation.datos-abiertos.json | exportar_reportes | ✓ | ✓ | ✓ |
 | GET | `/evaluacion/datos-abiertos/diccionario` | DatosAbiertosController@diccionario | evaluation.datos-abiertos.diccionario | exportar_reportes | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/datos-abiertos/zip/{ej}` | DatosAbiertosController@zip | evaluation.datos-abiertos.zip | exportar_reportes | ✓ | ✓ | ✓ |
+| GET | `/evaluacion/datos-abiertos/zip/{ejercicio}` | DatosAbiertosController@zip | evaluation.datos-abiertos.zip | exportar_reportes | ✓ | ✓ | ✓ |
 
 ---
 
@@ -195,3 +201,5 @@
 | exportar_reportes | Generar PDF, Excel, datos abiertos | ✓ | ✓ | ✓ |
 | administrar_usuarios | Monitoreo IA, auditoría | ✓ | — | — |
 | invitar_usuarios | Gestión de cuentas de usuario | ✓ | — | — |
+| ver_sabana_captura | Ver sábana de captura de seguimiento | ✓ | ✓ | ✓ |
+| ver_concentrado_captura | Ver concentrado de captura de seguimiento | ✓ | ✓ | ✓ |

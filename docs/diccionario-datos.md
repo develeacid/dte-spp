@@ -22,19 +22,41 @@
 | id | bigint | PK | Identificador |
 | name | varchar | NOT NULL | Nombre completo |
 | email | varchar | UNIQUE, NOT NULL | Correo electrónico |
-| password | varchar | NOT NULL | Hash bcrypt |
+| password | varchar | NULLABLE | Hash bcrypt |
 | two_factor_secret | text | NULLABLE | Secret TOTP para 2FA |
 | two_factor_recovery_codes | text | NULLABLE | Códigos de recuperación |
 | two_factor_confirmed_at | timestamp | NULLABLE | Fecha confirmación 2FA |
 | current_team_id | bigint | FK → teams | Equipo activo |
-| profile_photo_path | varchar | NULLABLE | Ruta foto de perfil |
-| active | boolean | DEFAULT true | Estado de cuenta |
-| invitation_token | varchar | NULLABLE | Token de activación |
-| invitation_expires_at | timestamp | NULLABLE | Expiración de invitación |
-| activated_at | timestamp | NULLABLE | Fecha de activación |
+| profile_photo_path | varchar(2048) | NULLABLE | Ruta foto de perfil |
 | email_verified_at | timestamp | NULLABLE | Verificación de email |
+| activated_at | timestamp | NULLABLE | Fecha de activación |
+| active | boolean | DEFAULT true | Estado de cuenta |
+| invitation_token | varchar(64) | UNIQUE, NULLABLE | Token de activación |
+| invitation_sent_at | timestamp | NULLABLE | Fecha de envío de invitación |
+| remember_token | varchar | NULLABLE | Token de sesión persistente |
 
 **Traits:** HasRoles, LogsActivity, HasTeams, TwoFactorAuthenticatable, Notifiable
+
+### `password_reset_tokens`
+
+| Columna | Tipo | Restricción | Descripción |
+|---------|------|-------------|-------------|
+| email | varchar | PK | Correo del usuario |
+| token | varchar | NOT NULL | Token de restablecimiento |
+| created_at | timestamp | NULLABLE | Fecha de creación |
+
+### `sessions`
+
+| Columna | Tipo | Restricción | Descripción |
+|---------|------|-------------|-------------|
+| id | varchar | PK | ID de sesión |
+| user_id | bigint | FK → users, NULLABLE | Usuario |
+| ip_address | varchar(45) | NULLABLE | Dirección IP |
+| user_agent | text | NULLABLE | Agente del navegador |
+| payload | longText | NOT NULL | Datos de sesión |
+| last_activity | integer | INDEX | Última actividad |
+
+**Nota:** No incluye timestamps convencionales.
 
 ### `teams`
 
@@ -44,17 +66,21 @@
 | user_id | bigint | FK → users | Dueño del equipo |
 | name | varchar | NOT NULL | Nombre del equipo |
 | personal_team | boolean | NOT NULL | Es equipo personal |
-| clave_ur | varchar | NULLABLE | Clave de Unidad Responsable |
-| nombre_ur | varchar | NULLABLE | Nombre de la UR |
+| clave_ur | varchar | UNIQUE, NULLABLE | Clave de Unidad Responsable |
+| titular | varchar | NULLABLE | Nombre del titular de la UR |
 | tipo_ur | varchar | NULLABLE | sustantiva / apoyo |
+| activa | boolean | DEFAULT true | UR activa |
 
 ### `team_user` (pivot)
 
 | Columna | Tipo | Restricción | Descripción |
 |---------|------|-------------|-------------|
+| id | bigint | PK | Identificador |
 | team_id | bigint | FK → teams | Equipo |
 | user_id | bigint | FK → users | Usuario |
-| role | varchar | | Rol en equipo (Jetstream) |
+| role | varchar | NULLABLE | Rol en equipo (Jetstream) |
+
+**Restricción única:** `(team_id, user_id)`
 
 ### `team_invitations`
 
@@ -64,6 +90,8 @@
 | team_id | bigint | FK → teams | Equipo destino |
 | email | varchar | NOT NULL | Email invitado |
 | role | varchar | NULLABLE | Rol asignado |
+
+**Restricción única:** `(team_id, email)`
 
 ---
 
@@ -109,10 +137,12 @@
 |---------|------|-------------|-------------|
 | id | bigint | PK | Identificador |
 | nombre | varchar | NOT NULL | Nombre del plan |
-| periodo_inicio | integer | NOT NULL | Año de inicio |
-| periodo_fin | integer | NOT NULL | Año de fin |
+| nivel_gobierno | varchar | DEFAULT 'estatal' | estatal / municipal |
+| periodo_inicio | smallint | NOT NULL | Año de inicio |
+| periodo_fin | smallint | NOT NULL | Año de fin |
 | activo | boolean | DEFAULT false | Plan vigente |
-| team_id | bigint | FK → teams | Equipo propietario |
+
+**Constraint:** Índice único parcial `ped_planes_activo_unique` — solo un plan con `activo = true` a la vez.
 
 **Traits:** LogsActivity
 
@@ -216,22 +246,31 @@
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
+| id | bigint | PK |
 | ped_objetivo_estrategico_id | bigint | FK |
 | pnd_objetivo_id | bigint | FK |
+
+**Restricción única:** `(ped_objetivo_estrategico_id, pnd_objetivo_id)`
 
 ### `alineacion_pnd_ods` (pivot)
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
+| id | bigint | PK |
 | pnd_objetivo_id | bigint | FK |
 | ods_meta_id | bigint | FK |
+
+**Restricción única:** `(pnd_objetivo_id, ods_meta_id)`
 
 ### `alineacion_linea_programa` (pivot)
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
+| id | bigint | PK |
 | ped_linea_accion_id | bigint | FK |
 | programa_derivado_objetivo_id | bigint | FK |
+
+**Restricción única:** `(ped_linea_accion_id, programa_derivado_objetivo_id)`
 
 ---
 
@@ -242,9 +281,10 @@
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
 | id | bigint | PK |
+| ped_plan_id | bigint | FK → ped_planes |
 | nombre | varchar | Nombre del programa |
-| tipo | varchar | ENUM: sectorial, especial, institucional, regional |
-| team_id | bigint | FK → teams |
+| descripcion | text | Descripción (nullable) |
+| tipo | tipo_programa_derivado | ENUM nativo PG: sectorial, especial, institucional, regional |
 
 ### `programas_derivados_objetivos`
 
@@ -252,8 +292,11 @@
 |---------|------|-------------|
 | id | bigint | PK |
 | programa_derivado_id | bigint | FK |
-| nombre | text | Descripción del objetivo |
-| orden | integer | Posición |
+| clave | varchar(20) | Clave del objetivo (ej. "OS.1") |
+| descripcion | text | Descripción del objetivo |
+| embedding | vector(1536) | Embedding para búsqueda semántica (pgvector) |
+
+**Restricción única:** `(programa_derivado_id, clave)`
 
 ---
 
@@ -264,16 +307,30 @@
 | Columna | Tipo | Restricción | Descripción |
 |---------|------|-------------|-------------|
 | id | bigint | PK | Identificador |
+| team_id | bigint | FK → teams, NULLABLE | Equipo propietario |
 | nombre | varchar | NOT NULL | Nombre del programa |
 | clave | varchar | UNIQUE | Clave identificadora |
-| team_id | bigint | FK → teams | Equipo propietario |
-| creado_por | bigint | FK → users | Creador |
-| estado | varchar | DEFAULT borrador | borrador, activo, cerrado |
-| origen | varchar | DEFAULT nuevo | nuevo, importado |
-| ejercicio_fiscal | integer | | Año fiscal |
+| ejercicio_fiscal | smallint | DEFAULT 2026 | Año fiscal |
+| origen | varchar(20) | DEFAULT 'nuevo' | nuevo, importado |
+| estado | varchar(20) | DEFAULT 'borrador' | borrador, activo, cerrado |
+| planeacion_completada_at | timestamp | NULLABLE | Fecha en que se completó la planeación |
+| created_by | bigint | FK → users, NULLABLE | Creador |
 | deleted_at | timestamp | NULLABLE | Soft delete |
 
 **Traits:** SoftDeletes
+
+**Índice:** `(team_id, ejercicio_fiscal)`
+
+### `programa_team` (pivot)
+
+| Columna | Tipo | Restricción | Descripción |
+|---------|------|-------------|-------------|
+| id | bigint | PK | Identificador |
+| programa_presupuestario_id | bigint | FK → programa_presupuestarios | Programa |
+| team_id | bigint | FK → teams | Equipo |
+| rol | varchar(20) | DEFAULT 'coadyuvante' | Rol del equipo en el programa |
+
+**Restricción única:** `(programa_presupuestario_id, team_id)`
 
 ### `arboles`
 
@@ -281,7 +338,9 @@
 |---------|------|-------------|
 | id | bigint | PK |
 | programa_presupuestario_id | bigint | FK |
-| tipo | varchar | ENUM: problema, objetivos |
+| tipo | varchar(20) | ENUM: problema, objetivos |
+
+**Restricción única:** `(programa_presupuestario_id, tipo)`
 
 ### `arbol_nodos`
 
@@ -289,10 +348,11 @@
 |---------|------|-------------|
 | id | bigint | PK |
 | arbol_id | bigint | FK → arboles |
-| tipo | varchar | ENUM: problema_central, causa_directa, causa_indirecta, efecto_directo, efecto_indirecto, objetivo_central, medio_directo, medio_indirecto, fin_directo, fin_indirecto |
-| contenido | text | Descripción del nodo |
-| parent_id | bigint | FK → arbol_nodos (auto-referencia) |
-| orden | integer | Posición |
+| parent_id | bigint | FK → arbol_nodos (auto-referencia, nullable) |
+| tipo_nodo | varchar(30) | ENUM: problema_central, causa_directa, causa_indirecta, efecto_directo, efecto_indirecto, objetivo_central, medio_directo, medio_indirecto, fin_directo, fin_indirecto |
+| descripcion | text | Descripción del nodo |
+| nodo_origen_id | bigint | FK → arbol_nodos (nullable) — referencia al nodo del árbol opuesto |
+| orden | smallint | DEFAULT 0 |
 
 ### `alternativas`
 
@@ -301,15 +361,18 @@
 | id | bigint | PK |
 | programa_presupuestario_id | bigint | FK |
 | nombre | varchar | Nombre de la alternativa |
-| seleccionada | boolean | Alternativa elegida |
-| justificacion | text | Justificación |
+| seleccionada | boolean | DEFAULT false — Alternativa elegida |
+| justificacion_seleccion | text | Justificación (nullable) |
 
 ### `alternativa_nodo` (pivot)
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
+| id | bigint | PK |
 | alternativa_id | bigint | FK |
 | arbol_nodo_id | bigint | FK |
+
+**Restricción única:** `(alternativa_id, arbol_nodo_id)`
 
 ### `mir_niveles`
 
@@ -317,17 +380,24 @@
 |---------|------|-------------|-------------|
 | id | bigint | PK | Identificador |
 | programa_presupuestario_id | bigint | FK | Programa |
-| tipo_nivel | varchar | NOT NULL | ENUM: fin, proposito, componente, actividad |
-| resumen_narrativo | text | NOT NULL | Texto del nivel |
-| orden | integer | NOT NULL | Posición |
-| team_id | bigint | FK → teams | Equipo |
-| componente_id | bigint | FK → mir_niveles | Componente padre (para actividades) |
-| arbol_nodo_id | bigint | FK → arbol_nodos | Nodo origen |
-| ped_objetivo_estrategico_id | bigint | FK | Alineación PED |
-| ped_linea_accion_id | bigint | FK | Línea de acción PED |
-| validacion_sintaxis | jsonb | NULLABLE | Resultado validación IA |
+| tipo_nivel | varchar(20) | NOT NULL | ENUM: fin, proposito, componente, actividad |
+| componente_id | bigint | FK → mir_niveles, NULLABLE | Componente padre (para actividades) |
+| resumen_narrativo | text | NULLABLE | Texto del nivel |
+| supuestos | text | NULLABLE | Supuestos del nivel |
+| arbol_nodo_id | bigint | FK → arbol_nodos, NULLABLE | Nodo origen |
+| orden | smallint | DEFAULT 0 | Posición |
+| ped_objetivo_estrategico_id | bigint | FK, NULLABLE | Alineación PED |
+| programa_derivado_objetivo_id | bigint | FK, NULLABLE | Alineación a programa derivado |
+| ped_linea_accion_id | bigint | FK, NULLABLE | Línea de acción PED |
+| team_id | bigint | FK → teams, NULLABLE | UR Coadyuvante |
+| sintaxis_valida | boolean | NULLABLE | Resultado de validación IA |
+| sintaxis_observacion | text | NULLABLE | Observación de la validación |
+| sintaxis_sugerencia | text | NULLABLE | Sugerencia de la IA |
+| sintaxis_validada_at | timestamp | NULLABLE | Fecha de validación |
 
 **Traits:** LogsActivity
+
+**Índices:** `(programa_presupuestario_id, tipo_nivel)`, `componente_id`
 
 ### `mir_versiones`
 
@@ -335,9 +405,9 @@
 |---------|------|-------------|
 | id | bigint | PK |
 | programa_presupuestario_id | bigint | FK |
-| version | integer | Número de versión |
+| etiqueta | varchar(100) | Etiqueta de la versión |
 | snapshot | jsonb | Snapshot completo de la MIR |
-| notas | text | Notas del versionamiento |
+| created_by | bigint | FK → users (nullable) |
 
 ### `indicadores`
 
@@ -346,16 +416,22 @@
 | id | bigint | PK | Identificador |
 | mir_nivel_id | bigint | FK → mir_niveles | Nivel MIR |
 | nombre | varchar | NOT NULL | Nombre del indicador |
-| tipo | varchar | | estrategico, gestion |
-| dimension | varchar | | eficacia, eficiencia, calidad, economia |
-| frecuencia | varchar | | mensual, trimestral, semestral, anual, bianual, sexenal |
-| sentido | varchar | | ascendente, descendente, regular |
-| meta | decimal | | Meta anual |
-| formula | text | NULLABLE | Fórmula de cálculo |
-| metodo_calculo | text | NULLABLE | Descripción del método |
-| catalogo_unidad_medida_id | bigint | FK | Unidad de medida |
-| activo_seguimiento | boolean | DEFAULT false | Habilitado para captura |
-| orden | integer | | Posición |
+| formula_texto | text | NULLABLE | Fórmula de cálculo |
+| tipo | varchar(20) | | estrategico, gestion |
+| dimension | varchar(20) | | eficacia, eficiencia, calidad, economia |
+| frecuencia | varchar(20) | | mensual, trimestral, semestral, anual, bianual, sexenal |
+| sentido | varchar(20) | NULLABLE | ascendente, descendente, regular |
+| linea_base | decimal(12,4) | NULLABLE | Línea base del indicador |
+| meta | decimal(12,4) | NULLABLE | Meta anual |
+| rango_verde_min | decimal(8,2) | NULLABLE | Semáforo verde mínimo |
+| rango_verde_max | decimal(8,2) | NULLABLE | Semáforo verde máximo |
+| rango_amarillo_min | decimal(8,2) | NULLABLE | Semáforo amarillo mínimo |
+| rango_amarillo_max | decimal(8,2) | NULLABLE | Semáforo amarillo máximo |
+| rango_rojo_min | decimal(8,2) | NULLABLE | Semáforo rojo mínimo |
+| rango_rojo_max | decimal(8,2) | NULLABLE | Semáforo rojo máximo |
+| unidad_medida_id | bigint | FK → catalogo_unidades_medida, NULLABLE | Unidad de medida |
+| orden | smallint | DEFAULT 0 | Posición |
+| activo_seguimiento | boolean | DEFAULT true | Habilitado para captura |
 
 **Traits:** LogsActivity
 
@@ -365,11 +441,12 @@
 |---------|------|-------------|
 | id | bigint | PK |
 | indicador_id | bigint | FK → indicadores |
+| simbolo | varchar(5) | Símbolo de la variable (ej. "A", "B") |
 | nombre | varchar | Nombre de la variable |
-| comportamiento | varchar | acumulable, continua |
-| unidad_medida | varchar | Unidad |
-| fuente_informacion | text | Fuente |
-| orden | integer | Posición |
+| descripcion | text | Descripción (nullable) |
+| comportamiento | varchar(20) | acumulable, continua (nullable) |
+| unidad_medida_id | bigint | FK → catalogo_unidades_medida (nullable) |
+| orden | smallint | DEFAULT 0 |
 
 ### `medios_verificacion`
 
@@ -377,31 +454,38 @@
 |---------|------|-------------|
 | id | bigint | PK |
 | indicador_id | bigint | FK → indicadores |
-| descripcion | text | Descripción del medio |
-| fuente | varchar | Fuente de información |
-| orden | integer | Posición |
+| nombre | varchar | Nombre del medio |
+| descripcion | text | Descripción (nullable) |
+| fuente | varchar | Fuente de información (nullable) |
+| frecuencia | varchar(20) | Frecuencia (nullable) |
+| orden | smallint | DEFAULT 0 |
 
 ### `cremaa_validaciones`
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
 | id | bigint | PK |
-| indicador_id | bigint | FK → indicadores (unique) |
-| claro | boolean | Criterio Claro |
-| relevante | boolean | Criterio Relevante |
-| economico | boolean | Criterio Económico |
-| monitoreable | boolean | Criterio Monitoreable |
-| adecuado | boolean | Criterio Adecuado |
-| aportacion_marginal | boolean | Criterio Aportación Marginal |
-| notas | text | Notas de validación |
+| indicador_id | bigint | FK → indicadores |
+| claro | boolean | DEFAULT false |
+| claro_observacion | text | Observación (nullable) |
+| relevante | boolean | DEFAULT false |
+| relevante_observacion | text | Observación (nullable) |
+| economico | boolean | DEFAULT false |
+| economico_observacion | text | Observación (nullable) |
+| monitoreable | boolean | DEFAULT false |
+| monitoreable_observacion | text | Observación (nullable) |
+| adecuado | boolean | DEFAULT false |
+| adecuado_observacion | text | Observación (nullable) |
+| aportante | boolean | DEFAULT false |
+| aportante_observacion | text | Observación (nullable) |
 
 ### `catalogo_unidades_medida`
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
 | id | bigint | PK |
+| clave | varchar(10) | UNIQUE — Clave corta |
 | nombre | varchar | Nombre de la unidad |
-| clave | varchar | Clave corta |
 
 ---
 
@@ -413,12 +497,14 @@
 |---------|------|-------------|-------------|
 | id | bigint | PK | Identificador |
 | indicador_id | bigint | FK → indicadores | Indicador |
-| periodo | integer | NOT NULL | Número del período |
-| meta_periodo | decimal | NOT NULL | Meta del período |
+| periodo | smallint | NOT NULL | Número del período |
+| meta_periodo | decimal(12,4) | NOT NULL | Meta del período |
 | ejercicio_fiscal | integer | NOT NULL | Año fiscal |
 | activo | boolean | DEFAULT true | Habilitado |
 | fecha_apertura | date | NULLABLE | Fecha de apertura de captura |
 | fecha_cierre | date | NULLABLE | Fecha límite de captura |
+
+**Restricción única:** `(indicador_id, periodo, ejercicio_fiscal)`
 
 ### `avances`
 
@@ -427,14 +513,19 @@
 | id | bigint | PK | Identificador |
 | meta_periodo_id | bigint | FK → metas_periodo | Período |
 | indicador_id | bigint | FK → indicadores | Indicador |
-| resultado | decimal | NULLABLE | Valor reportado |
-| semaforo_calculado | varchar | NULLABLE | verde, amarillo, rojo |
-| estado | varchar | NOT NULL | en_captura, en_revision, observado, aprobado, vencido |
-| observaciones | text | NULLABLE | Notas del capturista |
-| observacion_revisor | text | NULLABLE | Notas del revisor |
-| capturado_por | bigint | FK → users | Capturista |
-| revisado_por | bigint | FK → users | Revisor |
-| aprobado_por | bigint | FK → users | Aprobador |
+| resultado | decimal(12,4) | NULLABLE | Valor reportado |
+| semaforo_calculado | varchar(10) | NULLABLE | verde, amarillo, rojo |
+| semaforo_ajustado | varchar(10) | NULLABLE | Semáforo ajustado manualmente |
+| justificacion_ia | text | NULLABLE | Justificación generada por IA |
+| justificacion_final | text | NULLABLE | Justificación final aprobada |
+| estado | varchar(20) | DEFAULT 'en_captura' | en_captura, en_revision, observado, aprobado, vencido |
+| historial_observaciones | jsonb | DEFAULT '[]' | Historial de observaciones |
+| congelado_at | timestamp | NULLABLE | Fecha en que se congeló el avance |
+| capturado_por | bigint | FK → users, NULLABLE | Capturista |
+
+**Restricción única:** `(meta_periodo_id, indicador_id)`
+
+**Índices:** `estado`, `indicador_id`
 
 ### `avance_variables`
 
@@ -443,7 +534,10 @@
 | id | bigint | PK |
 | avance_id | bigint | FK → avances |
 | indicador_variable_id | bigint | FK → indicador_variables |
-| valor | decimal | Valor reportado |
+| valor | decimal(12,4) | Valor reportado |
+| valor_acumulado | decimal(12,4) | Valor acumulado (nullable) |
+
+**Restricción única:** `(avance_id, indicador_variable_id)`
 
 ### `avance_evidencias`
 
@@ -451,13 +545,14 @@
 |---------|------|-------------|
 | id | bigint | PK |
 | avance_id | bigint | FK → avances |
+| nombre_archivo | varchar | Nombre original del archivo subido |
 | ruta_archivo | varchar | Ruta en storage |
-| nombre_original | varchar | Nombre original del archivo |
+| mime_type | varchar(50) | Tipo MIME |
+| tamano_bytes | bigint unsigned | Tamaño en bytes |
+| hash_archivo | varchar(64) | Hash SHA-256 del archivo |
 | nombre_documento | varchar | Nombre descriptivo |
-| area_generadora | varchar | Área que genera |
-| fecha_documento | date | Fecha del documento |
-| mime_type | varchar | Tipo MIME |
-| tamano | bigint | Tamaño en bytes |
+| area_generadora | varchar | Área que genera (nullable) |
+| fecha_documento | date | Fecha del documento (nullable) |
 | subido_por | bigint | FK → users |
 
 ### `desbloqueos`
@@ -466,11 +561,25 @@
 |---------|------|-------------|
 | id | bigint | PK |
 | avance_id | bigint | FK → avances |
-| solicitante_id | bigint | FK → users |
-| motivo | text | Justificación |
-| estado | varchar | pendiente, aprobado, rechazado |
-| resuelto_por | bigint | FK → users |
-| resuelto_at | timestamp | Fecha de resolución |
+| motivo | text | Justificación de la solicitud |
+| solicitado_por | bigint | FK → users |
+| resuelto_por | bigint | FK → users (nullable) |
+| estado | varchar(20) | DEFAULT 'pendiente' — pendiente, aprobado, rechazado |
+| resolucion | text | Texto de resolución (nullable) |
+| resuelto_at | timestamp | Fecha de resolución (nullable) |
+
+**Índice:** `(avance_id, estado)`
+
+### `notifications` (Laravel)
+
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| id | uuid | PK |
+| type | varchar | Clase de notificación |
+| notifiable_type | varchar | Modelo notificable |
+| notifiable_id | bigint | ID del notificable |
+| data | text | Datos de la notificación |
+| read_at | timestamp | Fecha de lectura (nullable) |
 
 ---
 
@@ -482,15 +591,17 @@
 |---------|------|-------------|-------------|
 | id | bigint | PK | Identificador |
 | programa_presupuestario_id | bigint | FK | Programa |
-| ejercicio_fiscal | integer | NOT NULL | Año fiscal |
-| ponderacion_fin | decimal | | Peso nivel Fin |
-| ponderacion_proposito | decimal | | Peso nivel Propósito |
-| ponderacion_componente | decimal | | Peso nivel Componente |
-| ponderacion_actividad | decimal | | Peso nivel Actividad |
-| indice_eficacia | decimal | NULLABLE | Índice calculado |
-| resultados | jsonb | NULLABLE | Resultados detallados |
-| calculado_por | bigint | FK → users | Usuario que calculó |
-| calculado_at | timestamp | NULLABLE | Fecha de cálculo |
+| ejercicio_fiscal | smallint | NOT NULL | Año fiscal |
+| indice_eficacia | decimal(8,4) | NULLABLE | Índice calculado |
+| desglose_niveles | jsonb | NULLABLE | Desglose por nivel MIR |
+| conteo_semaforos | jsonb | NULLABLE | Conteo de semáforos |
+| indicadores_evaluados | integer unsigned | DEFAULT 0 | Indicadores evaluados |
+| indicadores_no_evaluados | integer unsigned | DEFAULT 0 | Indicadores sin evaluar |
+| configuracion_calculo | jsonb | NULLABLE | Configuración del cálculo |
+| analisis_ia | text | NULLABLE | Análisis generado por IA |
+| calculado_por | bigint | FK → users, NULLABLE | Usuario que calculó |
+
+**Restricción única:** `(programa_presupuestario_id, ejercicio_fiscal)`
 
 **Traits:** LogsActivity
 
@@ -500,7 +611,10 @@
 |---------|------|-------------|
 | id | bigint | PK |
 | nombre | varchar | Nombre del anexo |
-| clave | varchar | Clave identificadora |
+| clave | varchar(30) | UNIQUE — Clave identificadora |
+| descripcion | text | Descripción (nullable) |
+| activo | boolean | DEFAULT true |
+| orden | smallint | DEFAULT 0 |
 
 ### `indicador_anexo_transversal` (pivot)
 
@@ -509,75 +623,116 @@
 | indicador_id | bigint | FK |
 | anexo_transversal_id | bigint | FK |
 
+**Restricción única:** `(indicador_id, anexo_transversal_id)`
+
+**Nota:** Incluye timestamps.
+
 ---
 
-## 10. Dominio: Importación e IA
+## 10. Dominio: Poblaciones
+
+### `poblaciones_programa`
+
+| Columna | Tipo | Restricción | Descripción |
+|---------|------|-------------|-------------|
+| id | bigint | PK | Identificador |
+| programa_id | bigint | FK → programa_presupuestarios | Programa |
+| unidad_medida | varchar(100) | NOT NULL | Unidad de medida de la población |
+| referencia_cantidad | integer unsigned | NOT NULL | Cantidad de población de referencia |
+| referencia_fuente | text | NULLABLE | Fuente de la cifra de referencia |
+| potencial_cantidad | integer unsigned | NOT NULL | Cantidad de población potencial |
+| potencial_fuente | text | NULLABLE | Fuente de la cifra potencial |
+| objetivo_cantidad | integer unsigned | NOT NULL | Cantidad de población objetivo |
+| objetivo_justificacion | text | NULLABLE | Justificación de la cifra objetivo |
+| anio_ejercicio | smallint | NOT NULL | Año del ejercicio fiscal |
+
+**Restricción única:** `(programa_id, anio_ejercicio)`
+
+**CHECK constraint** (`chk_embudo_logico`): `objetivo_cantidad <= potencial_cantidad AND potencial_cantidad <= referencia_cantidad AND referencia_cantidad > 0 AND potencial_cantidad > 0 AND objetivo_cantidad > 0`
+
+---
+
+## 11. Dominio: Importación e IA
 
 ### `importacion_reportes`
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
 | id | bigint | PK |
-| programa_presupuestario_id | bigint | FK |
+| programa_presupuestario_id | bigint | FK (nullable) |
+| team_id | bigint | FK → teams |
 | archivo_original | varchar | Nombre del archivo subido |
-| ruta_archivo | varchar | Ruta en storage |
-| estado | varchar | pendiente, procesando, completado, error |
-| datos_extraidos | jsonb | Datos parseados |
-| errores | jsonb | Errores encontrados |
-| procesado_por | bigint | FK → users |
+| formato | varchar(10) | md, csv, xlsx |
+| datos_parseados | jsonb | Datos parseados |
+| diagnostico | jsonb | Diagnóstico de la importación (nullable) |
+| estado | varchar(20) | DEFAULT 'pendiente' — pendiente, procesado, descartado |
+| created_by | bigint | FK → users |
 
 ### `llm_logs`
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
 | id | bigint | PK |
-| modelo | varchar | Modelo usado |
-| prompt | text | Prompt enviado |
-| respuesta | text | Respuesta recibida |
-| tokens_entrada | integer | Tokens de entrada |
-| tokens_salida | integer | Tokens de salida |
-| costo_entrada | decimal | Costo entrada |
-| costo_salida | decimal | Costo salida |
-| costo_total | decimal | Costo total |
-| duracion_ms | integer | Duración en ms |
-| contexto | varchar | Contexto de uso |
-| team_id | bigint | FK → teams |
+| user_id | bigint | FK → users (nullable) |
+| method | varchar(30) | Método/operación invocada |
+| prompt_template | varchar | Nombre del template de prompt (nullable) |
+| prompt_version | varchar | Versión del prompt (nullable) |
+| prompt_text | text | Prompt enviado |
+| response_text | text | Respuesta recibida (nullable) |
+| prompt_tokens | integer unsigned | Tokens de entrada (nullable) |
+| completion_tokens | integer unsigned | Tokens de salida (nullable) |
+| total_tokens | integer unsigned | Tokens totales (nullable) |
+| duration_ms | integer unsigned | Duración en ms (nullable) |
+| cost_usd | decimal(10,6) | Costo en USD (nullable) |
+| model | varchar | Modelo usado (nullable) |
+| status | varchar(20) | DEFAULT 'pending' — Estado de la llamada |
+| error_message | text | Mensaje de error (nullable) |
+
+**Índices:** `user_id`, `status`, `created_at`
 
 ### `llm_budgets`
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
 | id | bigint | PK |
-| team_id | bigint | FK → teams |
-| mes | integer | Mes |
-| anio | integer | Año |
-| presupuesto | decimal | Límite mensual |
-| consumido | decimal | Monto consumido |
+| scope | varchar(10) | global, team, user |
+| scope_id | bigint unsigned | team_id o user_id (nullable) |
+| month | date | Primer día del mes |
+| budget_usd | decimal(10,2) | Presupuesto mensual en USD |
+| spent_usd | decimal(10,6) | DEFAULT 0 — Monto consumido |
+| alert_threshold | decimal(3,2) | DEFAULT 0.80 — Umbral de alerta |
+| alerted_at | timestamp | Fecha de la última alerta (nullable) |
+
+**Restricción única:** `(scope, scope_id, month)`
+
+**Índice:** `month`
 
 ---
 
-## 11. Auditoría
+## 12. Auditoría
 
 ### `activity_log` (spatie/laravel-activitylog)
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
 | id | bigint | PK |
-| log_name | varchar | Nombre del log |
-| description | varchar | created, updated, deleted |
-| subject_type | varchar | Modelo afectado |
-| subject_id | bigint | ID del registro |
-| causer_type | varchar | Modelo causante (User) |
-| causer_id | bigint | ID del usuario |
-| properties | jsonb | Atributos old/new |
-| batch_uuid | uuid | UUID de batch |
-| event | varchar | Evento |
+| log_name | varchar | Nombre del log (nullable) |
+| description | text | created, updated, deleted |
+| subject_type | varchar | Modelo afectado (nullable) |
+| subject_id | bigint | ID del registro (nullable) |
+| event | varchar | Evento (nullable) |
+| causer_type | varchar | Modelo causante (nullable) |
+| causer_id | bigint | ID del usuario (nullable) |
+| properties | json | Atributos old/new (nullable) |
+| batch_uuid | uuid | UUID de batch (nullable) |
+
+**Índices:** `log_name`, `event`, `batch_uuid`
 
 **Modelos auditados:** User, PedPlan, PedEje, PedTema, PedObjetivoEstrategico, MirNivel, Indicador, EvaluacionPrograma
 
 ---
 
-## 12. Enums del Sistema
+## 13. Enums del Sistema
 
 | Enum | Valores |
 |------|---------|
@@ -596,27 +751,34 @@
 | EstadoAvance | en_captura, en_revision, observado, aprobado, vencido |
 | TipoProgramaDerivado | sectorial, especial, institucional, regional |
 | TipoUnidadResponsable | sustantiva, apoyo |
+| NivelGobierno | estatal, municipal |
 
 ---
 
-## 13. Diagrama de Relaciones (resumen)
+## 14. Diagrama de Relaciones (resumen)
 
 ```
 PedPlan → PedEje → PedTema → PedObjetivoEstrategico → PedEstrategia → PedLineaAccion
                                         ↕ alineación                          ↕ alineación
                                     PndObjetivo ↔ OdsMeta          ProgramaDerivadoObjetivo
 
-ProgramaPresupuestario → Arbol → ArbolNodo
+PedPlan → ProgramaDerivado → ProgramaDerivadoObjetivo
+
+ProgramaPresupuestario → ProgramaTeam ↔ Team
+                       → Arbol → ArbolNodo
                        → Alternativa ↔ ArbolNodo
                        → MirNivel → Indicador → MetaPeriodo → Avance → AvanceEvidencia
                                                                      → AvanceVariable
+                                                             → Desbloqueo
                                    → IndicadorVariable
                                    → MedioVerificacion
                                    → CremaaValidacion
                        → MirVersion
                        → EvaluacionPrograma
+                       → PoblacionPrograma
 
 User → Team (Jetstream Teams)
-     → Avance (capturado_por, revisado_por, aprobado_por)
+     → Avance (capturado_por)
+     → LlmLog (user_id)
      → ActivityLog (causer)
 ```
