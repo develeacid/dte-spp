@@ -1,0 +1,37 @@
+<?php
+
+use App\Livewire\Presupuesto;
+
+Route::middleware(['auth:sanctum', 'jetstream.auth_session', 'verified'])->prefix('presupuesto')->group(function () {
+
+    // --- Dashboard financiero (lectura) ---
+    Route::get('/', Presupuesto\PanelPresupuestal::class)
+        ->middleware('can:ver_datos_financieros')
+        ->name('presupuesto.panel');
+
+    // --- CRUD Partidas ---
+    Route::middleware('can:gestionar_presupuesto')->group(function () {
+        Route::get('/partidas', Presupuesto\GestionPartidas::class)
+            ->name('presupuesto.partidas');
+        Route::get('/partidas/create', Presupuesto\PartidaForm::class)
+            ->name('presupuesto.partidas.create');
+        Route::get('/partidas/{partida}/edit', Presupuesto\PartidaForm::class)
+            ->name('presupuesto.partidas.edit');
+    });
+
+    // --- Captura de Avance Financiero ---
+    Route::get('/captura/{programa}', Presupuesto\CapturaAvanceFinanciero::class)
+        ->middleware('can:capturar_avance_financiero')
+        ->name('presupuesto.captura');
+
+    // --- Importación CSV ---
+    Route::get('/importar', Presupuesto\ImportarPresupuesto::class)
+        ->middleware('can:gestionar_presupuesto')
+        ->name('presupuesto.importar');
+
+    // --- Reportes y Exportación ---
+    Route::middleware('can:exportar_cuenta_publica')->group(function () {
+        Route::get('/cuenta-publica', Presupuesto\CuentaPublicaView::class)
+            ->name('presupuesto.cuenta-publica');
+    });
+});
