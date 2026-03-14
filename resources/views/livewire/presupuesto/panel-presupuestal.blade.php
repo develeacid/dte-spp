@@ -42,6 +42,7 @@
                         <th class="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Aprobado</th>
                         <th class="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Ejercido</th>
                         <th class="px-4 py-3 text-center text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Avance</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Validación</th>
                         <th class="px-4 py-3 text-center text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Acciones</th>
                     </tr>
                 </thead>
@@ -72,6 +73,9 @@
                                     <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ $pct }}%</span>
                                 </div>
                             </td>
+                            <td class="px-4 py-3 text-center">
+                                <x-programa.estado-tripartita :programa="$programa" :ejercicio="$filtroEjercicio" />
+                            </td>
                             <td class="whitespace-nowrap px-4 py-3 text-center">
                                 @can('capturar_avance_financiero')
                                     <a href="{{ route('presupuesto.captura', $programa) }}" class="text-sm text-brand hover:text-brand-dark">Capturar</a>
@@ -80,7 +84,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                 No hay programas presupuestarios para este ejercicio.
                             </td>
                         </tr>
