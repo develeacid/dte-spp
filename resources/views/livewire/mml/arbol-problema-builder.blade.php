@@ -153,13 +153,23 @@
                                             </div>
                                         @endforeach
 
-                                        <button
-                                            wire:click="agregarNodo({{ $causa->id }}, 'causa_indirecta')"
-                                            class="ml-6 mt-1.5 inline-flex items-center gap-1 text-xs text-orange-500 hover:text-orange-700 transition-colors"
-                                        >
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                            Causa indirecta
-                                        </button>
+                                        <div class="ml-6 mt-1.5 flex items-center gap-3">
+                                            <button
+                                                wire:click="agregarNodo({{ $causa->id }}, 'causa_indirecta')"
+                                                class="inline-flex items-center gap-1 text-xs text-orange-500 hover:text-orange-700 transition-colors"
+                                            >
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                Causa indirecta
+                                            </button>
+                                            <button
+                                                wire:click="sugerirCausasIndirectas({{ $causa->id }})"
+                                                wire:loading.attr="disabled"
+                                                class="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800"
+                                            >
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                                                Sugerir indirectas
+                                            </button>
+                                        </div>
                                     </div>
                                 @endforeach
 
@@ -188,6 +198,27 @@
                         </div>
 
                         <div class="p-4 space-y-3">
+                            {{-- Auto-generate tree button --}}
+                            <div class="mb-4 pb-4 border-b border-purple-200">
+                                <button
+                                    wire:click="generarArbolEjemplo"
+                                    wire:loading.attr="disabled"
+                                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 transition"
+                                >
+                                    <span wire:loading.remove wire:target="generarArbolEjemplo">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                                    </span>
+                                    <span wire:loading wire:target="generarArbolEjemplo">
+                                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                    </span>
+                                    <span wire:loading.remove wire:target="generarArbolEjemplo">Generar árbol de ejemplo</span>
+                                    <span wire:loading wire:target="generarArbolEjemplo">Generando...</span>
+                                </button>
+                                <p class="mt-1.5 text-xs text-gray-500 text-center">
+                                    Genera 2 causas, 2 efectos y causas indirectas basadas en el problema central
+                                </p>
+                            </div>
+
                             <div class="flex flex-col gap-2">
                                 <button
                                     wire:click="sugerirConIa('causa')"
@@ -294,6 +325,47 @@
                         </div>
                     </div>
                 </div>
+            @endif
+
+            {{-- Modal: Preview árbol ejemplo --}}
+            @if($mostrarPreviewArbol && !empty($arbolEjemploPreview))
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Vista previa del árbol propuesto</h3>
+
+                    <div class="space-y-3">
+                        <h4 class="text-sm font-medium text-orange-700">Causas directas:</h4>
+                        @foreach($arbolEjemploPreview['causas_directas'] ?? [] as $causa)
+                            <div class="ml-2 p-2 bg-orange-50 rounded border border-orange-200">
+                                <p class="text-sm font-medium">{{ $causa['descripcion'] }}</p>
+                                <div class="ml-4 mt-1 space-y-1">
+                                    @foreach($causa['indirectas'] ?? [] as $indirecta)
+                                        <p class="text-xs text-gray-600">&#8627; {{ $indirecta }}</p>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+
+                        <h4 class="text-sm font-medium text-purple-700 mt-4">Efectos directos:</h4>
+                        @foreach($arbolEjemploPreview['efectos_directos'] ?? [] as $efecto)
+                            <div class="ml-2 p-2 bg-purple-50 rounded border border-purple-200">
+                                <p class="text-sm">{{ $efecto }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="mt-6 flex gap-3 justify-end">
+                        <button wire:click="cancelarArbolEjemplo"
+                            class="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+                            Cancelar
+                        </button>
+                        <button wire:click="confirmarArbolEjemplo"
+                            class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">
+                            Aceptar árbol propuesto
+                        </button>
+                    </div>
+                </div>
+            </div>
             @endif
         @endif
 

@@ -33,6 +33,10 @@ class ArbolProblemaBuilder extends Component
     public bool $sugiriendoConIa = false;
     public array $sugerenciasIa = [];
     public string $tipoSugerencia = 'causa_directa';
+    public ?int $parentIdSugerencia = null;
+    public array $arbolEjemploPreview = [];
+    public bool $mostrarPreviewArbol = false;
+    public bool $generandoArbol = false;
 
     public function mount(ProgramaPresupuestario $programa): void
     {
@@ -158,17 +162,58 @@ class ArbolProblemaBuilder extends Component
         }
     }
 
+    public function sugerirCausasIndirectas(int $causaDirectaId): void
+    {
+        try {
+            $this->sugiriendoConIa = true;
+            $this->sugerenciasIa = [];
+            $this->tipoSugerencia = 'causa_indirecta';
+            $this->parentIdSugerencia = $causaDirectaId;
+
+            $llm = app(LlmServiceInterface::class);
+            $arbol = Arbol::findOrFail($this->arbolId);
+
+            $problemaCentral = $arbol->nodos()->where('tipo_nodo', TipoNodo::PROBLEMA_CENTRAL->value)->firstOrFail();
+            $causaDirecta = ArbolNodo::findOrFail($causaDirectaId);
+
+            $existentes = $causaDirecta->children()->pluck('descripcion')->implode('; ');
+
+            $prompt = "Dado el problema central: \"{$problemaCentral->descripcion}\" "
+                . "y la causa directa: \"{$causaDirecta->descripcion}\", "
+                . "sugiere 3 causas indirectas (causas raíz que originan esta causa directa). "
+                . ($existentes ? "Ya existen estas causas indirectas: {$existentes}. No las repitas. " : '')
+                . "Responde solo con la lista numerada, sin explicaciones.";
+
+            $result = $llm->suggest($prompt);
+            $this->sugerenciasIa = collect(explode("\n", $result))
+                ->map(fn ($l) => trim(preg_replace('/^\d+[\.\)\-]\s*/', '', trim($l))))
+                ->filter(fn ($l) => strlen($l) > 5)
+                ->values()
+                ->toArray();
+        } catch (\Throwable $e) {
+            report($e);
+            session()->flash('error', 'No se pudieron generar sugerencias.');
+        } finally {
+            $this->sugiriendoConIa = false;
+        }
+    }
+
     public function agregarSugerencia(string $descripcion, int $parentId, string $tipoNodo): void
     {
-        $descripcion = preg_replace('/^\d+\.\s*/', '', $descripcion);
+        $descripcion = trim(preg_replace('/^\d+[\.\)\-]\s*/', '', $descripcion));
+
+        $actualParentId = ($tipoNodo === 'causa_indirecta' && $this->parentIdSugerencia)
+            ? $this->parentIdSugerencia
+            : $parentId;
 
         $maxOrden = ArbolNodo::where('arbol_id', $this->arbolId)
-            ->where('parent_id', $parentId)
+            ->where('parent_id', $actualParentId)
+            ->where('tipo_nodo', $tipoNodo)
             ->max('orden') ?? 0;
 
         ArbolNodo::create([
             'arbol_id' => $this->arbolId,
-            'parent_id' => $parentId,
+            'parent_id' => $actualParentId,
             'tipo_nodo' => $tipoNodo,
             'descripcion' => $descripcion,
             'orden' => $maxOrden + 1,
@@ -176,8 +221,94 @@ class ArbolProblemaBuilder extends Component
 
         $this->sugerenciasIa = array_values(array_filter(
             $this->sugerenciasIa,
-            fn ($s) => $s !== $descripcion
+            fn ($s) => trim(preg_replace('/^\d+[\.\)\-]\s*/', '', $s)) !== $descripcion
         ));
+    }
+
+    public function generarArbolEjemplo(): void
+    {
+        try {
+            $this->generandoArbol = true;
+            $arbol = Arbol::findOrFail($this->arbolId);
+            $problemaCentral = $arbol->nodos()
+                ->where('tipo_nodo', TipoNodo::PROBLEMA_CENTRAL->value)
+                ->firstOrFail();
+
+            $llm = app(LlmServiceInterface::class);
+            $prompt = "Dado el problema central: \"{$problemaCentral->descripcion}\", "
+                . "genera un árbol de problemas completo en formato JSON con exactamente esta estructura:\n"
+                . "{\n"
+                . "  \"causas_directas\": [\n"
+                . "    {\"descripcion\": \"...\", \"indirectas\": [\"...\", \"...\"]},\n"
+                . "    {\"descripcion\": \"...\", \"indirectas\": [\"...\", \"...\"]}\n"
+                . "  ],\n"
+                . "  \"efectos_directos\": [\"...\", \"...\"]\n"
+                . "}\n"
+                . "Exactamente 2 causas directas, 2 causas indirectas por cada directa, y 2 efectos directos. "
+                . "Las causas y efectos deben ser específicos, relevantes y no genéricos. "
+                . "Responde SOLO con el JSON, sin texto adicional.";
+
+            $result = $llm->suggest($prompt);
+            $this->arbolEjemploPreview = json_decode($result, true) ?? [];
+            $this->mostrarPreviewArbol = !empty($this->arbolEjemploPreview);
+        } catch (\Throwable $e) {
+            report($e);
+            session()->flash('error', 'No se pudo generar el árbol de ejemplo.');
+        } finally {
+            $this->generandoArbol = false;
+        }
+    }
+
+    public function confirmarArbolEjemplo(): void
+    {
+        if (empty($this->arbolEjemploPreview)) return;
+
+        $arbol = Arbol::findOrFail($this->arbolId);
+        $problemaCentral = $arbol->nodos()
+            ->where('tipo_nodo', TipoNodo::PROBLEMA_CENTRAL->value)
+            ->firstOrFail();
+
+        $orden = 1;
+        foreach ($this->arbolEjemploPreview['causas_directas'] ?? [] as $causa) {
+            $nodo = ArbolNodo::create([
+                'arbol_id' => $this->arbolId,
+                'parent_id' => $problemaCentral->id,
+                'tipo_nodo' => 'causa_directa',
+                'descripcion' => $causa['descripcion'],
+                'orden' => $orden++,
+            ]);
+            $subOrden = 1;
+            foreach ($causa['indirectas'] ?? [] as $indirecta) {
+                ArbolNodo::create([
+                    'arbol_id' => $this->arbolId,
+                    'parent_id' => $nodo->id,
+                    'tipo_nodo' => 'causa_indirecta',
+                    'descripcion' => $indirecta,
+                    'orden' => $subOrden++,
+                ]);
+            }
+        }
+
+        $orden = 1;
+        foreach ($this->arbolEjemploPreview['efectos_directos'] ?? [] as $efecto) {
+            ArbolNodo::create([
+                'arbol_id' => $this->arbolId,
+                'parent_id' => $problemaCentral->id,
+                'tipo_nodo' => 'efecto_directo',
+                'descripcion' => $efecto,
+                'orden' => $orden++,
+            ]);
+        }
+
+        $this->arbolEjemploPreview = [];
+        $this->mostrarPreviewArbol = false;
+        session()->flash('message', 'Árbol de ejemplo generado exitosamente.');
+    }
+
+    public function cancelarArbolEjemplo(): void
+    {
+        $this->arbolEjemploPreview = [];
+        $this->mostrarPreviewArbol = false;
     }
 
     public function render()
