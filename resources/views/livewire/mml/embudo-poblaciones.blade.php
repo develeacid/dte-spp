@@ -39,7 +39,13 @@
             get objW() { return this.ref > 0 ? Math.max(20, Math.round((this.obj / this.ref) * 100)) : 50 },
             get potValid() { return !this.pot || !this.ref || this.pot <= this.ref },
             get objValid() { return !this.obj || !this.pot || this.obj <= this.pot },
-            fmt(n) { return n ? Number(n).toLocaleString('es-MX') : '0' }
+            fmt(n) {
+                if (!n) return '0';
+                const num = Number(n);
+                if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+                if (num >= 100_000) return (num / 1_000).toFixed(0) + 'K';
+                return num.toLocaleString('es-MX');
+            }
         }" class="lg:flex lg:gap-6">
             {{-- Left: Funnel visualization (sticky) --}}
             <div class="lg:w-80 xl:w-96 shrink-0 mb-6 lg:mb-0">
@@ -52,9 +58,9 @@
 
                         <div class="space-y-1 flex flex-col items-center">
                             {{-- Referencia (widest) --}}
-                            <div class="w-full rounded-t-xl bg-blue-100 border-2 border-blue-200 px-4 py-3 text-center transition-all">
+                            <div class="w-full rounded-t-xl bg-blue-100 border-2 border-blue-200 px-4 py-3 text-center transition-all min-w-0 overflow-hidden">
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-blue-500">Referencia</p>
-                                <p class="text-xl font-bold text-blue-800" x-text="fmt(ref) + ' ' + unidad"></p>
+                                <p class="text-base sm:text-xl font-bold text-blue-800 truncate" x-text="fmt(ref) + ' ' + unidad"></p>
                             </div>
 
                             {{-- Percentage between ref → pot --}}
@@ -64,11 +70,11 @@
                             </div>
 
                             {{-- Potencial --}}
-                            <div class="rounded bg-amber-100 border-2 px-4 py-3 text-center transition-all"
+                            <div class="rounded bg-amber-100 border-2 px-4 py-3 text-center transition-all min-w-0 overflow-hidden"
                                  :class="potValid ? 'border-amber-200' : 'border-red-400 ring-2 ring-red-200'"
                                  :style="'width: ' + potW + '%'">
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-amber-500">Potencial</p>
-                                <p class="text-xl font-bold text-amber-800" x-text="fmt(pot) + ' ' + unidad"></p>
+                                <p class="text-base sm:text-xl font-bold text-amber-800 truncate" x-text="fmt(pot) + ' ' + unidad"></p>
                             </div>
 
                             {{-- Percentage between pot → obj --}}
@@ -78,11 +84,11 @@
                             </div>
 
                             {{-- Objetivo --}}
-                            <div class="rounded-b-xl bg-green-100 border-2 px-4 py-3 text-center transition-all"
+                            <div class="rounded-b-xl bg-green-100 border-2 px-4 py-3 text-center transition-all min-w-0 overflow-hidden"
                                  :class="objValid ? 'border-green-200' : 'border-red-400 ring-2 ring-red-200'"
                                  :style="'width: ' + objW + '%'">
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-green-500">Objetivo</p>
-                                <p class="text-xl font-bold text-green-800" x-text="fmt(obj) + ' ' + unidad"></p>
+                                <p class="text-base sm:text-xl font-bold text-green-800 truncate" x-text="fmt(obj) + ' ' + unidad"></p>
                             </div>
                         </div>
 
