@@ -53,13 +53,17 @@ Los usuarios no se auto-registran. El flujo es:
 
 ### 3.1 Modelo RBAC
 
-Se usa **Spatie Laravel Permission** con 3 roles y 9 permisos:
+Se usa **Spatie Laravel Permission** con 5 roles y 19 permisos:
 
 | Rol | Permisos |
 |-----|----------|
-| **admin** | Todos los permisos |
-| **planeador** | gestionar_catalogos, crear_programa, editar_mir, revisar_avance, aprobar_avance, exportar_reportes |
-| **operador** | capturar_avance, exportar_reportes |
+| **admin** | Todos los permisos (Gate::before) |
+| **planeador** | gestionar_catalogos, crear_programa, editar_mir, revisar_avance, aprobar_avance, exportar_reportes, ver_sabana_captura, ver_concentrado_captura, ver_datos_financieros, exportar_cuenta_publica, ver_sustento_legal |
+| **operador** | capturar_avance, exportar_reportes, ver_sabana_captura, ver_concentrado_captura |
+| **analista_financiero** | gestionar_presupuesto, capturar_avance_financiero, ver_datos_financieros, exportar_cuenta_publica, ver_sustento_legal |
+| **analista_juridico** | gestionar_sustento_legal, validar_sustento_legal, ver_sustento_legal, gestionar_reglas_operacion, ver_datos_financieros |
+
+> Referencia completa: [`docs/roles-permisos-rutas.md`](roles-permisos-rutas.md)
 
 ### 3.2 Protección de Rutas
 
@@ -74,6 +78,14 @@ auth:sanctum → jetstream.auth_session → verified → [permission/can]
 | Admin (Usuarios) | `can:invitar_usuarios` | `/admin/usuarios` |
 | Cascada | `permission:gestionar_catalogos` | `/cascade/*` |
 | Evaluación (Exportar) | `can:exportar_reportes` | `/evaluacion/exportar/*`, `/evaluacion/transversal` |
+| Presupuesto (Panel) | `can:ver_datos_financieros` | `/presupuesto` |
+| Presupuesto (CRUD) | `can:gestionar_presupuesto` | `/presupuesto/partidas/*`, `/presupuesto/importar` |
+| Presupuesto (Captura) | `can:capturar_avance_financiero` | `/presupuesto/captura/*` |
+| Presupuesto (Cuenta Pública) | `can:exportar_cuenta_publica` | `/presupuesto/cuenta-publica`, `/presupuesto/exportar/*` |
+| Jurídico (Panel/Consulta) | `can:ver_sustento_legal` | `/juridico`, `/juridico/programa/*` |
+| Jurídico (CRUD) | `can:gestionar_sustento_legal` | `/juridico/*/fundamento/*` |
+| Jurídico (Documentos) | `can:gestionar_reglas_operacion` | `/juridico/*/documentos` |
+| Jurídico (Validación) | `can:validar_sustento_legal` | `/juridico/*/validacion` |
 | MML y Tracking | Auth sin permiso específico | Verificación interna en componentes |
 
 ### 3.3 Aislamiento Multi-Tenant (Teams)
@@ -133,10 +145,16 @@ frame-ancestors 'none'
 
 ### 5.4 Upload de Archivos
 
-- Validación de tipo MIME y extensión en `EvidenciaAvance`
+- Validación de tipo MIME y extensión en `EvidenciaAvance` y `DocumentoNormativo`
 - Archivos almacenados en `storage/app/` (no accesible públicamente)
+  - Evidencias: `storage/app/private/evidencias/`
+  - Documentos jurídicos: `storage/app/private/juridico/{programaId}/`
 - Nginx bloquea acceso directo a `/storage`
-- Descarga controlada a través de `EvidenciaController::download()` con verificación de permisos
+- Descarga controlada a través de controllers con verificación de permisos:
+  - `EvidenciaController::download()` — evidencias de avance
+  - `DocumentoNormativoController::download()` — documentos jurídicos (verifica `team_id`)
+- Integridad de documentos jurídicos: hash SHA-256 calculado al subir
+- Límite de archivo documentos jurídicos: 10MB (configurable en `config/juridico.php`)
 - Limpieza automática: `reports:cleanup` elimina reportes expirados (>24h)
 - Eventos `deleting` en `Avance` y `AvanceEvidencia` eliminan archivos huérfanos
 
@@ -171,6 +189,11 @@ Implementado con **spatie/laravel-activitylog**. Registra automáticamente:
 | MirNivel | tipo_nivel, resumen_narrativo, orden |
 | Indicador | nombre, tipo, dimension, frecuencia, meta |
 | EvaluacionPrograma | ejercicio_fiscal, indice_eficacia (excluye campos JSONB grandes) |
+| PartidaPresupuestal | clave_partida, monto_aprobado, monto_modificado |
+| AvanceFinanciero | monto_comprometido, monto_devengado, monto_pagado |
+| SustentoLegalPrograma | tipo, ordenamiento, articulo, vigente, validado_por |
+| DocumentoNormativo | nombre, tipo_documento, verificado, verificado_por |
+| ValidacionJuridicaPrograma | estado, tiene_facultad_ur, tiene_mandato_gasto, tiene_rop, validado_por |
 
 ### 6.3 Consulta de Auditoría
 
