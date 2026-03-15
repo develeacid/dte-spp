@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             Fase1PlaneacionMmlSeeder::class,
             Fase2PresupuestoSeeder::class,
             Fase3JuridicoSeeder::class,
+            Fase4SeguimientoSeeder::class,
         ]);
     }
 }
