@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             CatalogoOrdenamientosSeeder::class,
             Fase1PlaneacionMmlSeeder::class,
             Fase2PresupuestoSeeder::class,
+            Fase3JuridicoSeeder::class,
         ]);
     }
 }
