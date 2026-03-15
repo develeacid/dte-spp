@@ -22,6 +22,7 @@ class RolesAndPermissionsTest extends TestCase
         $this->app->make(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(\Database\Seeders\PresupuestoPermissionsSeeder::class);
     }
 
     public function test_planeador_tiene_permiso_crear_programa(): void
@@ -48,5 +49,37 @@ class RolesAndPermissionsTest extends TestCase
         foreach (SystemPermission::cases() as $permiso) {
             $this->assertTrue($user->hasPermissionTo($permiso->value));
         }
+    }
+
+    public function test_analista_financiero_tiene_permisos_presupuesto(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole(SystemRole::ANALISTA_FINANCIERO->value);
+
+        $this->assertTrue($user->hasPermissionTo(SystemPermission::GESTIONAR_PRESUPUESTO->value));
+        $this->assertTrue($user->hasPermissionTo(SystemPermission::CAPTURAR_AVANCE_FINANCIERO->value));
+        $this->assertTrue($user->hasPermissionTo(SystemPermission::VER_DATOS_FINANCIEROS->value));
+        $this->assertTrue($user->hasPermissionTo(SystemPermission::EXPORTAR_CUENTA_PUBLICA->value));
+    }
+
+    public function test_analista_financiero_no_tiene_permisos_planeacion(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole(SystemRole::ANALISTA_FINANCIERO->value);
+
+        $this->assertFalse($user->hasPermissionTo(SystemPermission::EDITAR_MIR->value));
+        $this->assertFalse($user->hasPermissionTo(SystemPermission::GESTIONAR_CATALOGOS->value));
+        $this->assertFalse($user->hasPermissionTo(SystemPermission::CREAR_PROGRAMA->value));
+    }
+
+    public function test_planeador_tiene_ver_datos_financieros(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole(SystemRole::PLANEADOR->value);
+
+        $this->assertTrue($user->hasPermissionTo(SystemPermission::VER_DATOS_FINANCIEROS->value));
+        $this->assertTrue($user->hasPermissionTo(SystemPermission::EXPORTAR_CUENTA_PUBLICA->value));
+        $this->assertFalse($user->hasPermissionTo(SystemPermission::GESTIONAR_PRESUPUESTO->value));
+        $this->assertFalse($user->hasPermissionTo(SystemPermission::CAPTURAR_AVANCE_FINANCIERO->value));
     }
 }

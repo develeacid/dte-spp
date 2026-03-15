@@ -1,6 +1,6 @@
 # Resultados Esperados — QA Testing
 
-> Generado automáticamente por QaTestingSeeder el 2026-03-13 01:02
+> Generado automáticamente por QaTestingSeeder el 2026-03-14 21:08
 
 ## Semáforos Esperados por Avance
 
@@ -76,7 +76,7 @@
 | FSP-003 | Porcentaje de equipamiento entregado respecto al programado | 2 | 2025 | 13.7500 | 25.0000 | ascendente | rojo | observado |
 | DDT-004 | Porcentaje de proyectos de rehabilitación completados | 1 | 2025 | 7.5000 | 25.0000 | ascendente | rojo | observado |
 
-## Dashboard Admin — SE-001 (team_id=386)
+## Dashboard Admin — SE-001 (team_id=602)
 
 - **Programas:** 1
 - **Indicadores con seguimiento:** 8
@@ -88,7 +88,7 @@
 - Amarillo: 1
 - Rojo: 6
 
-## Dashboard Admin — SS-002 (team_id=387)
+## Dashboard Admin — SS-002 (team_id=603)
 
 - **Programas:** 1
 - **Indicadores con seguimiento:** 7
@@ -100,7 +100,7 @@
 - Amarillo: 0
 - Rojo: 0
 
-## Dashboard Admin — SEG-003 (team_id=388)
+## Dashboard Admin — SEG-003 (team_id=604)
 
 - **Programas:** 1
 - **Indicadores con seguimiento:** 7
@@ -112,7 +112,7 @@
 - Amarillo: 2
 - Rojo: 2
 
-## Dashboard Admin — SECTUR-004 (team_id=389)
+## Dashboard Admin — SECTUR-004 (team_id=605)
 
 - **Programas:** 1
 - **Indicadores con seguimiento:** 6
