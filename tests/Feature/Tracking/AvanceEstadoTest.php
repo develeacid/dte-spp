@@ -12,7 +12,9 @@ use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Tracking\Avance;
 use App\Models\User;
+use App\Notifications\AvanceEnRevisionNotification;
 use App\Notifications\AvanceObservadoNotification;
+use App\Notifications\AvanceVencidoNotification;
 use App\Services\Tracking\AvanceEstadoService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -41,6 +43,11 @@ class AvanceEstadoTest extends TestCase
 
         $this->planeador = User::factory()->withPersonalTeam()->create();
         $this->planeador->assignRole('planeador');
+
+        // Add planeador to operador's team so notification tests can find them
+        $this->operador->currentTeam->users()->attach(
+            $this->planeador, ['role' => 'planeador']
+        );
 
         $programa = ProgramaPresupuestario::create([
             'nombre' => 'Test',
@@ -204,5 +211,55 @@ class AvanceEstadoTest extends TestCase
             $this->operador,
             AvanceObservadoNotification::class,
         );
+    }
+
+    public function test_transicionar_en_revision_notifica_planeadores(): void
+    {
+        Notification::fake();
+
+        $this->service->transicionar($this->avance, EstadoAvance::EN_REVISION, $this->operador);
+
+        Notification::assertSentTo($this->planeador, AvanceEnRevisionNotification::class);
+    }
+
+    public function test_transicionar_observado_notifica_capturador(): void
+    {
+        Notification::fake();
+
+        $this->avance->update(['estado' => EstadoAvance::EN_REVISION->value]);
+
+        $this->service->transicionar($this->avance, EstadoAvance::OBSERVADO, $this->planeador, 'Falta evidencia');
+
+        Notification::assertSentTo($this->operador, AvanceObservadoNotification::class);
+    }
+
+    public function test_transicionar_aprobado_no_notifica(): void
+    {
+        Notification::fake();
+
+        $this->avance->update(['estado' => EstadoAvance::EN_REVISION->value]);
+
+        $this->service->transicionar($this->avance, EstadoAvance::APROBADO, $this->planeador);
+
+        Notification::assertNotSentTo($this->operador, AvanceObservadoNotification::class);
+        Notification::assertNotSentTo($this->planeador, AvanceEnRevisionNotification::class);
+    }
+
+    public function test_transicionar_con_notificar_false_no_notifica(): void
+    {
+        Notification::fake();
+
+        $this->service->transicionar($this->avance, EstadoAvance::EN_REVISION, $this->operador, null, false);
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_transicionar_vencido_notifica_capturador(): void
+    {
+        Notification::fake();
+
+        $this->service->transicionar($this->avance, EstadoAvance::VENCIDO, $this->operador);
+
+        Notification::assertSentTo($this->operador, AvanceVencidoNotification::class);
     }
 }
