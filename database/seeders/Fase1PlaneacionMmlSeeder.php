@@ -578,6 +578,11 @@ class Fase1PlaneacionMmlSeeder extends Seeder
 
     private function mirTemplates(): array
     {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+
         $programs = [];
 
         // ── ISM-001: Impulso al Sector Mezcalero ──
@@ -655,7 +660,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             $programs[$clave] = $this->buildGenericMir($nombre, $beneficiario, $entregable, $tema);
         }
 
-        return $programs;
+        return $cached = $programs;
     }
 
     private function buildMirLevels(array $fin, array $proposito, array $c1, array $c2, array $a11, array $a12, array $a21, array $a22): array
