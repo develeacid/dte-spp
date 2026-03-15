@@ -2,29 +2,28 @@
 
 namespace Database\Seeders\Mml;
 
-use App\Models\CatalogoUnidadMedida;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class UnidadesMedidaSeeder extends Seeder
 {
     public function run(): void
     {
         $unidades = [
-            ['clave' => 'PCT', 'nombre' => 'Porcentaje'],
-            ['clave' => 'TASA', 'nombre' => 'Tasa'],
-            ['clave' => 'IDX', 'nombre' => 'Índice'],
-            ['clave' => 'PROM', 'nombre' => 'Promedio'],
-            ['clave' => 'NUM', 'nombre' => 'Número'],
-            ['clave' => 'RAZ', 'nombre' => 'Razón'],
-            ['clave' => 'PROP', 'nombre' => 'Proporción'],
-            ['clave' => 'MNT', 'nombre' => 'Monto'],
+            ['id' => 1, 'clave' => 'PCT', 'nombre' => 'Porcentaje'],
+            ['id' => 2, 'clave' => 'TASA', 'nombre' => 'Tasa'],
+            ['id' => 3, 'clave' => 'IDX', 'nombre' => 'Índice'],
+            ['id' => 4, 'clave' => 'PROM', 'nombre' => 'Promedio'],
+            ['id' => 5, 'clave' => 'NUM', 'nombre' => 'Número'],
+            ['id' => 6, 'clave' => 'RAZ', 'nombre' => 'Razón'],
+            ['id' => 7, 'clave' => 'PROP', 'nombre' => 'Proporción'],
+            ['id' => 8, 'clave' => 'MNT', 'nombre' => 'Monto'],
         ];
 
-        foreach ($unidades as $unidad) {
-            CatalogoUnidadMedida::updateOrCreate(
-                ['clave' => $unidad['clave']],
-                $unidad
-            );
-        }
+        DB::table('catalogo_unidades_medida')->upsert(
+            $unidades,
+            ['id'],
+            ['clave', 'nombre']
+        );
     }
 }
