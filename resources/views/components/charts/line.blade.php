@@ -2,6 +2,9 @@
     'categories' => [],
     'series' => [],
     'height' => 250,
+    'colors' => ['#3B82F6', '#F59E0B'],
+    'yaxisFormatter' => null,
+    'tooltipSuffix' => 'avances',
 ])
 
 <div wire:ignore
@@ -11,13 +14,13 @@
             this.chart = new ApexCharts(this.$refs.chart, {
                 chart: { type: 'area', height: {{ $height }}, toolbar: { show: false }, sparkline: { enabled: false } },
                 stroke: { curve: 'smooth', width: 2 },
-                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.1 } },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.1, opacityTo: 0.1 } },
                 xaxis: { categories: @js($categories) },
-                yaxis: { labels: { formatter: (val) => Math.round(val) } },
+                yaxis: { labels: { formatter: (val) => {{ $yaxisFormatter === 'percent' ? "Math.round(val) + '%'" : 'Math.round(val)' }} } },
                 series: @js($series),
-                colors: ['rgb(var(--color-primary))'],
+                colors: @js($colors),
                 dataLabels: { enabled: false },
-                tooltip: { y: { formatter: (val) => val + ' avances' } },
+                tooltip: { y: { formatter: (val) => val + ' ' + @js($tooltipSuffix) } },
             });
             this.chart.render();
         },
