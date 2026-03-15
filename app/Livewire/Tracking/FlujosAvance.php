@@ -4,9 +4,6 @@ namespace App\Livewire\Tracking;
 
 use App\Enums\EstadoAvance;
 use App\Models\Tracking\Avance;
-use App\Models\User;
-use App\Notifications\AvanceEnRevisionNotification;
-use App\Notifications\AvanceObservadoNotification;
 use App\Services\Tracking\AvanceEstadoService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -35,11 +32,6 @@ class FlujosAvance extends Component
         );
 
         $this->avance->refresh();
-
-        // Notify planners of the same team
-        $this->notificarPlaneadores(
-            new AvanceEnRevisionNotification($this->avance, $usuario->name)
-        );
 
         session()->flash('message', 'Avance enviado a revisión.');
     }
@@ -81,13 +73,6 @@ class FlujosAvance extends Component
 
         $this->avance->refresh();
 
-        // Notify the operator who captured the avance
-        if ($this->avance->capturador) {
-            $this->avance->capturador->notify(
-                new AvanceObservadoNotification($this->avance, $this->observacionTexto)
-            );
-        }
-
         $this->observacionTexto = '';
         session()->flash('message', 'Avance observado. Se notificó al operador.');
     }
@@ -105,24 +90,6 @@ class FlujosAvance extends Component
         $this->avance->refresh();
 
         session()->flash('message', 'Avance devuelto a captura para corrección.');
-    }
-
-    private function notificarPlaneadores($notification): void
-    {
-        $teamId = $this->avance->indicador->mirNivel->team_id
-            ?? $this->avance->indicador->mirNivel->programa?->team_id;
-
-        if (! $teamId) {
-            return;
-        }
-
-        $planeadores = User::permission('revisar_avance')
-            ->whereHas('teams', fn ($q) => $q->where('teams.id', $teamId))
-            ->get();
-
-        foreach ($planeadores as $planeador) {
-            $planeador->notify($notification);
-        }
     }
 
     public function render()
