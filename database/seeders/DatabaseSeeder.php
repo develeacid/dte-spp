@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             AnexosTransversalesSeeder::class,
             CatalogoOrdenamientosSeeder::class,
             Fase1PlaneacionMmlSeeder::class,
+            Fase2PresupuestoSeeder::class,
         ]);
     }
 }
