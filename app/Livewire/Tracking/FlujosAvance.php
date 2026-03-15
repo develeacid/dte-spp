@@ -109,7 +109,8 @@ class FlujosAvance extends Component
 
     private function notificarPlaneadores($notification): void
     {
-        $teamId = $this->avance->indicador->mirNivel->team_id ?? null;
+        $teamId = $this->avance->indicador->mirNivel->team_id
+            ?? $this->avance->indicador->mirNivel->programa?->team_id;
 
         if (! $teamId) {
             return;
