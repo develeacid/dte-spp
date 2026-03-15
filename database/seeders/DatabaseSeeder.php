@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             AlineacionesSeeder::class,
             AnexosTransversalesSeeder::class,
             CatalogoOrdenamientosSeeder::class,
+            Fase1PlaneacionMmlSeeder::class,
         ]);
     }
 }
