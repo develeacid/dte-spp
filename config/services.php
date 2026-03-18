@@ -35,6 +35,15 @@ return [
         ],
     ],
 
+    'geobase' => [
+        'url' => env('GEOBASE_API_URL', 'http://localhost:8081/api/v1/geobase'),
+        'token' => env('GEOBASE_API_TOKEN'),
+        'webhook_secret' => env('GEOBASE_WEBHOOK_SECRET'),
+        'timeout' => (int) env('GEOBASE_API_TIMEOUT', 15),
+        'retry_times' => (int) env('GEOBASE_API_RETRY_TIMES', 3),
+        'retry_sleep' => (int) env('GEOBASE_API_RETRY_SLEEP', 500),
+    ],
+
     'embedding' => [
         'api_key' => env('EMBEDDING_API_KEY', ''),
         'url'     => env('EMBEDDING_API_URL', 'https://api.openai.com/v1/embeddings'),

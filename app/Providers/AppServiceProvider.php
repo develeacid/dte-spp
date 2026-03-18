@@ -30,6 +30,7 @@ use App\Contracts\LlmServiceInterface;
 use App\Services\Embeddings\EmbeddingService;
 use App\Services\Embeddings\SemanticSearchService;
 use App\Services\Llm\LlmService;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -61,6 +62,12 @@ class AppServiceProvider extends ServiceProvider
                 return true;
             }
         });
+
+        // Registrar listeners GeoBase
+        Event::listen(
+            \App\Events\GeoBase\EnrollmentStatusChanged::class,
+            \App\Listeners\GeoBase\UpdateAvanceFromEnrollment::class,
+        );
 
         // Registrar Observers Jurídico (siempre activos)
         SustentoLegalPrograma::observe(SustentoLegalObserver::class);
