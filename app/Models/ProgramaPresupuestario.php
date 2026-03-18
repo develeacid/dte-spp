@@ -9,11 +9,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProgramaPresupuestario extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'nombre',
@@ -24,6 +25,7 @@ class ProgramaPresupuestario extends Model
         'estado',
         'planeacion_completada_at',
         'created_by',
+        'geobase_program_id',
     ];
 
     protected function casts(): array
@@ -109,6 +111,23 @@ class ProgramaPresupuestario extends Model
     {
         return $this->hasOne(\App\Models\Juridico\ValidacionJuridicaPrograma::class)
             ->where('ejercicio_fiscal', config('presupuesto.ejercicio_default'));
+    }
+
+    // --- GeoBase ---
+
+    public function hasGeoBaseLink(): bool
+    {
+        return $this->geobase_program_id !== null;
+    }
+
+    public function getGeoBaseCoverage(): ?array
+    {
+        if (! $this->hasGeoBaseLink()) {
+            return null;
+        }
+
+        return app(\App\Services\GeoBase\GeoBaseClient::class)
+            ->getProgramCoverage($this->geobase_program_id);
     }
 
     // --- Scopes ---
