@@ -34,5 +34,8 @@ class DatabaseSeeder extends Seeder
             Fase4SeguimientoSeeder::class,
             Fase5ConsolidadoSeeder::class,
         ]);
+
+        // Optional: link with GeoBase (requires GeoBase running and seeded)
+        // Run manually: ./vendor/bin/sail artisan db:seed --class=GeoBaseLinkSeeder
     }
 }
