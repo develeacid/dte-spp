@@ -226,11 +226,18 @@ class Fase4SeguimientoSeeder extends Seeder
         foreach ($indicador->variables as $variable) {
             $valor = $this->generarValor($indicador, $variable, $escenario, $meta);
 
-            AvanceVariable::create([
+            $avanceVar = AvanceVariable::create([
                 'avance_id' => $avance->id,
                 'indicador_variable_id' => $variable->id,
                 'valor' => $valor,
             ]);
+
+            if ($variable->hasGeoBaseLink()) {
+                $avanceVar->update([
+                    'synced_from_geobase' => true,
+                    'synced_at' => $avance->created_at,
+                ]);
+            }
 
             $variablesMap[$variable->simbolo] = $valor;
         }
