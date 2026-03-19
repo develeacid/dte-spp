@@ -86,7 +86,8 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             ['ur' => 'SE-001', 'clave' => 'ISM-001', 'nombre' => 'Impulso al Sector Mezcalero', 'transversal' => 'SECTUR-004',
              'problema' => 'Baja competitividad del sector mezcalero estatal',
              'objetivo' => 'Incrementar la competitividad del sector mezcalero estatal',
-             'poblacion' => ['ref' => 85000, 'pot' => 32000, 'obj' => 8500, 'unidad' => 'Productores']],
+             'poblacion' => ['ref' => 85000, 'pot' => 32000, 'obj' => 8500, 'unidad' => 'Productores'],
+             'geobase_program_id' => 1],
             ['ur' => 'SE-001', 'clave' => 'EDU-002', 'nombre' => 'Educación Básica de Calidad',
              'problema' => 'Bajo rendimiento académico en educación básica',
              'objetivo' => 'Mejorar el rendimiento académico en educación básica',
@@ -94,7 +95,8 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             ['ur' => 'SE-001', 'clave' => 'EDU-003', 'nombre' => 'Becas para Educación Superior',
              'problema' => 'Alta deserción en educación superior por falta de recursos económicos',
              'objetivo' => 'Reducir la deserción en educación superior mediante apoyo económico',
-             'poblacion' => ['ref' => 280000, 'pot' => 95000, 'obj' => 25000, 'unidad' => 'Estudiantes']],
+             'poblacion' => ['ref' => 280000, 'pot' => 95000, 'obj' => 25000, 'unidad' => 'Estudiantes'],
+             'geobase_program_id' => 3],
             ['ur' => 'SE-001', 'clave' => 'EDU-004', 'nombre' => 'Infraestructura Escolar',
              'problema' => 'Deterioro de la infraestructura en planteles educativos',
              'objetivo' => 'Rehabilitar la infraestructura de planteles educativos',
@@ -103,7 +105,8 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             ['ur' => 'SS-002', 'clave' => 'PEC-001', 'nombre' => 'Prevención de Enfermedades Crónicas',
              'problema' => 'Alta incidencia de enfermedades crónico-degenerativas en la población adulta',
              'objetivo' => 'Reducir la incidencia de enfermedades crónico-degenerativas',
-             'poblacion' => ['ref' => 2500000, 'pot' => 800000, 'obj' => 200000, 'unidad' => 'Personas']],
+             'poblacion' => ['ref' => 2500000, 'pot' => 800000, 'obj' => 200000, 'unidad' => 'Personas'],
+             'geobase_program_id' => 4],
             ['ur' => 'SS-002', 'clave' => 'SAL-002', 'nombre' => 'Vacunación Universal',
              'problema' => 'Cobertura de vacunación insuficiente en menores de 5 años',
              'objetivo' => 'Ampliar la cobertura de vacunación en menores de 5 años',
@@ -111,7 +114,8 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             ['ur' => 'SS-002', 'clave' => 'SAL-003', 'nombre' => 'Salud Materna e Infantil',
              'problema' => 'Mortalidad materna e infantil por encima de la media nacional',
              'objetivo' => 'Disminuir la mortalidad materna e infantil',
-             'poblacion' => ['ref' => 120000, 'pot' => 45000, 'obj' => 30000, 'unidad' => 'Mujeres embarazadas']],
+             'poblacion' => ['ref' => 120000, 'pot' => 45000, 'obj' => 30000, 'unidad' => 'Mujeres embarazadas'],
+             'geobase_program_id' => 5],
             ['ur' => 'SS-002', 'clave' => 'SAL-004', 'nombre' => 'Atención Hospitalaria',
              'problema' => 'Saturación de servicios hospitalarios de segundo nivel',
              'objetivo' => 'Mejorar la capacidad de atención hospitalaria de segundo nivel',
@@ -137,7 +141,8 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             ['ur' => 'SECTUR-004', 'clave' => 'DDT-001', 'nombre' => 'Destinos Turísticos Sustentables',
              'problema' => 'Degradación ambiental de destinos turísticos prioritarios',
              'objetivo' => 'Conservar y rehabilitar los destinos turísticos prioritarios',
-             'poblacion' => ['ref' => 45, 'pot' => 20, 'obj' => 12, 'unidad' => 'Destinos turísticos']],
+             'poblacion' => ['ref' => 45, 'pot' => 20, 'obj' => 12, 'unidad' => 'Destinos turísticos'],
+             'geobase_program_id' => 6],
             ['ur' => 'SECTUR-004', 'clave' => 'TUR-002', 'nombre' => 'Promoción Turística Digital',
              'problema' => 'Baja visibilidad del estado como destino turístico en medios digitales',
              'objetivo' => 'Incrementar la visibilidad turística del estado en plataformas digitales',
@@ -166,6 +171,10 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             ['nombre' => $def['nombre'], 'ejercicio_fiscal' => 2025, 'estado' => 'borrador', 'created_by' => $planeador->id]
         );
         $programa->equipos()->syncWithoutDetaching([$team->id => ['rol' => 'coordinadora']]);
+
+        if (isset($def['geobase_program_id'])) {
+            $programa->update(['geobase_program_id' => $def['geobase_program_id']]);
+        }
 
         if (!empty($def['transversal'])) {
             $coadTeam = $teams[$def['transversal']];
@@ -425,6 +434,31 @@ class Fase1PlaneacionMmlSeeder extends Seeder
                 ['indicador_id' => $indicador->id, 'simbolo' => $var['simbolo']],
                 ['nombre' => $var['nombre'], 'orden' => $var['orden']]
             );
+        }
+
+        // GeoBase linking for component-level and proposito-level variables
+        if ($programa->geobase_program_id) {
+            if ($mirNivel->tipo_nivel === TipoNivelMir::COMPONENTE) {
+                $firstVar = $indicador->variables()->where('orden', 1)->first();
+                if ($firstVar) {
+                    $firstVar->update([
+                        'geobase_endpoint_type' => 'component_coverage',
+                        'geobase_reference_id' => $mirNivel->id,
+                        'geobase_value_key' => 'count',
+                    ]);
+                }
+            }
+
+            if ($mirNivel->tipo_nivel === TipoNivelMir::PROPOSITO && $programa->clave === 'ISM-001') {
+                $firstVar = $indicador->variables()->where('orden', 1)->first();
+                if ($firstVar) {
+                    $firstVar->update([
+                        'geobase_endpoint_type' => 'program_coverage',
+                        'geobase_reference_id' => $programa->geobase_program_id,
+                        'geobase_value_key' => 'count',
+                    ]);
+                }
+            }
         }
 
         // Medio de verificacion
