@@ -133,7 +133,22 @@ class CapturaAvance extends Component
             };
 
             if ($response && isset($response[$variable->geobase_value_key ?? 'count'])) {
-                $this->valores[$variableId] = $response[$variable->geobase_value_key ?? 'count'];
+                $value = $response[$variable->geobase_value_key ?? 'count'];
+                $this->valores[$variableId] = $value;
+
+                AvanceVariable::updateOrCreate(
+                    [
+                        'avance_id' => $this->avance->id,
+                        'indicador_variable_id' => $variableId,
+                    ],
+                    [
+                        'valor' => $value,
+                        'synced_from_geobase' => true,
+                        'synced_at' => now(),
+                    ],
+                );
+
+                $this->avance->load('variables');
                 $this->calcular();
                 session()->flash('sync_success', "Variable '{$variable->nombre}' sincronizada desde GeoBase.");
             }

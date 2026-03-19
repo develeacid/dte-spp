@@ -75,7 +75,11 @@ class SyncGeoBaseAvances extends Command
                             'avance_id' => $avance->id,
                             'indicador_variable_id' => $variable->id,
                         ],
-                        ['valor' => $value],
+                        [
+                            'valor' => $value,
+                            'synced_from_geobase' => true,
+                            'synced_at' => now(),
+                        ],
                     );
 
                     $synced++;

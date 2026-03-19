@@ -54,6 +54,10 @@
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     @foreach($avance->indicador->variables as $variable)
+                        @php
+                            $avanceVar = $avance->variables->firstWhere('indicador_variable_id', $variable->id);
+                            $isSynced = $avanceVar?->synced_from_geobase ?? false;
+                        @endphp
                         <div>
                             <label for="var-{{ $variable->id }}" class="block text-sm font-medium text-gray-700">
                                 {{ $variable->nombre }}
@@ -66,9 +70,13 @@
                                     id="var-{{ $variable->id }}"
                                     wire:model="valores.{{ $variable->id }}"
                                     wire:change="calcular"
-                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    @class([
+                                        'block w-full rounded-md shadow-sm sm:text-sm',
+                                        'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500' => !$isSynced,
+                                        'border-emerald-300 bg-emerald-50 text-emerald-900 focus:border-emerald-500 focus:ring-emerald-500' => $isSynced,
+                                    ])
                                     placeholder="Valor de {{ $variable->simbolo }}"
-                                    @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
+                                    @if($avance->estaCongelado() || ! $avance->estado->esEditable() || $isSynced) disabled @endif
                                 />
                                 @if($variable->hasGeoBaseLink())
                                     <button
@@ -86,13 +94,15 @@
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                                         </svg>
-                                        Sincronizar
+                                        {{ $isSynced ? 'Re-sincronizar' : 'Sincronizar' }}
                                     </button>
-                                    @if(isset($valores[$variable->id]) && $variable->hasGeoBaseLink())
-                                        <span class="ml-1 text-xs text-emerald-600">GeoBase</span>
-                                    @endif
                                 @endif
                             </div>
+                            @if($isSynced && $avanceVar->synced_at)
+                                <p class="mt-1 text-xs text-emerald-600">
+                                    Valor de GeoBase &middot; {{ $avanceVar->synced_at->diffForHumans() }}
+                                </p>
+                            @endif
                             @error("valores.{$variable->id}")
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
