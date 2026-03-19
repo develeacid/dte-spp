@@ -163,6 +163,12 @@ frame-ancestors 'none'
 - Laravel Sanctum aplica rate limiting a autenticación
 - API de embeddings tiene rate limiting configurable (`EMBEDDING_RATE_LIMIT=60`)
 
+### 5.6 Webhook Security (GeoBase)
+
+- Middleware `VerifyGeoBaseWebhook` valida firma HMAC-SHA256
+- Secreto compartido en variable de entorno (`GEOBASE_WEBHOOK_SECRET`)
+- Rechazo con 403 si firma no coincide
+
 ---
 
 ## 6. Auditoría

@@ -19,6 +19,7 @@ Este documento define la estrategia de respaldo, retención y recuperación para
 |-----------|------|-----------|-----------------|
 | PostgreSQL (spp_2026) | Datos | **Crítico** | Variable (crece con avances) |
 | `storage/app/` | Archivos | **Crítico** | Variable (evidencias PDF, imágenes) |
+| `storage/app/private/juridico/` | Archivos | **Crítico** | Variable (documentos normativos PDF) |
 | `.env` | Configuración | **Alto** | < 1 KB |
 | `storage/logs/` | Logs | Medio | Rotación automática |
 | Redis | Cache | Bajo | Regenerable |
@@ -77,6 +78,8 @@ mkdir -p "${DESTINO}"
 rsync -av --delete \
     /var/www/spp/storage/app/ \
     "${DESTINO}/app/"
+
+# Incluye evidencias de avance (`private/evidencias/`) y documentos normativos (`private/juridico/`).
 
 # Comprimir snapshot semanal (domingos)
 if [ $(date +%u) -eq 7 ]; then
@@ -226,6 +229,14 @@ cp /var/backups/spp/storage/app/evidencias/archivo.pdf \
    /var/www/spp/storage/app/evidencias/archivo.pdf
 
 chown spp:www-data /var/www/spp/storage/app/evidencias/archivo.pdf
+```
+
+```bash
+# Restaurar un documento normativo específico
+cp /var/backups/spp/storage/app/private/juridico/{programaId}/documento.pdf \
+   /var/www/spp/storage/app/private/juridico/{programaId}/documento.pdf
+
+chown spp:www-data /var/www/spp/storage/app/private/juridico/{programaId}/documento.pdf
 ```
 
 ### 6.4 Point-in-Time Recovery (PITR)

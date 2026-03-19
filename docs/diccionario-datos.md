@@ -314,6 +314,8 @@
 | origen | varchar(20) | DEFAULT 'nuevo' | nuevo, importado |
 | estado | varchar(20) | DEFAULT 'borrador' | borrador, activo, cerrado |
 | planeacion_completada_at | timestamp | NULLABLE | Fecha en que se completó la planeación |
+| geobase_program_id | bigint unsigned | NULLABLE | ID del programa en GeoBase |
+| requiere_rop | boolean | DEFAULT false | Requiere Reglas de Operación publicadas |
 | created_by | bigint | FK → users, NULLABLE | Creador |
 | deleted_at | timestamp | NULLABLE | Soft delete |
 
@@ -446,6 +448,10 @@
 | descripcion | text | Descripción (nullable) |
 | comportamiento | varchar(20) | acumulable, continua (nullable) |
 | unidad_medida_id | bigint | FK → catalogo_unidades_medida (nullable) |
+| geobase_endpoint_type | varchar(20) | Tipo de endpoint GeoBase (nullable) |
+| geobase_reference_id | bigint unsigned | ID de referencia en GeoBase (nullable) |
+| geobase_filter_params | json | Parámetros de filtro GeoBase (nullable) |
+| geobase_value_key | varchar(30) | Clave del valor en respuesta GeoBase (nullable) |
 | orden | smallint | DEFAULT 0 |
 
 ### `medios_verificacion`
@@ -709,7 +715,166 @@
 
 ---
 
-## 12. Auditoría
+## 12. Dominio: Presupuesto
+
+### `partidas_presupuestales`
+
+| Columna | Tipo | Restricción | Descripción |
+|---------|------|-------------|-------------|
+| id | bigint | PK | Identificador |
+| programa_presupuestario_id | bigint | FK → programa_presupuestarios | Programa |
+| clave_partida | varchar(20) | NOT NULL | Clave presupuestal |
+| descripcion | varchar(255) | NOT NULL | Descripción de la partida |
+| monto_aprobado | decimal(15,2) | NOT NULL | Monto aprobado |
+| monto_modificado | decimal(15,2) | NULLABLE | Monto modificado |
+| ejercicio_fiscal | smallint | NOT NULL | Año fiscal |
+| team_id | bigint | FK → teams | Equipo |
+| registrado_por | bigint | FK → users, NULLABLE | Usuario que registró |
+
+**Restricción única:** `(programa_presupuestario_id, clave_partida, ejercicio_fiscal)`
+**Índice:** `(programa_presupuestario_id, ejercicio_fiscal)`
+**Traits:** LogsActivity
+
+### `avances_financieros`
+
+| Columna | Tipo | Restricción | Descripción |
+|---------|------|-------------|-------------|
+| id | bigint | PK | Identificador |
+| partida_presupuestal_id | bigint | FK → partidas_presupuestales | Partida |
+| trimestre | smallint | NOT NULL | Trimestre (1-4) |
+| monto_comprometido | decimal(15,2) | DEFAULT 0 | Monto comprometido |
+| monto_devengado | decimal(15,2) | DEFAULT 0 | Monto devengado |
+| monto_pagado | decimal(15,2) | DEFAULT 0 | Monto pagado |
+| registrado_por | bigint | FK → users | Usuario que registró |
+| observaciones | text | NULLABLE | Observaciones |
+
+**Restricción única:** `(partida_presupuestal_id, trimestre)`
+**CHECK constraints:**
+- `chk_trimestre_valido`: `trimestre BETWEEN 1 AND 4`
+- `chk_pagado_le_devengado`: `monto_pagado <= monto_devengado`
+- `chk_devengado_le_comprometido`: `monto_devengado <= monto_comprometido`
+**Traits:** LogsActivity
+
+### `metas_gasto_trimestral`
+
+| Columna | Tipo | Restricción | Descripción |
+|---------|------|-------------|-------------|
+| id | bigint | PK | Identificador |
+| partida_presupuestal_id | bigint | FK → partidas_presupuestales | Partida |
+| trimestre | smallint | NOT NULL | Trimestre (1-4) |
+| monto_programado | decimal(15,2) | NOT NULL | Monto programado |
+| justificacion | text | NULLABLE | Justificación |
+
+**Restricción única:** `(partida_presupuestal_id, trimestre)`
+**CHECK constraints:**
+- `chk_meta_trimestre`: `trimestre BETWEEN 1 AND 4`
+- `chk_meta_positiva`: `monto_programado >= 0`
+
+---
+
+## 13. Dominio: Jurídico
+
+### `catalogo_ordenamientos`
+
+| Columna | Tipo | Restricción | Descripción |
+|---------|------|-------------|-------------|
+| id | bigint | PK | Identificador |
+| nombre | varchar(255) | NOT NULL | Nombre del ordenamiento |
+| nivel_jerarquia | varchar(30) | NOT NULL | constitucional, federal, estatal, reglamentario, operativo |
+| abreviatura | varchar(50) | NULLABLE | Abreviatura |
+| activo | boolean | DEFAULT true | Activo |
+| orden | smallint | DEFAULT 0 | Posición |
+
+**Índice:** `nivel_jerarquia`
+
+### `sustento_legal_programa`
+
+| Columna | Tipo | Restricción | Descripción |
+|---------|------|-------------|-------------|
+| id | bigint | PK | Identificador |
+| programa_presupuestario_id | bigint | FK → programa_presupuestarios | Programa |
+| tipo | varchar(30) | NOT NULL | facultad_ur, mandato_gasto, regla_operacion, otro |
+| catalogo_ordenamiento_id | bigint | FK → catalogo_ordenamientos, NULLABLE | Ordenamiento del catálogo |
+| ordenamiento | varchar(255) | NOT NULL | Nombre del ordenamiento legal |
+| articulo | varchar(100) | NULLABLE | Artículo(s) citado(s) |
+| descripcion | text | NULLABLE | Descripción |
+| nivel_jerarquia | varchar(30) | NOT NULL | Nivel en jerarquía legal |
+| vigente | boolean | DEFAULT true | Vigente |
+| registrado_por | bigint | FK → users | Usuario que registró |
+| validado_por | bigint | FK → users, NULLABLE | Usuario que validó |
+| validado_at | timestamp | NULLABLE | Fecha de validación |
+| team_id | bigint | FK → teams | Equipo |
+
+**Índices:** `(programa_presupuestario_id, tipo)`, `team_id`
+**Traits:** LogsActivity
+
+### `documentos_normativos`
+
+| Columna | Tipo | Restricción | Descripción |
+|---------|------|-------------|-------------|
+| id | bigint | PK | Identificador |
+| programa_presupuestario_id | bigint | FK → programa_presupuestarios | Programa |
+| tipo_documento | varchar(30) | NOT NULL | reglas_operacion, periodico_oficial, reglamento_interior, ley_organica, otro |
+| nombre | varchar(255) | NOT NULL | Nombre del documento |
+| archivo_path | varchar(500) | NOT NULL | Ruta en storage |
+| archivo_hash | varchar(64) | NULLABLE | Hash SHA-256 |
+| archivo_size | integer | NULLABLE | Tamaño en bytes |
+| fecha_publicacion | date | NULLABLE | Fecha de publicación |
+| fecha_vigencia | date | NULLABLE | Fecha de vigencia |
+| verificado | boolean | DEFAULT false | Verificado |
+| verificado_por | bigint | FK → users, NULLABLE | Verificador |
+| verificado_at | timestamp | NULLABLE | Fecha de verificación |
+| registrado_por | bigint | FK → users | Quien subió |
+| team_id | bigint | FK → teams | Equipo |
+
+**Índice:** `(programa_presupuestario_id, tipo_documento)`
+**Traits:** LogsActivity
+
+### `validacion_juridica_programa`
+
+| Columna | Tipo | Restricción | Descripción |
+|---------|------|-------------|-------------|
+| id | bigint | PK | Identificador |
+| programa_presupuestario_id | bigint | FK → programa_presupuestarios | Programa |
+| ejercicio_fiscal | smallint | NOT NULL | Año fiscal |
+| estado | varchar(20) | DEFAULT 'pendiente' | pendiente, en_revision, validado, rechazado, vencido |
+| tiene_facultad_ur | boolean | DEFAULT false | ¿Tiene facultad de la UR? |
+| tiene_mandato_gasto | boolean | DEFAULT false | ¿Tiene mandato de gasto? |
+| tiene_rop | boolean | NULLABLE | ¿Tiene ROP publicadas? (null si no aplica) |
+| observaciones | text | NULLABLE | Observaciones del validador |
+| validado_por | bigint | FK → users, NULLABLE | Validador |
+| validado_at | timestamp | NULLABLE | Fecha de validación |
+
+**Restricción única:** `(programa_presupuestario_id, ejercicio_fiscal)`
+
+---
+
+## 14. Dominio: Validación Tripartita
+
+### `estado_validacion_programa`
+
+| Columna | Tipo | Restricción | Descripción |
+|---------|------|-------------|-------------|
+| id | bigint | PK | Identificador |
+| programa_presupuestario_id | bigint | FK → programa_presupuestarios | Programa |
+| ejercicio_fiscal | smallint | NOT NULL | Año fiscal |
+| planeacion_estado | varchar(20) | DEFAULT 'incompleta' | Estado de planeación |
+| planeacion_detalle | jsonb | NULLABLE | Detalle de planeación |
+| planeacion_actualizado_at | timestamp | NULLABLE | Última actualización |
+| juridico_estado | varchar(20) | DEFAULT 'no_implementado' | Estado jurídico |
+| juridico_detalle | jsonb | NULLABLE | Detalle jurídico |
+| juridico_actualizado_at | timestamp | NULLABLE | Última actualización |
+| financiero_estado | varchar(20) | DEFAULT 'sin_partidas' | Estado financiero |
+| financiero_detalle | jsonb | NULLABLE | Detalle financiero |
+| financiero_actualizado_at | timestamp | NULLABLE | Última actualización |
+| consolidado | varchar(20) | DEFAULT 'critico' | Estado consolidado |
+| validaciones_completas | smallint | DEFAULT 0 | Conteo (0-3) |
+
+**Restricción única:** `(programa_presupuestario_id, ejercicio_fiscal)`
+
+---
+
+## 15. Auditoría
 
 ### `activity_log` (spatie/laravel-activitylog)
 
@@ -728,11 +893,11 @@
 
 **Índices:** `log_name`, `event`, `batch_uuid`
 
-**Modelos auditados:** User, PedPlan, PedEje, PedTema, PedObjetivoEstrategico, MirNivel, Indicador, EvaluacionPrograma
+**Modelos auditados:** User, PedPlan, PedEje, PedTema, PedObjetivoEstrategico, MirNivel, Indicador, EvaluacionPrograma, PartidaPresupuestal, AvanceFinanciero, SustentoLegalPrograma, DocumentoNormativo, ValidacionJuridicaPrograma
 
 ---
 
-## 13. Enums del Sistema
+## 16. Enums del Sistema
 
 | Enum | Valores |
 |------|---------|
@@ -752,10 +917,14 @@
 | TipoProgramaDerivado | sectorial, especial, institucional, regional |
 | TipoUnidadResponsable | sustantiva, apoyo |
 | NivelGobierno | estatal, municipal |
+| EstadoValidacionJuridica | pendiente, en_revision, validado, rechazado, vencido |
+| NivelJerarquiaLegal | constitucional, federal, estatal, reglamentario, operativo |
+| TipoDocumentoNormativo | reglas_operacion, periodico_oficial, reglamento_interior, ley_organica, otro |
+| TipoSustentoLegal | facultad_ur, mandato_gasto, regla_operacion, otro |
 
 ---
 
-## 14. Diagrama de Relaciones (resumen)
+## 17. Diagrama de Relaciones (resumen)
 
 ```
 PedPlan → PedEje → PedTema → PedObjetivoEstrategico → PedEstrategia → PedLineaAccion
@@ -776,6 +945,12 @@ ProgramaPresupuestario → ProgramaTeam ↔ Team
                        → MirVersion
                        → EvaluacionPrograma
                        → PoblacionPrograma
+                       → PartidaPresupuestal → MetaGastoTrimestral
+                                             → AvanceFinanciero
+                       → SustentoLegalPrograma ↔ CatalogoOrdenamiento
+                       → DocumentoNormativo
+                       → ValidacionJuridicaPrograma
+                       → EstadoValidacionPrograma
 
 User → Team (Jetstream Teams)
      → Avance (capturado_por)

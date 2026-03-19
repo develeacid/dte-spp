@@ -1,6 +1,6 @@
 # Matriz de Roles, Permisos y Rutas — DTE-SPP 2026
 
-> Referencia técnica actualizada al 2026-03-14 (post Fase 3: Jurídico)
+> Referencia técnica actualizada al 2026-03-19 (post Fase 3: Jurídico + GeoBase)
 
 ---
 
@@ -146,6 +146,12 @@
 | `/admin/usuarios` | `admin.users` | `invitar_usuarios` | Gestión de usuarios e invitaciones |
 | `/admin/monitoreo-ia` | `admin.monitoreo-ia` | `administrar_usuarios` | Monitor de uso de IA (LLM) |
 | `/admin/auditoria` | `admin.auditoria` | `administrar_usuarios` | Auditoría de cambios (activity log) |
+
+### 3.10 GeoBase (Webhook)
+
+| Ruta | Nombre | Permiso | Descripción |
+|------|--------|---------|-------------|
+| `POST /geobase/webhook` | `geobase.webhook` | HMAC signature | Webhook de cambios en padrón geoespacial |
 
 ---
 

@@ -123,6 +123,15 @@ MAIL_FROM_NAME="SPP 2026"
 
 FILESYSTEM_DISK=local
 
+# GeoBase (integración con padrón geoespacial)
+GEOBASE_BASE_URL=https://geobase.ejemplo.gob.mx/api
+GEOBASE_TOKEN=
+GEOBASE_WEBHOOK_SECRET=
+GEOBASE_TIMEOUT=10
+
+# Jurídico
+# (sin variables adicionales, config en config/juridico.php)
+
 # Reportes
 REPORT_INSTITUCION="Gobierno del Estado"
 REPORT_DEPENDENCIA="Secretaría de Planeación"
@@ -150,8 +159,11 @@ npm ci && npm run build
 php artisan key:generate
 php artisan migrate --force
 php artisan db:seed --class=RolesAndPermissionsSeeder
+php artisan db:seed --class=PresupuestoPermissionsSeeder
+php artisan db:seed --class=JuridicoPermissionsSeeder
 php artisan db:seed --class=Database\\Seeders\\Cascade\\OdsSeeder
 php artisan db:seed --class=Database\\Seeders\\Cascade\\PndSeeder
+php artisan db:seed --class=CatalogoOrdenamientosSeeder
 php artisan optimize
 ```
 
@@ -222,13 +234,15 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ---
 
-## 5. Certificado SSL
+## 5. Certificado SSL y Middleware
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d spp.ejemplo.gob.mx
 # Renovación automática ya incluida via systemd timer
 ```
+
+> **Nota:** El middleware `VerifyGeoBaseWebhook` se aplica automáticamente a la ruta del webhook de GeoBase. No requiere configuración manual en Nginx ni en el kernel de middleware.
 
 ---
 
@@ -430,5 +444,7 @@ El proyecto incluye pipeline CI en `.github/workflows/ci.yml` que ejecuta autom�
 4. Composer audit (vulnerabilidades)
 5. Migraciones contra PostgreSQL 16 de prueba
 6. PHPUnit en paralelo
+
+El pipeline también ejecuta los seeders `PresupuestoPermissionsSeeder` y `JuridicoPermissionsSeeder` como parte de la preparación del entorno de pruebas.
 
 Para despliegue automático, agregar un step adicional con SSH deploy o usar un servicio como Laravel Forge/Envoyer.

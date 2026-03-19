@@ -13,6 +13,7 @@
 | Queue Workers (Supervisor) | Alto | Procesos activos, jobs fallidos |
 | Cron / Scheduler | Alto | Tareas ejecutadas a tiempo |
 | Storage | Medio | Espacio en disco |
+| GeoBase API | Medio | Conectividad, webhook activo |
 | Aplicación | Crítico | Endpoint de salud, logs de error |
 
 ---
@@ -316,24 +317,43 @@ El sistema tiene monitoreo interno de consumo de API en `/admin/monitoreo-ia`:
 sudo -u postgres psql -d spp_2026 -c "
 SELECT
     count(*) as llamadas,
-    sum(costo_total) as costo_total,
-    sum(tokens_entrada + tokens_salida) as tokens_totales
+    sum(cost_usd) as costo_total,
+    sum(prompt_tokens + completion_tokens) as tokens_totales
 FROM llm_logs
 WHERE created_at >= date_trunc('month', current_date);"
 
 # Verificar presupuesto vs consumo
 sudo -u postgres psql -d spp_2026 -c "
-SELECT team_id, presupuesto, consumido,
-       round((consumido/presupuesto * 100)::numeric, 1) as porcentaje
+SELECT scope, scope_id, budget_usd, spent_usd,
+       round((spent_usd/budget_usd * 100)::numeric, 1) as porcentaje
 FROM llm_budgets
-WHERE anio = 2026 AND mes = extract(month from current_date);"
+WHERE month = date_trunc('month', current_date);"
 ```
 
 **Alerta si:** consumo > 80% del presupuesto mensual
 
 ---
 
-## 10. Dashboard de Monitoreo (Resumen)
+## 10. Monitoreo de Integración GeoBase
+
+```bash
+# Verificar conectividad con GeoBase API
+curl -s -o /dev/null -w "%{http_code}" \
+    -H "Authorization: Bearer $GEOBASE_TOKEN" \
+    "$GEOBASE_BASE_URL/programs"
+# Esperado: 200
+
+# Verificar último webhook recibido
+grep "geobase.*webhook" /var/www/spp/storage/logs/laravel.log | tail -5
+```
+
+**Alertas:**
+- API no responde (HTTP ≠ 200): verificar token y red
+- Webhook sin actividad > 24h: verificar configuración en GeoBase
+
+---
+
+## 11. Dashboard de Monitoreo (Resumen)
 
 ### Checklist Diario
 
@@ -349,6 +369,8 @@ WHERE anio = 2026 AND mes = extract(month from current_date);"
 - [ ] Verificar tamaño de activity_log
 - [ ] Revisar consumo de Redis
 - [ ] Verificar workers no reiniciados excesivamente
+- [ ] Verificar conectividad GeoBase API
+- [ ] Revisar logs de webhook GeoBase
 
 ### Checklist Mensual
 

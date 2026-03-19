@@ -41,8 +41,10 @@ El SPP 2026 es una aplicación web monolítica basada en Laravel 12 que implemen
 | Auditoría | Spatie Activity Log | Registro automático de cambios |
 | PDF | barryvdh/laravel-dompdf | Generación server-side |
 | Excel | Maatwebsite/Excel | Import/export de hojas de cálculo |
+| Visualización | ChartSvgService + Alpine.js | 18 componentes SVG server-side, sin dependencias JS externas |
 | Embeddings | pgvector + OpenAI API | Búsqueda semántica (optional) |
 | Fórmulas | Symfony Expression Language | Evaluación segura de fórmulas de indicadores |
+| GeoBase API | HTTP client (Sanctum) | Integración con padrón geoespacial para cobertura |
 | CI | GitHub Actions | Pipeline automatizado |
 | Dev | Laravel Sail (Docker) | Entorno reproducible |
 
@@ -60,14 +62,14 @@ app/
 ├── Console/Commands/        # 7 comandos artisan programados
 ├── Contracts/               # 2 interfaces: EmbeddingServiceInterface, LlmServiceInterface
 ├── DTOs/                    # 3 DTOs: ImportedMirData, LlmValidationResult, SimilarityResult
-├── Enums/                   # 15 enums PHP 8.1 (estados, tipos)
+├── Enums/                   # 19 enums PHP 8.1 (estados, tipos, roles, permisos)
 ├── Exceptions/              # 2 excepciones: LlmException, TransicionInvalidaException
 ├── Exports/
-│   ├── Excel/               # 9 exports: MIR, avance trimestral, concentrado, sábana, evaluación, transversal
+│   ├── Excel/               # 14 exports: MIR, avance trimestral, concentrado, sábana, evaluación, transversal, cuenta pública (4 sheets)
 │   └── Pdf/                 # 8 exports: MIR, ficha técnica, FMyE, avance, concentrado, sábana, evaluación, transversal
 ├── Http/
 │   ├── Controllers/         # Controllers por dominio (ver 3.3)
-│   ├── Middleware/           # 4 middleware custom
+│   ├── Middleware/           # 5 middleware custom
 │   └── Requests/            # 10 Form Requests (validación)
 │       ├── Cascade/         # 7: StorePedPlan/Eje/Tema/Objetivo/Estrategia/LineaAccion/NodoRequest
 │       ├── Mml/             # 1: StoreIndicadorRequest
@@ -75,31 +77,41 @@ app/
 ├── Jobs/                    # 4 jobs
 │   ├── Embeddings/          # GenerateEmbedding
 │   └── [root]               # GenerarReporteExcelJob, GenerarReportePdfJob, ProcessLlmRequest
-├── Livewire/                # 42 componentes Livewire (ver 3.4)
+├── Listeners/
+│   └── GeoBase/             # UpdateAvanceFromEnrollment
+├── Livewire/                # 56 componentes Livewire (ver 3.4)
 │   ├── Admin/               # MonitoreoIa, GestionUsuarios, Auditoría
 │   ├── Cascade/             # PED tree, alineación, importador, programas derivados
 │   ├── Mml/                 # MIR editor, árboles, importación, poblaciones
 │   ├── Tracking/            # Captura, flujos, desbloqueos, sábana, concentrado
 │   ├── Evaluation/          # Evaluación, panel transversal
+│   ├── Presupuesto/         # Panel, partidas, captura financiera, cuenta pública, importación
+│   ├── Juridico/            # Panel, sustento legal, fundamentos, documentos, validación
 │   ├── Dashboard.php        # Dashboard role-based
 │   ├── NotificationBell.php
 │   └── NotificationsIndex.php
 ├── Mail/                    # 1: InvitacionUsuario
-├── Models/                  # 39 modelos Eloquent
+├── Models/                  # 46 modelos Eloquent
 │   ├── Mml/                 # Arbol, Indicador, MirNivel, MetaPeriodo, MirVersion...
 │   ├── Tracking/            # Avance, AvanceEvidencia, AvanceVariable, Desbloqueo
 │   ├── Evaluation/          # EvaluacionPrograma, AnexoTransversal
-│   └── [root]               # User, Team, PED models, ODS, PND, LlmLog...
-├── Notifications/           # 6 notificaciones del sistema
-├── Observers/               # 8 observers: PED, PND, ODS, ProgramaDerivadoObjetivo, Embedding
+│   ├── Presupuesto/         # PartidaPresupuestal, AvanceFinanciero, MetaGastoTrimestral
+│   ├── Juridico/            # SustentoLegalPrograma, DocumentoNormativo, ValidacionJuridicaPrograma, CatalogoOrdenamiento
+│   └── [root]               # User, Team, PED models, ODS, PND, LlmLog, EstadoValidacionPrograma...
+├── Notifications/           # 11 notificaciones del sistema
+├── Observers/               # 10 observers: PED, PND, ODS, Embedding, DocumentoNormativo, SustentoLegal
 ├── Policies/                # 1: TeamPolicy
-├── Services/                # 23 servicios de lógica de negocio (ver 3.5)
+├── Services/                # 30 servicios de lógica de negocio (ver 3.5)
+│   ├── Charts/              # ChartSvgService (18 componentes SVG)
 │   ├── Embeddings/          # EmbeddingService, SemanticSearchService
 │   ├── Evaluation/          # IndiceEficaciaService, LogicaVerticalService, DatosAbiertosService
+│   ├── GeoBase/             # GeoBaseClient, GeoBaseException
+│   ├── Juridico/            # DocumentoNormativoService, ValidacionJuridicaService
 │   ├── Llm/                 # LlmService, LlmBudgetService
-│   ├── Mml/                 # 7 servicios: parser, persistencia, snapshot, prellenado, diagnóstico, validación, calendarización
+│   ├── Mml/                 # 8 servicios: parser, persistencia, snapshot, prellenado, diagnóstico, validación, calendarización, reglas
+│   ├── Presupuesto/         # CuentaPublicaService, PresupuestoResumenService, SemaforoFinancieroService
 │   ├── Tracking/            # 5 servicios: semáforo, estado, fórmula, calendario, justificación
-│   └── [root]               # DashboardService, InvitacionUsuarioService, PedMarkdownParser
+│   └── [root]               # DashboardService, EstadoConsolidadoService, InvitacionUsuarioService, PedMarkdownParser
 └── Traits/                  # 1: HasEmbedding
 ```
 
@@ -111,6 +123,8 @@ app/
 | **MML** | Metodología Marco Lógico, MIR | ProgramaPresupuestario, Arbol, ArbolNodo, MirNivel, Indicador |
 | **Tracking** | Seguimiento de avances | Avance, AvanceEvidencia, MetaPeriodo, Desbloqueo |
 | **Evaluation** | Evaluación y reportes | EvaluacionPrograma, AnexoTransversal |
+| **Presupuesto** | Gestión financiera, partidas, cuenta pública | PartidaPresupuestal, AvanceFinanciero, MetaGastoTrimestral |
+| **Jurídico** | Sustento legal, validación, documentos normativos | SustentoLegalPrograma, DocumentoNormativo, ValidacionJuridicaPrograma |
 | **Admin** | Usuarios, IA, auditoría | User, Team, LlmLog, ActivityLog |
 
 ### 3.3 Controllers
@@ -118,35 +132,45 @@ app/
 ```
 Http/Controllers/
 ├── Cascade/
-│   ├── PedController.php               # CRUD completo del árbol PED (plan, ejes, temas, objetivos, estrategias, líneas)
+│   ├── PedController.php               # CRUD completo del árbol PED
 │   ├── MatrizAlineacionController.php   # Vista de matriz de alineación PED-PND-ODS
-│   └── ProgramaDerivadoController.php   # CRUD de programas derivados y sus objetivos
+│   └── ProgramaDerivadoController.php   # CRUD de programas derivados
 ├── Evaluation/
 │   ├── ExportController.php             # Generación y descarga de reportes PDF/Excel
 │   └── DatosAbiertosController.php      # API pública de datos abiertos (JSON/CSV)
 ├── Tracking/
-│   └── EvidenciaController.php          # Descarga controlada de archivos de evidencia
-├── OnboardingController.php             # Flujo de activación de cuenta post-invitación
+│   └── EvidenciaController.php          # Descarga controlada de evidencias
+├── Presupuesto/
+│   └── PresupuestalController.php       # Exportación de Cuenta Pública PDF/Excel
+├── Juridico/
+│   └── DocumentoNormativoController.php # Descarga controlada de documentos normativos
+├── GeoBase/
+│   └── WebhookController.php            # Webhook handler con verificación HMAC
+├── OnboardingController.php             # Flujo de activación de cuenta
 └── Controller.php                       # Base controller
 ```
 
-### 3.4 Componentes Livewire (42)
+### 3.4 Componentes Livewire (56)
 
 | Subdominio | Componentes | Descripción |
 |------------|------------|-------------|
 | `Admin/` | 3 | MonitoreoIa, GestionUsuarios, Auditoría |
-| `Cascade/` | 9 | PedTree, PedPlanForm, PedNodoForm, PedImporter, AlineacionPedPnd, AlineacionPndOds, AlineacionLineaPrograma, CadenaAlineacion, MatrizAlineacionManager, ProgramasDerivadosManager |
+| `Cascade/` | 10 | PedTree, PedPlanForm, PedNodoForm, PedImporter, AlineacionPedPnd, AlineacionPndOds, AlineacionLineaPrograma, CadenaAlineacion, MatrizAlineacionManager, ProgramasDerivadosManager |
 | `Mml/` | 13 | ListaProgramas, DefinicionProblema, ArbolProblemaBuilder, ArbolObjetivosBuilder, SeleccionAlternativas, MirEditor, CalendarizarMetas, AlineacionEstrategica, VincularAlineacion, ImportarPrograma, DashboardImportaciones, CompletarHuecos, EmbudoPoblaciones |
 | `Tracking/` | 11 | PanelSeguimiento, CapturaAvance, EvidenciaAvance, FlujosAvance, GestionarDesbloqueos, SolicitarDesbloqueo, IndicadoresVencidos, MisIndicadoresPendientes, DashboardIndicadores, SábanaCaptura, ConcentradoCaptura |
 | `Evaluation/` | 2 | EvaluacionProgramaView, PanelTransversal |
+| `Presupuesto/` | 6 | PanelPresupuestal, GestionPartidas, PartidaForm, CapturaAvanceFinanciero, ImportarPresupuesto, CuentaPublicaView |
+| `Juridico/` | 5 | PanelJuridico, SustentoLegalPrograma, FundamentoForm, DocumentosNormativos, ValidacionJuridica |
 | [root] | 3 | Dashboard, NotificationBell, NotificationsIndex |
 
 ### 3.5 Servicios de Lógica de Negocio
 
 Servicios clave:
 - `DashboardService`: Estadísticas, semáforo, tendencias (cacheado 10 min)
+- `EstadoConsolidadoService`: Cálculo de validación tripartita (planeación + jurídico + financiero)
 - `InvitacionUsuarioService`: Flujo de activación de cuentas
 - `PedMarkdownParser`: Parser de archivos Markdown para importar PED
+- `Charts/ChartSvgService`: 18 visualizaciones SVG server-side (bar, donut, radar, treemap, etc.)
 - `Tracking/SemaforoService`: Cálculo de semáforo (verde/amarillo/rojo)
 - `Tracking/FormulaEvaluatorService`: Evaluación segura de fórmulas con Symfony Expression Language
 - `Tracking/AvanceEstadoService`: Máquina de estados para transiciones de avance
@@ -154,6 +178,13 @@ Servicios clave:
 - `Evaluation/LogicaVerticalService`: Validación de lógica vertical MIR
 - `Mml/MirParserService`: Parseo de archivos Excel para importación MIR
 - `Mml/MirSnapshotService`: Versionado de snapshots MIR (JSONB)
+- `Mml/IndicadorReglasService`: Reglas de negocio de indicadores
+- `Presupuesto/CuentaPublicaService`: Generación de reportes de cuenta pública
+- `Presupuesto/PresupuestoResumenService`: KPIs y resúmenes del panel presupuestal
+- `Presupuesto/SemaforoFinancieroService`: Semáforo combinado (programático + financiero)
+- `Juridico/DocumentoNormativoService`: Gestión de documentos normativos (upload, hash SHA-256)
+- `Juridico/ValidacionJuridicaService`: Validación tripartita del sustento legal
+- `GeoBase/GeoBaseClient`: HTTP client para API del padrón geoespacial (Sanctum)
 
 ---
 
@@ -210,11 +241,13 @@ Observers registrados para mantener consistencia:
 - `OdsObjetivoObserver`, `OdsMetaObserver`: Sincronización de datos ODS
 - `ProgramaDerivadoObjetivoObserver`: Actualización de relaciones
 - `EmbeddingObserver`: Regeneración de embeddings al modificar modelos
+- `DocumentoNormativoObserver`: Invalidación de cache y verificación de integridad
+- `SustentoLegalObserver`: Notificaciones y actualización de estado jurídico
 
 ### 4.7 Exports (PDF y Excel)
 
 Capa dedicada para generación de reportes exportables:
-- **Excel/** (9 clases): Usa Maatwebsite/Excel con sheets múltiples (MIR, avance trimestral, concentrado, sábana, evaluación, transversal)
+- **Excel/** (14 clases): Usa Maatwebsite/Excel con sheets múltiples (MIR, avance trimestral, concentrado, sábana, evaluación, transversal, cuenta pública con 4 sheets: Resumen, Detalle, Ejes, Alertas)
 - **Pdf/** (8 clases): Usa barryvdh/dompdf (MIR, ficha técnica, FMyE, avance, concentrado, sábana, evaluación, transversal)
 
 ### 4.8 Computed Properties (Livewire)
@@ -276,6 +309,24 @@ ProgramaPresupuestario::paraTeam($user->currentTeam->id)->get();
 
 7. Evaluación
    Avances aprobados → EvaluacionPrograma (índice de eficacia ponderado)
+
+8. Presupuesto
+   PartidaPresupuestal → MetaGastoTrimestral (calendarización)
+   PartidaPresupuestal → AvanceFinanciero (captura trimestral)
+   Semáforo financiero: comprometido vs programado
+
+9. Jurídico
+   ProgramaPresupuestario → SustentoLegalPrograma (fundamentos)
+   ProgramaPresupuestario → DocumentoNormativo (ROP, periódico oficial)
+   ProgramaPresupuestario → ValidacionJuridicaPrograma (validación tripartita)
+
+10. Validación Tripartita
+    EstadoValidacionPrograma = f(planeación, jurídico, financiero)
+    3/3 completas → programa libre de riesgo de observación ASFE
+
+11. GeoBase (Integración)
+    GeoBaseClient → API Sanctum → cobertura geoespacial
+    IndicadorVariable ↔ GeoBase mapping → sincronización de valores
 ```
 
 ### 5.2 Flujo de un Avance
@@ -295,7 +346,7 @@ Operador captura          Planeador/Admin revisa       Sistema calcula
 
 ### 6.1 Diseño
 
-- **54 tablas** organizadas en 5 dominios + sistema
+- **74 migraciones** organizadas en **7 dominios + sistema**
 - **Soft deletes** en ProgramaPresupuestario
 - **JSONB** para snapshots de MIR, resultados de evaluación, validación de sintaxis, datos importados
 - **pgvector** para embeddings de búsqueda semántica
@@ -311,6 +362,13 @@ ProgramaPresupuestario (1) ──→ (N) MirNivel (1) ──→ (N) Indicador
                                                             (1) ──→ (1) Avance
                                                                         │
                                                                   (1) ──→ (N) AvanceEvidencia
+
+ProgramaPresupuestario → PartidaPresupuestal → MetaGastoTrimestral
+                                              → AvanceFinanciero
+                       → SustentoLegalPrograma
+                       → DocumentoNormativo
+                       → ValidacionJuridicaPrograma
+                       → EstadoValidacionPrograma
 ```
 
 ### 6.3 Estrategia de Cache
@@ -347,8 +405,9 @@ Layout (x-app-layout)
 | `page/` | container, header, form-footer |
 | `ui/` | topbar, sidebar, tooltip, help-label |
 | `forms/` | section, inputs |
-| `charts/` | bar-horizontal, donut, line (gráficas Alpine.js) |
+| `charts/` | 18 componentes SVG (bar-horizontal, bar-grouped, bullet, donut, gauge, heatmap, line, lollipop, marimekko, progress-bar, radar, scatter-quadrant, semaforo-pill, sparkline, sunburst, timeline-legal, treemap, waterfall) |
 | `mml/` | stepper (navegación por pasos MML) |
+| `programa/` | estado-tripartita, estado-juridico |
 | `modals/` | confirm (con focus trap) |
 
 ### 7.3 Dashboard Role-Based
@@ -372,6 +431,7 @@ Admin incluye Planeador, que a su vez tiene sus propios widgets.
 | Servicio | Uso | Configuración |
 |----------|-----|---------------|
 | OpenAI API | Embeddings, asistencia IA, validación sintaxis | `EMBEDDING_API_KEY`, rate limited |
+| GeoBase API | Padrón geoespacial, cobertura | `GEOBASE_*` en .env, Sanctum token, webhook HMAC |
 | Fonts Bunny | Tipografía web | CDN, incluido en CSP |
 | UI Avatars | Avatares por defecto | CDN, incluido en CSP |
 | SMTP | Envío de correos (invitaciones, notificaciones) | `MAIL_*` en .env |
@@ -381,10 +441,11 @@ Admin incluye Planeador, que a su vez tiene sus propios widgets.
 ## 9. Seguridad (Resumen)
 
 - Autenticación 2FA obligatoria
-- RBAC con 3 roles y 9 permisos
+- RBAC con 5 roles y 19 permisos
 - Multi-tenant por Teams con aislamiento de queries
 - CSP, X-Frame-Options, X-Content-Type-Options
-- Auditoría con spatie/laravel-activitylog (8 modelos)
+- 5 middleware custom (incluye VerifyGeoBaseWebhook)
+- Auditoría con spatie/laravel-activitylog (13 modelos)
 - Archivos en storage privado con descarga controlada
 
 Ver `docs/seguridad.md` para documento completo.
@@ -426,3 +487,5 @@ Ver `docs/seguridad.md` para documento completo.
 | Full-page Livewire | Controller + View | Menos boilerplate para vistas con estado |
 | Atomic Design | BEM/Component library | Consistencia visual, slots para composición |
 | Docker Sail (dev) | Vagrant, nativo | Reproducibilidad, onboarding rápido |
+| Validación Tripartita | Validación secuencial por área | 3 pilares independientes (planeación, jurídico, financiero) validan en paralelo sin bloqueo |
+| ChartSvgService server-side | Chart.js/D3 client-side | SVG puro sin JS dependencies, renderizable en PDF, accesible |

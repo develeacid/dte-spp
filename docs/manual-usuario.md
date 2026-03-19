@@ -45,8 +45,10 @@ Desde el menú de usuario (esquina superior derecha):
 | Rol | Descripción | Acceso Principal |
 |-----|-------------|------------------|
 | **Admin** | Administrador general con acceso total | Todos los módulos, gestión de usuarios, monitoreo IA, auditoría |
-| **Planeador** | Responsable de planeación y revisión | Cascada, MML, revisión de avances, reportes |
+| **Planeador** | Responsable de planeación y revisión | Cascada, MML, revisión de avances, reportes, consulta presupuestal y legal |
 | **Operador** | Capturista de avances | Captura de avances, evidencias, mis pendientes |
+| **Analista Financiero** | Responsable de gestión presupuestal | Partidas, avance financiero, cuenta pública, consulta legal |
+| **Analista Jurídico** | Responsable de sustento legal | Fundamentos jurídicos, documentos normativos, validación legal |
 
 ---
 
@@ -323,9 +325,125 @@ Vista comparativa de todos los programas con sus índices de eficacia y anexos t
 
 ---
 
-## 8. Administración
+## 8. Módulo: Presupuesto
 
-### 8.1 Gestión de Usuarios
+### 8.1 Panel Presupuestal
+
+**Ruta:** `/presupuesto`
+**Permiso:** `ver_datos_financieros`
+
+Dashboard financiero con KPIs: total aprobado, ejercido, porcentaje de avance, semáforo financiero. Vista de todos los programas con estado tripartita (planeación + jurídico + financiero).
+
+### 8.2 Gestión de Partidas
+
+**Ruta:** `/presupuesto/partidas`
+**Permiso:** `gestionar_presupuesto`
+
+1. Ver lista de partidas presupuestales por programa
+2. Crear partida: clave, descripción, monto aprobado, monto modificado
+3. Editar y eliminar partidas existentes
+4. Cada partida tiene calendarización trimestral de gasto
+
+### 8.3 Captura de Avance Financiero
+
+**Ruta:** `/presupuesto/captura/{programa}`
+**Permiso:** `capturar_avance_financiero`
+
+1. Seleccionar programa
+2. Para cada partida, registrar por trimestre: monto comprometido, devengado y pagado
+3. El sistema valida que pagado ≤ devengado ≤ comprometido
+4. Semáforo financiero automático basado en comprometido vs programado
+
+### 8.4 Importación de Partidas
+
+**Ruta:** `/presupuesto/importar`
+**Permiso:** `gestionar_presupuesto`
+
+Subir archivo CSV con partidas presupuestales para carga masiva.
+
+### 8.5 Cuenta Pública
+
+**Ruta:** `/presupuesto/cuenta-publica`
+**Permiso:** `exportar_cuenta_publica`
+
+Reporte consolidado tipo "Cuenta Pública" con:
+- Resumen por programa
+- Detalle por partida
+- Agrupación por ejes PED
+- Alertas de sub-ejercicio
+
+Exportable en PDF y Excel.
+
+---
+
+## 9. Módulo: Jurídico
+
+### 9.1 Panel Jurídico
+
+**Ruta:** `/juridico`
+**Permiso:** `ver_sustento_legal`
+
+Dashboard con KPIs: programas validados, pendientes, rechazados. Vista de todos los programas con estado de validación jurídica.
+
+### 9.2 Sustento Legal por Programa
+
+**Ruta:** `/juridico/programa/{programa}`
+**Permiso:** `ver_sustento_legal`
+
+Vista del sustento legal de un programa con:
+- Fundamentos registrados (facultad UR, mandato de gasto, ROP)
+- Documentos normativos subidos
+- Estado de validación jurídica
+
+### 9.3 Registro de Fundamentos
+
+**Ruta:** `/juridico/programa/{programa}/fundamento/create`
+**Permiso:** `gestionar_sustento_legal`
+
+1. Seleccionar tipo de fundamento: facultad UR, mandato de gasto, regla de operación, otro
+2. Seleccionar ordenamiento del catálogo o escribir manualmente
+3. Indicar artículo(s), nivel de jerarquía legal, vigencia
+4. Guardar fundamento
+
+### 9.4 Documentos Normativos
+
+**Ruta:** `/juridico/programa/{programa}/documentos`
+**Permiso:** `gestionar_reglas_operacion`
+
+Subir documentos normativos (ROP, periódico oficial, reglamento interior, etc.):
+1. Subir archivo PDF (máximo 10 MB)
+2. Indicar tipo de documento, fecha de publicación, fecha de vigencia
+3. El sistema calcula hash SHA-256 para integridad
+4. Los documentos se almacenan en storage privado
+
+### 9.5 Validación Jurídica
+
+**Ruta:** `/juridico/programa/{programa}/validacion`
+**Permiso:** `validar_sustento_legal`
+
+El analista jurídico valida que el programa tiene:
+- Facultad de la UR (artículo que otorga competencia)
+- Mandato de gasto (artículo que autoriza erogación)
+- ROP publicadas (si el programa las requiere)
+
+Estados: pendiente → en revisión → validado/rechazado
+
+---
+
+## 10. Validación Tripartita
+
+Cada programa requiere 3 validaciones independientes para ser considerado "completo":
+1. **Planeación:** MIR completada con indicadores calendarizados
+2. **Jurídico:** Sustento legal validado por analista jurídico
+3. **Financiero:** Partidas registradas y calendarizadas
+
+El componente `estado-tripartita` muestra el estado consolidado visualmente en los paneles de presupuesto y jurídico.
+
+---
+
+## 11. Administración
+
+### 11.1 Gestión de Usuarios
 
 **Ruta:** `/admin/usuarios`
 **Permiso:** `invitar_usuarios`
@@ -335,7 +453,7 @@ Vista comparativa de todos los programas con sus índices de eficacia y anexos t
 3. Ver estado de activación de cada usuario
 4. Activar/desactivar cuentas
 
-### 8.2 Monitoreo IA
+### 11.2 Monitoreo IA
 
 **Ruta:** `/admin/monitoreo-ia`
 **Permiso:** `administrar_usuarios`
@@ -345,7 +463,7 @@ Monitorear consumo de la API de IA (OpenAI) para generación de embeddings y asi
 - Presupuestos y alertas
 - Logs detallados de llamadas
 
-### 8.3 Auditoría
+### 11.3 Auditoría
 
 **Ruta:** `/admin/auditoria`
 **Permiso:** `administrar_usuarios`
@@ -357,7 +475,7 @@ Registro cronológico de todas las acciones en el sistema:
 
 ---
 
-## 9. Accesibilidad
+## 12. Accesibilidad
 
 - **Navegación por teclado:** El sistema incluye un enlace "Saltar al contenido" al inicio
 - **ARIA:** Modales, menús y controles tienen etiquetas accesibles
@@ -366,7 +484,7 @@ Registro cronológico de todas las acciones en el sistema:
 
 ---
 
-## 10. Preguntas Frecuentes
+## 13. Preguntas Frecuentes
 
 **¿Cómo recupero mi acceso si pierdo el dispositivo 2FA?**
 Usa uno de los códigos de recuperación proporcionados al configurar 2FA. Si no los tienes, contacta al administrador.
@@ -379,3 +497,9 @@ Desde el selector de equipo en la barra superior (si perteneces a varios equipos
 
 **¿Los reportes exportados se eliminan automáticamente?**
 Sí, los archivos generados se eliminan después de 24 horas por seguridad.
+
+**¿Qué es la validación tripartita?**
+Es la verificación cruzada de que cada programa tiene completos sus tres pilares: planeación (MIR), sustento legal, y presupuesto. Un programa necesita 3/3 para estar libre de riesgo de observación ASFE.
+
+**¿Quién puede ver datos financieros?**
+Admin, Planeador (solo lectura), Analista Financiero y Analista Jurídico (lectura).

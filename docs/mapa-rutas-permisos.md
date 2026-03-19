@@ -28,10 +28,10 @@
 
 **Middleware:** `auth:sanctum`, `jetstream.auth_session`, `verified`
 
-| Método | URI | Componente/Controller | Nombre | Admin | Planeador | Operador |
-|--------|-----|----------------------|--------|:-----:|:---------:|:--------:|
-| GET | `/dashboard` | Livewire\Dashboard | dashboard | ✓ | ✓ | ✓ |
-| GET | `/notifications` | Livewire\NotificationsIndex | notifications.index | ✓ | ✓ | ✓ |
+| Método | URI | Componente/Controller | Nombre | Admin | Planeador | Operador | Financiero | Jurídico |
+|--------|-----|----------------------|--------|:-----:|:---------:|:--------:|:----------:|:--------:|
+| GET | `/dashboard` | Livewire\Dashboard | dashboard | ✓ | ✓ | ✓ | ✓ | ✓ |
+| GET | `/notifications` | Livewire\NotificationsIndex | notifications.index | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ---
 
@@ -39,16 +39,16 @@
 
 ### 3.1 Administración (`can:administrar_usuarios`)
 
-| Método | URI | Componente | Nombre | Admin | Planeador | Operador |
-|--------|-----|-----------|--------|:-----:|:---------:|:--------:|
-| GET | `/admin/monitoreo-ia` | Admin\MonitoreoIa | admin.monitoreo-ia | ✓ | — | — |
-| GET | `/admin/auditoria` | Admin\Auditoria | admin.auditoria | ✓ | — | — |
+| Método | URI | Componente | Nombre | Admin | Planeador | Operador | Financiero | Jurídico |
+|--------|-----|-----------|--------|:-----:|:---------:|:--------:|:----------:|:--------:|
+| GET | `/admin/monitoreo-ia` | Admin\MonitoreoIa | admin.monitoreo-ia | ✓ | — | — | — | — |
+| GET | `/admin/auditoria` | Admin\Auditoria | admin.auditoria | ✓ | — | — | — | — |
 
 ### 3.2 Gestión de Usuarios (`can:invitar_usuarios`)
 
-| Método | URI | Componente | Nombre | Admin | Planeador | Operador |
-|--------|-----|-----------|--------|:-----:|:---------:|:--------:|
-| GET | `/admin/usuarios` | Admin\GestionUsuarios | admin.users | ✓ | — | — |
+| Método | URI | Componente | Nombre | Admin | Planeador | Operador | Financiero | Jurídico |
+|--------|-----|-----------|--------|:-----:|:---------:|:--------:|:----------:|:--------:|
+| GET | `/admin/usuarios` | Admin\GestionUsuarios | admin.users | ✓ | — | — | — | — |
 
 ---
 
@@ -58,59 +58,59 @@
 
 ### 4.1 PED (Plan Estatal de Desarrollo)
 
-| Método | URI | Controller@action | Nombre | Admin | Planeador | Operador |
-|--------|-----|-------------------|--------|:-----:|:---------:|:--------:|
-| GET | `/cascade/ped` | PedController@index | cascade.ped.index | ✓ | ✓ | — |
-| GET | `/cascade/ped/plan/create` | PedController@createPlan | cascade.ped.plan.create | ✓ | ✓ | — |
-| POST | `/cascade/ped/plan` | PedController@storePlan | cascade.ped.plan.store | ✓ | ✓ | — |
-| GET | `/cascade/ped/plan/{plan}/edit` | PedController@editPlan | cascade.ped.plan.edit | ✓ | ✓ | — |
-| PUT | `/cascade/ped/plan/{plan}` | PedController@updatePlan | cascade.ped.plan.update | ✓ | ✓ | — |
-| DELETE | `/cascade/ped/plan/{plan}` | PedController@destroyPlan | cascade.ped.plan.destroy | ✓ | ✓ | — |
-| POST | `/cascade/ped/eje` | PedController@storeEje | cascade.ped.eje.store | ✓ | ✓ | — |
-| PUT | `/cascade/ped/eje/{eje}` | PedController@updateEje | cascade.ped.eje.update | ✓ | ✓ | — |
-| DELETE | `/cascade/ped/eje/{eje}` | PedController@destroyEje | cascade.ped.eje.destroy | ✓ | ✓ | — |
-| POST | `/cascade/ped/tema` | PedController@storeTema | cascade.ped.tema.store | ✓ | ✓ | — |
-| PUT | `/cascade/ped/tema/{tema}` | PedController@updateTema | cascade.ped.tema.update | ✓ | ✓ | — |
-| DELETE | `/cascade/ped/tema/{tema}` | PedController@destroyTema | cascade.ped.tema.destroy | ✓ | ✓ | — |
-| POST | `/cascade/ped/objetivo` | PedController@storeObjetivo | cascade.ped.objetivo.store | ✓ | ✓ | — |
-| PUT | `/cascade/ped/objetivo/{objetivo}` | PedController@updateObjetivo | cascade.ped.objetivo.update | ✓ | ✓ | — |
-| DELETE | `/cascade/ped/objetivo/{objetivo}` | PedController@destroyObjetivo | cascade.ped.objetivo.destroy | ✓ | ✓ | — |
-| POST | `/cascade/ped/estrategia` | PedController@storeEstrategia | cascade.ped.estrategia.store | ✓ | ✓ | — |
-| PUT | `/cascade/ped/estrategia/{estrategia}` | PedController@updateEstrategia | cascade.ped.estrategia.update | ✓ | ✓ | — |
-| DELETE | `/cascade/ped/estrategia/{estrategia}` | PedController@destroyEstrategia | cascade.ped.estrategia.destroy | ✓ | ✓ | — |
-| POST | `/cascade/ped/linea` | PedController@storeLinea | cascade.ped.linea.store | ✓ | ✓ | — |
-| PUT | `/cascade/ped/linea/{linea}` | PedController@updateLinea | cascade.ped.linea.update | ✓ | ✓ | — |
-| DELETE | `/cascade/ped/linea/{linea}` | PedController@destroyLinea | cascade.ped.linea.destroy | ✓ | ✓ | — |
-| GET | `/cascade/ped/nodo/create` | PedController@createNodo | cascade.ped.nodo.create | ✓ | ✓ | — |
-| GET | `/cascade/ped/nodo/{tipo}/{id}/edit` | PedController@editNodo | cascade.ped.nodo.edit | ✓ | ✓ | — |
-| GET | `/cascade/ped/import` | PedController@importForm | cascade.ped.import | ✓ | ✓ | — |
-| POST | `/cascade/ped/import` | PedController@import | cascade.ped.import.store | ✓ | ✓ | — |
+| Método | URI | Controller@action | Nombre | Admin | Planeador | Operador | Financiero | Jurídico |
+|--------|-----|-------------------|--------|:-----:|:---------:|:--------:|:----------:|:--------:|
+| GET | `/cascade/ped` | PedController@index | cascade.ped.index | ✓ | ✓ | — | — | — |
+| GET | `/cascade/ped/plan/create` | PedController@createPlan | cascade.ped.plan.create | ✓ | ✓ | — | — | — |
+| POST | `/cascade/ped/plan` | PedController@storePlan | cascade.ped.plan.store | ✓ | ✓ | — | — | — |
+| GET | `/cascade/ped/plan/{plan}/edit` | PedController@editPlan | cascade.ped.plan.edit | ✓ | ✓ | — | — | — |
+| PUT | `/cascade/ped/plan/{plan}` | PedController@updatePlan | cascade.ped.plan.update | ✓ | ✓ | — | — | — |
+| DELETE | `/cascade/ped/plan/{plan}` | PedController@destroyPlan | cascade.ped.plan.destroy | ✓ | ✓ | — | — | — |
+| POST | `/cascade/ped/eje` | PedController@storeEje | cascade.ped.eje.store | ✓ | ✓ | — | — | — |
+| PUT | `/cascade/ped/eje/{eje}` | PedController@updateEje | cascade.ped.eje.update | ✓ | ✓ | — | — | — |
+| DELETE | `/cascade/ped/eje/{eje}` | PedController@destroyEje | cascade.ped.eje.destroy | ✓ | ✓ | — | — | — |
+| POST | `/cascade/ped/tema` | PedController@storeTema | cascade.ped.tema.store | ✓ | ✓ | — | — | — |
+| PUT | `/cascade/ped/tema/{tema}` | PedController@updateTema | cascade.ped.tema.update | ✓ | ✓ | — | — | — |
+| DELETE | `/cascade/ped/tema/{tema}` | PedController@destroyTema | cascade.ped.tema.destroy | ✓ | ✓ | — | — | — |
+| POST | `/cascade/ped/objetivo` | PedController@storeObjetivo | cascade.ped.objetivo.store | ✓ | ✓ | — | — | — |
+| PUT | `/cascade/ped/objetivo/{objetivo}` | PedController@updateObjetivo | cascade.ped.objetivo.update | ✓ | ✓ | — | — | — |
+| DELETE | `/cascade/ped/objetivo/{objetivo}` | PedController@destroyObjetivo | cascade.ped.objetivo.destroy | ✓ | ✓ | — | — | — |
+| POST | `/cascade/ped/estrategia` | PedController@storeEstrategia | cascade.ped.estrategia.store | ✓ | ✓ | — | — | — |
+| PUT | `/cascade/ped/estrategia/{estrategia}` | PedController@updateEstrategia | cascade.ped.estrategia.update | ✓ | ✓ | — | — | — |
+| DELETE | `/cascade/ped/estrategia/{estrategia}` | PedController@destroyEstrategia | cascade.ped.estrategia.destroy | ✓ | ✓ | — | — | — |
+| POST | `/cascade/ped/linea` | PedController@storeLinea | cascade.ped.linea.store | ✓ | ✓ | — | — | — |
+| PUT | `/cascade/ped/linea/{linea}` | PedController@updateLinea | cascade.ped.linea.update | ✓ | ✓ | — | — | — |
+| DELETE | `/cascade/ped/linea/{linea}` | PedController@destroyLinea | cascade.ped.linea.destroy | ✓ | ✓ | — | — | — |
+| GET | `/cascade/ped/nodo/create` | PedController@createNodo | cascade.ped.nodo.create | ✓ | ✓ | — | — | — |
+| GET | `/cascade/ped/nodo/{tipo}/{id}/edit` | PedController@editNodo | cascade.ped.nodo.edit | ✓ | ✓ | — | — | — |
+| GET | `/cascade/ped/import` | PedController@importForm | cascade.ped.import | ✓ | ✓ | — | — | — |
+| POST | `/cascade/ped/import` | PedController@import | cascade.ped.import.store | ✓ | ✓ | — | — | — |
 
 ### 4.2 Matriz de Alineación
 
-| Método | URI | Controller@action | Nombre | Admin | Planeador | Operador |
-|--------|-----|-------------------|--------|:-----:|:---------:|:--------:|
-| GET | `/cascade/alineacion` | MatrizAlineacionController@index | cascade.alineacion.index | ✓ | ✓ | — |
-| POST | `/cascade/alineacion/ped-pnd` | @storePedPnd | cascade.alineacion.ped-pnd.store | ✓ | ✓ | — |
-| DELETE | `/cascade/alineacion/ped-pnd/{pedObjetivo}/{pndObjetivo}` | @destroyPedPnd | cascade.alineacion.ped-pnd.destroy | ✓ | ✓ | — |
-| POST | `/cascade/alineacion/pnd-ods` | @storePndOds | cascade.alineacion.pnd-ods.store | ✓ | ✓ | — |
-| DELETE | `/cascade/alineacion/pnd-ods/{pndObjetivo}/{odsMeta}` | @destroyPndOds | cascade.alineacion.pnd-ods.destroy | ✓ | ✓ | — |
-| POST | `/cascade/alineacion/linea-programa` | @storeLineaPrograma | cascade.alineacion.linea-programa.store | ✓ | ✓ | — |
-| DELETE | `/cascade/alineacion/linea-programa/{linea}/{programaObjetivo}` | @destroyLineaPrograma | cascade.alineacion.linea-programa.destroy | ✓ | ✓ | — |
-| GET | `/cascade/alineacion/search/*` | @search* | cascade.alineacion.search.* | ✓ | ✓ | — |
-| GET | `/cascade/alineacion/cadena/{lineaAccion}` | @showCadena | cascade.alineacion.cadena.show | ✓ | ✓ | — |
+| Método | URI | Controller@action | Nombre | Admin | Planeador | Operador | Financiero | Jurídico |
+|--------|-----|-------------------|--------|:-----:|:---------:|:--------:|:----------:|:--------:|
+| GET | `/cascade/alineacion` | MatrizAlineacionController@index | cascade.alineacion.index | ✓ | ✓ | — | — | — |
+| POST | `/cascade/alineacion/ped-pnd` | @storePedPnd | cascade.alineacion.ped-pnd.store | ✓ | ✓ | — | — | — |
+| DELETE | `/cascade/alineacion/ped-pnd/{pedObjetivo}/{pndObjetivo}` | @destroyPedPnd | cascade.alineacion.ped-pnd.destroy | ✓ | ✓ | — | — | — |
+| POST | `/cascade/alineacion/pnd-ods` | @storePndOds | cascade.alineacion.pnd-ods.store | ✓ | ✓ | — | — | — |
+| DELETE | `/cascade/alineacion/pnd-ods/{pndObjetivo}/{odsMeta}` | @destroyPndOds | cascade.alineacion.pnd-ods.destroy | ✓ | ✓ | — | — | — |
+| POST | `/cascade/alineacion/linea-programa` | @storeLineaPrograma | cascade.alineacion.linea-programa.store | ✓ | ✓ | — | — | — |
+| DELETE | `/cascade/alineacion/linea-programa/{linea}/{programaObjetivo}` | @destroyLineaPrograma | cascade.alineacion.linea-programa.destroy | ✓ | ✓ | — | — | — |
+| GET | `/cascade/alineacion/search/*` | @search* | cascade.alineacion.search.* | ✓ | ✓ | — | — | — |
+| GET | `/cascade/alineacion/cadena/{lineaAccion}` | @showCadena | cascade.alineacion.cadena.show | ✓ | ✓ | — | — | — |
 
 ### 4.3 Programas Derivados
 
-| Método | URI | Controller@action | Nombre | Admin | Planeador | Operador |
-|--------|-----|-------------------|--------|:-----:|:---------:|:--------:|
-| GET | `/cascade/programas-derivados` | ProgramaDerivadoController@index | cascade.programas-derivados.index | ✓ | ✓ | — |
-| POST | `/cascade/programas-derivados` | @store | cascade.programas-derivados.store | ✓ | ✓ | — |
-| PUT | `/cascade/programas-derivados/{programa}` | @update | cascade.programas-derivados.update | ✓ | ✓ | — |
-| DELETE | `/cascade/programas-derivados/{programa}` | @destroy | cascade.programas-derivados.destroy | ✓ | ✓ | — |
-| POST | `/cascade/programas-derivados/{programa}/objetivos` | @storeObjetivo | cascade.programas-derivados.objetivos.store | ✓ | ✓ | — |
-| PUT | `/cascade/programas-derivados/{programa}/objetivos/{objetivo}` | @updateObjetivo | cascade.programas-derivados.objetivos.update | ✓ | ✓ | — |
-| DELETE | `/cascade/programas-derivados/{programa}/objetivos/{objetivo}` | @destroyObjetivo | cascade.programas-derivados.objetivos.destroy | ✓ | ✓ | — |
+| Método | URI | Controller@action | Nombre | Admin | Planeador | Operador | Financiero | Jurídico |
+|--------|-----|-------------------|--------|:-----:|:---------:|:--------:|:----------:|:--------:|
+| GET | `/cascade/programas-derivados` | ProgramaDerivadoController@index | cascade.programas-derivados.index | ✓ | ✓ | — | — | — |
+| POST | `/cascade/programas-derivados` | @store | cascade.programas-derivados.store | ✓ | ✓ | — | — | — |
+| PUT | `/cascade/programas-derivados/{programa}` | @update | cascade.programas-derivados.update | ✓ | ✓ | — | — | — |
+| DELETE | `/cascade/programas-derivados/{programa}` | @destroy | cascade.programas-derivados.destroy | ✓ | ✓ | — | — | — |
+| POST | `/cascade/programas-derivados/{programa}/objetivos` | @storeObjetivo | cascade.programas-derivados.objetivos.store | ✓ | ✓ | — | — | — |
+| PUT | `/cascade/programas-derivados/{programa}/objetivos/{objetivo}` | @updateObjetivo | cascade.programas-derivados.objetivos.update | ✓ | ✓ | — | — | — |
+| DELETE | `/cascade/programas-derivados/{programa}/objetivos/{objetivo}` | @destroyObjetivo | cascade.programas-derivados.objetivos.destroy | ✓ | ✓ | — | — | — |
 
 ---
 
@@ -118,21 +118,21 @@
 
 **Middleware:** `auth:sanctum`, `jetstream.auth_session`, `verified` (sin permiso de middleware, verificación interna)
 
-| Método | URI | Componente | Nombre | Admin | Planeador | Operador |
-|--------|-----|-----------|--------|:-----:|:---------:|:--------:|
-| GET | `/mml/programas` | Mml\ListaProgramas | mml.programas | ✓ | ✓ | ✓ |
-| GET | `/mml/importar` | Mml\DashboardImportaciones | mml.importaciones | ✓ | ✓ | ✓ |
-| GET | `/mml/importar/nuevo` | Mml\ImportarPrograma | mml.importar.nuevo | ✓ | ✓ | ✓ |
-| GET | `/mml/importar/{importacion}/completar` | Mml\CompletarHuecos | mml.importar.completar | ✓ | ✓ | ✓ |
-| GET | `/mml/importar/{importacion}/vincular` | Mml\VincularAlineacion | mml.importar.vincular | ✓ | ✓ | ✓ |
-| GET | `/mml/importar/{importacion}/calendarizar` | Mml\CalendarizarMetas | mml.importar.calendarizar | ✓ | ✓ | ✓ |
-| GET | `/mml/{programa}/etapa/1` | Mml\DefinicionProblema | mml.etapa1 | ✓ | ✓ | ✓ |
-| GET | `/mml/{programa}/etapa/2` | Mml\ArbolProblemaBuilder | mml.etapa2 | ✓ | ✓ | ✓ |
-| GET | `/mml/{programa}/etapa/3` | Mml\ArbolObjetivosBuilder | mml.etapa3 | ✓ | ✓ | ✓ |
-| GET | `/mml/{programa}/etapa/4` | Mml\SeleccionAlternativas | mml.etapa4 | ✓ | ✓ | ✓ |
-| GET | `/mml/{programa}/etapa/5` | Mml\EmbudoPoblaciones | mml.etapa5 | ✓ | ✓ | ✓ |
-| GET | `/mml/{programa}/etapa/6` | Mml\AlineacionEstrategica | mml.etapa6 | ✓ | ✓ | ✓ |
-| GET | `/mml/{programa}/etapa/7/mir` | Mml\MirEditor | mml.mir | ✓ | ✓ | ✓ |
+| Método | URI | Componente | Nombre | Admin | Planeador | Operador | Financiero | Jurídico |
+|--------|-----|-----------|--------|:-----:|:---------:|:--------:|:----------:|:--------:|
+| GET | `/mml/programas` | Mml\ListaProgramas | mml.programas | ✓ | ✓ | ✓ | — | — |
+| GET | `/mml/importar` | Mml\DashboardImportaciones | mml.importaciones | ✓ | ✓ | ✓ | — | — |
+| GET | `/mml/importar/nuevo` | Mml\ImportarPrograma | mml.importar.nuevo | ✓ | ✓ | ✓ | — | — |
+| GET | `/mml/importar/{importacion}/completar` | Mml\CompletarHuecos | mml.importar.completar | ✓ | ✓ | ✓ | — | — |
+| GET | `/mml/importar/{importacion}/vincular` | Mml\VincularAlineacion | mml.importar.vincular | ✓ | ✓ | ✓ | — | — |
+| GET | `/mml/importar/{importacion}/calendarizar` | Mml\CalendarizarMetas | mml.importar.calendarizar | ✓ | ✓ | ✓ | — | — |
+| GET | `/mml/{programa}/etapa/1` | Mml\DefinicionProblema | mml.etapa1 | ✓ | ✓ | ✓ | — | — |
+| GET | `/mml/{programa}/etapa/2` | Mml\ArbolProblemaBuilder | mml.etapa2 | ✓ | ✓ | ✓ | — | — |
+| GET | `/mml/{programa}/etapa/3` | Mml\ArbolObjetivosBuilder | mml.etapa3 | ✓ | ✓ | ✓ | — | — |
+| GET | `/mml/{programa}/etapa/4` | Mml\SeleccionAlternativas | mml.etapa4 | ✓ | ✓ | ✓ | — | — |
+| GET | `/mml/{programa}/etapa/5` | Mml\EmbudoPoblaciones | mml.etapa5 | ✓ | ✓ | ✓ | — | — |
+| GET | `/mml/{programa}/etapa/6` | Mml\AlineacionEstrategica | mml.etapa6 | ✓ | ✓ | ✓ | — | — |
+| GET | `/mml/{programa}/etapa/7/mir` | Mml\MirEditor | mml.mir | ✓ | ✓ | ✓ | — | — |
 
 ---
 
@@ -140,20 +140,20 @@
 
 **Middleware:** `auth:sanctum`, `jetstream.auth_session`, `verified`
 
-| Método | URI | Componente/Controller | Nombre | Permiso | Admin | Planeador | Operador |
-|--------|-----|----------------------|--------|---------|:-----:|:---------:|:--------:|
-| GET | `/seguimiento` | Tracking\PanelSeguimiento | tracking.panel | (auth) | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/pendientes` | Tracking\MisIndicadoresPendientes | tracking.pendientes | (auth) | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/vencidos` | Tracking\IndicadoresVencidos | tracking.vencidos | (auth) | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/captura/{avance}` | Tracking\CapturaAvance | tracking.captura | (auth) | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/avance/{avance}/evidencias` | Tracking\EvidenciaAvance | tracking.evidencia.index | (auth) | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/evidencia/{evidencia}/download` | EvidenciaController@download | tracking.evidencia.download | (auth) | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/flujo/{avance}` | Tracking\FlujosAvance | tracking.flujo | (auth) | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/desbloqueo/{avance}` | Tracking\SolicitarDesbloqueo | tracking.desbloqueo.solicitar | (auth) | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/desbloqueos` | Tracking\GestionarDesbloqueos | tracking.desbloqueos | (auth) | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/sabana-captura` | Tracking\SabanaCaptura | tracking.sabana-captura | ver_sabana_captura | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/concentrado-captura` | Tracking\ConcentradoCaptura | tracking.concentrado-captura | ver_concentrado_captura | ✓ | ✓ | ✓ |
-| GET | `/seguimiento/{programa}/dashboard-indicadores` | Tracking\DashboardIndicadores | tracking.dashboard-indicadores | (auth) | ✓ | ✓ | ✓ |
+| Método | URI | Componente/Controller | Nombre | Permiso | Admin | Planeador | Operador | Financiero | Jurídico |
+|--------|-----|----------------------|--------|---------|:-----:|:---------:|:--------:|:----------:|:--------:|
+| GET | `/seguimiento` | Tracking\PanelSeguimiento | tracking.panel | (auth) | ✓ | ✓ | ✓ | — | — |
+| GET | `/seguimiento/pendientes` | Tracking\MisIndicadoresPendientes | tracking.pendientes | (auth) | ✓ | ✓ | ✓ | — | — |
+| GET | `/seguimiento/vencidos` | Tracking\IndicadoresVencidos | tracking.vencidos | (auth) | ✓ | ✓ | ✓ | — | — |
+| GET | `/seguimiento/captura/{avance}` | Tracking\CapturaAvance | tracking.captura | (auth) | ✓ | ✓ | ✓ | — | — |
+| GET | `/seguimiento/avance/{avance}/evidencias` | Tracking\EvidenciaAvance | tracking.evidencia.index | (auth) | ✓ | ✓ | ✓ | — | — |
+| GET | `/seguimiento/evidencia/{evidencia}/download` | EvidenciaController@download | tracking.evidencia.download | (auth) | ✓ | ✓ | ✓ | — | — |
+| GET | `/seguimiento/flujo/{avance}` | Tracking\FlujosAvance | tracking.flujo | (auth) | ✓ | ✓ | ✓ | — | — |
+| GET | `/seguimiento/desbloqueo/{avance}` | Tracking\SolicitarDesbloqueo | tracking.desbloqueo.solicitar | (auth) | ✓ | ✓ | ✓ | — | — |
+| GET | `/seguimiento/desbloqueos` | Tracking\GestionarDesbloqueos | tracking.desbloqueos | (auth) | ✓ | ✓ | ✓ | — | — |
+| GET | `/seguimiento/sabana-captura` | Tracking\SabanaCaptura | tracking.sabana-captura | ver_sabana_captura | ✓ | ✓ | ✓ | — | — |
+| GET | `/seguimiento/concentrado-captura` | Tracking\ConcentradoCaptura | tracking.concentrado-captura | ver_concentrado_captura | ✓ | ✓ | ✓ | — | — |
+| GET | `/seguimiento/{programa}/dashboard-indicadores` | Tracking\DashboardIndicadores | tracking.dashboard-indicadores | (auth) | ✓ | ✓ | ✓ | — | — |
 
 ---
 
@@ -161,23 +161,65 @@
 
 **Middleware:** `auth:sanctum`, `jetstream.auth_session`, `verified`
 
-| Método | URI | Componente/Controller | Nombre | Permiso | Admin | Planeador | Operador |
-|--------|-----|----------------------|--------|---------|:-----:|:---------:|:--------:|
-| GET | `/evaluacion/programa/{evaluacion}` | Evaluation\EvaluacionProgramaView | evaluation.programa | (auth) | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/transversal` | Evaluation\PanelTransversal | evaluation.transversal | exportar_reportes | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/mir-publica/{id}` | Closure (MirPdfExport) | evaluation.mir-publica | (auth) | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/exportar/pdf/{tipo}/{id?}` | ExportController@pdf | evaluation.exportar.pdf | exportar_reportes | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/exportar/excel/{tipo}/{id?}` | ExportController@excel | evaluation.exportar.excel | exportar_reportes | ✓ | ✓ | ✓ |
-| POST | `/evaluacion/exportar/async/{formato}/{tipo}` | ExportController@async | evaluation.exportar.async | exportar_reportes | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/exportar/descargar/{filename}` | ExportController@descargar | evaluation.exportar.descargar | exportar_reportes | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/datos-abiertos/csv/{ejercicio}` | DatosAbiertosController@csv | evaluation.datos-abiertos.csv | exportar_reportes | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/datos-abiertos/json/{ejercicio}` | DatosAbiertosController@json | evaluation.datos-abiertos.json | exportar_reportes | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/datos-abiertos/diccionario` | DatosAbiertosController@diccionario | evaluation.datos-abiertos.diccionario | exportar_reportes | ✓ | ✓ | ✓ |
-| GET | `/evaluacion/datos-abiertos/zip/{ejercicio}` | DatosAbiertosController@zip | evaluation.datos-abiertos.zip | exportar_reportes | ✓ | ✓ | ✓ |
+| Método | URI | Componente/Controller | Nombre | Permiso | Admin | Planeador | Operador | Financiero | Jurídico |
+|--------|-----|----------------------|--------|---------|:-----:|:---------:|:--------:|:----------:|:--------:|
+| GET | `/evaluacion/programa/{evaluacion}` | Evaluation\EvaluacionProgramaView | evaluation.programa | (auth) | ✓ | ✓ | ✓ | — | — |
+| GET | `/evaluacion/transversal` | Evaluation\PanelTransversal | evaluation.transversal | exportar_reportes | ✓ | ✓ | ✓ | — | — |
+| GET | `/evaluacion/mir-publica/{id}` | Closure (MirPdfExport) | evaluation.mir-publica | (auth) | ✓ | ✓ | ✓ | — | — |
+| GET | `/evaluacion/exportar/pdf/{tipo}/{id?}` | ExportController@pdf | evaluation.exportar.pdf | exportar_reportes | ✓ | ✓ | ✓ | — | — |
+| GET | `/evaluacion/exportar/excel/{tipo}/{id?}` | ExportController@excel | evaluation.exportar.excel | exportar_reportes | ✓ | ✓ | ✓ | — | — |
+| POST | `/evaluacion/exportar/async/{formato}/{tipo}` | ExportController@async | evaluation.exportar.async | exportar_reportes | ✓ | ✓ | ✓ | — | — |
+| GET | `/evaluacion/exportar/descargar/{filename}` | ExportController@descargar | evaluation.exportar.descargar | exportar_reportes | ✓ | ✓ | ✓ | — | — |
+| GET | `/evaluacion/datos-abiertos/csv/{ejercicio}` | DatosAbiertosController@csv | evaluation.datos-abiertos.csv | exportar_reportes | ✓ | ✓ | ✓ | — | — |
+| GET | `/evaluacion/datos-abiertos/json/{ejercicio}` | DatosAbiertosController@json | evaluation.datos-abiertos.json | exportar_reportes | ✓ | ✓ | ✓ | — | — |
+| GET | `/evaluacion/datos-abiertos/diccionario` | DatosAbiertosController@diccionario | evaluation.datos-abiertos.diccionario | exportar_reportes | ✓ | ✓ | ✓ | — | — |
+| GET | `/evaluacion/datos-abiertos/zip/{ejercicio}` | DatosAbiertosController@zip | evaluation.datos-abiertos.zip | exportar_reportes | ✓ | ✓ | ✓ | — | — |
 
 ---
 
-## 8. Middleware Custom
+## 8. Rutas Presupuesto
+
+**Middleware:** `auth:sanctum`, `jetstream.auth_session`, `verified`
+
+| Método | URI | Componente/Controller | Nombre | Permiso | Admin | Planeador | Operador | Financiero | Jurídico |
+|--------|-----|----------------------|--------|---------|:-----:|:---------:|:--------:|:----------:|:--------:|
+| GET | `/presupuesto` | Presupuesto\PanelPresupuestal | presupuesto.panel | ver_datos_financieros | ✓ | ✓ | — | ✓ | — |
+| GET | `/presupuesto/partidas` | Presupuesto\GestionPartidas | presupuesto.partidas | gestionar_presupuesto | ✓ | — | — | ✓ | — |
+| GET | `/presupuesto/partidas/create` | Presupuesto\PartidaForm | presupuesto.partidas.create | gestionar_presupuesto | ✓ | — | — | ✓ | — |
+| GET | `/presupuesto/partidas/{partida}/edit` | Presupuesto\PartidaForm | presupuesto.partidas.edit | gestionar_presupuesto | ✓ | — | — | ✓ | — |
+| GET | `/presupuesto/captura/{programa}` | Presupuesto\CapturaAvanceFinanciero | presupuesto.captura | capturar_avance_financiero | ✓ | — | — | ✓ | — |
+| GET | `/presupuesto/importar` | Presupuesto\ImportarPresupuesto | presupuesto.importar | gestionar_presupuesto | ✓ | — | — | ✓ | — |
+| GET | `/presupuesto/cuenta-publica` | Presupuesto\CuentaPublicaView | presupuesto.cuenta-publica | exportar_cuenta_publica | ✓ | ✓ | — | ✓ | — |
+| GET | `/presupuesto/exportar/pdf/{ejercicio}` | PresupuestalController@exportarPdf | presupuesto.exportar.pdf | exportar_cuenta_publica | ✓ | ✓ | — | ✓ | — |
+| GET | `/presupuesto/exportar/excel/{ejercicio}` | PresupuestalController@exportarExcel | presupuesto.exportar.excel | exportar_cuenta_publica | ✓ | ✓ | — | ✓ | — |
+
+---
+
+## 9. Rutas Jurídico
+
+**Middleware:** `auth:sanctum`, `jetstream.auth_session`, `verified`
+
+| Método | URI | Componente/Controller | Nombre | Permiso | Admin | Planeador | Operador | Financiero | Jurídico |
+|--------|-----|----------------------|--------|---------|:-----:|:---------:|:--------:|:----------:|:--------:|
+| GET | `/juridico` | Juridico\PanelJuridico | juridico.dashboard | ver_sustento_legal | ✓ | ✓ | — | ✓ | ✓ |
+| GET | `/juridico/programa/{programa}` | Juridico\SustentoLegalPrograma | juridico.programa | ver_sustento_legal | ✓ | ✓ | — | ✓ | ✓ |
+| GET | `/juridico/programa/{programa}/fundamento/create` | Juridico\FundamentoForm | juridico.fundamento.create | gestionar_sustento_legal | ✓ | — | — | — | ✓ |
+| GET | `/juridico/programa/{programa}/fundamento/{id}/edit` | Juridico\FundamentoForm | juridico.fundamento.edit | gestionar_sustento_legal | ✓ | — | — | — | ✓ |
+| GET | `/juridico/programa/{programa}/documentos` | Juridico\DocumentosNormativos | juridico.documentos | gestionar_reglas_operacion | ✓ | — | — | — | ✓ |
+| GET | `/juridico/programa/{programa}/validacion` | Juridico\ValidacionJuridica | juridico.validacion | validar_sustento_legal | ✓ | — | — | — | ✓ |
+| GET | `/juridico/documento/{documento}/download` | DocumentoNormativoController@download | juridico.documento.download | ver_sustento_legal | ✓ | ✓ | — | ✓ | ✓ |
+
+---
+
+## 10. Rutas GeoBase (Webhook)
+
+| Método | URI | Controller | Nombre | Protección |
+|--------|-----|-----------|--------|-----------|
+| POST | `/geobase/webhook` | GeoBase\WebhookController | geobase.webhook | HMAC-SHA256 |
+
+---
+
+## 11. Middleware Custom
 
 | Middleware | Clase | Aplicación | Descripción |
 |-----------|-------|-----------|-------------|
@@ -185,21 +227,43 @@
 | EnsureUserIsActivated | `App\Http\Middleware\EnsureUserIsActivated` | Auth routes | Verifica activación de cuenta |
 | RequireTwoFactorAuthentication | `App\Http\Middleware\RequireTwoFactorAuthentication` | Auth routes | Obliga configurar 2FA |
 | AislamientoMultiUR | `App\Http\Middleware\AislamientoMultiUR` | Selectivo | Filtra datos por UR/Team |
+| VerifyGeoBaseWebhook | `App\Http\Middleware\VerifyGeoBaseWebhook` | Webhook GeoBase | Valida firma HMAC-SHA256 del payload |
 
 ---
 
-## 9. Resumen de Permisos por Rol
+## 12. Roles del Sistema
 
-| Permiso | Descripción | Admin | Planeador | Operador |
-|---------|-------------|:-----:|:---------:|:--------:|
-| gestionar_catalogos | CRUD PED, alineación, programas derivados | ✓ | ✓ | — |
-| crear_programa | Crear programas presupuestarios | ✓ | ✓ | — |
-| editar_mir | Editar MIR y sus componentes | ✓ | ✓ | — |
-| capturar_avance | Capturar avances de indicadores | ✓ | — | ✓ |
-| revisar_avance | Revisar avances capturados | ✓ | ✓ | — |
-| aprobar_avance | Aprobar avances revisados | ✓ | ✓ | — |
-| exportar_reportes | Generar PDF, Excel, datos abiertos | ✓ | ✓ | ✓ |
-| administrar_usuarios | Monitoreo IA, auditoría | ✓ | — | — |
-| invitar_usuarios | Gestión de cuentas de usuario | ✓ | — | — |
-| ver_sabana_captura | Ver sábana de captura de seguimiento | ✓ | ✓ | ✓ |
-| ver_concentrado_captura | Ver concentrado de captura de seguimiento | ✓ | ✓ | ✓ |
+| Rol | Slug | Descripción |
+|-----|------|-------------|
+| Administrador | `admin` | Acceso total al sistema, gestión de usuarios y configuración |
+| Planeador | `planeador` | Diseño de MIR, catálogos, revisión y aprobación de avances |
+| Operador | `operador` | Captura de avances de indicadores y evidencias |
+| Analista Financiero | `financiero` | Gestión presupuestal, partidas, captura de avance financiero |
+| Analista Jurídico | `juridico` | Sustento legal, fundamentos normativos, validación jurídica |
+
+---
+
+## 13. Resumen de Permisos por Rol
+
+| Permiso | Descripción | Admin | Planeador | Operador | Financiero | Jurídico |
+|---------|-------------|:-----:|:---------:|:--------:|:----------:|:--------:|
+| gestionar_catalogos | CRUD PED, alineación, programas derivados | ✓ | ✓ | — | — | — |
+| crear_programa | Crear programas presupuestarios | ✓ | ✓ | — | — | — |
+| editar_mir | Editar MIR y sus componentes | ✓ | ✓ | — | — | — |
+| capturar_avance | Capturar avances de indicadores | ✓ | — | ✓ | — | — |
+| revisar_avance | Revisar avances capturados | ✓ | ✓ | — | — | — |
+| aprobar_avance | Aprobar avances revisados | ✓ | ✓ | — | — | — |
+| exportar_reportes | Generar PDF, Excel, datos abiertos | ✓ | ✓ | ✓ | — | — |
+| administrar_usuarios | Monitoreo IA, auditoría | ✓ | — | — | — | — |
+| invitar_usuarios | Gestión de cuentas de usuario | ✓ | — | — | — | — |
+| ver_sabana_captura | Ver sábana de captura de seguimiento | ✓ | ✓ | ✓ | — | — |
+| ver_concentrado_captura | Ver concentrado de captura de seguimiento | ✓ | ✓ | ✓ | — | — |
+| ver_datos_financieros | Consultar panel presupuestal y datos financieros | ✓ | ✓ | — | ✓ | — |
+| gestionar_presupuesto | CRUD partidas, importar presupuesto | ✓ | — | — | ✓ | — |
+| capturar_avance_financiero | Capturar avances de ejercicio presupuestal | ✓ | — | — | ✓ | — |
+| exportar_cuenta_publica | Exportar cuenta pública en PDF/Excel | ✓ | ✓ | — | ✓ | — |
+| ver_sustento_legal | Consultar fundamentos y documentos normativos | ✓ | ✓ | — | ✓ | ✓ |
+| gestionar_sustento_legal | CRUD fundamentos legales de programas | ✓ | — | — | — | ✓ |
+| gestionar_reglas_operacion | Gestionar documentos normativos y reglas de operación | ✓ | — | — | — | ✓ |
+| validar_sustento_legal | Validar completitud del sustento jurídico | ✓ | — | — | — | ✓ |
+| sincronizar_geobase | Sincronizar datos con el sistema GeoBase | ✓ | ✓ | — | — | — |
