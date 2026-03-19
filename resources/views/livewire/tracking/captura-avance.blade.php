@@ -10,6 +10,17 @@
             </div>
         @endif
 
+        @if(session('sync_success'))
+            <div class="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded text-sm text-emerald-700">
+                {{ session('sync_success') }}
+            </div>
+        @endif
+        @if(session('sync_error'))
+            <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700">
+                {{ session('sync_error') }}
+            </div>
+        @endif
+
         {{-- Indicator info --}}
         <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h3 class="text-lg font-medium text-gray-900">{{ $avance->indicador->nombre }}</h3>
@@ -48,16 +59,40 @@
                                 {{ $variable->nombre }}
                                 <span class="text-gray-400">({{ $variable->simbolo }})</span>
                             </label>
-                            <input
-                                type="number"
-                                step="any"
-                                id="var-{{ $variable->id }}"
-                                wire:model="valores.{{ $variable->id }}"
-                                wire:change="calcular"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                placeholder="Valor de {{ $variable->simbolo }}"
-                                @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
-                            />
+                            <div class="mt-1 flex items-center">
+                                <input
+                                    type="number"
+                                    step="any"
+                                    id="var-{{ $variable->id }}"
+                                    wire:model="valores.{{ $variable->id }}"
+                                    wire:change="calcular"
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    placeholder="Valor de {{ $variable->simbolo }}"
+                                    @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
+                                />
+                                @if($variable->hasGeoBaseLink())
+                                    <button
+                                        type="button"
+                                        wire:click="sincronizarVariable({{ $variable->id }})"
+                                        wire:loading.attr="disabled"
+                                        wire:target="sincronizarVariable({{ $variable->id }})"
+                                        class="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-emerald-600 rounded hover:bg-emerald-700 disabled:opacity-50"
+                                        @if($avance->estaCongelado() || !$avance->estado->esEditable()) disabled @endif
+                                    >
+                                        <svg wire:loading.remove wire:target="sincronizarVariable({{ $variable->id }})" class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                        </svg>
+                                        <svg wire:loading wire:target="sincronizarVariable({{ $variable->id }})" class="w-3 h-3 mr-1 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                        </svg>
+                                        Sincronizar
+                                    </button>
+                                    @if(isset($valores[$variable->id]) && $variable->hasGeoBaseLink())
+                                        <span class="ml-1 text-xs text-emerald-600">GeoBase</span>
+                                    @endif
+                                @endif
+                            </div>
                             @error("valores.{$variable->id}")
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror

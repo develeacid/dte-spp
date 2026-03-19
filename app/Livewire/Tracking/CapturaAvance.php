@@ -4,6 +4,8 @@ namespace App\Livewire\Tracking;
 
 use App\Models\Tracking\Avance;
 use App\Models\Tracking\AvanceVariable;
+use App\Services\GeoBase\GeoBaseClient;
+use App\Services\GeoBase\GeoBaseException;
 use App\Services\Tracking\FormulaEvaluatorService;
 use App\Services\Tracking\JustificacionService;
 use App\Services\Tracking\SemaforoService;
@@ -110,6 +112,33 @@ class CapturaAvance extends Component
             if (empty($this->justificacion)) {
                 $this->justificacion = $draft;
             }
+        }
+    }
+
+    public function sincronizarVariable(int $variableId): void
+    {
+        $variable = $this->avance->indicador->variables->firstWhere('id', $variableId);
+
+        if (! $variable || ! $variable->hasGeoBaseLink()) {
+            return;
+        }
+
+        try {
+            $client = app(GeoBaseClient::class);
+
+            $response = match ($variable->geobase_endpoint_type) {
+                'component_coverage' => $client->getProgramCoverage($variable->geobase_reference_id),
+                'program_coverage' => $client->getProgramCoverage($variable->geobase_reference_id),
+                default => null,
+            };
+
+            if ($response && isset($response[$variable->geobase_value_key ?? 'count'])) {
+                $this->valores[$variableId] = $response[$variable->geobase_value_key ?? 'count'];
+                $this->calcular();
+                session()->flash('sync_success', "Variable '{$variable->nombre}' sincronizada desde GeoBase.");
+            }
+        } catch (GeoBaseException $e) {
+            session()->flash('sync_error', "No se pudo conectar con GeoBase: {$e->getMessage()}. Capture el valor manualmente.");
         }
     }
 
