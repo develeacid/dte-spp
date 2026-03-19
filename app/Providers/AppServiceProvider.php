@@ -69,6 +69,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Listeners\GeoBase\UpdateAvanceFromEnrollment::class,
         );
 
+        Event::listen(
+            \App\Events\GeoBase\SnapshotGenerated::class,
+            \App\Listeners\GeoBase\StoreSnapshotHash::class,
+        );
+
         // Registrar Observers Jurídico (siempre activos)
         SustentoLegalPrograma::observe(SustentoLegalObserver::class);
         DocumentoNormativo::observe(DocumentoNormativoObserver::class);

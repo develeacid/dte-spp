@@ -1,0 +1,126 @@
+<?php
+
+namespace Tests\Unit\Listeners;
+
+use App\Events\GeoBase\SnapshotGenerated;
+use App\Listeners\GeoBase\StoreSnapshotHash;
+use App\Models\Mml\Indicador;
+use App\Models\Mml\MetaPeriodo;
+use App\Models\Mml\MirNivel;
+use App\Models\ProgramaPresupuestario;
+use App\Models\Tracking\Avance;
+use App\Models\Tracking\AvanceEvidencia;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Tests\TestCase;
+
+class StoreSnapshotHashTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private function createFullChain(int $geobaseProgramId, string $period = '1'): Avance
+    {
+        $user = User::factory()->withPersonalTeam()->create();
+
+        $programa = ProgramaPresupuestario::create([
+            'nombre' => 'Programa Test',
+            'clave' => 'PT-'.uniqid(),
+            'geobase_program_id' => $geobaseProgramId,
+        ]);
+
+        $mirNivel = MirNivel::create([
+            'programa_presupuestario_id' => $programa->id,
+            'tipo_nivel' => 'componente',
+            'resumen_narrativo' => 'Test narrativo',
+        ]);
+
+        $indicador = Indicador::create([
+            'mir_nivel_id' => $mirNivel->id,
+            'nombre' => 'Indicador Test',
+            'tipo' => 'estrategico',
+            'dimension' => 'eficacia',
+            'frecuencia' => 'trimestral',
+        ]);
+
+        $metaPeriodo = MetaPeriodo::create([
+            'indicador_id' => $indicador->id,
+            'periodo' => (int) $period,
+            'meta_periodo' => 100.0000,
+            'ejercicio_fiscal' => 2026,
+        ]);
+
+        return Avance::create([
+            'meta_periodo_id' => $metaPeriodo->id,
+            'indicador_id' => $indicador->id,
+            'resultado' => 50.0000,
+            'semaforo_calculado' => 'verde',
+            'estado' => 'en_captura',
+            'capturado_por' => $user->id,
+        ]);
+    }
+
+    private function makeEvent(int $programId = 99, string $period = '1'): SnapshotGenerated
+    {
+        return new SnapshotGenerated(
+            snapshotId: 42,
+            period: $period,
+            snapshotHash: 'abc123hash',
+            componentId: 10,
+            programId: $programId,
+            valorOficial: 500,
+            timestamp: '2026-03-19T12:00:00Z',
+        );
+    }
+
+    public function test_creates_evidencia_when_programa_and_avance_exist(): void
+    {
+        $avance = $this->createFullChain(geobaseProgramId: 99, period: '1');
+
+        $listener = new StoreSnapshotHash();
+        $listener->handle($this->makeEvent(programId: 99, period: '1'));
+
+        $this->assertDatabaseHas('avance_evidencias', [
+            'avance_id' => $avance->id,
+            'nombre_archivo' => 'snapshot-42-1.csv',
+            'ruta_archivo' => '',
+            'mime_type' => 'text/csv',
+            'tamano_bytes' => 0,
+            'hash_archivo' => 'abc123hash',
+            'nombre_documento' => 'Snapshot GeoBase 1',
+            'area_generadora' => 'GeoBase (automatico)',
+        ]);
+    }
+
+    public function test_logs_warning_when_programa_not_found(): void
+    {
+        Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(fn (string $msg) => str_contains($msg, 'programa'));
+
+        $listener = new StoreSnapshotHash();
+        $listener->handle($this->makeEvent(programId: 999));
+
+        $this->assertDatabaseCount('avance_evidencias', 0);
+    }
+
+    public function test_logs_info_when_avance_not_found(): void
+    {
+        User::factory()->withPersonalTeam()->create();
+
+        ProgramaPresupuestario::create([
+            'nombre' => 'Programa Sin Avance',
+            'clave' => 'PSA-'.uniqid(),
+            'geobase_program_id' => 77,
+        ]);
+
+        Log::shouldReceive('info')
+            ->once()
+            ->withArgs(fn (string $msg) => str_contains($msg, 'avance'));
+
+        $listener = new StoreSnapshotHash();
+        $listener->handle($this->makeEvent(programId: 77, period: '1'));
+
+        $this->assertDatabaseCount('avance_evidencias', 0);
+    }
+}
