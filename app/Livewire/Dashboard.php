@@ -3,8 +3,13 @@
 namespace App\Livewire;
 
 use App\Enums\SystemRole;
+use App\Models\Mml\IndicadorVariable;
+use App\Models\ProgramaPresupuestario;
 use App\Services\DashboardService;
+use App\Services\GeoBase\GeoBaseClient;
+use App\Services\GeoBase\GeoBaseException;
 use App\Services\Presupuesto\PresupuestoResumenService;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -153,6 +158,52 @@ class Dashboard extends Component
             'pct_ejercido' => $totalAprobado > 0 ? round(($totalEjercido / $totalAprobado) * 100, 2) : 0,
             'alertas_subejercicio' => $alertas->count(),
         ];
+    }
+
+    #[Computed]
+    public function geobaseStats(): ?array
+    {
+        return Cache::remember('dashboard:geobase:' . auth()->id(), 300, function () {
+            $connected = false;
+            $programas = [];
+            $totalBeneficiarios = 0;
+            $lastError = null;
+
+            $vinculadas = IndicadorVariable::whereNotNull('geobase_endpoint_type')->count();
+            $totalVariables = IndicadorVariable::count();
+
+            $programasConLink = ProgramaPresupuestario::whereNotNull('geobase_program_id')->get();
+
+            try {
+                $client = app(GeoBaseClient::class);
+
+                foreach ($programasConLink as $programa) {
+                    $coverage = $client->getProgramCoverage($programa->geobase_program_id);
+                    $count = $coverage['total_beneficiaries'] ?? $coverage['count'] ?? 0;
+                    $programas[] = [
+                        'nombre' => $programa->nombre,
+                        'beneficiarios' => $count,
+                    ];
+                    $totalBeneficiarios += $count;
+                }
+
+                $connected = true;
+            } catch (GeoBaseException $e) {
+                $lastError = $e->getMessage();
+            } catch (\Exception $e) {
+                $lastError = 'Error de conexion';
+            }
+
+            return [
+                'connected' => $connected,
+                'last_check' => now()->toIso8601String(),
+                'last_error' => $lastError,
+                'variables_vinculadas' => $vinculadas,
+                'variables_total' => $totalVariables,
+                'programas' => $programas,
+                'total_beneficiarios' => $totalBeneficiarios,
+            ];
+        });
     }
 
     private function teamId(): int
