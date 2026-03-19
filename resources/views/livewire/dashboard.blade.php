@@ -9,6 +9,11 @@
             @include('livewire.dashboard.partials._operador')
         @endif
 
+        {{-- Partial GeoBase — visible para admin y planeador --}}
+        @if(in_array($this->dashboardRole, ['admin', 'planeador']))
+            @include('livewire.dashboard.partials._geobase')
+        @endif
+
         {{-- Partial presupuestal — visible para cualquier rol con permiso financiero --}}
         @include('livewire.dashboard.partials._analista_financiero')
 
