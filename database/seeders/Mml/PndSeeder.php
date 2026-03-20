@@ -28,15 +28,19 @@ class PndSeeder extends Seeder
         foreach ($lines as $line) {
             $line = trim($line);
 
-            // Detectar Eje: "## Eje 1: Política y Gobierno"
-            if (preg_match('/^## Eje (\d+): (.+)/', $line, $matches)) {
-                $ejeNumero = (int) $matches[1];
+            // Detectar Eje General: "## Eje 1: ..." o Eje Transversal: "## Eje Transversal 1: ..."
+            if (preg_match('/^## Eje (?:Transversal )?(\d+): (.+)/', $line, $matches)) {
+                $isTransversal = str_contains($line, 'Transversal');
+                $ejeNumero = $isTransversal
+                    ? (100 + (int) $matches[1])  // T1=101, T2=102, T3=103
+                    : (int) $matches[1];
                 $currentEje = PndEje::updateOrCreate(
                     ['numero' => $ejeNumero],
                     ['nombre' => trim($matches[2])]
                 );
                 $currentObjetivo = null;
-                $this->command->info("Eje {$ejeNumero}: {$matches[2]}");
+                $prefix = $isTransversal ? "Eje Transversal {$matches[1]}" : "Eje {$matches[1]}";
+                $this->command->info("{$prefix}: {$matches[2]}");
             }
 
             // Descripción del Eje (línea no-heading después del título)
@@ -44,13 +48,13 @@ class PndSeeder extends Seeder
                 $currentEje->update(['descripcion' => $line]);
             }
 
-            // Detectar Objetivo: "### Objetivo 1.1" o "### Objetivo 1.1: Título"
-            elseif ($currentEje && preg_match('/^### Objetivo (\d+\.\d+)(?::\s*(.+))?/', $line, $matches)) {
+            // Detectar Objetivo: "### Objetivo 1.1" o "### Objetivo T1.1"
+            elseif ($currentEje && preg_match('/^### Objetivo (T?\d+\.\d+)/', $line, $matches)) {
                 $currentObjetivo = PndObjetivo::updateOrCreate(
                     ['clave' => $matches[1]],
                     [
                         'pnd_eje_id' => $currentEje->id,
-                        'descripcion' => isset($matches[2]) ? trim($matches[2]) : null,
+                        'descripcion' => null,
                     ]
                 );
                 $this->command->info("  Objetivo {$matches[1]}");
@@ -61,16 +65,24 @@ class PndSeeder extends Seeder
                 $currentObjetivo->update(['descripcion' => $line]);
             }
 
-            // Detectar Estrategia: "#### Estrategia 1.1.1"
-            elseif ($currentObjetivo && preg_match('/^#### Estrategia (\d+\.\d+\.\d+)(?::\s*(.+))?/', $line, $matches)) {
+            // Detectar Estrategia: "#### Estrategia 1.1.1" o "#### Estrategia T1.1.1"
+            elseif ($currentObjetivo && preg_match('/^#### Estrategia (T?\d+\.\d+\.\d+)/', $line, $matches)) {
                 PndEstrategia::updateOrCreate(
                     ['clave' => $matches[1]],
                     [
                         'pnd_objetivo_id' => $currentObjetivo->id,
-                        'descripcion' => isset($matches[2]) ? trim($matches[2]) : null,
+                        'descripcion' => null,
                     ]
                 );
                 $this->command->info("    Estrategia {$matches[1]}");
+            }
+
+            // Descripción de Estrategia (línea siguiente)
+            elseif (isset($matches[1]) && !preg_match('/^#/', $line) && $line) {
+                $lastEstrategia = PndEstrategia::where('clave', $matches[1])->first();
+                if ($lastEstrategia && !$lastEstrategia->descripcion) {
+                    $lastEstrategia->update(['descripcion' => $line]);
+                }
             }
         }
 
