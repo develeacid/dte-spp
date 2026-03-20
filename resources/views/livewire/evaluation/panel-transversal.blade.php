@@ -50,6 +50,58 @@
                 </div>
             @endif
 
+            {{-- Gráfica resumen PED --}}
+            @if (!empty($data['ejes']))
+            <div class="mb-6" wire:ignore>
+                @php
+                    $ejesChart = collect($data['ejes']);
+                @endphp
+                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Índice de Eficacia por Eje PED</h4>
+                    <x-charts.bar-horizontal
+                        :categories="$ejesChart->pluck('eje_nombre')->map(fn ($n) => Str::limit($n, 30))->toArray()"
+                        :series="[['name' => 'Índice %', 'data' => $ejesChart->pluck('promedio_indice')->toArray()]]"
+                        :height="max(200, $ejesChart->count() * 45)"
+                        :referenceLine="100"
+                        referenceLabel="Meta"
+                    />
+                </div>
+            </div>
+
+            {{-- Heatmap PED × Programa --}}
+            @php
+                $heatmapRows = collect($data['ejes'])->map(fn ($e) => ['id' => $e['eje_numero'], 'nombre' => 'Eje ' . $e['eje_numero']]);
+                $heatmapCols = collect($data['ejes'])->flatMap(fn ($e) => collect($e['programas'] ?? []))->pluck('clave')->unique()->values()->toArray();
+                $heatmapValues = collect($data['ejes'])->map(function ($eje) use ($heatmapCols) {
+                    $progs = collect($eje['programas'] ?? [])->keyBy('clave');
+                    return collect($heatmapCols)->map(function ($clave) use ($progs) {
+                        $p = $progs->get($clave);
+                        return $p ? [
+                            'valor' => $p['indice'] ?? 0,
+                            'semaforo' => match(true) {
+                                ($p['indice'] ?? 0) >= 75 => 'verde',
+                                ($p['indice'] ?? 0) >= 50 => 'amarillo',
+                                default => 'rojo',
+                            },
+                            'detalle' => $clave . ': ' . ($p['indice'] ?? 0) . '%',
+                        ] : ['valor' => null, 'semaforo' => 'gris', 'detalle' => 'Sin datos'];
+                    })->toArray();
+                })->toArray();
+            @endphp
+            @if (count($heatmapCols) > 0)
+            <div class="mb-6" wire:ignore>
+                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Matriz Eje × Programa</h4>
+                    <x-charts.heatmap
+                        :rows="$heatmapRows->toArray()"
+                        :columns="$heatmapCols"
+                        :values="$heatmapValues"
+                    />
+                </div>
+            </div>
+            @endif
+            @endif
+
             @forelse($data['ejes'] as $eje)
                 <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
@@ -106,6 +158,25 @@
 
         {{-- Tab: ODS --}}
         @if($tab === 'ods')
+            {{-- Gráfica resumen ODS --}}
+            @if (is_iterable($data) && count($data) > 0)
+            <div class="mb-6" wire:ignore>
+                @php
+                    $odsChart = collect($data);
+                @endphp
+                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Índice de Eficacia por ODS</h4>
+                    <x-charts.bar-horizontal
+                        :categories="$odsChart->pluck('ods_nombre')->map(fn ($n) => Str::limit($n, 30))->toArray()"
+                        :series="[['name' => 'Índice %', 'data' => $odsChart->pluck('promedio_indice')->toArray()]]"
+                        :height="max(200, $odsChart->count() * 45)"
+                        :referenceLine="100"
+                        referenceLabel="Meta"
+                    />
+                </div>
+            </div>
+            @endif
+
             @forelse($data as $ods)
                 <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
@@ -160,6 +231,25 @@
 
         {{-- Tab: UR --}}
         @if($tab === 'ur')
+            {{-- Gráfica resumen UR --}}
+            @if (is_iterable($data) && count($data) > 0)
+            <div class="mb-6" wire:ignore>
+                @php
+                    $urChart = collect($data);
+                @endphp
+                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Índice de Eficacia por Unidad Responsable</h4>
+                    <x-charts.bar-horizontal
+                        :categories="$urChart->pluck('team_nombre')->map(fn ($n) => Str::limit($n, 30))->toArray()"
+                        :series="[['name' => 'Índice %', 'data' => $urChart->pluck('promedio_indice')->toArray()]]"
+                        :height="max(200, $urChart->count() * 45)"
+                        :referenceLine="100"
+                        referenceLabel="Meta"
+                    />
+                </div>
+            </div>
+            @endif
+
             @forelse($data as $ur)
                 <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
@@ -217,6 +307,25 @@
 
         {{-- Tab: Anexo --}}
         @if($tab === 'anexo')
+            {{-- Gráfica resumen Anexo --}}
+            @if (is_iterable($data) && count($data) > 0)
+            <div class="mb-6" wire:ignore>
+                @php
+                    $anexoChart = collect($data);
+                @endphp
+                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                    <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Índice de Eficacia por Anexo Transversal</h4>
+                    <x-charts.bar-horizontal
+                        :categories="$anexoChart->pluck('anexo_nombre')->map(fn ($n) => Str::limit($n, 30))->toArray()"
+                        :series="[['name' => 'Índice %', 'data' => $anexoChart->pluck('promedio_indice')->toArray()]]"
+                        :height="max(200, $anexoChart->count() * 45)"
+                        :referenceLine="100"
+                        referenceLabel="Meta"
+                    />
+                </div>
+            </div>
+            @endif
+
             @forelse($data as $anexo)
                 <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
