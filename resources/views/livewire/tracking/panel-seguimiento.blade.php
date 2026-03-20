@@ -39,6 +39,49 @@
             </div>
         </div>
 
+        {{-- Resumen visual --}}
+        <div class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2" wire:ignore>
+            @php
+                $semaforoCounts = collect($filas)->countBy('semaforo');
+                $semaforoLabels = ['verde', 'amarillo', 'rojo', 'gris'];
+                $semaforoSeries = collect($semaforoLabels)->map(fn ($s) => $semaforoCounts->get($s, 0))->values()->toArray();
+                $semaforoColors = ['#22c55e', '#eab308', '#ef4444', '#9ca3af'];
+            @endphp
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Semáforo de Indicadores</h4>
+                <x-charts.donut
+                    :labels="$semaforoLabels"
+                    :series="$semaforoSeries"
+                    :colors="$semaforoColors"
+                    :height="220"
+                    centerText="{{ array_sum($semaforoSeries) }}"
+                    centerSubtext="indicadores"
+                />
+            </div>
+
+            @php
+                $porPrograma = collect($filas)->groupBy('programa_clave')->map(function ($items, $clave) {
+                    $conMeta = $items->filter(fn ($i) => $i['meta'] > 0);
+                    return [
+                        'clave' => $clave,
+                        'avance' => $conMeta->count() > 0
+                            ? round($conMeta->avg(fn ($i) => min(($i['resultado'] / $i['meta']) * 100, 150)), 1)
+                            : 0,
+                    ];
+                })->sortByDesc('avance')->values();
+            @endphp
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Avance Promedio por Programa</h4>
+                <x-charts.bar-horizontal
+                    :categories="$porPrograma->pluck('clave')->toArray()"
+                    :series="[['name' => 'Avance %', 'data' => $porPrograma->pluck('avance')->toArray()]]"
+                    :height="max(200, $porPrograma->count() * 35)"
+                    :referenceLine="100"
+                    referenceLabel="Meta"
+                />
+            </div>
+        </div>
+
         {{-- Main table --}}
         @if($filas->isEmpty())
             <div class="rounded-lg border border-gray-200 bg-white p-8 text-center shadow-sm">
