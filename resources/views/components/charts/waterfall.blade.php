@@ -11,14 +11,15 @@ Cada item en $data:
   - type: 'total' | 'increment' | 'decrement'
 --}}
 
+@php $uid = 'waterfall-' . Str::random(8); @endphp
+
 <div wire:ignore
-     x-data="{
-        init() {
-            this.$nextTick(() => this.render());
-        },
+     x-data="{ init() { this.$nextTick(() => this.render()); },
         render() {
             const container = this.$refs.chart;
-            const data = @js($data);
+            const cfg = JSON.parse(document.getElementById('{{ $uid }}').textContent);
+            const data = cfg.data;
+            const chartHeight = cfg.height;
 
             if (!data.length || typeof d3 === 'undefined') return;
 
@@ -26,14 +27,14 @@ Cada item en $data:
 
             const margin = { top: 20, right: 30, bottom: 60, left: 80 };
             const width = container.clientWidth - margin.left - margin.right;
-            const height = {{ $height }} - margin.top - margin.bottom;
+            const height = chartHeight - margin.top - margin.bottom;
 
             const svg = d3.select(container)
                 .append('svg')
                 .attr('width', width + margin.left + margin.right)
                 .attr('height', height + margin.top + margin.bottom)
                 .append('g')
-                .attr('transform', `translate(${margin.left},${margin.top})`);
+                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
             let running = 0;
             const processed = data.map(d => {
@@ -65,7 +66,7 @@ Cada item en $data:
                 .range([height, 0]);
 
             svg.append('g')
-                .attr('transform', `translate(0,${height})`)
+                .attr('transform', 'translate(0,' + height + ')')
                 .call(d3.axisBottom(x))
                 .selectAll('text')
                 .attr('transform', 'rotate(-25)')
@@ -134,12 +135,12 @@ Cada item en $data:
                 .style('z-index', 50);
 
             svg.selectAll('rect')
-                .on('mouseover', function(event, d) {
+                .on('mouseover', function(event) {
                     const idx = Math.floor((event.target.getAttribute('x') - x.range()[0]) / (x.step()));
                     const item = processed[idx];
                     if (!item) return;
                     tooltip
-                        .html(`<strong>${item.label}</strong><br>$${new Intl.NumberFormat().format(item.value)}`)
+                        .html('<strong>' + item.label + '</strong><br>$' + new Intl.NumberFormat().format(item.value))
                         .style('opacity', 1);
                 })
                 .on('mousemove', (event) => {
@@ -153,6 +154,8 @@ Cada item en $data:
      }"
      x-init="init()"
      {{ $attributes->merge(['class' => 'relative']) }}>
+    @php $jsonData = ['data' => $data, 'height' => $height]; @endphp
+    <script type="application/json" id="{{ $uid }}">{!! json_encode($jsonData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
     <div x-ref="chart"></div>
 </div>
 

@@ -23,7 +23,7 @@ class SecurityHeaders
         $response->headers->set(
             'Content-Security-Policy',
             "default-src 'self'; "
-            ."script-src 'self' 'unsafe-inline' 'unsafe-eval'{$viteOrigin}; "
+            ."script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com{$viteOrigin}; "
             ."style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net{$viteOrigin}; "
             ."font-src 'self' https://fonts.gstatic.com; "
             ."img-src 'self' data: https://ui-avatars.com; "

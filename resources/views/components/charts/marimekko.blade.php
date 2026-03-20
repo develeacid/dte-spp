@@ -11,15 +11,16 @@ Marimekko/Mosaic D3 — Visualización de presupuesto.
 - $clickRoute: prefijo de ruta para navegación por click (recibe id)
 --}}
 
+@php $uid = 'marimekko-' . Str::random(8); @endphp
+
 <div wire:ignore
-     x-data="{
-        init() {
-            this.$nextTick(() => this.render());
-        },
+     x-data="{ init() { this.$nextTick(() => this.render()); },
         render() {
             const container = this.$refs.chart;
-            const data = @js($data);
-            const chartHeight = @js($height);
+            const cfg = JSON.parse(document.getElementById('{{ $uid }}').textContent);
+            const data = cfg.data;
+            const chartHeight = cfg.height;
+            const clickRoute = cfg.clickRoute;
 
             if (!data.length || typeof d3 === 'undefined') return;
 
@@ -95,9 +96,8 @@ Marimekko/Mosaic D3 — Visualización de presupuesto.
                     .attr('height', colHeight)
                     .attr('fill', fill)
                     .attr('rx', 4)
-                    .attr('clip-path', `inset(0 0 -4px 0 round 4px)`);
+                    .attr('clip-path', 'inset(0 0 -4px 0 round 4px)');
 
-                /* Rounded top corners only — overlay a rect at the bottom to square off */
                 if (colHeight > 8) {
                     svg.append('rect')
                         .attr('x', x)
@@ -107,7 +107,6 @@ Marimekko/Mosaic D3 — Visualización de presupuesto.
                         .attr('fill', fill);
                 }
 
-                /* Labels inside column (only if wide enough) */
                 if (colWidth >= 60) {
                     const cx = x + colWidth / 2;
                     const textY = y + Math.min(colHeight / 2, 40);
@@ -154,22 +153,21 @@ Marimekko/Mosaic D3 — Visualización de presupuesto.
                     }
                 }
 
-                /* Hit area for tooltip & click */
                 const hitArea = svg.append('rect')
                     .attr('x', x)
                     .attr('y', 0)
                     .attr('width', Math.max(colWidth, 1))
                     .attr('height', chartHeight)
                     .attr('fill', 'transparent')
-                    .style('cursor', @js($clickRoute) ? 'pointer' : 'default');
+                    .style('cursor', clickRoute ? 'pointer' : 'default');
 
                 hitArea
                     .on('mouseover', () => {
                         rect.attr('opacity', 0.8);
-                        let html = `<strong>${d.nombre}</strong>`;
-                        html += `<br>Aprobado: ${formatMoneyFull(d.monto_aprobado)}`;
-                        html += `<br>Ejercido: ${pctEjercido}%`;
-                        if (d.detalle) html += `<br>${d.detalle}`;
+                        let html = '<strong>' + d.nombre + '</strong>';
+                        html += '<br>Aprobado: ' + formatMoneyFull(d.monto_aprobado);
+                        html += '<br>Ejercido: ' + pctEjercido + '%';
+                        if (d.detalle) html += '<br>' + d.detalle;
                         tooltip.html(html).style('opacity', 1);
                     })
                     .on('mousemove', (event) => {
@@ -183,11 +181,9 @@ Marimekko/Mosaic D3 — Visualización de presupuesto.
                         tooltip.style('opacity', 0);
                     });
 
-                if (d.id) {
+                if (d.id && clickRoute) {
                     hitArea.on('click', () => {
-                        @if($clickRoute)
-                            window.location.href = @js(url('/')) + '/{{ $clickRoute }}/' + d.id;
-                        @endif
+                        window.location.href = clickRoute + '/' + d.id;
                     });
                 }
 
@@ -197,6 +193,8 @@ Marimekko/Mosaic D3 — Visualización de presupuesto.
      }"
      x-init="init()"
      {{ $attributes->merge(['class' => 'relative']) }}>
+    @php $jsonData = ['data' => $data, 'height' => $height, 'clickRoute' => $clickRoute ? url($clickRoute) : null]; @endphp
+    <script type="application/json" id="{{ $uid }}">{!! json_encode($jsonData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
     <div x-ref="chart"></div>
 </div>
 

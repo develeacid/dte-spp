@@ -11,6 +11,7 @@
      x-data="{
         chart: null,
         init() {
+            if (this.$refs.chart && this.$refs.chart.querySelector('.apexcharts-canvas')) return;
             const options = {
                 chart: {
                     type: 'donut',

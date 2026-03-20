@@ -13,15 +13,16 @@ Cada item en $data:
   - ejercido: number (monto ejercido)
 --}}
 
+@php $uid = 'lollipop-' . Str::random(8); @endphp
+
 <div wire:ignore
-     x-data="{
-        init() {
-            this.$nextTick(() => this.render());
-        },
+     x-data="{ init() { this.$nextTick(() => this.render()); },
         render() {
             const container = this.$refs.chart;
-            const rawData = @js($data);
-            const threshold = {{ $threshold }};
+            const cfg = JSON.parse(document.getElementById('{{ $uid }}').textContent);
+            const rawData = cfg.data;
+            const threshold = cfg.threshold;
+            const chartHeight = cfg.height;
 
             if (!rawData.length || typeof d3 === 'undefined') return;
 
@@ -32,14 +33,14 @@ Cada item en $data:
             const margin = { top: 20, right: 60, bottom: 30, left: 200 };
             const width = (container.clientWidth || 600) - margin.left - margin.right;
             const rowH = 32;
-            const computedHeight = Math.max({{ $height }} - margin.top - margin.bottom, data.length * rowH);
+            const computedHeight = Math.max(chartHeight - margin.top - margin.bottom, data.length * rowH);
 
             const svg = d3.select(container)
                 .append('svg')
                 .attr('width', width + margin.left + margin.right)
                 .attr('height', computedHeight + margin.top + margin.bottom)
                 .append('g')
-                .attr('transform', `translate(${margin.left},${margin.top})`);
+                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
             const maxAbs = d3.max(data, d => Math.abs(d.desviacion)) || 30;
             const domainMax = Math.max(maxAbs * 1.2, Math.abs(threshold) * 1.3);
@@ -54,7 +55,7 @@ Cada item en $data:
                 .padding(0.3);
 
             svg.append('g')
-                .attr('transform', `translate(0,${computedHeight})`)
+                .attr('transform', 'translate(0,' + computedHeight + ')')
                 .call(d3.axisBottom(x).ticks(7).tickFormat(v => v + '%'))
                 .selectAll('text')
                 .style('font-size', '11px');
@@ -160,11 +161,11 @@ Cada item en $data:
                     .on('mouseover', () => {
                         circle.attr('r', 8);
                         const diff = Math.abs(d.ejercido - d.programado);
-                        let html = `<strong>${d.nombre}</strong>`;
-                        html += `<br>Programado: ${formatMoney(d.programado)}`;
-                        html += `<br>Ejercido: ${formatMoney(d.ejercido)}`;
-                        html += `<br>Diferencia: ${formatMoney(diff)}`;
-                        html += `<br>Desviación: ${sign}${d.desviacion}%`;
+                        let html = '<strong>' + d.nombre + '</strong>';
+                        html += '<br>Programado: ' + formatMoney(d.programado);
+                        html += '<br>Ejercido: ' + formatMoney(d.ejercido);
+                        html += '<br>Diferencia: ' + formatMoney(diff);
+                        html += '<br>Desviación: ' + sign + d.desviacion + '%';
                         tooltip.html(html).style('opacity', 1);
                     })
                     .on('mousemove', (event) => {
@@ -182,6 +183,8 @@ Cada item en $data:
      }"
      x-init="init()"
      {{ $attributes->merge(['class' => 'relative']) }}>
+    @php $jsonData = ['data' => $data, 'height' => $height, 'threshold' => $threshold]; @endphp
+    <script type="application/json" id="{{ $uid }}">{!! json_encode($jsonData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
     <div x-ref="chart"></div>
 </div>
 
