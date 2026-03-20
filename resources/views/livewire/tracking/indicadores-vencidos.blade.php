@@ -4,6 +4,26 @@
     </x-page.header>
 
     <x-page.container>
+        {{-- Resumen visual --}}
+        @if ($avances->isNotEmpty())
+        <div class="mb-6" wire:ignore>
+            @php
+                $vencidosPorPrograma = $avances->groupBy(fn ($a) => $a->indicador->programa->clave ?? 'N/A')
+                    ->map(fn ($items, $clave) => ['clave' => $clave, 'count' => $items->count()])
+                    ->sortByDesc('count')
+                    ->values();
+            @endphp
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Vencidos por Programa</h4>
+                <x-charts.bar-horizontal
+                    :categories="$vencidosPorPrograma->pluck('clave')->toArray()"
+                    :series="[['name' => 'Vencidos', 'data' => $vencidosPorPrograma->pluck('count')->toArray()]]"
+                    :height="max(150, $vencidosPorPrograma->count() * 35)"
+                />
+            </div>
+        </div>
+        @endif
+
         @if($avances->isEmpty())
             <div class="text-center py-12 text-gray-500">
                 No hay indicadores vencidos en este equipo.
