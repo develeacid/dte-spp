@@ -11,6 +11,7 @@
      x-data="{
         chart: null,
         init() {
+            if (this.$refs.chart && this.$refs.chart.querySelector('.apexcharts-canvas')) return;
             this.chart = new ApexCharts(this.$refs.chart, {
                 chart: { type: 'area', height: {{ $height }}, toolbar: { show: false }, sparkline: { enabled: false } },
                 stroke: { curve: 'smooth', width: 2 },
