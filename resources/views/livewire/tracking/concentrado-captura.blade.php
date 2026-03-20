@@ -73,7 +73,7 @@
             </div>
 
             @php
-                $programasConcentrado = $agrupado->map(function ($items, $clave) {
+                $programasConcentrado = $agrupado->groupBy('programa_clave')->map(function ($items, $clave) {
                     return [
                         'clave' => $clave,
                         'aprobados' => $items->sum('aprobados'),

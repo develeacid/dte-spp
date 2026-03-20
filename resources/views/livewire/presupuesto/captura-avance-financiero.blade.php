@@ -86,6 +86,33 @@
                     </table>
                 </div>
 
+                {{-- Bar-grouped: Calendarización T1-T4 --}}
+                <div class="mt-6" wire:ignore>
+                    <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                        <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Distribución Trimestral</h4>
+                        @php
+                            $calData = $partidas->map(fn ($p) => [
+                                'clave' => $p->clave_partida,
+                                't1' => (float) ($metas[$p->id][1] ?? 0),
+                                't2' => (float) ($metas[$p->id][2] ?? 0),
+                                't3' => (float) ($metas[$p->id][3] ?? 0),
+                                't4' => (float) ($metas[$p->id][4] ?? 0),
+                            ]);
+                        @endphp
+                        <x-charts.bar-grouped
+                            :categories="$calData->pluck('clave')->toArray()"
+                            :series="[
+                                ['name' => 'T1', 'data' => $calData->pluck('t1')->toArray()],
+                                ['name' => 'T2', 'data' => $calData->pluck('t2')->toArray()],
+                                ['name' => 'T3', 'data' => $calData->pluck('t3')->toArray()],
+                                ['name' => 'T4', 'data' => $calData->pluck('t4')->toArray()],
+                            ]"
+                            :height="280"
+                            yaxisFormat="currency"
+                        />
+                    </div>
+                </div>
+
                 <div class="mt-4 flex justify-end">
                     <x-ui.button.primary wire:click="guardarMetas">Guardar Calendarización</x-ui.button.primary>
                 </div>
@@ -153,6 +180,24 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+
+                {{-- Waterfall: Flujo presupuestal por partida --}}
+                <div class="mt-6" wire:ignore>
+                    <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                        <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Flujo Presupuestal</h4>
+                        @php
+                            $totalAprobadoPartidas = $partidas->sum('monto_efectivo');
+                            $totalEjercidoPartidas = collect($avances)->flatMap(fn ($t) => collect($t))->sum(fn ($v) => (float) ($v['pagado'] ?? 0));
+                            $saldoDisponible = $totalAprobadoPartidas - $totalEjercidoPartidas;
+                            $waterfallData = [
+                                ['label' => 'Aprobado', 'value' => $totalAprobadoPartidas, 'type' => 'total'],
+                                ['label' => 'Ejercido', 'value' => -$totalEjercidoPartidas, 'type' => 'decrement'],
+                                ['label' => 'Disponible', 'value' => $saldoDisponible, 'type' => 'total'],
+                            ];
+                        @endphp
+                        <x-charts.waterfall :data="$waterfallData" :height="280" />
+                    </div>
                 </div>
 
                 <div class="mt-2 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
