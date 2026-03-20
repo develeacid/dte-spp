@@ -33,6 +33,65 @@
             </div>
         </div>
 
+        {{-- Visualizaciones presupuestales --}}
+        <div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3" wire:ignore>
+            {{-- Gauge: % Ejercido global --}}
+            <div class="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <x-charts.gauge
+                    :value="$pctEjercido"
+                    :max="100"
+                    label="% Ejercido"
+                    :ranges="[
+                        ['min' => 0, 'max' => 40, 'color' => '#ef4444'],
+                        ['min' => 40, 'max' => 75, 'color' => '#eab308'],
+                        ['min' => 75, 'max' => 100, 'color' => '#22c55e'],
+                    ]"
+                />
+            </div>
+
+            {{-- Marimekko: Programas (ancho=aprobado, alto=%ejercido) --}}
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 lg:col-span-2">
+                <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Distribución Presupuestal</h4>
+                @php
+                    $marimekkoData = $programas->map(function ($p) {
+                        $aprobado = $p->partidasPresupuestales->sum(fn ($pp) => $pp->monto_efectivo);
+                        $ejercido = $p->partidasPresupuestales->sum(fn ($pp) => $pp->avancesFinancieros->sum('monto_pagado'));
+                        $pct = $aprobado > 0 ? round(($ejercido / $aprobado) * 100, 1) : 0;
+                        return [
+                            'id' => $p->id,
+                            'nombre' => $p->clave . ' ' . Str::limit($p->nombre, 20),
+                            'monto_aprobado' => $aprobado,
+                            'porcentaje_ejercido' => $pct,
+                            'semaforo' => $pct >= 75 ? 'verde' : ($pct >= 40 ? 'amarillo' : 'rojo'),
+                            'detalle' => '$' . number_format($ejercido, 0) . ' de $' . number_format($aprobado, 0),
+                        ];
+                    })->filter(fn ($p) => $p['monto_aprobado'] > 0)->values()->toArray();
+                @endphp
+                <x-charts.marimekko :data="$marimekkoData" :height="280" />
+            </div>
+        </div>
+
+        {{-- Lollipop: Desviación de ejecución --}}
+        <div class="mb-8" wire:ignore>
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Desviación de Ejecución por Programa</h4>
+                @php
+                    $lollipopData = $programas->map(function ($p) {
+                        $aprobado = $p->partidasPresupuestales->sum(fn ($pp) => $pp->monto_efectivo);
+                        $ejercido = $p->partidasPresupuestales->sum(fn ($pp) => $pp->avancesFinancieros->sum('monto_pagado'));
+                        $pct = $aprobado > 0 ? round(($ejercido / $aprobado) * 100, 1) : 0;
+                        return [
+                            'nombre' => $p->clave,
+                            'desviacion' => round($pct - 100, 1),
+                            'programado' => $aprobado,
+                            'ejercido' => $ejercido,
+                        ];
+                    })->filter(fn ($p) => $p['programado'] > 0)->values()->toArray();
+                @endphp
+                <x-charts.lollipop :data="$lollipopData" :height="max(250, count($lollipopData) * 40)" :threshold="-20" />
+            </div>
+        </div>
+
         {{-- Tabla de programas --}}
         <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
