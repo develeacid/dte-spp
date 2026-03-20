@@ -58,6 +58,46 @@
             </div>
         </div>
 
+        {{-- Resumen visual --}}
+        <div class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2" wire:ignore>
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Distribución Global</h4>
+                <x-charts.donut
+                    :labels="['Aprobados', 'En revisión', 'En captura', 'Observados']"
+                    :series="[$metricas['aprobados'], $metricas['en_revision'], $metricas['en_captura'], $metricas['observados']]"
+                    :colors="['#22c55e', '#3b82f6', '#eab308', '#f97316']"
+                    :height="220"
+                    centerText="{{ $metricas['total'] }}"
+                    centerSubtext="total"
+                />
+            </div>
+
+            @php
+                $programasConcentrado = $agrupado->map(function ($items, $clave) {
+                    return [
+                        'clave' => $clave,
+                        'aprobados' => $items->sum('aprobados'),
+                        'en_revision' => $items->sum('en_revision'),
+                        'en_captura' => $items->sum('en_captura'),
+                        'observados' => $items->sum('observados'),
+                    ];
+                })->values();
+            @endphp
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Comparativa por Programa</h4>
+                <x-charts.bar-grouped
+                    :categories="$programasConcentrado->pluck('clave')->toArray()"
+                    :series="[
+                        ['name' => 'Aprobados', 'data' => $programasConcentrado->pluck('aprobados')->toArray()],
+                        ['name' => 'En revisión', 'data' => $programasConcentrado->pluck('en_revision')->toArray()],
+                        ['name' => 'En captura', 'data' => $programasConcentrado->pluck('en_captura')->toArray()],
+                    ]"
+                    :colors="['#22c55e', '#3b82f6', '#eab308']"
+                    :height="280"
+                />
+            </div>
+        </div>
+
         {{-- Grouped table --}}
         @if($agrupado->isEmpty())
             <div class="rounded-lg border border-gray-200 bg-white p-8 text-center shadow-sm">
