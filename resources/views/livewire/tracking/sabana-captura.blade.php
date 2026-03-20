@@ -58,6 +58,49 @@
             </div>
         </div>
 
+        {{-- Resumen visual de estados --}}
+        <div class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3" wire:ignore>
+            @php
+                $estadoCounts = collect($filas)->countBy('estado');
+                $estadoLabels = ['aprobado', 'en_revision', 'en_captura', 'observado', 'pendiente', 'vencido'];
+                $estadoSeries = collect($estadoLabels)->map(fn ($e) => $estadoCounts->get($e, 0))->toArray();
+                $estadoColors = ['#22c55e', '#3b82f6', '#eab308', '#f97316', '#9ca3af', '#ef4444'];
+            @endphp
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 lg:col-span-1">
+                <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Distribución de Estados</h4>
+                <x-charts.donut
+                    :labels="$estadoLabels"
+                    :series="$estadoSeries"
+                    :colors="$estadoColors"
+                    :height="220"
+                    centerText="{{ array_sum($estadoSeries) }}"
+                    centerSubtext="registros"
+                />
+            </div>
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 lg:col-span-2">
+                @php
+                    $porProgramaEstado = collect($filas)->groupBy('programa_clave')->map(function ($items, $clave) {
+                        return [
+                            'clave' => $clave,
+                            'aprobados' => $items->where('estado', 'aprobado')->count(),
+                            'pendientes' => $items->whereIn('estado', ['pendiente', 'en_captura', 'en_revision'])->count(),
+                            'problemas' => $items->whereIn('estado', ['observado', 'vencido'])->count(),
+                        ];
+                    })->values();
+                @endphp
+                <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Estado por Programa</h4>
+                <x-charts.bar-horizontal
+                    :categories="$porProgramaEstado->pluck('clave')->toArray()"
+                    :series="[
+                        ['name' => 'Aprobados', 'data' => $porProgramaEstado->pluck('aprobados')->toArray()],
+                        ['name' => 'En proceso', 'data' => $porProgramaEstado->pluck('pendientes')->toArray()],
+                        ['name' => 'Observado/Vencido', 'data' => $porProgramaEstado->pluck('problemas')->toArray()],
+                    ]"
+                    :height="max(200, $porProgramaEstado->count() * 40)"
+                />
+            </div>
+        </div>
+
         {{-- Main table --}}
         @if($filas->isEmpty())
             <div class="rounded-lg border border-gray-200 bg-white p-8 text-center shadow-sm">
