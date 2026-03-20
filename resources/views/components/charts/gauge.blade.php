@@ -15,18 +15,18 @@ Gauge D3 — Velocímetro ejecutivo semicircular (180°).
 200×120px compacto para tarjetas KPI.
 --}}
 
+@php $uid = 'gauge-' . Str::random(8); @endphp
+
 <div wire:ignore
-     x-data="{
-        init() {
-            this.$nextTick(() => this.render());
-        },
+     x-data="{ init() { this.$nextTick(() => this.render()); },
         render() {
             const container = this.$refs.chart;
-            const value = Math.min({{ $value }}, {{ $max }});
-            const max = {{ $max }};
-            const ranges = @js($ranges);
-            const label = @js($label);
-            const animate = @js($animate);
+            const cfg = JSON.parse(document.getElementById('{{ $uid }}').textContent);
+            const value = Math.min(cfg.value, cfg.max);
+            const max = cfg.max;
+            const ranges = cfg.ranges;
+            const label = cfg.label;
+            const animate = cfg.animate;
 
             if (typeof d3 === 'undefined') return;
 
@@ -111,6 +111,8 @@ Gauge D3 — Velocímetro ejecutivo semicircular (180°).
      }"
      x-init="init()"
      {{ $attributes->merge(['class' => 'relative']) }}>
+    @php $jsonData = ['value' => $value, 'max' => $max, 'ranges' => $ranges, 'label' => $label, 'animate' => $animate]; @endphp
+    <script type="application/json" id="{{ $uid }}">{!! json_encode($jsonData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
     <div x-ref="chart"></div>
 </div>
 

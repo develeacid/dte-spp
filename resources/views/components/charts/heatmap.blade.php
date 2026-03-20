@@ -15,17 +15,18 @@ Heatmap D3 — Matriz de semáforos.
 - $clickRoute: nombre de la ruta para generar URL (recibe row id)
 --}}
 
+@php $uid = 'heatmap-' . Str::random(8); @endphp
+
 <div wire:ignore
-     x-data="{
-        init() {
-            this.$nextTick(() => this.render());
-        },
+     x-data="{ init() { this.$nextTick(() => this.render()); },
         render() {
             const container = this.$refs.chart;
-            const rows = @js($rows);
-            const columns = @js($columns);
-            const values = @js($values);
-            const clickable = @js($clickable);
+            const cfg = JSON.parse(document.getElementById('{{ $uid }}').textContent);
+            const rows = cfg.rows;
+            const columns = cfg.columns;
+            const values = cfg.values;
+            const clickable = cfg.clickable;
+            const baseUrl = cfg.baseUrl;
 
             if (!rows.length || !columns.length || typeof d3 === 'undefined') return;
 
@@ -143,9 +144,9 @@ Heatmap D3 — Matriz de semáforos.
                     hitArea
                         .on('mouseover', () => {
                             rect.attr('opacity', 0.8);
-                            let html = `<strong>${row.nombre}</strong> — ${col}`;
-                            if (cell.valor != null) html += `<br>Avance: ${cell.valor}%`;
-                            if (cell.detalle) html += `<br>${cell.detalle}`;
+                            let html = '<strong>' + row.nombre + '</strong> — ' + col;
+                            if (cell.valor != null) html += '<br>Avance: ' + cell.valor + '%';
+                            if (cell.detalle) html += '<br>' + cell.detalle;
                             tooltip.html(html).style('opacity', 1);
                         })
                         .on('mousemove', (event) => {
@@ -159,11 +160,9 @@ Heatmap D3 — Matriz de semáforos.
                             tooltip.style('opacity', 0);
                         });
 
-                    if (clickable && row.id) {
+                    if (clickable && row.id && baseUrl) {
                         hitArea.on('click', () => {
-                            @if($clickRoute)
-                                window.location.href = @js(url('/')) + '/{{ $clickRoute }}/' + row.id;
-                            @endif
+                            window.location.href = baseUrl + '/' + row.id;
                         });
                     }
                 });
@@ -172,6 +171,8 @@ Heatmap D3 — Matriz de semáforos.
      }"
      x-init="init()"
      {{ $attributes->merge(['class' => 'relative']) }}>
+    @php $jsonData = ['rows' => $rows, 'columns' => $columns, 'values' => $values, 'clickable' => $clickable, 'baseUrl' => $clickRoute ? url($clickRoute) : null]; @endphp
+    <script type="application/json" id="{{ $uid }}">{!! json_encode($jsonData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
     <div x-ref="chart"></div>
 </div>
 
