@@ -49,30 +49,43 @@
 
         {{-- Section 2: Tablero de Semaforos --}}
         <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 class="mb-4 text-lg font-semibold text-gray-900">Tablero de Semaforos</h2>
+            <h3 class="mb-4 text-lg font-semibold text-gray-900">Tablero de Semáforos</h3>
 
-            <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <div class="rounded-lg bg-green-50 border border-green-200 p-4 text-center">
-                    <p class="text-3xl font-bold text-green-700">{{ $tablero['conteo']['verde'] ?? 0 }}</p>
-                    <p class="text-sm font-medium text-green-600">Verde</p>
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {{-- Donut de semáforos --}}
+                <div wire:ignore>
+                    <x-charts.donut
+                        :labels="['Verde', 'Amarillo', 'Rojo', 'Sin dato']"
+                        :series="[$tablero['conteo']['verde'] ?? 0, $tablero['conteo']['amarillo'] ?? 0, $tablero['conteo']['rojo'] ?? 0, $tablero['conteo']['sin_dato'] ?? 0]"
+                        :colors="['#22c55e', '#eab308', '#ef4444', '#9ca3af']"
+                        :height="250"
+                        centerText="{{ ($tablero['conteo']['verde'] ?? 0) + ($tablero['conteo']['amarillo'] ?? 0) + ($tablero['conteo']['rojo'] ?? 0) + ($tablero['conteo']['sin_dato'] ?? 0) }}"
+                        centerSubtext="indicadores"
+                    />
                 </div>
-                <div class="rounded-lg bg-yellow-50 border border-yellow-200 p-4 text-center">
-                    <p class="text-3xl font-bold text-yellow-700">{{ $tablero['conteo']['amarillo'] ?? 0 }}</p>
-                    <p class="text-sm font-medium text-yellow-600">Amarillo</p>
-                </div>
-                <div class="rounded-lg bg-red-50 border border-red-200 p-4 text-center">
-                    <p class="text-3xl font-bold text-red-700">{{ $tablero['conteo']['rojo'] ?? 0 }}</p>
-                    <p class="text-sm font-medium text-red-600">Rojo</p>
-                </div>
-                <div class="rounded-lg bg-gray-50 border border-gray-200 p-4 text-center">
-                    <p class="text-3xl font-bold text-gray-700">{{ $tablero['conteo']['sin_dato'] ?? 0 }}</p>
-                    <p class="text-sm font-medium text-gray-600">Sin dato</p>
+
+                {{-- Bullet charts por nivel --}}
+                <div wire:ignore>
+                    @if (!empty($tablero['desglose']))
+                        <x-charts.bullet
+                            :data="collect($tablero['desglose'])->map(fn ($d, $nivel) => [
+                                'nombre' => ucfirst($nivel),
+                                'resultado' => $d['promedio'] ?? 0,
+                                'meta' => 100,
+                                'rango_verde_min' => 75, 'rango_verde_max' => 150,
+                                'rango_amarillo_min' => 50, 'rango_amarillo_max' => 75,
+                                'rango_rojo_min' => 0, 'rango_rojo_max' => 50,
+                            ])->values()->toArray()"
+                            :height="max(200, count($tablero['desglose']) * 60)"
+                            :showLabels="true"
+                        />
+                    @endif
                 </div>
             </div>
 
+            {{-- Tabla de desglose por nivel --}}
             @if(!empty($tablero['desglose']))
-                <div class="mt-6">
-                    <h3 class="mb-2 text-sm font-medium text-gray-700">Desglose por nivel</h3>
+                <div class="mt-4 overflow-x-auto">
                     <div class="overflow-hidden rounded-lg border border-gray-200">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -119,6 +132,24 @@
                         <p class="text-xl font-bold text-indigo-600">{{ number_format((float) $comparativa['indice_actual'], 2) }}%</p>
                     </div>
                 </div>
+
+                @if (count($comparativa['filas']) > 0)
+                <div class="mb-4" wire:ignore>
+                    @php
+                        $compFilas = collect($comparativa['filas'])->take(10);
+                    @endphp
+                    <x-charts.bar-grouped
+                        :categories="$compFilas->pluck('indicador')->map(fn ($n) => Str::limit($n, 25))->toArray()"
+                        :series="[
+                            ['name' => 'Anterior', 'data' => $compFilas->pluck('resultado_anterior')->toArray()],
+                            ['name' => 'Actual', 'data' => $compFilas->pluck('resultado_actual')->toArray()],
+                        ]"
+                        :colors="['#94a3b8', '#3b82f6']"
+                        :height="300"
+                        yaxisFormat="percent"
+                    />
+                </div>
+                @endif
 
                 <div class="overflow-hidden rounded-lg border border-gray-200">
                     <table class="min-w-full divide-y divide-gray-200">
