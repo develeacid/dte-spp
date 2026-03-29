@@ -64,6 +64,76 @@ class GeoBaseClient
         return $this->get("/programs/{$programId}/coverage");
     }
 
+    // --- Reportes Territoriales ---
+
+    public function getReporte(string $reporte, array $filters = []): array
+    {
+        return $this->get("/reportes/{$reporte}", $filters);
+    }
+
+    public function getCoberturaMunicipal(array $filters = []): array
+    {
+        return $this->getReporte('cobertura-municipal', $filters);
+    }
+
+    public function getInversionMunicipal(array $filters = []): array
+    {
+        return $this->getReporte('inversion-municipal', $filters);
+    }
+
+    public function getInversionRegional(array $filters = []): array
+    {
+        return $this->getReporte('inversion-regional', $filters);
+    }
+
+    // --- Imagen de polígonos ---
+
+    public function getPolygonImage(string $tipo, int $id, string $format = 'png'): string
+    {
+        $response = $this->request()->get("/imagen/poligono/{$tipo}/{$id}", ['format' => $format]);
+
+        if ($response->failed()) {
+            throw new GeoBaseException(
+                message: "GeoBase image error: {$response->status()}",
+                statusCode: $response->status(),
+            );
+        }
+
+        return $response->body();
+    }
+
+    public function getMapImage(string $tipo, int $id, int $width = 800, int $height = 600): string
+    {
+        $response = $this->request()
+            ->timeout(30)
+            ->get("/imagen/mapa/{$tipo}/{$id}", compact('width', 'height'));
+
+        if ($response->failed()) {
+            throw new GeoBaseException(
+                message: "GeoBase map image error: {$response->status()}",
+                statusCode: $response->status(),
+            );
+        }
+
+        return $response->body();
+    }
+
+    public function getConsultaImage(array $queryConfig): string
+    {
+        $response = $this->request()
+            ->timeout(30)
+            ->post('/imagen/consulta', $queryConfig);
+
+        if ($response->failed()) {
+            throw new GeoBaseException(
+                message: "GeoBase consulta image error: {$response->status()}",
+                statusCode: $response->status(),
+            );
+        }
+
+        return $response->body();
+    }
+
     // --- Snapshots ---
 
     public function requestSnapshot(array $params): array
