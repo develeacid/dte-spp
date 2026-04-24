@@ -38,6 +38,8 @@ Route::prefix('evaluacion')
                     ->name('evaluation.exportar.async');
                 Route::get('/descargar/{filename}', [\App\Http\Controllers\Evaluation\ExportController::class, 'descargar'])
                     ->name('evaluation.exportar.descargar');
+                Route::get('/anexo-11/{programa}', \App\Http\Controllers\Evaluation\Anexo11Controller::class)
+                    ->name('evaluation.anexo-11');
             });
 
         Route::middleware('can:exportar_reportes')
