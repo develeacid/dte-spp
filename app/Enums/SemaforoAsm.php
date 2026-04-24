@@ -36,14 +36,14 @@ enum SemaforoAsm: string
         return self::VERDE;
     }
 
-    public function color(): string
+    public function colorClass(): string
     {
         return match ($this) {
-            self::VERDE => 'green',
-            self::AMARILLO => 'yellow',
-            self::ROJO => 'red',
-            self::VENCIDO => 'gray',
-            self::CUMPLIDO => 'blue',
+            self::VERDE => 'bg-green-100 text-green-800',
+            self::AMARILLO => 'bg-yellow-100 text-yellow-800',
+            self::ROJO => 'bg-red-100 text-red-800',
+            self::VENCIDO => 'bg-gray-100 text-gray-800',
+            self::CUMPLIDO => 'bg-blue-100 text-blue-800',
         };
     }
 

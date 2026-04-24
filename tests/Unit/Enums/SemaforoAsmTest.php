@@ -76,4 +76,24 @@ class SemaforoAsmTest extends TestCase
         $resultado = SemaforoAsm::calcular(CarbonImmutable::parse('2026-06-23'), StatusAsm::PENDIENTE);
         $this->assertSame(SemaforoAsm::VERDE, $resultado);
     }
+
+    /** @test */
+    public function cumplido_gana_sobre_vencido_cuando_la_fecha_ya_paso(): void
+    {
+        $resultado = SemaforoAsm::calcular(
+            CarbonImmutable::parse('2024-01-01'),
+            StatusAsm::CUMPLIDO,
+        );
+        $this->assertSame(SemaforoAsm::CUMPLIDO, $resultado);
+    }
+
+    /** @test */
+    public function returns_rojo_cuando_fecha_compromiso_es_hoy_mismo(): void
+    {
+        $resultado = SemaforoAsm::calcular(
+            CarbonImmutable::parse('2026-04-24'),
+            StatusAsm::PENDIENTE,
+        );
+        $this->assertSame(SemaforoAsm::ROJO, $resultado);
+    }
 }
