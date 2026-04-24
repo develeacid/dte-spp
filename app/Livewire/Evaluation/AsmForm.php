@@ -10,10 +10,29 @@ use Livewire\Component;
 class AsmForm extends Component
 {
     public ?Asm $asm = null;
+    public AsmFormData $form;
 
     public function mount(?Asm $asm = null): void
     {
-        $this->asm = $asm;
+        if ($asm && $asm->exists) {
+            $this->asm = $asm;
+            $this->form->setFromModel($asm);
+        }
+    }
+
+    public function save()
+    {
+        $data = $this->form->validate();
+
+        if ($this->asm && $this->asm->exists) {
+            $this->asm->update($data);
+        } else {
+            Asm::create($data);
+        }
+
+        session()->flash('status', $this->asm && $this->asm->exists ? 'ASM actualizado.' : 'ASM creado.');
+
+        return redirect()->route('evaluation.asms.index');
     }
 
     public function render()
