@@ -42,6 +42,11 @@ Route::prefix('evaluacion')
                     ->name('evaluation.anexo-11');
             });
 
+        Route::middleware('can:exportar_cuenta_publica')
+            ->get('/exportar/presupuesto-capitulo/{programa}',
+                [\App\Http\Controllers\Evaluation\PresupuestoCapituloXlsxController::class, 'download'])
+            ->name('evaluation.exportar.presupuesto-capitulo');
+
         Route::prefix('asms')->name('evaluation.asms.')->group(function () {
             Route::get('/', \App\Livewire\Evaluation\AsmIndex::class)
                 ->middleware('can:ver_asm')
