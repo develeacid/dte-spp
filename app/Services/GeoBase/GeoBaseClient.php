@@ -88,6 +88,22 @@ class GeoBaseClient
 
     public function getTerritorialReport(int $programId, ?int $componentId = null, ?int $municipioId = null): array
     {
+        if ($programId < 1) {
+            throw new \InvalidArgumentException(
+                "getTerritorialReport() expects a positive program id, {$programId} given."
+            );
+        }
+        if ($componentId !== null && $componentId < 1) {
+            throw new \InvalidArgumentException(
+                "getTerritorialReport() expects a positive component id, {$componentId} given."
+            );
+        }
+        if ($municipioId !== null && $municipioId < 1) {
+            throw new \InvalidArgumentException(
+                "getTerritorialReport() expects a positive municipio id, {$municipioId} given."
+            );
+        }
+
         $filters = array_filter([
             'program_id' => $programId,
             'component_id' => $componentId,

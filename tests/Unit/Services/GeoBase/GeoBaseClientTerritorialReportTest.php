@@ -30,8 +30,13 @@ class GeoBaseClientTerritorialReportTest extends TestCase
         $this->assertSame(42, $result['data'][0]['program_id']);
 
         Http::assertSent(function ($request) {
-            return $request->url() === 'https://geobase.test/api/v1/geobase/territorial-report?program_id=42'
-                && $request->hasHeader('Authorization', 'Bearer fake-token');
+            return str_starts_with($request->url(), 'https://geobase.test/api/v1/geobase/territorial-report?')
+                && str_contains($request->url(), 'program_id=42')
+                && ! str_contains($request->url(), 'component_id=')
+                && ! str_contains($request->url(), 'municipio_id=')
+                && $request->method() === 'GET'
+                && $request->hasHeader('Authorization', 'Bearer fake-token')
+                && $request->hasHeader('Accept', 'application/json');
         });
     }
 
@@ -49,5 +54,27 @@ class GeoBaseClientTerritorialReportTest extends TestCase
         Http::assertSent(fn ($request) => str_contains($request->url(), 'program_id=42')
             && str_contains($request->url(), 'component_id=7')
         );
+    }
+
+    public function test_get_territorial_report_throws_on_non_2xx(): void
+    {
+        config(['services.geobase.url' => 'https://geobase.test/api/v1/geobase']);
+        config(['services.geobase.token' => 'fake-token']);
+        config(['services.geobase.retry_times' => 1]);  // keep the test fast
+
+        Http::fake(['*' => Http::response(['error' => 'boom'], 500)]);
+
+        $this->expectException(\App\Services\GeoBase\GeoBaseException::class);
+
+        app(\App\Services\GeoBase\GeoBaseClient::class)->getTerritorialReport(42);
+    }
+
+    public function test_get_territorial_report_rejects_non_positive_program_id(): void
+    {
+        Http::fake(['*' => Http::response(['data' => []], 200)]);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        app(\App\Services\GeoBase\GeoBaseClient::class)->getTerritorialReport(0);
     }
 }
