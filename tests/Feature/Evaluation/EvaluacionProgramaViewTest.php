@@ -224,6 +224,26 @@ class EvaluacionProgramaViewTest extends TestCase
         $response->assertStatus(403);
     }
 
+    public function test_boton_anexo_11_visible_cuando_programa_tiene_geobase_link(): void
+    {
+        $this->programa->update(['geobase_program_id' => 42]);
+
+        $this->actingAs($this->planeador);
+
+        Livewire::test(EvaluacionProgramaView::class, ['evaluacion' => $this->evaluacion->id])
+            ->assertSee('Anexo 11 PEF')
+            ->assertSeeHtml(route('evaluation.anexo-11', $this->programa));
+    }
+
+    public function test_boton_anexo_11_oculto_cuando_programa_no_tiene_geobase_link(): void
+    {
+        // programa was created in setUp without geobase_program_id.
+        $this->actingAs($this->planeador);
+
+        Livewire::test(EvaluacionProgramaView::class, ['evaluacion' => $this->evaluacion->id])
+            ->assertDontSee('Anexo 11 PEF');
+    }
+
     public function test_sin_evaluacion_anterior(): void
     {
         $nivel = MirNivel::create([
