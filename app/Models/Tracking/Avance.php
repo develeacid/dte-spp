@@ -10,9 +10,27 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Avance extends Model
 {
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'meta_periodo_id', 'indicador_id', 'resultado',
+                'semaforo_calculado', 'semaforo_ajustado',
+                'justificacion_ia', 'justificacion_final',
+                'estado', 'congelado_at', 'capturado_por',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn (string $eventName) => "Avance {$eventName}");
+    }
+
     protected static function booted(): void
     {
         static::deleting(function (Avance $avance) {
