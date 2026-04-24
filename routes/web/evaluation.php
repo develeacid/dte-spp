@@ -42,6 +42,23 @@ Route::prefix('evaluacion')
                     ->name('evaluation.anexo-11');
             });
 
+        Route::prefix('asms')->name('evaluation.asms.')->group(function () {
+            Route::get('/', \App\Livewire\Evaluation\AsmIndex::class)
+                ->middleware('can:ver_asm')
+                ->name('index');
+
+            Route::get('/crear', \App\Livewire\Evaluation\AsmForm::class)
+                ->middleware('can:gestionar_asm')
+                ->name('create');
+
+            Route::get('/{asm}/editar', \App\Livewire\Evaluation\AsmForm::class)
+                ->middleware('can:gestionar_asm')
+                ->name('edit');
+
+            // `show` route — Livewire\AsmShow not implemented yet; will be added in Task 13.
+            // Placeholder reference removed to avoid class-load errors at boot.
+        });
+
         Route::middleware('can:exportar_reportes')
             ->prefix('datos-abiertos')
             ->group(function () {
