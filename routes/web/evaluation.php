@@ -42,6 +42,32 @@ Route::prefix('evaluacion')
                     ->name('evaluation.anexo-11');
             });
 
+        Route::prefix('asms')->name('evaluation.asms.')->group(function () {
+            Route::get('/', \App\Livewire\Evaluation\AsmIndex::class)
+                ->middleware('can:ver_asm')
+                ->name('index');
+
+            Route::get('/crear', \App\Livewire\Evaluation\AsmForm::class)
+                ->middleware('can:gestionar_asm')
+                ->name('create');
+
+            Route::get('/{asm}/editar', \App\Livewire\Evaluation\AsmForm::class)
+                ->middleware('can:gestionar_asm')
+                ->name('edit');
+
+            Route::delete('/{asm}', [\App\Http\Controllers\Evaluation\AsmController::class, 'destroy'])
+                ->middleware('can:gestionar_asm')
+                ->name('destroy');
+
+            Route::get('/exportar/xlsx', [\App\Http\Controllers\Evaluation\AsmXlsxExportController::class, 'download'])
+                ->middleware('can:exportar_reportes')
+                ->name('export.xlsx');
+
+            Route::get('/{asm}', \App\Livewire\Evaluation\AsmShow::class)
+                ->middleware('can:ver_asm')
+                ->name('show');
+        });
+
         Route::middleware('can:exportar_reportes')
             ->prefix('datos-abiertos')
             ->group(function () {
