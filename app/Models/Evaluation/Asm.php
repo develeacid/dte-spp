@@ -8,6 +8,7 @@ use App\Enums\TipoAccionAsm;
 use App\Enums\TipoPlazoAsm;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -52,10 +53,21 @@ class Asm extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll()
+            ->logOnly([
+                'programa_presupuestario_id',
+                'evaluacion_id',
+                'tipo_plazo',
+                'tipo_accion',
+                'responsable_id',
+                'fecha_compromiso',
+                'fecha_cumplimiento',
+                'porcentaje_avance',
+                'status',
+            ])
             ->logOnlyDirty()
             ->useLogName('asm')
-            ->dontSubmitEmptyLogs();
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn (string $eventName) => "Asm {$eventName}");
     }
 
     public function programa(): BelongsTo
@@ -78,12 +90,12 @@ class Asm extends Model
         return SemaforoAsm::calcular($this->fecha_compromiso, $this->status);
     }
 
-    public function scopeVigentes($query)
+    public function scopeVigentes(Builder $query): Builder
     {
         return $query->where('status', '!=', StatusAsm::CUMPLIDO->value);
     }
 
-    public function scopePorPrograma($query, int $programaId)
+    public function scopePorPrograma(Builder $query, int $programaId): Builder
     {
         return $query->where('programa_presupuestario_id', $programaId);
     }

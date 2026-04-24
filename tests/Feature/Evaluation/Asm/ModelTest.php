@@ -16,8 +16,7 @@ class ModelTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function creates_an_asm_via_factory_with_defaults(): void
+    public function test_creates_an_asm_via_factory_with_defaults(): void
     {
         $asm = Asm::factory()->create();
 
@@ -29,8 +28,7 @@ class ModelTest extends TestCase
         $this->assertInstanceOf(TipoAccionAsm::class, $asm->tipo_accion);
     }
 
-    /** @test */
-    public function derives_semaforo_accessor_from_fecha_compromiso_and_status(): void
+    public function test_derives_semaforo_accessor_from_fecha_compromiso_and_status(): void
     {
         $asm = Asm::factory()->create([
             'fecha_compromiso' => now()->addDays(60),
@@ -40,8 +38,7 @@ class ModelTest extends TestCase
         $this->assertSame(SemaforoAsm::VERDE, $asm->semaforo);
     }
 
-    /** @test */
-    public function soft_deletes_records(): void
+    public function test_soft_deletes_records(): void
     {
         $asm = Asm::factory()->create();
         $id = $asm->id;

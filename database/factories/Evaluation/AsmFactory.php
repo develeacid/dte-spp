@@ -27,7 +27,7 @@ class AsmFactory extends Factory
             'area_responsable' => $this->faker->jobTitle(),
             'fecha_compromiso' => $this->faker->dateTimeBetween('-60 days', '+180 days'),
             'fecha_cumplimiento' => null,
-            'porcentaje_avance' => $this->faker->numberBetween(0, 80),
+            'porcentaje_avance' => $this->faker->numberBetween(0, 80), // 100 reserved for cumplido() state
             'observacion_ultimo_avance' => null,
             'status' => StatusAsm::PENDIENTE,
             'evidencia_url' => null,
