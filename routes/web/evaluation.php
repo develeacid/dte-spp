@@ -59,8 +59,9 @@ Route::prefix('evaluacion')
                 ->middleware('can:gestionar_asm')
                 ->name('destroy');
 
-            // `show` route — Livewire\AsmShow not implemented yet; will be added in Task 13.
-            // Placeholder reference removed to avoid class-load errors at boot.
+            Route::get('/{asm}', \App\Livewire\Evaluation\AsmShow::class)
+                ->middleware('can:ver_asm')
+                ->name('show');
         });
 
         Route::middleware('can:exportar_reportes')
