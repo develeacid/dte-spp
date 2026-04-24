@@ -63,6 +63,51 @@
             @endforeach
         </tbody>
     </table>
+    @isset($partidas)
+        @if($partidas->count() > 0)
+            <div style="page-break-before: always;"></div>
+            <h2 style="font-size: 14pt; margin-top: 20px;">Componente Financiero — T{{ $trimestre }}</h2>
+            <table style="width:100%; border-collapse: collapse; font-size: 9pt;">
+                <thead>
+                    <tr>
+                        <th>Clave</th>
+                        <th>Descripción</th>
+                        <th>Aprobado</th>
+                        <th>Modificado</th>
+                        <th>Comprometido</th>
+                        <th>Devengado</th>
+                        <th>Pagado</th>
+                        <th>% Ejercido</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($partidas as $partida)
+                        <tr>
+                            <td>{{ $partida['clave_partida'] }}</td>
+                            <td>{{ $partida['descripcion'] }}</td>
+                            <td style="text-align: right;">{{ number_format($partida['monto_aprobado'], 2) }}</td>
+                            <td style="text-align: right;">{{ number_format($partida['monto_modificado'] ?? $partida['monto_aprobado'], 2) }}</td>
+                            <td style="text-align: right;">{{ number_format($partida['monto_comprometido'], 2) }}</td>
+                            <td style="text-align: right;">{{ number_format($partida['monto_devengado'], 2) }}</td>
+                            <td style="text-align: right;">{{ number_format($partida['monto_pagado'], 2) }}</td>
+                            <td style="text-align: right;">{{ number_format($partida['porcentaje_ejercido'], 2) }}%</td>
+                        </tr>
+                    @endforeach
+                    <tr style="font-weight: bold; background: #f0f0f0;">
+                        <td>TOTAL</td>
+                        <td></td>
+                        <td style="text-align: right;">{{ number_format($totalesFinancieros['aprobado'], 2) }}</td>
+                        <td style="text-align: right;">{{ number_format($totalesFinancieros['modificado'], 2) }}</td>
+                        <td style="text-align: right;">{{ number_format($totalesFinancieros['comprometido'], 2) }}</td>
+                        <td style="text-align: right;">{{ number_format($totalesFinancieros['devengado'], 2) }}</td>
+                        <td style="text-align: right;">{{ number_format($totalesFinancieros['pagado'], 2) }}</td>
+                        <td style="text-align: right;">{{ number_format($totalesFinancieros['porcentaje_ejercido'], 2) }}%</td>
+                    </tr>
+                </tbody>
+            </table>
+        @endif
+    @endisset
+
     @include('exports.pdf.partials.vobo', [
         'titular' => $titular,
         'dependencia' => $dependencia,

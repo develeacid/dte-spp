@@ -3,6 +3,7 @@
 namespace App\Models\Presupuesto;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
@@ -10,6 +11,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class AvanceFinanciero extends Model
 {
+    use HasFactory;
     use LogsActivity;
 
     protected $table = 'avances_financieros';

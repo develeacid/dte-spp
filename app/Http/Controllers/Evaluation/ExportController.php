@@ -58,6 +58,7 @@ class ExportController extends Controller
                 ProgramaPresupuestario::findOrFail($id),
                 (int) $request->input('ejercicio_fiscal', date('Y')),
                 (int) $request->input('trimestre', 1),
+                $request->user(),
             ),
             'evaluacion-anual' => new EvaluacionAnualExcelExport(
                 EvaluacionPrograma::findOrFail($id),
@@ -124,6 +125,7 @@ class ExportController extends Controller
             $programa,
             (int) $request->input('ejercicio_fiscal', date('Y')),
             (int) $request->input('trimestre', 1),
+            $request->user(),
         ))->generate();
     }
 

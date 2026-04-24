@@ -2,14 +2,14 @@
 
 namespace App\Exports\Excel;
 
+use App\Exports\Excel\Sheets\AvanceFinancieroSheet;
+use App\Exports\Excel\Sheets\AvanceFisicoSheet;
 use App\Models\ProgramaPresupuestario;
-use Illuminate\Support\Collection;
+use App\Models\User;
 use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class AvanceTrimestralExcelExport implements FromCollection, WithHeadings, WithTitle
+class AvanceTrimestralExcelExport implements WithMultipleSheets
 {
     use Exportable;
 
@@ -17,56 +17,27 @@ class AvanceTrimestralExcelExport implements FromCollection, WithHeadings, WithT
         private ProgramaPresupuestario $programa,
         private int $ejercicioFiscal,
         private int $trimestre,
+        private ?User $user = null,
     ) {}
 
-    public function collection(): Collection
+    public function sheets(): array
     {
-        $niveles = $this->programa->mirNiveles()
-            ->with([
-                'indicadores' => fn ($q) => $q->where('activo_seguimiento', true),
-                'indicadores.metasPeriodo' => fn ($q) => $q->where('ejercicio_fiscal', $this->ejercicioFiscal)
-                    ->where('periodo', $this->trimestre),
-                'indicadores.avances' => fn ($q) => $q->whereHas('metaPeriodo', fn ($mp) => $mp->where('ejercicio_fiscal', $this->ejercicioFiscal)
-                    ->where('periodo', $this->trimestre)),
-            ])
-            ->orderByRaw("CASE tipo_nivel WHEN 'fin' THEN 1 WHEN 'proposito' THEN 2 WHEN 'componente' THEN 3 WHEN 'actividad' THEN 4 END")
-            ->orderBy('orden')
-            ->get();
+        $sheets = [
+            'Avance Físico' => new AvanceFisicoSheet(
+                $this->programa,
+                $this->ejercicioFiscal,
+                $this->trimestre,
+            ),
+        ];
 
-        $rows = collect();
-
-        foreach ($niveles as $nivel) {
-            foreach ($nivel->indicadores as $indicador) {
-                $meta = $indicador->metasPeriodo->first();
-                $avance = $indicador->avances->first();
-
-                $rows->push([
-                    'nivel' => $nivel->tipo_nivel->label(),
-                    'indicador' => $indicador->nombre,
-                    'meta_anual' => $indicador->meta,
-                    'meta_trimestral' => $meta?->meta_periodo,
-                    'resultado' => $avance?->resultado,
-                    'semaforo' => $avance?->semaforo_calculado ?? 'sin dato',
-                    'avance_porcentaje' => $meta?->meta_periodo > 0
-                        ? round(($avance?->resultado / $meta->meta_periodo) * 100, 2)
-                        : null,
-                ]);
-            }
+        if ($this->user?->can('ver_datos_financieros')) {
+            $sheets['Financiero'] = new AvanceFinancieroSheet(
+                $this->programa,
+                $this->ejercicioFiscal,
+                $this->trimestre,
+            );
         }
 
-        return $rows;
-    }
-
-    public function headings(): array
-    {
-        return [
-            'Nivel', 'Indicador', 'Meta Anual', 'Meta Trimestral',
-            'Resultado', 'Semáforo', 'Avance %',
-        ];
-    }
-
-    public function title(): string
-    {
-        return "T{$this->trimestre} - {$this->programa->clave}";
+        return $sheets;
     }
 }
