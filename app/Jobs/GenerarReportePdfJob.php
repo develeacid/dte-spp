@@ -63,6 +63,7 @@ class GenerarReportePdfJob implements ShouldQueue
             $programa,
             $this->parametros['ejercicio_fiscal'] ?? (int) date('Y'),
             $this->parametros['trimestre'] ?? 1,
+            User::find($this->userId),
         ))->generate();
     }
 

@@ -3,6 +3,8 @@
 namespace App\Exports\Pdf;
 
 use App\Models\ProgramaPresupuestario;
+use App\Models\User;
+use App\Services\Presupuesto\IaffFinancialReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class AvanceTrimestralPdfExport
@@ -11,9 +13,23 @@ class AvanceTrimestralPdfExport
         private ProgramaPresupuestario $programa,
         private int $ejercicioFiscal,
         private int $trimestre,
+        private ?User $user = null,
     ) {}
 
+    public function generateHtml(): string
+    {
+        return view('exports.pdf.avance-trimestral', $this->viewData())->render();
+    }
+
     public function generate(): string
+    {
+        $pdf = Pdf::loadView('exports.pdf.avance-trimestral', $this->viewData());
+        $pdf->setPaper('letter', 'landscape');
+
+        return $pdf->output();
+    }
+
+    private function viewData(): array
     {
         $niveles = $this->programa->mirNiveles()
             ->with([
@@ -30,20 +46,31 @@ class AvanceTrimestralPdfExport
         $encabezado = config('evaluation.exports.encabezado');
         $team = $this->programa->team;
 
-        $pdf = Pdf::loadView('exports.pdf.avance-trimestral', [
+        $data = [
             'programa' => $this->programa,
             'niveles' => $niveles,
             'ejercicioFiscal' => $this->ejercicioFiscal,
             'trimestre' => $this->trimestre,
             'encabezado' => $encabezado,
             'generadoEn' => now()->format('d/m/Y H:i'),
-            'titular' => $team->titular,
-            'dependencia' => $team->name,
+            'titular' => $team?->titular,
+            'dependencia' => $team?->name,
             'fecha' => now()->format('d/m/Y'),
-        ]);
+            'partidas' => null,
+            'totalesFinancieros' => null,
+        ];
 
-        $pdf->setPaper('letter', 'landscape');
+        if ($this->user?->can('ver_datos_financieros')) {
+            $service = new IaffFinancialReportService(
+                $this->programa,
+                $this->ejercicioFiscal,
+                $this->trimestre,
+            );
+            $partidas = $service->rows();
+            $data['partidas'] = $partidas;
+            $data['totalesFinancieros'] = $service->totals($partidas);
+        }
 
-        return $pdf->output();
+        return $data;
     }
 }
