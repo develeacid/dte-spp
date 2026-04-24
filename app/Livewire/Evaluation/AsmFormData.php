@@ -38,12 +38,10 @@ class AsmFormData extends Form
             'area_responsable' => ['required', 'string', 'max:255'],
             'fecha_compromiso' => ['required', 'date'],
             'fecha_cumplimiento' => [
-                'nullable', 'date', 'after_or_equal:fecha_compromiso',
-                function (string $attribute, mixed $value, \Closure $fail) {
-                    if ($this->status === StatusAsm::CUMPLIDO->value && empty($value)) {
-                        $fail('La fecha de cumplimiento es obligatoria cuando el status es cumplido.');
-                    }
-                },
+                'nullable',
+                'required_if:status,cumplido',
+                'date',
+                'after_or_equal:fecha_compromiso',
             ],
             'porcentaje_avance' => ['integer', 'min:0', 'max:100'],
             'observacion_ultimo_avance' => ['nullable', 'string'],
