@@ -1,6 +1,13 @@
 <div>
     <x-page.header>
         <x-slot name="title">Evaluacion del programa: {{ $resumen['clave'] }} - {{ $resumen['nombre'] }}</x-slot>
+
+        @if($evaluacionModel->programa->hasGeoBaseLink())
+            <a href="{{ route('evaluation.anexo-11', $evaluacionModel->programa) }}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Anexo 11 PEF
+            </a>
+        @endif
     </x-page.header>
 
     <x-page.container>
