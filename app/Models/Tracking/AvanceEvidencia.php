@@ -6,9 +6,26 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class AvanceEvidencia extends Model
 {
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'avance_id', 'nombre_archivo', 'ruta_archivo', 'mime_type',
+                'tamano_bytes', 'hash_archivo', 'nombre_documento',
+                'area_generadora', 'fecha_documento', 'subido_por',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn (string $eventName) => "AvanceEvidencia {$eventName}");
+    }
+
     protected static function booted(): void
     {
         static::deleting(function (AvanceEvidencia $evidencia) {
