@@ -59,6 +59,10 @@ Route::prefix('evaluacion')
                 ->middleware('can:gestionar_asm')
                 ->name('destroy');
 
+            Route::get('/exportar/xlsx', [\App\Http\Controllers\Evaluation\AsmXlsxExportController::class, 'download'])
+                ->middleware('can:exportar_reportes')
+                ->name('export.xlsx');
+
             Route::get('/{asm}', \App\Livewire\Evaluation\AsmShow::class)
                 ->middleware('can:ver_asm')
                 ->name('show');
