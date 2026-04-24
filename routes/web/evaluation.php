@@ -55,6 +55,10 @@ Route::prefix('evaluacion')
                 ->middleware('can:gestionar_asm')
                 ->name('edit');
 
+            Route::delete('/{asm}', [\App\Http\Controllers\Evaluation\AsmController::class, 'destroy'])
+                ->middleware('can:gestionar_asm')
+                ->name('destroy');
+
             // `show` route — Livewire\AsmShow not implemented yet; will be added in Task 13.
             // Placeholder reference removed to avoid class-load errors at boot.
         });

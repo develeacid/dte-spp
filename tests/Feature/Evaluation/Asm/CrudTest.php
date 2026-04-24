@@ -90,4 +90,50 @@ class CrudTest extends TestCase
             ->call('save')
             ->assertHasErrors(['form.tipo_plazo']);
     }
+
+    public function test_updates_an_existing_asm(): void
+    {
+        $asm = Asm::factory()->create(['porcentaje_avance' => 10]);
+
+        Livewire::test(AsmForm::class, ['asm' => $asm])
+            ->set('form.porcentaje_avance', 50)
+            ->set('form.observacion_ultimo_avance', 'Se concluyó fase 1.')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('evaluation.asms.index'));
+
+        $fresh = $asm->fresh();
+        $this->assertSame(50, $fresh->porcentaje_avance);
+        $this->assertSame('Se concluyó fase 1.', $fresh->observacion_ultimo_avance);
+    }
+
+    public function test_requires_fecha_cumplimiento_when_status_is_cumplido(): void
+    {
+        $asm = Asm::factory()->create();
+
+        Livewire::test(AsmForm::class, ['asm' => $asm])
+            ->set('form.status', 'cumplido')
+            ->set('form.fecha_cumplimiento', null)
+            ->call('save')
+            ->assertHasErrors(['form.fecha_cumplimiento']);
+    }
+
+    public function test_rejects_porcentaje_avance_out_of_range(): void
+    {
+        Livewire::test(AsmForm::class)
+            ->set('form.porcentaje_avance', 150)
+            ->call('save')
+            ->assertHasErrors(['form.porcentaje_avance']);
+    }
+
+    public function test_soft_deletes_an_asm_via_controller(): void
+    {
+        $asm = Asm::factory()->create();
+
+        $this->delete(route('evaluation.asms.destroy', $asm))
+            ->assertRedirect(route('evaluation.asms.index'));
+
+        $this->assertNull(Asm::find($asm->id));
+        $this->assertNotNull(Asm::withTrashed()->find($asm->id)?->deleted_at);
+    }
 }
