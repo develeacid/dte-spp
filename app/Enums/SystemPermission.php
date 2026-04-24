@@ -27,4 +27,8 @@ enum SystemPermission: string
     case VALIDAR_SUSTENTO_LEGAL = 'validar_sustento_legal';
     case VER_SUSTENTO_LEGAL = 'ver_sustento_legal';
     case GESTIONAR_REGLAS_OPERACION = 'gestionar_reglas_operacion';
+
+    // Evaluación — ASM
+    case VER_ASM = 'ver_asm';
+    case GESTIONAR_ASM = 'gestionar_asm';
 }
