@@ -305,5 +305,12 @@
                 </div>
             </div>
         @endif
+
+        @can('ver_asm')
+            <section class="mt-8">
+                <h2 class="text-lg font-semibold mb-2">Aspectos Susceptibles de Mejora</h2>
+                <livewire:evaluation.asm-index :programa-id="$evaluacionModel->programa->id" :key="'asm-' . $evaluacionModel->programa->id" />
+            </section>
+        @endcan
     </x-page.container>
 </div>
