@@ -86,6 +86,17 @@ class GeoBaseClient
         return $this->getReporte('inversion-regional', $filters);
     }
 
+    public function getTerritorialReport(int $programId, ?int $componentId = null, ?int $municipioId = null): array
+    {
+        $filters = array_filter([
+            'program_id' => $programId,
+            'component_id' => $componentId,
+            'municipio_id' => $municipioId,
+        ], fn ($value) => $value !== null);
+
+        return $this->get('/territorial-report', $filters);
+    }
+
     // --- Imagen de polígonos ---
 
     public function getPolygonImage(string $tipo, int $id, string $format = 'png'): string
