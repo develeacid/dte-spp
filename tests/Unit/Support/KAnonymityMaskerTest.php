@@ -3,6 +3,7 @@
 namespace Tests\Unit\Support;
 
 use App\Support\KAnonymityMasker;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class KAnonymityMaskerTest extends TestCase
@@ -41,5 +42,54 @@ class KAnonymityMaskerTest extends TestCase
 
         $this->assertSame('<5', $masker->mask(4));
         $this->assertSame(5, $masker->mask(5));
+    }
+
+    public function test_threshold_accessor_returns_value(): void
+    {
+        $masker = new KAnonymityMasker(threshold: 10);
+
+        $this->assertSame(10, $masker->threshold());
+    }
+
+    public function test_mask_literal_uses_current_threshold(): void
+    {
+        $masker = new KAnonymityMasker(threshold: 10);
+
+        $this->assertSame('<10', $masker->maskLiteral());
+        $this->assertSame('<10', $masker->mask(7));
+    }
+
+    public function test_default_threshold_constant_is_five(): void
+    {
+        $this->assertSame(5, KAnonymityMasker::DEFAULT_THRESHOLD);
+    }
+
+    public function test_constructor_rejects_non_positive_threshold(): void
+    {
+        $caught = 0;
+
+        try {
+            new KAnonymityMasker(threshold: 0);
+        } catch (InvalidArgumentException) {
+            $caught++;
+        }
+
+        try {
+            new KAnonymityMasker(threshold: -1);
+        } catch (InvalidArgumentException) {
+            $caught++;
+        }
+
+        $this->assertSame(2, $caught, 'Both threshold: 0 and threshold: -1 should throw InvalidArgumentException.');
+    }
+
+    public function test_mask_rejects_negative_count(): void
+    {
+        $masker = new KAnonymityMasker();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/-3/');
+
+        $masker->mask(-3);
     }
 }
