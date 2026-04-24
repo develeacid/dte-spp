@@ -5,7 +5,12 @@ use App\Livewire\Mml\EmbudoPoblaciones;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('mml')
-    ->middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])
+    ->middleware([
+        'auth:sanctum',
+        config('jetstream.auth_session'),
+        'verified',
+        'permission:'.\App\Enums\SystemPermission::EDITAR_MIR->value,
+    ])
     ->group(function () {
 
         // Lista de programas
