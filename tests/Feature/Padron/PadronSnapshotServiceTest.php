@@ -2,12 +2,18 @@
 
 namespace Tests\Feature\Padron;
 
+use App\Enums\TipoNivelMir;
+use App\Models\Mml\Indicador;
+use App\Models\Mml\MetaPeriodo;
+use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
+use App\Models\Tracking\Avance;
 use App\Models\Tracking\AvanceEvidencia;
 use App\Models\User;
 use App\Services\GeoBase\GeoBaseException;
 use App\Services\Padron\PadronSnapshotService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -93,5 +99,78 @@ class PadronSnapshotServiceTest extends TestCase
         }
 
         $this->assertSame(0, AvanceEvidencia::count());
+    }
+
+    public function test_generar_vincula_avance_id_si_existe_avance_del_trimestre(): void
+    {
+        // Snapshots use the current quarter; lock time so the test is deterministic.
+        Carbon::setTestNow('2026-04-15 12:00:00');
+
+        Http::fake([
+            '*/snapshots/generate' => Http::response([
+                'data' => ['id' => 100, 'snapshot_hash' => 'h', 'row_count' => 0, 'cutoff_date' => '2026-06-30'],
+            ], 201),
+        ]);
+
+        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 12]);
+        $componente = MirNivel::create([
+            'programa_presupuestario_id' => $programa->id,
+            'tipo_nivel' => TipoNivelMir::COMPONENTE,
+            'resumen_narrativo' => 'C1',
+            'orden' => 1,
+        ]);
+        $indicador = Indicador::create([
+            'mir_nivel_id' => $componente->id,
+            'nombre' => 'Indicador C1',
+            'tipo' => 'gestion',
+            'dimension' => 'eficacia',
+            'frecuencia' => 'trimestral',
+            'orden' => 1,
+        ]);
+        $meta = MetaPeriodo::create([
+            'indicador_id' => $indicador->id,
+            'periodo' => 2,
+            'ejercicio_fiscal' => 2026,
+            'meta_periodo' => 100,
+        ]);
+        $user = User::factory()->withPersonalTeam()->create();
+        $avance = Avance::create([
+            'meta_periodo_id' => $meta->id,
+            'indicador_id' => $indicador->id,
+            'estado' => 'en_captura',
+            'capturado_por' => $user->id,
+        ]);
+
+        $evidencia = app(PadronSnapshotService::class)->generar($programa, $componente->id, $user);
+
+        $this->assertSame($avance->id, $evidencia->avance_id);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_generar_deja_avance_id_null_si_no_hay_avance_del_trimestre(): void
+    {
+        Carbon::setTestNow('2026-04-15 12:00:00');
+
+        Http::fake([
+            '*/snapshots/generate' => Http::response([
+                'data' => ['id' => 100, 'snapshot_hash' => 'h', 'row_count' => 0, 'cutoff_date' => '2026-06-30'],
+            ], 201),
+        ]);
+
+        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 12]);
+        $componente = MirNivel::create([
+            'programa_presupuestario_id' => $programa->id,
+            'tipo_nivel' => TipoNivelMir::COMPONENTE,
+            'resumen_narrativo' => 'C1',
+            'orden' => 1,
+        ]);
+        $user = User::factory()->withPersonalTeam()->create();
+
+        $evidencia = app(PadronSnapshotService::class)->generar($programa, $componente->id, $user);
+
+        $this->assertNull($evidencia->avance_id);
+
+        Carbon::setTestNow();
     }
 }

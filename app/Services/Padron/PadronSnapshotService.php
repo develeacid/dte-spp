@@ -3,6 +3,7 @@
 namespace App\Services\Padron;
 
 use App\Models\ProgramaPresupuestario;
+use App\Models\Tracking\Avance;
 use App\Models\Tracking\AvanceEvidencia;
 use App\Models\User;
 use App\Services\GeoBase\GeoBaseClient;
@@ -36,9 +37,11 @@ class PadronSnapshotService
         $rowCount = (int) ($snapshot['row_count'] ?? 0);
         $cutoffDate = Carbon::parse($snapshot['cutoff_date'] ?? $cutoff)->toDateString();
 
-        return DB::transaction(function () use ($snapshotId, $hash, $rowCount, $cutoffDate, $period, $user) {
+        $avance = $this->findAvanceParaComponente($componenteId, $period);
+
+        return DB::transaction(function () use ($snapshotId, $hash, $rowCount, $cutoffDate, $period, $user, $avance) {
             $evidencia = AvanceEvidencia::create([
-                'avance_id' => null,
+                'avance_id' => $avance?->id,
                 'nombre_archivo' => "snapshot-{$snapshotId}-{$cutoffDate}.csv",
                 'ruta_archivo' => '',
                 'mime_type' => 'text/csv',
@@ -58,11 +61,34 @@ class PadronSnapshotService
                     'snapshot_id' => $snapshotId,
                     'period' => $period,
                     'row_count' => $rowCount,
+                    'avance_id' => $avance?->id,
                 ])
                 ->log('Snapshot manual generado');
 
             return $evidencia;
         });
+    }
+
+    /**
+     * Find the Avance that this snapshot should attach to: same Componente
+     * (MirNivel id) + same trimestre + same ejercicio fiscal. Returns null
+     * when no matching Avance exists, in which case the evidence is created
+     * unbound (avance_id=null) and acts as standalone audit material.
+     */
+    private function findAvanceParaComponente(int $componenteId, string $period): ?Avance
+    {
+        if (! preg_match('/^(\d{4})-Q([1-4])$/', $period, $m)) {
+            return null;
+        }
+        [$ejercicio, $trimestre] = [(int) $m[1], (int) $m[2]];
+
+        return Avance::query()
+            ->whereHas('indicador', fn ($q) => $q->where('mir_nivel_id', $componenteId))
+            ->whereHas('metaPeriodo', fn ($q) => $q
+                ->where('periodo', $trimestre)
+                ->where('ejercicio_fiscal', $ejercicio))
+            ->orderBy('id')
+            ->first();
     }
 
     private function trimestreActual(): string
