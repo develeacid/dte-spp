@@ -19,14 +19,14 @@ class StoreSnapshotHashTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createFullChain(int $geobaseProgramId, string $period = '2026-Q1'): Avance
+    private function createFullChain(string $period = '2026-Q1'): Avance
     {
         $user = User::factory()->withPersonalTeam()->create();
 
         $programa = ProgramaPresupuestario::create([
             'nombre' => 'Programa Test',
             'clave' => 'PT-'.uniqid(),
-            'geobase_program_id' => $geobaseProgramId,
+            'padron_geobase_activo' => true,
         ]);
 
         $mirNivel = MirNivel::create([
@@ -62,14 +62,14 @@ class StoreSnapshotHashTest extends TestCase
         ]);
     }
 
-    private function makeEvent(int $programId = 99, string $period = '2026-Q1'): SnapshotGenerated
+    private function makeEvent(int $sppProgramId = 99, string $period = '2026-Q1'): SnapshotGenerated
     {
         return new SnapshotGenerated(
             snapshotId: 42,
             period: $period,
             snapshotHash: 'abc123hash',
-            componentId: 10,
-            programId: $programId,
+            sppMirNivelId: 10,
+            sppProgramId: $sppProgramId,
             valorOficial: 500,
             timestamp: '2026-03-19T12:00:00Z',
         );
@@ -77,10 +77,11 @@ class StoreSnapshotHashTest extends TestCase
 
     public function test_creates_evidencia_when_programa_and_avance_exist(): void
     {
-        $avance = $this->createFullChain(geobaseProgramId: 99, period: '2026-Q1');
+        $avance = $this->createFullChain(period: '2026-Q1');
+        $programaId = $avance->indicador->mirNivel->programa_presupuestario_id;
 
         $listener = new StoreSnapshotHash();
-        $listener->handle($this->makeEvent(programId: 99, period: '2026-Q1'));
+        $listener->handle($this->makeEvent(sppProgramId: $programaId, period: '2026-Q1'));
 
         $this->assertDatabaseHas('avance_evidencias', [
             'avance_id' => $avance->id,
@@ -102,7 +103,7 @@ class StoreSnapshotHashTest extends TestCase
             ->withArgs(fn (string $msg) => str_contains($msg, 'programa'));
 
         $listener = new StoreSnapshotHash();
-        $listener->handle($this->makeEvent(programId: 999));
+        $listener->handle($this->makeEvent(sppProgramId: 999999));
 
         $this->assertDatabaseCount('avance_evidencias', 0);
     }
@@ -111,10 +112,10 @@ class StoreSnapshotHashTest extends TestCase
     {
         User::factory()->withPersonalTeam()->create();
 
-        ProgramaPresupuestario::create([
+        $programa = ProgramaPresupuestario::create([
             'nombre' => 'Programa Sin Avance',
             'clave' => 'PSA-'.uniqid(),
-            'geobase_program_id' => 77,
+            'padron_geobase_activo' => true,
         ]);
 
         Log::shouldReceive('info')
@@ -122,7 +123,7 @@ class StoreSnapshotHashTest extends TestCase
             ->withArgs(fn (string $msg) => str_contains($msg, 'avance'));
 
         $listener = new StoreSnapshotHash();
-        $listener->handle($this->makeEvent(programId: 77, period: '2026-Q1'));
+        $listener->handle($this->makeEvent(sppProgramId: $programa->id, period: '2026-Q1'));
 
         $this->assertDatabaseCount('avance_evidencias', 0);
     }

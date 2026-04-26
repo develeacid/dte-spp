@@ -59,7 +59,7 @@ class AvanceTrimestralPdfExport
             'fecha' => now()->format('d/m/Y'),
             'partidas' => null,
             'totalesFinancieros' => null,
-            'evidenciasPadron' => $this->programa->geobase_program_id
+            'evidenciasPadron' => $this->programa->padron_geobase_activo
                 ? (new EvidenciaPadronSheet(
                     $this->programa,
                     $this->ejercicioFiscal,

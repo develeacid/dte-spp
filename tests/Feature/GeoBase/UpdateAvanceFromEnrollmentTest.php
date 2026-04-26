@@ -19,11 +19,11 @@ class UpdateAvanceFromEnrollmentTest extends TestCase
 
         $programa = ProgramaPresupuestario::factory()->create([
             'team_id' => $user->currentTeam->id,
-            'geobase_program_id' => 3,
+            'padron_geobase_activo' => true,
         ]);
 
         Http::fake([
-            '*/programs/3/coverage' => Http::response([
+            "*/programs/{$programa->id}/coverage" => Http::response([
                 'data' => [
                     'total_enrollments' => 501,
                     'aprobados' => 451,
@@ -35,12 +35,12 @@ class UpdateAvanceFromEnrollmentTest extends TestCase
             enrollmentId: 42,
             oldStatus: 'solicitado',
             newStatus: 'aprobado',
-            programId: 3,
+            sppProgramId: $programa->id,
             timestamp: now()->toIso8601String(),
         );
 
-        Http::assertSent(function ($request) {
-            return str_contains($request->url(), '/programs/3/coverage');
+        Http::assertSent(function ($request) use ($programa) {
+            return str_contains($request->url(), "/programs/{$programa->id}/coverage");
         });
     }
 
@@ -52,7 +52,7 @@ class UpdateAvanceFromEnrollmentTest extends TestCase
             enrollmentId: 42,
             oldStatus: 'solicitado',
             newStatus: 'aprobado',
-            programId: 99,
+            sppProgramId: 999999, // no programa with this id
             timestamp: now()->toIso8601String(),
         );
 

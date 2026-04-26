@@ -45,7 +45,7 @@ class PadronPrograma extends Component
         $this->authorize('ver_padron');
         $this->programa = $programa;
 
-        if (! $programa->geobase_program_id) {
+        if (! $programa->padron_geobase_activo) {
             return;
         }
 
@@ -135,7 +135,7 @@ class PadronPrograma extends Component
         try {
             $client = app(GeoBaseClient::class);
             $response = $client->getSnapshots(
-                $this->programa->geobase_program_id,
+                $this->programa->id,
                 $this->componenteSeleccionado,
             );
 

@@ -25,10 +25,10 @@ class GeoBaseLinkSeeder extends Seeder
             return;
         }
 
-        $programas = ProgramaPresupuestario::whereNotNull('geobase_program_id')->get();
+        $programas = ProgramaPresupuestario::where('padron_geobase_activo', true)->get();
 
         if ($programas->isEmpty()) {
-            $this->command->warn('No hay programas con geobase_program_id. Ejecuta Fase1PlaneacionMmlSeeder primero.');
+            $this->command->warn('No hay programas con padron_geobase_activo=true. Ejecuta Fase1PlaneacionMmlSeeder primero.');
 
             return;
         }
@@ -38,9 +38,9 @@ class GeoBaseLinkSeeder extends Seeder
 
         foreach ($programas as $programa) {
             try {
-                $coverage = $client->getProgramCoverage($programa->geobase_program_id);
+                $coverage = $client->getProgramCoverage($programa->id);
                 $count = $coverage['total_beneficiaries'] ?? $coverage['count'] ?? 0;
-                $this->command->info("  {$programa->clave} -> GeoBase program #{$programa->geobase_program_id}: {$count} beneficiarios");
+                $this->command->info("  {$programa->clave} -> spp_program_id={$programa->id}: {$count} beneficiarios");
                 $linked++;
             } catch (GeoBaseException $e) {
                 $this->command->warn("  {$programa->clave} -> GeoBase error: {$e->getMessage()}");

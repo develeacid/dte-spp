@@ -16,18 +16,18 @@ class UpdateAvanceFromEnrollment
 
     public function handle(EnrollmentStatusChanged $event): void
     {
-        $programa = ProgramaPresupuestario::where('geobase_program_id', $event->programId)->first();
+        $programa = ProgramaPresupuestario::find($event->sppProgramId);
 
         if (! $programa) {
             return;
         }
 
         try {
-            $coverage = $this->client->getProgramCoverage($event->programId);
+            $coverage = $this->client->getProgramCoverage($event->sppProgramId);
 
             Log::info('GeoBase coverage refreshed', [
                 'programa_id' => $programa->id,
-                'geobase_program_id' => $event->programId,
+                'spp_program_id' => $event->sppProgramId,
                 'coverage' => $coverage['data'] ?? [],
             ]);
         } catch (GeoBaseException $e) {

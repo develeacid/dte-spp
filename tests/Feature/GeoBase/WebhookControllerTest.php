@@ -36,7 +36,7 @@ class WebhookControllerTest extends TestCase
                 'enrollment_id' => 42,
                 'old_status' => 'solicitado',
                 'new_status' => 'aprobado',
-                'program_id' => 3,
+                'spp_program_id' => 3,
                 'timestamp' => '2026-03-18T12:00:00-06:00',
             ],
         ];
@@ -85,8 +85,8 @@ class WebhookControllerTest extends TestCase
                 'snapshot_id' => 7,
                 'period' => '2026-Q1',
                 'sha256' => 'a1b2c3d4e5f6',
-                'component_id' => 2,
-                'program_id' => 3,
+                'spp_mir_nivel_id' => 2,
+                'spp_program_id' => 3,
                 'valor_oficial' => 150,
                 'timestamp' => '2026-03-18T12:00:00-06:00',
             ],
@@ -143,7 +143,7 @@ class WebhookControllerTest extends TestCase
     {
         $payload = [
             'event' => 'enrollment.status_changed',
-            'data' => ['enrollment_id' => 42, 'old_status' => 'solicitado', 'new_status' => 'aprobado', 'program_id' => 3, 'timestamp' => now()->toIso8601String()],
+            'data' => ['enrollment_id' => 42, 'old_status' => 'solicitado', 'new_status' => 'aprobado', 'spp_program_id' => 3, 'timestamp' => now()->toIso8601String()],
         ];
 
         $this->postJson('/api/webhooks/geobase', $payload, [

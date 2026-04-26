@@ -33,13 +33,13 @@ class GeoBaseIntegrationTest extends TestCase
     {
         $user = User::factory()->withPersonalTeam()->create();
 
-        ProgramaPresupuestario::factory()->create([
+        $programa = ProgramaPresupuestario::factory()->create([
             'team_id' => $user->currentTeam->id,
-            'geobase_program_id' => 3,
+            'padron_geobase_activo' => true,
         ]);
 
         Http::fake([
-            '*/programs/3/coverage' => Http::response([
+            "*/programs/{$programa->id}/coverage" => Http::response([
                 'data' => ['total_enrollments' => 501, 'aprobados' => 451],
             ], 200),
         ]);
@@ -50,7 +50,7 @@ class GeoBaseIntegrationTest extends TestCase
                 'enrollment_id' => 42,
                 'old_status' => 'solicitado',
                 'new_status' => 'aprobado',
-                'program_id' => 3,
+                'spp_program_id' => $programa->id,
                 'timestamp' => '2026-03-18T12:00:00-06:00',
             ],
         ];
@@ -62,8 +62,8 @@ class GeoBaseIntegrationTest extends TestCase
         $response->assertStatus(200);
 
         // 2. Coverage was refreshed via HTTP
-        Http::assertSent(function ($request) {
-            return str_contains($request->url(), '/programs/3/coverage');
+        Http::assertSent(function ($request) use ($programa) {
+            return str_contains($request->url(), "/programs/{$programa->id}/coverage");
         });
 
         // 3. Activity was logged
@@ -81,8 +81,8 @@ class GeoBaseIntegrationTest extends TestCase
                 'snapshot_id' => 7,
                 'period' => '2026-Q1',
                 'sha256' => 'abc123def456',
-                'component_id' => 2,
-                'program_id' => 3,
+                'spp_mir_nivel_id' => 2,
+                'spp_program_id' => 3,
                 'valor_oficial' => 150,
                 'timestamp' => '2026-03-18T14:00:00-06:00',
             ],
@@ -118,7 +118,7 @@ class GeoBaseIntegrationTest extends TestCase
         $client->validateCurp('TEST');
         $client->validateLocation(17.07, -96.72, 3);
         $client->getProgramCoverage(3);
-        $client->requestSnapshot(['component_id' => 1, 'period' => '2026-Q1', 'cutoff_date' => '2026-03-31']);
+        $client->requestSnapshot(['spp_mir_nivel_id' => 1, 'period' => '2026-Q1', 'cutoff_date' => '2026-03-31']);
 
         Http::assertSentCount(7);
     }
@@ -127,7 +127,7 @@ class GeoBaseIntegrationTest extends TestCase
     {
         $payload = [
             'event' => 'enrollment.status_changed',
-            'data' => ['enrollment_id' => 42, 'old_status' => 'a', 'new_status' => 'b', 'program_id' => 1, 'timestamp' => now()->toIso8601String()],
+            'data' => ['enrollment_id' => 42, 'old_status' => 'a', 'new_status' => 'b', 'spp_program_id' => 1, 'timestamp' => now()->toIso8601String()],
         ];
 
         // Sign with correct secret, then change payload

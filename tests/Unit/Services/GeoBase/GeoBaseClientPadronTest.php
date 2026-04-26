@@ -39,13 +39,13 @@ class GeoBaseClientPadronTest extends TestCase
             ], 200),
         ]);
 
-        $result = $this->client->getSnapshots(programId: 12, componentId: 3);
+        $result = $this->client->getSnapshots(sppProgramId: 12, sppMirNivelId: 3);
 
         $this->assertCount(2, $result['data']);
 
         Http::assertSent(function ($request) {
-            return str_contains($request->url(), 'program_id=12')
-                && str_contains($request->url(), 'component_id=3')
+            return str_contains($request->url(), 'spp_program_id=12')
+                && str_contains($request->url(), 'spp_mir_nivel_id=3')
                 && $request->hasHeader('Authorization', 'Bearer test-token-123');
         });
     }
@@ -56,11 +56,11 @@ class GeoBaseClientPadronTest extends TestCase
             '*/snapshots*' => Http::response(['data' => [], 'meta' => []], 200),
         ]);
 
-        $this->client->getSnapshots(programId: 12);
+        $this->client->getSnapshots(sppProgramId: 12);
 
         Http::assertSent(function ($request) {
-            return str_contains($request->url(), 'program_id=12')
-                && ! str_contains($request->url(), 'component_id');
+            return str_contains($request->url(), 'spp_program_id=12')
+                && ! str_contains($request->url(), 'spp_mir_nivel_id');
         });
     }
 
@@ -132,8 +132,8 @@ class GeoBaseClientPadronTest extends TestCase
         ]);
 
         $result = $this->client->requestSnapshot([
-            'program_id' => 12,
-            'component_id' => 3,
+            'spp_program_id' => 12,
+            'spp_mir_nivel_id' => 3,
             'period' => '2026-Q1',
             'cutoff_date' => '2026-03-31',
         ]);

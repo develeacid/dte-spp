@@ -25,7 +25,7 @@ class ProgramaPresupuestario extends Model
         'estado',
         'planeacion_completada_at',
         'created_by',
-        'geobase_program_id',
+        'padron_geobase_activo',
     ];
 
     protected function casts(): array
@@ -35,6 +35,7 @@ class ProgramaPresupuestario extends Model
             'origen' => OrigenPrograma::class,
             'estado' => EstadoPrograma::class,
             'planeacion_completada_at' => 'datetime',
+            'padron_geobase_activo' => 'boolean',
         ];
     }
 
@@ -115,9 +116,15 @@ class ProgramaPresupuestario extends Model
 
     // --- GeoBase ---
 
+    /**
+     * dte-spp is the source of truth for program identity. This program is
+     * "linked" to GeoBase when its padron has been provisioned there
+     * (via the geobase:register-program command). The id used on the wire
+     * is always the local programa.id.
+     */
     public function hasGeoBaseLink(): bool
     {
-        return $this->geobase_program_id !== null;
+        return (bool) $this->padron_geobase_activo;
     }
 
     public function getGeoBaseCoverage(): ?array
@@ -127,7 +134,7 @@ class ProgramaPresupuestario extends Model
         }
 
         return app(\App\Services\GeoBase\GeoBaseClient::class)
-            ->getProgramCoverage($this->geobase_program_id);
+            ->getProgramCoverage($this->id);
     }
 
     // --- Scopes ---

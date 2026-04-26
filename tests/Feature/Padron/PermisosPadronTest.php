@@ -33,7 +33,7 @@ class PermisosPadronTest extends TestCase
         $this->seed(PadronPermissionsSeeder::class);
 
         $this->programa = ProgramaPresupuestario::factory()->create([
-            'geobase_program_id' => 100,
+            'padron_geobase_activo' => true,
         ]);
     }
 

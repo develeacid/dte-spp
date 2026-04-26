@@ -1,5 +1,5 @@
 <x-page.container :title="'Padrón — '.$programa->clave" subtitle="Beneficiarios atendidos por componente (datos administrados por GeoBase)">
-    @if ($programa->geobase_program_id && $componenteSeleccionado)
+    @if ($programa->padron_geobase_activo && $componenteSeleccionado)
         <x-slot name="actions">
             @can('exportar_reportes')
                 <x-ui.button.secondary :href="route('evaluation.anexo-11', $programa)">
@@ -15,7 +15,7 @@
         </x-slot>
     @endif
 
-    @if (! $programa->geobase_program_id)
+    @if (! $programa->padron_geobase_activo)
         <x-ui.empty-state
             title="Sin vinculación a GeoBase"
             description="Este programa aún no está vinculado a GeoBase. Solicita al admin la vinculación." />

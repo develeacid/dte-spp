@@ -87,7 +87,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
              'problema' => 'Baja competitividad del sector mezcalero estatal',
              'objetivo' => 'Incrementar la competitividad del sector mezcalero estatal',
              'poblacion' => ['ref' => 85000, 'pot' => 32000, 'obj' => 8500, 'unidad' => 'Productores'],
-             'geobase_program_id' => 1],
+             'padron_geobase_activo' => true],
             ['ur' => 'SE-001', 'clave' => 'EDU-002', 'nombre' => 'Educación Básica de Calidad',
              'problema' => 'Bajo rendimiento académico en educación básica',
              'objetivo' => 'Mejorar el rendimiento académico en educación básica',
@@ -96,7 +96,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
              'problema' => 'Alta deserción en educación superior por falta de recursos económicos',
              'objetivo' => 'Reducir la deserción en educación superior mediante apoyo económico',
              'poblacion' => ['ref' => 280000, 'pot' => 95000, 'obj' => 25000, 'unidad' => 'Estudiantes'],
-             'geobase_program_id' => 3],
+             'padron_geobase_activo' => true],
             ['ur' => 'SE-001', 'clave' => 'EDU-004', 'nombre' => 'Infraestructura Escolar',
              'problema' => 'Deterioro de la infraestructura en planteles educativos',
              'objetivo' => 'Rehabilitar la infraestructura de planteles educativos',
@@ -106,7 +106,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
              'problema' => 'Alta incidencia de enfermedades crónico-degenerativas en la población adulta',
              'objetivo' => 'Reducir la incidencia de enfermedades crónico-degenerativas',
              'poblacion' => ['ref' => 2500000, 'pot' => 800000, 'obj' => 200000, 'unidad' => 'Personas'],
-             'geobase_program_id' => 4],
+             'padron_geobase_activo' => true],
             ['ur' => 'SS-002', 'clave' => 'SAL-002', 'nombre' => 'Vacunación Universal',
              'problema' => 'Cobertura de vacunación insuficiente en menores de 5 años',
              'objetivo' => 'Ampliar la cobertura de vacunación en menores de 5 años',
@@ -115,7 +115,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
              'problema' => 'Mortalidad materna e infantil por encima de la media nacional',
              'objetivo' => 'Disminuir la mortalidad materna e infantil',
              'poblacion' => ['ref' => 120000, 'pot' => 45000, 'obj' => 30000, 'unidad' => 'Mujeres embarazadas'],
-             'geobase_program_id' => 5],
+             'padron_geobase_activo' => true],
             ['ur' => 'SS-002', 'clave' => 'SAL-004', 'nombre' => 'Atención Hospitalaria',
              'problema' => 'Saturación de servicios hospitalarios de segundo nivel',
              'objetivo' => 'Mejorar la capacidad de atención hospitalaria de segundo nivel',
@@ -142,7 +142,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
              'problema' => 'Degradación ambiental de destinos turísticos prioritarios',
              'objetivo' => 'Conservar y rehabilitar los destinos turísticos prioritarios',
              'poblacion' => ['ref' => 45, 'pot' => 20, 'obj' => 12, 'unidad' => 'Destinos turísticos'],
-             'geobase_program_id' => 6],
+             'padron_geobase_activo' => true],
             ['ur' => 'SECTUR-004', 'clave' => 'TUR-002', 'nombre' => 'Promoción Turística Digital',
              'problema' => 'Baja visibilidad del estado como destino turístico en medios digitales',
              'objetivo' => 'Incrementar la visibilidad turística del estado en plataformas digitales',
@@ -172,8 +172,8 @@ class Fase1PlaneacionMmlSeeder extends Seeder
         );
         $programa->equipos()->syncWithoutDetaching([$team->id => ['rol' => 'coordinadora']]);
 
-        if (isset($def['geobase_program_id'])) {
-            $programa->update(['geobase_program_id' => $def['geobase_program_id']]);
+        if (isset($def['padron_geobase_activo']) && $def['padron_geobase_activo']) {
+            $programa->update(['padron_geobase_activo' => true]);
         }
 
         if (!empty($def['transversal'])) {

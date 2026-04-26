@@ -12,7 +12,7 @@ class EnrollmentStatusChanged
         public readonly int $enrollmentId,
         public readonly string $oldStatus,
         public readonly string $newStatus,
-        public readonly int $programId,
+        public readonly int $sppProgramId,
         public readonly string $timestamp,
     ) {}
 }

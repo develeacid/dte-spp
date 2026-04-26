@@ -80,7 +80,7 @@ class AvanceTrimestralExportTest extends TestCase
     public function test_excel_includes_padron_sheet_when_program_is_linked_to_geobase(): void
     {
         $programa = ProgramaPresupuestario::where('clave', 'ISM-001')->firstOrFail();
-        $programa->update(['geobase_program_id' => 1]);
+        $programa->update(['padron_geobase_activo' => true]);
 
         $export = new AvanceTrimestralExcelExport($programa, 2025, 1);
         $sheets = $export->sheets();
@@ -92,7 +92,7 @@ class AvanceTrimestralExportTest extends TestCase
     public function test_excel_omits_padron_sheet_when_program_has_no_geobase_link(): void
     {
         $programa = ProgramaPresupuestario::where('clave', 'ISM-001')->firstOrFail();
-        $programa->update(['geobase_program_id' => null]);
+        $programa->update(['padron_geobase_activo' => false]);
 
         $export = new AvanceTrimestralExcelExport($programa, 2025, 1);
         $sheets = $export->sheets();
@@ -103,7 +103,7 @@ class AvanceTrimestralExportTest extends TestCase
     public function test_pdf_includes_padron_evidence_section_when_geobase_linked(): void
     {
         $programa = ProgramaPresupuestario::where('clave', 'ISM-001')->firstOrFail();
-        $programa->update(['geobase_program_id' => 1]);
+        $programa->update(['padron_geobase_activo' => true]);
 
         $componente = $programa->mirNiveles()->where('tipo_nivel', 'componente')->orderBy('orden')->firstOrFail();
         $indicador = $componente->indicadores()->firstOrFail();
@@ -136,7 +136,7 @@ class AvanceTrimestralExportTest extends TestCase
     public function test_pdf_omits_padron_section_when_no_geobase_link(): void
     {
         $programa = ProgramaPresupuestario::where('clave', 'ISM-001')->firstOrFail();
-        $programa->update(['geobase_program_id' => null]);
+        $programa->update(['padron_geobase_activo' => false]);
 
         $html = (new \App\Exports\Pdf\AvanceTrimestralPdfExport($programa, 2025, 1))->generateHtml();
 
@@ -146,7 +146,7 @@ class AvanceTrimestralExportTest extends TestCase
     public function test_padron_sheet_lists_components_with_their_snapshot_evidence(): void
     {
         $programa = ProgramaPresupuestario::where('clave', 'ISM-001')->firstOrFail();
-        $programa->update(['geobase_program_id' => 1]);
+        $programa->update(['padron_geobase_activo' => true]);
 
         // Attach a snapshot-style evidence to one of the program's avances.
         $componente = $programa->mirNiveles()->where('tipo_nivel', 'componente')->orderBy('orden')->firstOrFail();
