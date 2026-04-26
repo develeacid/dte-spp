@@ -52,8 +52,8 @@ class SyncGeoBaseAvances extends Command
 
                 try {
                     $response = match ($variable->geobase_endpoint_type) {
-                        'component_coverage' => $client->getProgramCoverage($variable->geobase_reference_id),
-                        'program_coverage' => $client->getProgramCoverage($variable->geobase_reference_id),
+                        'component_coverage' => $client->getComponentCoverage($variable->spp_reference_id),
+                        'program_coverage' => $client->getProgramCoverage($variable->spp_reference_id),
                         default => null,
                     };
 

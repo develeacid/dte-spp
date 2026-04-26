@@ -100,6 +100,25 @@ class GeoBaseClientTest extends TestCase
         $this->assertEquals(450, $result['data']['aprobados']);
     }
 
+    public function test_get_component_coverage_hits_components_endpoint(): void
+    {
+        Http::fake([
+            '*/components/42/coverage' => Http::response([
+                'spp_mir_nivel_id' => 42,
+                'component_name' => 'Componente C1',
+                'total_enrollments' => 87,
+                'total_beneficiaries' => 80,
+            ], 200),
+        ]);
+
+        $result = $this->client->getComponentCoverage(42);
+
+        $this->assertSame(42, $result['spp_mir_nivel_id']);
+        $this->assertSame(87, $result['total_enrollments']);
+
+        Http::assertSent(fn ($req) => str_contains($req->url(), '/components/42/coverage'));
+    }
+
     public function test_request_snapshot_sends_params(): void
     {
         Http::fake([

@@ -71,6 +71,15 @@ class GeoBaseClient
         return $this->get("/programs/{$sppProgramId}/coverage");
     }
 
+    /**
+     * Coverage of a single MIR componente. The argument is the dte-spp
+     * MirNivel.id (== components.spp_mir_nivel_id on the geobase side).
+     */
+    public function getComponentCoverage(int $sppMirNivelId): array
+    {
+        return $this->get("/components/{$sppMirNivelId}/coverage");
+    }
+
     // --- Reportes Territoriales ---
 
     public function getReporte(string $reporte, array $filters = []): array

@@ -12,7 +12,7 @@ class IndicadorVariable extends Model
     protected $fillable = [
         'indicador_id', 'simbolo', 'nombre', 'descripcion',
         'comportamiento', 'unidad_medida_id', 'orden',
-        'geobase_endpoint_type', 'geobase_reference_id', 'geobase_filter_params', 'geobase_value_key',
+        'geobase_endpoint_type', 'spp_reference_id', 'geobase_filter_params', 'geobase_value_key',
     ];
 
     protected function casts(): array
@@ -20,13 +20,19 @@ class IndicadorVariable extends Model
         return [
             'orden' => 'integer',
             'geobase_filter_params' => 'array',
-            'geobase_reference_id' => 'integer',
+            'spp_reference_id' => 'integer',
         ];
     }
 
+    /**
+     * The variable resolves a numeric value from GeoBase when both the
+     * endpoint type and the spp_reference_id are set. Reference is always
+     * a dte-spp id (programa.id for program_coverage,
+     * mir_nivel.id for component_coverage).
+     */
     public function hasGeoBaseLink(): bool
     {
-        return $this->geobase_endpoint_type !== null && $this->geobase_reference_id !== null;
+        return $this->geobase_endpoint_type !== null && $this->spp_reference_id !== null;
     }
 
     public function indicador(): BelongsTo
