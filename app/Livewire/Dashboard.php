@@ -172,13 +172,13 @@ class Dashboard extends Component
             $vinculadas = IndicadorVariable::whereNotNull('geobase_endpoint_type')->count();
             $totalVariables = IndicadorVariable::count();
 
-            $programasConLink = ProgramaPresupuestario::whereNotNull('geobase_program_id')->get();
+            $programasConLink = ProgramaPresupuestario::where('padron_geobase_activo', true)->get();
 
             try {
                 $client = app(GeoBaseClient::class);
 
                 foreach ($programasConLink as $programa) {
-                    $coverage = $client->getProgramCoverage($programa->geobase_program_id);
+                    $coverage = $client->getProgramCoverage($programa->id);
                     $count = $coverage['total_beneficiaries'] ?? $coverage['count'] ?? 0;
                     $programas[] = [
                         'nombre' => $programa->nombre,

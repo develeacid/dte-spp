@@ -39,7 +39,7 @@ class AvanceTrimestralExcelExport implements WithMultipleSheets
             );
         }
 
-        if ($this->programa->geobase_program_id) {
+        if ($this->programa->padron_geobase_activo) {
             $sheets['Evidencia de Padrón'] = new EvidenciaPadronSheet(
                 $this->programa,
                 $this->ejercicioFiscal,

@@ -36,7 +36,7 @@ class PadronSnapshotServiceTest extends TestCase
             ], 201),
         ]);
 
-        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 12]);
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $user = User::factory()->withPersonalTeam()->create();
 
         $service = app(PadronSnapshotService::class);
@@ -64,7 +64,7 @@ class PadronSnapshotServiceTest extends TestCase
             ], 201),
         ]);
 
-        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 12]);
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $user = User::factory()->withPersonalTeam()->create();
 
         app(PadronSnapshotService::class)->generar($programa, 3, $user);
@@ -78,7 +78,7 @@ class PadronSnapshotServiceTest extends TestCase
     {
         Http::fake(['*' => Http::response(['error' => 'down'], 500)]);
 
-        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 12]);
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $user = User::factory()->withPersonalTeam()->create();
 
         $this->expectException(GeoBaseException::class);
@@ -89,7 +89,7 @@ class PadronSnapshotServiceTest extends TestCase
     {
         Http::fake(['*' => Http::response(['error' => 'down'], 500)]);
 
-        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 12]);
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $user = User::factory()->withPersonalTeam()->create();
 
         try {
@@ -112,7 +112,7 @@ class PadronSnapshotServiceTest extends TestCase
             ], 201),
         ]);
 
-        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 12]);
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $componente = MirNivel::create([
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => TipoNivelMir::COMPONENTE,
@@ -158,7 +158,7 @@ class PadronSnapshotServiceTest extends TestCase
             ], 201),
         ]);
 
-        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 12]);
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $componente = MirNivel::create([
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => TipoNivelMir::COMPONENTE,

@@ -25,8 +25,8 @@ class PadronSnapshotService
         $cutoff = $this->fechaCorteActual();
 
         $response = $this->client->requestSnapshot([
-            'program_id' => $programa->geobase_program_id,
-            'component_id' => $componenteId,
+            'spp_program_id' => $programa->id,
+            'spp_mir_nivel_id' => $componenteId,
             'period' => $period,
             'cutoff_date' => $cutoff,
         ]);

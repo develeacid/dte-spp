@@ -26,3 +26,7 @@ Thumbs.db
 .worktrees
 .claude/worktrees/
 /docs/plans/
+
+# Ad-hoc folders that landed in the working tree but are not part of the project
+.playwright-mcp/
+/grub2-themes/

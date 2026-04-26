@@ -226,7 +226,7 @@ class EvaluacionProgramaViewTest extends TestCase
 
     public function test_boton_anexo_11_visible_cuando_programa_tiene_geobase_link(): void
     {
-        $this->programa->update(['geobase_program_id' => 42]);
+        $this->programa->update(['padron_geobase_activo' => true]);
 
         $this->actingAs($this->planeador);
 
@@ -237,7 +237,7 @@ class EvaluacionProgramaViewTest extends TestCase
 
     public function test_boton_anexo_11_oculto_cuando_programa_no_tiene_geobase_link(): void
     {
-        // programa was created in setUp without geobase_program_id.
+        // programa was created in setUp with padron_geobase_activo defaulting to false.
         $this->actingAs($this->planeador);
 
         Livewire::test(EvaluacionProgramaView::class, ['evaluacion' => $this->evaluacion->id])

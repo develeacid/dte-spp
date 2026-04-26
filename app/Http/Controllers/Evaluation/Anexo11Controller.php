@@ -16,7 +16,7 @@ class Anexo11Controller extends Controller
     ): BinaryFileResponse {
         abort_unless($programa->hasGeoBaseLink(), 404);
 
-        $data = $service->build($programa->geobase_program_id, $programa->nombre);
+        $data = $service->build($programa->id, $programa->nombre);
         $filename = sprintf(
             'anexo-11-%s-%s.xlsx',
             $programa->clave ?: $programa->id,

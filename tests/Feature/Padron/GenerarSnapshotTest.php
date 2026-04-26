@@ -97,7 +97,7 @@ class GenerarSnapshotTest extends TestCase
             return Http::response([], 404);
         });
 
-        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 12]);
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $componente = MirNivel::create([
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => TipoNivelMir::COMPONENTE,

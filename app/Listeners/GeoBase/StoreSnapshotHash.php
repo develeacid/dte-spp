@@ -12,11 +12,12 @@ class StoreSnapshotHash
 {
     public function handle(SnapshotGenerated $event): void
     {
-        $programa = ProgramaPresupuestario::where('geobase_program_id', $event->programId)->first();
+        // sppProgramId is the dte-spp programa.id (geobase echoes it back).
+        $programa = ProgramaPresupuestario::find($event->sppProgramId);
 
         if (! $programa) {
-            Log::warning('StoreSnapshotHash: no programa found for geobase_program_id', [
-                'geobase_program_id' => $event->programId,
+            Log::warning('StoreSnapshotHash: no programa found for spp_program_id', [
+                'spp_program_id' => $event->sppProgramId,
             ]);
 
             return;

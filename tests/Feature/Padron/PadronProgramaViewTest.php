@@ -40,10 +40,10 @@ class PadronProgramaViewTest extends TestCase
         ]);
     }
 
-    private function programaConComponente(?int $geobaseId = 12): ProgramaPresupuestario
+    private function programaConComponente(bool $padronActivo = true): ProgramaPresupuestario
     {
         $programa = ProgramaPresupuestario::factory()->create([
-            'geobase_program_id' => $geobaseId,
+            'padron_geobase_activo' => $padronActivo,
         ]);
 
         MirNivel::create([
@@ -71,7 +71,7 @@ class PadronProgramaViewTest extends TestCase
 
     public function test_programa_sin_geobase_program_id_muestra_estado_vacio(): void
     {
-        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => null]);
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => false]);
         $user = User::factory()->withPersonalTeam()->create();
         $user->assignRole(SystemRole::PLANEADOR->value);
 
@@ -82,7 +82,7 @@ class PadronProgramaViewTest extends TestCase
 
     public function test_programa_sin_componentes_muestra_estado_vacio(): void
     {
-        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 12]);
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $user = User::factory()->withPersonalTeam()->create();
         $user->assignRole(SystemRole::PLANEADOR->value);
 

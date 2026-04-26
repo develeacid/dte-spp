@@ -36,6 +36,9 @@ class GeoBaseClient
         return $this->post('/enrollments', $data);
     }
 
+    /**
+     * @param  array{spp_program_id?: int, spp_mir_nivel_id?: int, status?: string, beneficiary_id?: int, per_page?: int}  $filters
+     */
     public function getEnrollments(array $filters = []): array
     {
         return $this->get('/enrollments', $filters);
@@ -58,10 +61,14 @@ class GeoBaseClient
     }
 
     // --- Programas ---
+    //
+    // Public API speaks in spp ids. The argument is the dte-spp programa.id
+    // (== programa.spp_program_id from geobase's perspective). Geobase
+    // resolves the local row internally.
 
-    public function getProgramCoverage(int $programId): array
+    public function getProgramCoverage(int $sppProgramId): array
     {
-        return $this->get("/programs/{$programId}/coverage");
+        return $this->get("/programs/{$sppProgramId}/coverage");
     }
 
     // --- Reportes Territoriales ---
@@ -86,16 +93,16 @@ class GeoBaseClient
         return $this->getReporte('inversion-regional', $filters);
     }
 
-    public function getTerritorialReport(int $programId, ?int $componentId = null, ?int $municipioId = null): array
+    public function getTerritorialReport(int $sppProgramId, ?int $sppMirNivelId = null, ?int $municipioId = null): array
     {
-        if ($programId < 1) {
+        if ($sppProgramId < 1) {
             throw new \InvalidArgumentException(
-                "getTerritorialReport() expects a positive program id, {$programId} given."
+                "getTerritorialReport() expects a positive spp program id, {$sppProgramId} given."
             );
         }
-        if ($componentId !== null && $componentId < 1) {
+        if ($sppMirNivelId !== null && $sppMirNivelId < 1) {
             throw new \InvalidArgumentException(
-                "getTerritorialReport() expects a positive component id, {$componentId} given."
+                "getTerritorialReport() expects a positive spp mir-nivel id, {$sppMirNivelId} given."
             );
         }
         if ($municipioId !== null && $municipioId < 1) {
@@ -105,8 +112,8 @@ class GeoBaseClient
         }
 
         $filters = array_filter([
-            'program_id' => $programId,
-            'component_id' => $componentId,
+            'spp_program_id' => $sppProgramId,
+            'spp_mir_nivel_id' => $sppMirNivelId,
             'municipio_id' => $municipioId,
         ], fn ($value) => $value !== null);
 
@@ -163,16 +170,37 @@ class GeoBaseClient
 
     // --- Snapshots ---
 
+    /**
+     * @param  array{spp_program_id: int, spp_mir_nivel_id: int, period: string, cutoff_date: string}  $params
+     */
     public function requestSnapshot(array $params): array
     {
         return $this->post('/snapshots/generate', $params);
     }
 
-    public function getSnapshots(int $programId, ?int $componentId = null): array
+    /**
+     * Idempotent provisioning of a program in geobase using dte-spp as the
+     * source of truth. Returns 201 the first time, 200 on subsequent calls.
+     */
+    public function registerProgram(array $payload): array
     {
-        $query = ['program_id' => $programId];
-        if ($componentId !== null) {
-            $query['component_id'] = $componentId;
+        return $this->post('/programs', $payload);
+    }
+
+    /**
+     * Idempotent provisioning of a MIR component (parent program looked up
+     * by spp_program_id on the geobase side).
+     */
+    public function registerComponent(array $payload): array
+    {
+        return $this->post('/components', $payload);
+    }
+
+    public function getSnapshots(int $sppProgramId, ?int $sppMirNivelId = null): array
+    {
+        $query = ['spp_program_id' => $sppProgramId];
+        if ($sppMirNivelId !== null) {
+            $query['spp_mir_nivel_id'] = $sppMirNivelId;
         }
 
         return $this->get('/snapshots', $query);

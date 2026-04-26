@@ -24,7 +24,7 @@ class Anexo11ExportTest extends TestCase
     {
         $user = User::factory()->withPersonalTeam()->create();
         // No role assigned -> no exportar_reportes permission.
-        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 42]);
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
 
         $this->actingAs($user)
             ->get(route('evaluation.anexo-11', $programa))
@@ -37,16 +37,16 @@ class Anexo11ExportTest extends TestCase
         $user->assignRole('planeador');
 
         $programa = ProgramaPresupuestario::factory()->create([
-            'geobase_program_id' => 42,
+            'padron_geobase_activo' => true,
             'nombre' => 'Becas Básicas',
         ]);
 
-        $this->mock(Anexo11ExportService::class, function ($mock) {
+        $this->mock(Anexo11ExportService::class, function ($mock) use ($programa) {
             $mock->shouldReceive('build')
                 ->once()
-                ->with(42, 'Becas Básicas')
+                ->with($programa->id, 'Becas Básicas')
                 ->andReturn(new Anexo11ReportData(
-                    programaId: 42,
+                    programaId: $programa->id,
                     programaNombre: 'Becas Básicas',
                     totalBeneficiarios: 100,
                     porGenero: ['masculino' => 40, 'femenino' => 58, 'otro' => '<5'],
@@ -72,7 +72,7 @@ class Anexo11ExportTest extends TestCase
         $user = User::factory()->withPersonalTeam()->create();
         $user->assignRole('planeador');
 
-        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => null]);
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => false]);
 
         $this->actingAs($user)
             ->get(route('evaluation.anexo-11', $programa))

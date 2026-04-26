@@ -24,15 +24,17 @@ class GeoBaseClientTerritorialReportTest extends TestCase
             ], 200),
         ]);
 
-        $result = app(GeoBaseClient::class)->getTerritorialReport(programId: 42);
+        $result = app(GeoBaseClient::class)->getTerritorialReport(sppProgramId: 42);
 
         $this->assertSame(1, $result['meta']['total_rows']);
+        // The territorial-report row response still echoes program_id (it's an
+        // aggregated field from geobase's row, not the request key).
         $this->assertSame(42, $result['data'][0]['program_id']);
 
         Http::assertSent(function ($request) {
             return str_starts_with($request->url(), 'https://geobase.test/api/v1/geobase/territorial-report?')
-                && str_contains($request->url(), 'program_id=42')
-                && ! str_contains($request->url(), 'component_id=')
+                && str_contains($request->url(), 'spp_program_id=42')
+                && ! str_contains($request->url(), 'spp_mir_nivel_id=')
                 && ! str_contains($request->url(), 'municipio_id=')
                 && $request->method() === 'GET'
                 && $request->hasHeader('Authorization', 'Bearer fake-token')
@@ -49,10 +51,10 @@ class GeoBaseClientTerritorialReportTest extends TestCase
             '*' => Http::response(['data' => [], 'meta' => []], 200),
         ]);
 
-        app(GeoBaseClient::class)->getTerritorialReport(programId: 42, componentId: 7);
+        app(GeoBaseClient::class)->getTerritorialReport(sppProgramId: 42, sppMirNivelId: 7);
 
-        Http::assertSent(fn ($request) => str_contains($request->url(), 'program_id=42')
-            && str_contains($request->url(), 'component_id=7')
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'spp_program_id=42')
+            && str_contains($request->url(), 'spp_mir_nivel_id=7')
         );
     }
 

@@ -57,7 +57,7 @@ class M5WebhookContractTest extends TestCase
             'enrollment_id' => 123,
             'old_status' => 'solicitado',
             'new_status' => 'aprobado',
-            'program_id' => 7,
+            'spp_program_id' => 7,
             'timestamp' => '2026-04-26T12:00:00+00:00',
         ];
 
@@ -69,7 +69,7 @@ class M5WebhookContractTest extends TestCase
             return $e->enrollmentId === $payload['enrollment_id']
                 && $e->oldStatus === $payload['old_status']
                 && $e->newStatus === $payload['new_status']
-                && $e->programId === $payload['program_id'];
+                && $e->sppProgramId === $payload['spp_program_id'];
         });
     }
 
@@ -77,7 +77,7 @@ class M5WebhookContractTest extends TestCase
     {
         // Set up programa + indicador + avance + meta_periodo so that
         // StoreSnapshotHash finds an Avance to attach the evidence to.
-        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 7]);
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $componente = MirNivel::create([
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => TipoNivelMir::COMPONENTE,
@@ -110,8 +110,8 @@ class M5WebhookContractTest extends TestCase
             'snapshot_id' => 4421,
             'period' => '2026-Q2',
             'sha256' => 'a3f7c9e2deadbeef',
-            'component_id' => 99,
-            'program_id' => 7,
+            'spp_mir_nivel_id' => 99,
+            'spp_program_id' => $programa->id,
             'valor_oficial' => 1820,
             'timestamp' => '2026-04-26T12:00:00+00:00',
         ];
@@ -151,7 +151,7 @@ class M5WebhookContractTest extends TestCase
 
     public function test_signature_invalida_retorna_403(): void
     {
-        $payload = ['enrollment_id' => 1, 'old_status' => 'a', 'new_status' => 'b', 'program_id' => 1, 'timestamp' => 't'];
+        $payload = ['enrollment_id' => 1, 'old_status' => 'a', 'new_status' => 'b', 'spp_program_id' => 1, 'timestamp' => 't'];
 
         $this->postWebhook('enrollment.status_changed', $payload, signatureOverride: 'sha256=feedface')
             ->assertForbidden();
@@ -161,7 +161,7 @@ class M5WebhookContractTest extends TestCase
 
     public function test_acepta_signature_sin_prefijo_sha256(): void
     {
-        $payload = ['enrollment_id' => 1, 'old_status' => 'a', 'new_status' => 'b', 'program_id' => 1, 'timestamp' => 't'];
+        $payload = ['enrollment_id' => 1, 'old_status' => 'a', 'new_status' => 'b', 'spp_program_id' => 1, 'timestamp' => 't'];
         $body = json_encode($payload);
         $bareHex = hash_hmac('sha256', $body, self::SECRET);
 

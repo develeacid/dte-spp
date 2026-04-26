@@ -12,8 +12,8 @@ class SnapshotGenerated
         public readonly int $snapshotId,
         public readonly string $period,
         public readonly string $snapshotHash,
-        public readonly int $componentId,
-        public readonly int $programId,
+        public readonly int $sppMirNivelId,
+        public readonly int $sppProgramId,
         public readonly int $valorOficial,
         public readonly string $timestamp,
     ) {}

@@ -17,9 +17,12 @@ class Anexo11ExportService
     ) {
     }
 
-    public function build(int $programaId, ?string $programaNombre = null): Anexo11ReportData
+    /**
+     * @param  int  $sppProgramId  the dte-spp programa.id (geobase resolves it)
+     */
+    public function build(int $sppProgramId, ?string $programaNombre = null): Anexo11ReportData
     {
-        $response = $this->client->getTerritorialReport($programaId);
+        $response = $this->client->getTerritorialReport($sppProgramId);
 
         $rows = $response['data'] ?? [];
 
@@ -40,7 +43,7 @@ class Anexo11ExportService
         }
 
         return new Anexo11ReportData(
-            programaId: $programaId,
+            programaId: $sppProgramId,
             programaNombre: $nombre ?? '',
             totalBeneficiarios: $total,
             porGenero: $this->masker->maskBucket($genero),

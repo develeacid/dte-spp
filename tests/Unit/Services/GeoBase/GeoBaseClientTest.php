@@ -114,7 +114,7 @@ class GeoBaseClientTest extends TestCase
         ]);
 
         $result = $this->client->requestSnapshot([
-            'component_id' => 45,
+            'spp_mir_nivel_id' => 45,
             'period' => '2026-Q1',
             'cutoff_date' => '2026-03-31',
         ]);
