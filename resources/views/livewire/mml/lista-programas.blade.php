@@ -103,6 +103,14 @@
                                             MIR
                                         </a>
                                     @endif
+                                    @if($programa->geobase_program_id)
+                                        @can('ver_padron')
+                                            <a href="{{ route('mml.padron', $programa) }}"
+                                               class="text-amber-600 hover:text-amber-800 font-medium text-sm">
+                                                Padrón
+                                            </a>
+                                        @endcan
+                                    @endif
                                 </div>
                             </td>
                         </tr>

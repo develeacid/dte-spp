@@ -31,4 +31,8 @@ enum SystemPermission: string
     // Evaluación — ASM
     case VER_ASM = 'ver_asm';
     case GESTIONAR_ASM = 'gestionar_asm';
+
+    // Padrón (integración GeoBase)
+    case VER_PADRON = 'ver_padron';
+    case GENERAR_SNAPSHOT_PADRON = 'generar_snapshot_padron';
 }

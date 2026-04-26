@@ -107,7 +107,7 @@ class GeoBaseIntegrationTest extends TestCase
             '*/validation/curp' => Http::response(['exists' => false], 200),
             '*/validation/location' => Http::response(['valid' => true, 'geography_id' => 5], 200),
             '*/programs/3/coverage' => Http::response(['data' => ['total_enrollments' => 100]], 200),
-            '*/snapshot' => Http::response(['data' => ['id' => 1, 'snapshot_hash' => 'abc']], 201),
+            '*/snapshots/generate' => Http::response(['data' => ['id' => 1, 'snapshot_hash' => 'abc']], 201),
         ]);
 
         $client = app(\App\Services\GeoBase\GeoBaseClient::class);

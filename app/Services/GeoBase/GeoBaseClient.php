@@ -165,7 +165,33 @@ class GeoBaseClient
 
     public function requestSnapshot(array $params): array
     {
-        return $this->post('/snapshot', $params);
+        return $this->post('/snapshots/generate', $params);
+    }
+
+    public function getSnapshots(int $programId, ?int $componentId = null): array
+    {
+        $query = ['program_id' => $programId];
+        if ($componentId !== null) {
+            $query['component_id'] = $componentId;
+        }
+
+        return $this->get('/snapshots', $query);
+    }
+
+    public function getSnapshotKpis(int $snapshotId): array
+    {
+        return $this->get("/snapshots/{$snapshotId}");
+    }
+
+    public function getProgramComponentKpis(int $programId, int $componentId): array
+    {
+        // Modo vivo deshabilitado en N3 (Opción B del design doc 2026-04-26
+        // sec. 9): GeoBase no expone un endpoint Anexo 11 unificado para
+        // KPIs en vivo; requeriría componer equidad-genero + densidad-etnica
+        // + cobertura-componente. Habilitar en sprint posterior.
+        throw new \BadMethodCallException(
+            'Modo vivo deshabilitado en este sprint; usa snapshots históricos.'
+        );
     }
 
     // --- HTTP helpers ---
