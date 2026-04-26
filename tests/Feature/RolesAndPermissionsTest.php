@@ -60,6 +60,7 @@ class RolesAndPermissionsTest extends TestCase
         $this->assertTrue($user->hasPermissionTo(SystemPermission::CAPTURAR_AVANCE_FINANCIERO->value));
         $this->assertTrue($user->hasPermissionTo(SystemPermission::VER_DATOS_FINANCIEROS->value));
         $this->assertTrue($user->hasPermissionTo(SystemPermission::EXPORTAR_CUENTA_PUBLICA->value));
+        $this->assertTrue($user->hasPermissionTo(SystemPermission::EXPORTAR_REPORTES->value));
     }
 
     public function test_analista_financiero_no_tiene_permisos_planeacion(): void

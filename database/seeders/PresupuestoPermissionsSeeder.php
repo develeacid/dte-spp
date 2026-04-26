@@ -30,6 +30,7 @@ class PresupuestoPermissionsSeeder extends Seeder
         // Crear rol Analista Financiero con todos los permisos financieros
         $analistaFinanciero = Role::findOrCreate(SystemRole::ANALISTA_FINANCIERO->value, 'web');
         $analistaFinanciero->givePermissionTo(array_map(fn ($p) => $p->value, $permisosFinancieros));
+        $analistaFinanciero->givePermissionTo(SystemPermission::EXPORTAR_REPORTES->value);
 
         // Admin recibe todos los permisos financieros
         $admin = Role::findOrCreate(SystemRole::ADMIN->value, 'web');
