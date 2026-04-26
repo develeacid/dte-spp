@@ -15,6 +15,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class M5WebhookContractTest extends TestCase
@@ -28,6 +29,9 @@ class M5WebhookContractTest extends TestCase
         parent::setUp();
 
         config(['services.geobase.webhook_secret' => self::SECRET]);
+
+        // Capture sync jobs dispatched by the MirNivelGeoBaseObserver.
+        Queue::fake();
     }
 
     private function postWebhook(string $event, array $payload, ?string $signatureOverride = null): \Illuminate\Testing\TestResponse

@@ -15,6 +15,7 @@ use Database\Seeders\PresupuestoPermissionsSeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -34,6 +35,11 @@ class PadronProgramaViewTest extends TestCase
         $this->seed(JuridicoPermissionsSeeder::class);
         $this->seed(AsmPermissionsSeeder::class);
         $this->seed(PadronPermissionsSeeder::class);
+
+        // The MirNivelGeoBaseObserver dispatches a sync job whenever a
+        // Componente is created on a programa with padron_geobase_activo=true;
+        // these tests don't care about that side effect, so we capture them.
+        Queue::fake();
 
         Http::fake([
             '*/snapshots*' => Http::response(['data' => [], 'meta' => []], 200),

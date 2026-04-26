@@ -17,6 +17,7 @@ use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -33,6 +34,9 @@ class GenerarSnapshotTest extends TestCase
         $this->seed(JuridicoPermissionsSeeder::class);
         $this->seed(AsmPermissionsSeeder::class);
         $this->seed(PadronPermissionsSeeder::class);
+
+        // Capture sync jobs dispatched by the MirNivelGeoBaseObserver.
+        Queue::fake();
 
         $listCalls = 0;
 

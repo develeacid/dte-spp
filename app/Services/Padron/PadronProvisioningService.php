@@ -47,7 +47,10 @@ class PadronProvisioningService
                 $this->client->registerComponent([
                     'spp_mir_nivel_id' => $componente->id,
                     'spp_program_id' => $programa->id,
-                    'clave' => sprintf('%s-C%d', $programa->clave, $componente->orden),
+                    // Use the immutable spp_mir_nivel_id in the clave so that
+                    // reordering components in dte-spp does not produce a new
+                    // clave on each sync (orden is mutable, mir_nivel id is not).
+                    'clave' => sprintf('%s-MN%d', $programa->clave, $componente->id),
                     'name' => (string) str($componente->resumen_narrativo)->limit(255),
                     'description' => $componente->resumen_narrativo,
                     'activo' => true,
