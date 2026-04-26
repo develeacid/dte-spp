@@ -16,9 +16,28 @@
     @endif
 
     @if (! $programa->padron_geobase_activo)
+        @if (session('success'))
+            <div class="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800 mb-4">
+                {{ session('success') }}
+            </div>
+        @endif
+        @if ($errorMessage)
+            <div class="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-800 mb-4">
+                {{ $errorMessage }}
+            </div>
+        @endif
         <x-ui.empty-state
             title="Sin vinculación a GeoBase"
-            description="Este programa aún no está vinculado a GeoBase. Solicita al admin la vinculación." />
+            description="Este programa aún no está vinculado a GeoBase. Una vez activado, los Componentes de la MIR se replicarán a GeoBase y podrás generar snapshots del padrón.">
+            @can('generar_snapshot_padron')
+                <x-ui.button.primary wire:click="activarPadron" wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="activarPadron">Activar padrón en GeoBase</span>
+                    <span wire:loading wire:target="activarPadron">Activando…</span>
+                </x-ui.button.primary>
+            @else
+                <p class="text-xs text-gray-500">Solicita a un planeador u operador que active el padrón.</p>
+            @endcan
+        </x-ui.empty-state>
     @elseif (empty($componentesDelPrograma))
         <x-ui.empty-state
             title="Sin Componentes"
