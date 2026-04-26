@@ -48,49 +48,22 @@
             @endforeach
         </nav>
 
-        <div class="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
-            <div class="flex items-center justify-between">
-                <h3 class="text-sm font-semibold text-gray-900">Fuente de datos</h3>
-                <span @class([
-                    'inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium',
-                    'bg-blue-100 text-blue-800' => $modoFuente === 'snapshot',
-                    'bg-yellow-100 text-yellow-800' => $modoFuente === 'vivo',
-                ])>
-                    {{ $modoFuente === 'snapshot' ? '🔒 Snapshot' : '⚡ Vivo' }}
-                </span>
-            </div>
-            @unless ($modoVivoDisponible)
-                <p class="text-xs text-gray-500">Modo "vivo" disponible próximamente — por ahora se muestran los snapshots históricos.</p>
-            @endunless
-        </div>
+        @php
+            $snapshotActual = collect($snapshotsHistoricos)->firstWhere('id', $snapshotIdSeleccionado);
+        @endphp
 
-        <div class="rounded-lg border border-gray-200 bg-white p-4">
+        <x-padron.fuente-banner
+            :modoFuente="$modoFuente"
+            :modoVivoDisponible="$modoVivoDisponible"
+            :snapshot="$snapshotActual" />
+
+        <div>
             <h3 class="text-sm font-semibold text-gray-900 mb-3">Cobertura del Componente</h3>
-            <p class="text-2xl font-bold text-gray-900">{{ number_format($kpis['total'] ?? 0) }}</p>
-            <p class="text-xs text-gray-500">Total atendidos (snapshot)</p>
+            <x-padron.kpi-cards :kpis="$kpis" />
         </div>
 
-        <div class="rounded-lg border border-gray-200 bg-white overflow-hidden">
-            <div class="px-4 py-3 border-b border-gray-200">
-                <h3 class="text-sm font-semibold text-gray-900">Snapshots históricos</h3>
-            </div>
-            @if (empty($snapshotsHistoricos))
-                <p class="px-4 py-6 text-center text-sm text-gray-500">
-                    Sin snapshots — genera el primero del trimestre.
-                </p>
-            @else
-                <ul class="divide-y divide-gray-200">
-                    @foreach ($snapshotsHistoricos as $s)
-                        <li class="px-4 py-3 flex items-center justify-between text-sm {{ ($s['id'] ?? null) === $snapshotIdSeleccionado ? 'bg-indigo-50' : '' }}">
-                            <span>{{ \Illuminate\Support\Str::of($s['cutoff_date'] ?? '')->limit(10) }}</span>
-                            <span class="font-mono text-xs text-gray-500">{{ \Illuminate\Support\Str::substr($s['snapshot_hash'] ?? '', 0, 16) }}…</span>
-                            <button type="button" wire:click="seleccionarSnapshot({{ $s['id'] }})" class="text-indigo-600 hover:underline">
-                                Seleccionar
-                            </button>
-                        </li>
-                    @endforeach
-                </ul>
-            @endif
-        </div>
+        <x-padron.snapshots-table
+            :snapshots="$snapshotsHistoricos"
+            :snapshotIdSeleccionado="$snapshotIdSeleccionado" />
     @endif
 </x-page.container>
