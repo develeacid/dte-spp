@@ -15,6 +15,7 @@ use App\Models\PndEje;
 use App\Models\PndEstrategia;
 use App\Models\PndObjetivo;
 use App\Models\ProgramaDerivadoObjetivo;
+use App\Observers\MirNivelGeoBaseObserver;
 use App\Observers\OdsMetaObserver;
 use App\Observers\OdsObjetivoObserver;
 use App\Observers\PedObserver;
@@ -26,6 +27,7 @@ use App\Observers\SustentoLegalObserver;
 use App\Observers\DocumentoNormativoObserver;
 use App\Models\Juridico\SustentoLegalPrograma;
 use App\Models\Juridico\DocumentoNormativo;
+use App\Models\Mml\MirNivel;
 use App\Contracts\LlmServiceInterface;
 use App\Services\Embeddings\EmbeddingService;
 use App\Services\Embeddings\SemanticSearchService;
@@ -77,6 +79,10 @@ class AppServiceProvider extends ServiceProvider
         // Registrar Observers Jurídico (siempre activos)
         SustentoLegalPrograma::observe(SustentoLegalObserver::class);
         DocumentoNormativo::observe(DocumentoNormativoObserver::class);
+
+        // Auto-replicate MIR Componentes to GeoBase whenever the parent
+        // programa has padron_geobase_activo=true.
+        MirNivel::observe(MirNivelGeoBaseObserver::class);
 
         // Registrar Observers para embeddings
         if ($this->shouldRegisterObservers()) {

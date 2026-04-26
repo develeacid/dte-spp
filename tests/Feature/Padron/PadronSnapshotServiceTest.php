@@ -15,11 +15,21 @@ use App\Services\Padron\PadronSnapshotService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class PadronSnapshotServiceTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Capture sync jobs dispatched by the MirNivelGeoBaseObserver when
+        // a Componente is created on a programa with padron_geobase_activo.
+        Queue::fake();
+    }
 
     public function test_generar_solicita_snapshot_persiste_evidencia_y_logea(): void
     {
