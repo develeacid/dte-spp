@@ -2,7 +2,23 @@
 
 use App\Livewire\Mml\AlineacionEstrategica;
 use App\Livewire\Mml\EmbudoPoblaciones;
+use App\Livewire\Mml\PadronPrograma;
 use Illuminate\Support\Facades\Route;
+
+// Padrón vive bajo /mml/programas/{programa}/padron pero está fuera del
+// grupo permission:editar_mir porque roles de solo-lectura (analista
+// jurídico/financiero) deben poder consultarlo sin poder editar la MIR.
+Route::prefix('mml/programas')
+    ->middleware([
+        'auth:sanctum',
+        config('jetstream.auth_session'),
+        'verified',
+    ])
+    ->group(function () {
+        Route::get('/{programa}/padron', PadronPrograma::class)
+            ->middleware('can:ver_padron')
+            ->name('mml.padron');
+    });
 
 Route::prefix('mml')
     ->middleware([
