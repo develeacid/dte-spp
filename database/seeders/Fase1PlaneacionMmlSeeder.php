@@ -443,7 +443,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
                 if ($firstVar) {
                     $firstVar->update([
                         'geobase_endpoint_type' => 'component_coverage',
-                        'geobase_reference_id' => $mirNivel->id,
+                        'spp_reference_id' => $mirNivel->id,
                         'geobase_value_key' => 'count',
                     ]);
                 }
@@ -454,7 +454,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
                 if ($firstVar) {
                     $firstVar->update([
                         'geobase_endpoint_type' => 'program_coverage',
-                        'geobase_reference_id' => $programa->geobase_program_id,
+                        'spp_reference_id' => $programa->id,
                         'geobase_value_key' => 'count',
                     ]);
                 }

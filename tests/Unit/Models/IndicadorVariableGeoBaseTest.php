@@ -11,7 +11,7 @@ class IndicadorVariableGeoBaseTest extends TestCase
     {
         $variable = new IndicadorVariable([
             'geobase_endpoint_type' => 'program_coverage',
-            'geobase_reference_id' => 42,
+            'spp_reference_id' => 42,
         ]);
 
         $this->assertTrue($variable->hasGeoBaseLink());
@@ -21,7 +21,7 @@ class IndicadorVariableGeoBaseTest extends TestCase
     {
         $variable = new IndicadorVariable([
             'geobase_endpoint_type' => null,
-            'geobase_reference_id' => null,
+            'spp_reference_id' => null,
         ]);
 
         $this->assertFalse($variable->hasGeoBaseLink());

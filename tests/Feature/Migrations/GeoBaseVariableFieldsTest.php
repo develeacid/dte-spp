@@ -15,9 +15,9 @@ class GeoBaseVariableFieldsTest extends TestCase
         $this->assertTrue(Schema::hasColumn('indicador_variables', 'geobase_endpoint_type'));
     }
 
-    public function test_indicador_variables_has_geobase_reference_id_column(): void
+    public function test_indicador_variables_has_spp_reference_id_column(): void
     {
-        $this->assertTrue(Schema::hasColumn('indicador_variables', 'geobase_reference_id'));
+        $this->assertTrue(Schema::hasColumn('indicador_variables', 'spp_reference_id'));
     }
 
     public function test_indicador_variables_has_geobase_filter_params_column(): void

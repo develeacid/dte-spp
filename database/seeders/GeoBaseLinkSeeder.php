@@ -61,7 +61,10 @@ class GeoBaseLinkSeeder extends Seeder
 
             foreach ($avanceVars as $av) {
                 try {
-                    $response = $client->getProgramCoverage($variable->geobase_reference_id);
+                    $response = match ($variable->geobase_endpoint_type) {
+                        'component_coverage' => $client->getComponentCoverage($variable->spp_reference_id),
+                        default => $client->getProgramCoverage($variable->spp_reference_id),
+                    };
                     $value = $response[$variable->geobase_value_key ?? 'count'] ?? null;
                     if ($value !== null) {
                         $av->update(['valor' => $value, 'synced_from_geobase' => true, 'synced_at' => now()]);
