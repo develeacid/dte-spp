@@ -22,11 +22,22 @@ class StoreSnapshotHash
             return;
         }
 
+        // GeoBase emits period as "YYYY-QN"; metas_periodo.periodo is smallint
+        // (1..4) and ejercicio_fiscal is the year. Parse to match.
+        if (! preg_match('/^(\d{4})-Q([1-4])$/', $event->period, $m)) {
+            Log::warning('StoreSnapshotHash: invalid period format', [
+                'period' => $event->period,
+            ]);
+
+            return;
+        }
+        [$ejercicio, $trimestre] = [(int) $m[1], (int) $m[2]];
+
         $avance = Avance::whereHas('indicador.mirNivel', function ($query) use ($programa) {
             $query->where('programa_presupuestario_id', $programa->id);
         })
-            ->whereHas('metaPeriodo', function ($query) use ($event) {
-                $query->where('periodo', $event->period);
+            ->whereHas('metaPeriodo', function ($query) use ($trimestre, $ejercicio) {
+                $query->where('periodo', $trimestre)->where('ejercicio_fiscal', $ejercicio);
             })
             ->first();
 
@@ -46,6 +57,7 @@ class StoreSnapshotHash
             'mime_type' => 'text/csv',
             'tamano_bytes' => 0,
             'hash_archivo' => $event->snapshotHash,
+            'geobase_snapshot_id' => $event->snapshotId,
             'nombre_documento' => "Snapshot GeoBase {$event->period}",
             'area_generadora' => 'GeoBase (automatico)',
             'fecha_documento' => now(),

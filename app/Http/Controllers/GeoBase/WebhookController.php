@@ -13,8 +13,13 @@ class WebhookController extends Controller
 {
     public function handle(Request $request): JsonResponse
     {
-        $eventType = $request->input('event');
-        $data = $request->input('data', []);
+        // GeoBase carries the event type in X-GeoBase-Event and the payload
+        // is the raw JSON body (no envelope). Old format with a {event,data}
+        // body envelope is supported as a fallback.
+        $eventType = $request->header('X-GeoBase-Event') ?? $request->input('event');
+        $data = $request->header('X-GeoBase-Event')
+            ? $request->all()
+            : $request->input('data', []);
 
         activity('geobase-webhook')
             ->withProperties($data)

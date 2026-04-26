@@ -19,7 +19,7 @@ class StoreSnapshotHashTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createFullChain(int $geobaseProgramId, string $period = '1'): Avance
+    private function createFullChain(int $geobaseProgramId, string $period = '2026-Q1'): Avance
     {
         $user = User::factory()->withPersonalTeam()->create();
 
@@ -43,11 +43,13 @@ class StoreSnapshotHashTest extends TestCase
             'frecuencia' => 'trimestral',
         ]);
 
+        // period is "YYYY-QN" — extract trimestre + ejercicio
+        preg_match('/^(\d{4})-Q([1-4])$/', $period, $m);
         $metaPeriodo = MetaPeriodo::create([
             'indicador_id' => $indicador->id,
-            'periodo' => (int) $period,
+            'periodo' => (int) ($m[2] ?? 1),
             'meta_periodo' => 100.0000,
-            'ejercicio_fiscal' => 2026,
+            'ejercicio_fiscal' => (int) ($m[1] ?? 2026),
         ]);
 
         return Avance::create([
@@ -60,7 +62,7 @@ class StoreSnapshotHashTest extends TestCase
         ]);
     }
 
-    private function makeEvent(int $programId = 99, string $period = '1'): SnapshotGenerated
+    private function makeEvent(int $programId = 99, string $period = '2026-Q1'): SnapshotGenerated
     {
         return new SnapshotGenerated(
             snapshotId: 42,
@@ -75,19 +77,20 @@ class StoreSnapshotHashTest extends TestCase
 
     public function test_creates_evidencia_when_programa_and_avance_exist(): void
     {
-        $avance = $this->createFullChain(geobaseProgramId: 99, period: '1');
+        $avance = $this->createFullChain(geobaseProgramId: 99, period: '2026-Q1');
 
         $listener = new StoreSnapshotHash();
-        $listener->handle($this->makeEvent(programId: 99, period: '1'));
+        $listener->handle($this->makeEvent(programId: 99, period: '2026-Q1'));
 
         $this->assertDatabaseHas('avance_evidencias', [
             'avance_id' => $avance->id,
-            'nombre_archivo' => 'snapshot-42-1.csv',
+            'nombre_archivo' => 'snapshot-42-2026-Q1.csv',
             'ruta_archivo' => '',
             'mime_type' => 'text/csv',
             'tamano_bytes' => 0,
             'hash_archivo' => 'abc123hash',
-            'nombre_documento' => 'Snapshot GeoBase 1',
+            'geobase_snapshot_id' => 42,
+            'nombre_documento' => 'Snapshot GeoBase 2026-Q1',
             'area_generadora' => 'GeoBase (automatico)',
         ]);
     }
@@ -119,7 +122,7 @@ class StoreSnapshotHashTest extends TestCase
             ->withArgs(fn (string $msg) => str_contains($msg, 'avance'));
 
         $listener = new StoreSnapshotHash();
-        $listener->handle($this->makeEvent(programId: 77, period: '1'));
+        $listener->handle($this->makeEvent(programId: 77, period: '2026-Q1'));
 
         $this->assertDatabaseCount('avance_evidencias', 0);
     }

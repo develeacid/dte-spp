@@ -2,41 +2,170 @@
 
 namespace Tests\Feature\Padron;
 
+use App\Enums\TipoNivelMir;
+use App\Events\GeoBase\EnrollmentStatusChanged;
+use App\Events\GeoBase\SnapshotGenerated;
+use App\Events\GeoBase\SyncProcessed;
+use App\Models\Mml\Indicador;
+use App\Models\Mml\MetaPeriodo;
+use App\Models\Mml\MirNivel;
+use App\Models\ProgramaPresupuestario;
+use App\Models\Tracking\Avance;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
-/**
- * Documenta el contrato esperado del receptor M5 (webhooks de GeoBase).
- *
- * El receptor (App\Http\Controllers\GeoBase\WebhookController) y el
- * middleware HMAC ya existen, pero GeoBase aún no implementa el
- * Observer + Job que los emite. Estos tests están skipped hasta que
- * GeoBase cierre M5 (sprint posterior, ver design doc 2026-04-26 §11).
- */
 class M5WebhookContractTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const SECRET = 'test-webhook-secret-please-rotate';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['services.geobase.webhook_secret' => self::SECRET]);
+    }
+
+    private function postWebhook(string $event, array $payload, ?string $signatureOverride = null): \Illuminate\Testing\TestResponse
+    {
+        $body = json_encode($payload);
+        $signature = $signatureOverride ?? 'sha256=' . hash_hmac('sha256', $body, self::SECRET);
+
+        return $this->call(
+            method: 'POST',
+            uri: '/api/webhooks/geobase',
+            server: [
+                'HTTP_X-GeoBase-Event' => $event,
+                'HTTP_X-GeoBase-Signature' => $signature,
+                'HTTP_X-GeoBase-Delivery' => '42',
+                'HTTP_ACCEPT' => 'application/json',
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            content: $body,
+        );
+    }
+
     public function test_enrollment_status_changed_dispara_evento_interno(): void
     {
-        $this->markTestSkipped(
-            'Pendiente: GeoBase debe implementar EnrollmentObserver + SendWebhookToSpp job. '
-            . 'Cuando emita, este test debe verificar HMAC válido y disparo de UpdateAvanceFromEnrollment.'
-        );
+        Event::fake([EnrollmentStatusChanged::class]);
+
+        $payload = [
+            'enrollment_id' => 123,
+            'old_status' => 'solicitado',
+            'new_status' => 'aprobado',
+            'program_id' => 7,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+        ];
+
+        $this->postWebhook('enrollment.status_changed', $payload)
+            ->assertOk()
+            ->assertJson(['received' => true]);
+
+        Event::assertDispatched(EnrollmentStatusChanged::class, function ($e) use ($payload) {
+            return $e->enrollmentId === $payload['enrollment_id']
+                && $e->oldStatus === $payload['old_status']
+                && $e->newStatus === $payload['new_status']
+                && $e->programId === $payload['program_id'];
+        });
     }
 
     public function test_snapshot_generated_dispara_listener_storesnapshothash(): void
     {
-        $this->markTestSkipped(
-            'Pendiente: GeoBase observer post-snapshot. Verifica que StoreSnapshotHash '
-            . 'se ejecute con el payload {snapshot_id, hash, program_id, component_id, period}.'
-        );
+        // Set up programa + indicador + avance + meta_periodo so that
+        // StoreSnapshotHash finds an Avance to attach the evidence to.
+        $programa = ProgramaPresupuestario::factory()->create(['geobase_program_id' => 7]);
+        $componente = MirNivel::create([
+            'programa_presupuestario_id' => $programa->id,
+            'tipo_nivel' => TipoNivelMir::COMPONENTE,
+            'resumen_narrativo' => 'C1',
+            'orden' => 1,
+        ]);
+        $indicador = Indicador::create([
+            'mir_nivel_id' => $componente->id,
+            'nombre' => 'Indicador C1',
+            'tipo' => 'gestion',
+            'dimension' => 'eficacia',
+            'frecuencia' => 'trimestral',
+            'orden' => 1,
+        ]);
+        $meta = MetaPeriodo::create([
+            'indicador_id' => $indicador->id,
+            'periodo' => 2,
+            'ejercicio_fiscal' => 2026,
+            'meta_periodo' => 100,
+        ]);
+        $user = User::factory()->withPersonalTeam()->create();
+        $avance = Avance::create([
+            'meta_periodo_id' => $meta->id,
+            'indicador_id' => $indicador->id,
+            'estado' => 'en_captura',
+            'capturado_por' => $user->id,
+        ]);
+
+        $payload = [
+            'snapshot_id' => 4421,
+            'period' => '2026-Q2',
+            'sha256' => 'a3f7c9e2deadbeef',
+            'component_id' => 99,
+            'program_id' => 7,
+            'valor_oficial' => 1820,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+        ];
+
+        $this->postWebhook('snapshot.generated', $payload)
+            ->assertOk();
+
+        $this->assertDatabaseHas('avance_evidencias', [
+            'avance_id' => $avance->id,
+            'hash_archivo' => 'a3f7c9e2deadbeef',
+            'geobase_snapshot_id' => 4421,
+            'area_generadora' => 'GeoBase (automatico)',
+        ]);
     }
 
     public function test_sync_processed_se_loguea_en_activity_log(): void
     {
-        $this->markTestSkipped(
-            'Pendiente: GeoBase observer post-sync. Verifica activity_log con log_name=geobase-sync.'
-        );
+        Event::fake([SyncProcessed::class]);
+
+        $payload = [
+            'entry_id' => 99,
+            'operation' => 'create',
+            'result_type' => 'enrollment',
+            'result_id' => 123,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+        ];
+
+        $this->postWebhook('sync.processed', $payload)->assertOk();
+
+        Event::assertDispatched(SyncProcessed::class);
+
+        $this->assertDatabaseHas('activity_log', [
+            'log_name' => 'geobase-webhook',
+            'description' => 'sync.processed',
+        ]);
+    }
+
+    public function test_signature_invalida_retorna_403(): void
+    {
+        $payload = ['enrollment_id' => 1, 'old_status' => 'a', 'new_status' => 'b', 'program_id' => 1, 'timestamp' => 't'];
+
+        $this->postWebhook('enrollment.status_changed', $payload, signatureOverride: 'sha256=feedface')
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('activity_log', ['log_name' => 'geobase-webhook']);
+    }
+
+    public function test_acepta_signature_sin_prefijo_sha256(): void
+    {
+        $payload = ['enrollment_id' => 1, 'old_status' => 'a', 'new_status' => 'b', 'program_id' => 1, 'timestamp' => 't'];
+        $body = json_encode($payload);
+        $bareHex = hash_hmac('sha256', $body, self::SECRET);
+
+        $this->postWebhook('enrollment.status_changed', $payload, signatureOverride: $bareHex)
+            ->assertOk();
     }
 }
