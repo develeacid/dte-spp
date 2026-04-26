@@ -4,6 +4,7 @@ namespace App\Exports\Excel;
 
 use App\Exports\Excel\Sheets\AvanceFinancieroSheet;
 use App\Exports\Excel\Sheets\AvanceFisicoSheet;
+use App\Exports\Excel\Sheets\EvidenciaPadronSheet;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -32,6 +33,14 @@ class AvanceTrimestralExcelExport implements WithMultipleSheets
 
         if ($this->user?->can('ver_datos_financieros')) {
             $sheets['Financiero'] = new AvanceFinancieroSheet(
+                $this->programa,
+                $this->ejercicioFiscal,
+                $this->trimestre,
+            );
+        }
+
+        if ($this->programa->geobase_program_id) {
+            $sheets['Evidencia de Padrón'] = new EvidenciaPadronSheet(
                 $this->programa,
                 $this->ejercicioFiscal,
                 $this->trimestre,

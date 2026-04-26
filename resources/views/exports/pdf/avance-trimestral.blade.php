@@ -108,6 +108,34 @@
         @endif
     @endisset
 
+    @if (! empty($evidenciasPadron))
+        <h3 style="margin-top: 24px;">Evidencia de Padrón (GeoBase)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Componente</th>
+                    <th>Resumen narrativo</th>
+                    <th>Snapshot ID</th>
+                    <th>Hash SHA-256</th>
+                    <th>Fecha de corte</th>
+                    <th>Origen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($evidenciasPadron as $row)
+                    <tr>
+                        <td>{{ $row['componente'] }}</td>
+                        <td>{{ $row['narrativa'] }}</td>
+                        <td>{{ $row['snapshot_id'] }}</td>
+                        <td style="font-family: monospace; font-size: 8px;">{{ $row['hash'] }}</td>
+                        <td>{{ $row['fecha'] }}</td>
+                        <td>{{ $row['origen'] }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
     @include('exports.pdf.partials.vobo', [
         'titular' => $titular,
         'dependencia' => $dependencia,
