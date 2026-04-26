@@ -7,6 +7,7 @@ use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Services\GeoBase\GeoBaseClient;
 use App\Services\GeoBase\GeoBaseException;
+use App\Services\Padron\PadronProvisioningService;
 use App\Services\Padron\PadronSnapshotService;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
@@ -84,6 +85,45 @@ class PadronPrograma extends Component
     {
         $this->snapshotIdSeleccionado = $id;
         $this->cargarKpis();
+    }
+
+    public function activarPadron(): void
+    {
+        $this->authorize('generar_snapshot_padron');
+
+        if ($this->programa->padron_geobase_activo) {
+            session()->flash('info', 'Este programa ya tiene padrón activo en GeoBase.');
+
+            return;
+        }
+
+        $sinComponentes = $this->programa->mirNiveles()
+            ->where('tipo_nivel', TipoNivelMir::COMPONENTE)
+            ->doesntExist();
+
+        if ($sinComponentes) {
+            $this->errorMessage = 'Define al menos un Componente en la MIR antes de activar el padrón.';
+
+            return;
+        }
+
+        try {
+            $result = app(PadronProvisioningService::class)->register($this->programa);
+
+            $this->programa->refresh();
+            $this->cargarComponentes();
+            if ($this->componenteSeleccionado) {
+                $this->cargarSnapshots();
+                $this->cargarKpis();
+            }
+
+            session()->flash(
+                'success',
+                "Padrón activado en GeoBase. {$result['componentes_registrados']} componente(s) registrado(s)."
+            );
+        } catch (GeoBaseException $e) {
+            $this->errorMessage = "Error al activar padrón: {$e->getMessage()}";
+        }
     }
 
     public function generarSnapshot(): void
