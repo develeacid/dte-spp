@@ -126,6 +126,30 @@ class PadronPrograma extends Component
         }
     }
 
+    public function desactivarPadron(): void
+    {
+        $this->authorize('generar_snapshot_padron');
+
+        if (! $this->programa->padron_geobase_activo) {
+            session()->flash('info', 'El padrón ya está desactivado en GeoBase.');
+
+            return;
+        }
+
+        try {
+            $result = app(PadronProvisioningService::class)->deactivate($this->programa);
+
+            $this->programa->refresh();
+
+            session()->flash(
+                'success',
+                "Padrón desactivado en GeoBase. {$result['componentes_desactivados']} componente(s) marcado(s) inactivo(s)."
+            );
+        } catch (GeoBaseException $e) {
+            $this->errorMessage = "Error al desactivar padrón: {$e->getMessage()}";
+        }
+    }
+
     public function generarSnapshot(): void
     {
         $this->authorize('generar_snapshot_padron');
