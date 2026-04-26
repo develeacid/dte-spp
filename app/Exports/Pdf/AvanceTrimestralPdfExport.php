@@ -2,6 +2,7 @@
 
 namespace App\Exports\Pdf;
 
+use App\Exports\Excel\Sheets\EvidenciaPadronSheet;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
 use App\Services\Presupuesto\IaffFinancialReportService;
@@ -58,6 +59,13 @@ class AvanceTrimestralPdfExport
             'fecha' => now()->format('d/m/Y'),
             'partidas' => null,
             'totalesFinancieros' => null,
+            'evidenciasPadron' => $this->programa->geobase_program_id
+                ? (new EvidenciaPadronSheet(
+                    $this->programa,
+                    $this->ejercicioFiscal,
+                    $this->trimestre,
+                ))->collection()->all()
+                : [],
         ];
 
         if ($this->user?->can('ver_datos_financieros')) {
