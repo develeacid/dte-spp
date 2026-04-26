@@ -1,6 +1,12 @@
 <x-page.container :title="'Padrón — '.$programa->clave" subtitle="Beneficiarios atendidos por componente (datos administrados por GeoBase)">
     @if ($programa->padron_geobase_activo && $componenteSeleccionado)
         <x-slot name="actions">
+            @can('generar_snapshot_padron')
+                <x-ui.button.secondary
+                    @click="$dispatch('open-confirm-desactivar-padron-{{ $programa->id }}')">
+                    Desactivar padrón
+                </x-ui.button.secondary>
+            @endcan
             @can('exportar_reportes')
                 <x-ui.button.secondary :href="route('evaluation.anexo-11', $programa)">
                     Exportar Anexo 11
@@ -13,6 +19,16 @@
                 </x-ui.button.primary>
             @endcan
         </x-slot>
+
+        @can('generar_snapshot_padron')
+            <x-modals.confirm
+                id="desactivar-padron-{{ $programa->id }}"
+                title="¿Desactivar padrón en GeoBase?"
+                message="Los Componentes y el programa se marcarán como inactivos en GeoBase. Los snapshots ya generados quedan archivados y siguen siendo verificables, pero el programa dejará de recibir nuevos enrollments. Puedes reactivar después."
+                confirmText="Sí, desactivar" />
+            <div x-data
+                 x-on:confirmed-desactivar-padron-{{ $programa->id }}.window="$wire.desactivarPadron()"></div>
+        @endcan
     @endif
 
     @if (! $programa->padron_geobase_activo)

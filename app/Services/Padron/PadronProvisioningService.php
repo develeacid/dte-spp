@@ -84,4 +84,69 @@ class PadronProvisioningService
             'componentes_registrados' => $registered,
         ];
     }
+
+    /**
+     * Soft-deactivates the padron in GeoBase: the program and its MIR
+     * componentes are marked activo=false upstream. Snapshots already
+     * generated stay archived and verifiable. Use this when a programa
+     * is winding down or being moved out of GeoBase, not for hard
+     * deletes (FKs in geobase point to components).
+     *
+     * @return array{programa: int, componentes_desactivados: int}
+     */
+    public function deactivate(ProgramaPresupuestario $programa): array
+    {
+        $componentes = $programa->mirNiveles()
+            ->where('tipo_nivel', TipoNivelMir::COMPONENTE)
+            ->orderBy('orden')
+            ->get();
+
+        $deactivated = 0;
+        foreach ($componentes as $componente) {
+            try {
+                $this->client->registerComponent([
+                    'spp_mir_nivel_id' => $componente->id,
+                    'spp_program_id' => $programa->id,
+                    'clave' => sprintf('%s-MN%d', $programa->clave, $componente->id),
+                    'name' => (string) str($componente->resumen_narrativo)->limit(255),
+                    'description' => $componente->resumen_narrativo,
+                    'activo' => false,
+                ]);
+                $deactivated++;
+            } catch (GeoBaseException $e) {
+                Log::warning('PadronProvisioningService: component deactivate failed', [
+                    'programa_id' => $programa->id,
+                    'componente_id' => $componente->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Programa is registered last so that if geobase rejects it we don't
+        // leave components in an inconsistent state with the parent program
+        // still flagged activo=true upstream.
+        $this->client->registerProgram([
+            'spp_program_id' => $programa->id,
+            'clave' => $programa->clave,
+            'name' => $programa->nombre,
+            'ejercicio_fiscal' => $programa->ejercicio_fiscal,
+            'activo' => false,
+        ]);
+
+        DB::transaction(function () use ($programa, $deactivated) {
+            $programa->update(['padron_geobase_activo' => false]);
+
+            activity('padron-deactivation')
+                ->performedOn($programa)
+                ->withProperties([
+                    'componentes_desactivados' => $deactivated,
+                ])
+                ->log('Padrón desactivado en GeoBase');
+        });
+
+        return [
+            'programa' => $programa->id,
+            'componentes_desactivados' => $deactivated,
+        ];
+    }
 }
