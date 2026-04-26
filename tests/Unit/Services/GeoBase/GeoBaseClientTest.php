@@ -103,7 +103,7 @@ class GeoBaseClientTest extends TestCase
     public function test_request_snapshot_sends_params(): void
     {
         Http::fake([
-            '*/snapshot' => Http::response([
+            '*/snapshots/generate' => Http::response([
                 'data' => [
                     'id' => 7,
                     'snapshot_hash' => 'a1b2c3d4e5f6',
