@@ -18,8 +18,9 @@ class AvanceEvidencia extends Model
         return LogOptions::defaults()
             ->logOnly([
                 'avance_id', 'nombre_archivo', 'ruta_archivo', 'mime_type',
-                'tamano_bytes', 'hash_archivo', 'nombre_documento',
-                'area_generadora', 'fecha_documento', 'subido_por',
+                'tamano_bytes', 'hash_archivo', 'geobase_snapshot_id',
+                'nombre_documento', 'area_generadora', 'fecha_documento',
+                'subido_por',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
@@ -37,8 +38,9 @@ class AvanceEvidencia extends Model
 
     protected $fillable = [
         'avance_id', 'nombre_archivo', 'ruta_archivo', 'mime_type',
-        'tamano_bytes', 'hash_archivo', 'nombre_documento',
-        'area_generadora', 'fecha_documento', 'subido_por',
+        'tamano_bytes', 'hash_archivo', 'geobase_snapshot_id',
+        'nombre_documento', 'area_generadora', 'fecha_documento',
+        'subido_por',
     ];
 
     protected function casts(): array
@@ -46,6 +48,7 @@ class AvanceEvidencia extends Model
         return [
             'tamano_bytes' => 'integer',
             'fecha_documento' => 'date',
+            'geobase_snapshot_id' => 'integer',
         ];
     }
 
