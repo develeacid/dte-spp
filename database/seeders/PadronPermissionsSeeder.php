@@ -18,6 +18,7 @@ class PadronPermissionsSeeder extends Seeder
         $permisos = [
             SystemPermission::VER_PADRON,
             SystemPermission::GENERAR_SNAPSHOT_PADRON,
+            SystemPermission::EXPORTAR_PADRON_SHCP,
         ];
 
         foreach ($permisos as $permiso) {
@@ -41,5 +42,10 @@ class PadronPermissionsSeeder extends Seeder
         foreach ([SystemRole::PLANEADOR, SystemRole::OPERADOR] as $rol) {
             Role::findOrCreate($rol->value, 'web')->givePermissionTo($generar);
         }
+
+        // SHCP export sees decrypted CURP — restricted to planeador only.
+        $exportar = SystemPermission::EXPORTAR_PADRON_SHCP->value;
+        Role::findOrCreate(SystemRole::PLANEADOR->value, 'web')
+            ->givePermissionTo($exportar);
     }
 }

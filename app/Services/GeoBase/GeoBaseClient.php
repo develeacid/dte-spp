@@ -80,6 +80,20 @@ class GeoBaseClient
         return $this->get("/components/{$sppMirNivelId}/coverage");
     }
 
+    // --- Padrón SHCP ---
+    //
+    // Returns the SHCP-format padron with decrypted CURP for a programa and
+    // periodo (YYYY-QN). The token used here MUST carry the
+    // padron:export-shcp ability — geobase rejects with 403 otherwise.
+
+    public function getPadronShcp(int $sppProgramId, string $periodo): array
+    {
+        return $this->get('/padron/shcp', [
+            'spp_program_id' => $sppProgramId,
+            'periodo' => $periodo,
+        ]);
+    }
+
     // --- Reportes Territoriales ---
 
     public function getReporte(string $reporte, array $filters = []): array
