@@ -53,6 +53,7 @@ class PadronPrograma extends Component
         $this->cargarComponentes();
 
         if ($this->componenteSeleccionado) {
+            $this->modoVivoDisponible = true;
             $this->cargarSnapshots();
             $this->cargarKpis();
         }
@@ -61,6 +62,7 @@ class PadronPrograma extends Component
     public function seleccionarComponente(int $componenteId): void
     {
         $this->componenteSeleccionado = $componenteId;
+        $this->modoVivoDisponible = true;
         $this->snapshotIdSeleccionado = null;
         $this->cargarSnapshots();
         $this->cargarKpis();
@@ -232,15 +234,32 @@ class PadronPrograma extends Component
 
         try {
             $client = app(GeoBaseClient::class);
-            $this->kpis = Cache::remember($cacheKey, 60, function () use ($client) {
-                $response = $client->getSnapshotKpis($this->snapshotIdSeleccionado);
-
-                return $this->mapearDesagregados($response['data'] ?? []);
-            });
+            // Vivo mode hits /components/{id}/coverage and exposes the live
+            // beneficiary count without desagregados — those only exist in
+            // captured snapshots. Snapshot mode keeps the historic shape.
+            $this->kpis = Cache::remember(
+                $cacheKey,
+                $this->modoFuente === 'vivo' ? 30 : 60,
+                fn () => $this->modoFuente === 'vivo'
+                    ? $this->mapearVivo($client->getComponentCoverage($this->componenteSeleccionado))
+                    : $this->mapearDesagregados($client->getSnapshotKpis($this->snapshotIdSeleccionado)['data'] ?? []),
+            );
         } catch (GeoBaseException $e) {
             $this->errorMessage = $e->getMessage();
             $this->kpis = $this->kpisVacios();
         }
+    }
+
+    private function mapearVivo(array $coverage): array
+    {
+        return [
+            'total' => (int) ($coverage['total_beneficiaries'] ?? 0),
+            'por_genero' => [],
+            'por_grupo_edad' => [],
+            'por_indigena' => [],
+            'por_discapacidad' => [],
+            'por_pueblo' => [],
+        ];
     }
 
     private function mapearDesagregados(array $snapshot): array
