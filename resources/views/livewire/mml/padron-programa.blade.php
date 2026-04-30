@@ -12,6 +12,11 @@
                     Exportar Anexo 11
                 </x-ui.button.secondary>
             @endcan
+            @can('exportar_padron_shcp')
+                <x-ui.button.secondary :href="route('evaluation.padron-shcp', $programa)">
+                    Exportar Padrón SHCP
+                </x-ui.button.secondary>
+            @endcan
             @can('generar_snapshot_padron')
                 <x-ui.button.primary wire:click="generarSnapshot" wire:loading.attr="disabled">
                     <span wire:loading.remove wire:target="generarSnapshot">Generar snapshot del trimestre</span>
