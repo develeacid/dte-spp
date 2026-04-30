@@ -9,6 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('mir:abrir-periodos')->dailyAt('06:00');
+Schedule::command('geobase:snapshot-trimestral')->dailyAt('04:30')->withoutOverlapping();
 Schedule::command('geobase:sync-avances')->dailyAt('22:30')->withoutOverlapping();
 Schedule::command('mir:cerrar-vencidos')->dailyAt('23:00');
 Schedule::command('app:embeddings-generate')->dailyAt('02:00')->withoutOverlapping();
