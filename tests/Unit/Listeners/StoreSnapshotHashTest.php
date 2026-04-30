@@ -108,6 +108,19 @@ class StoreSnapshotHashTest extends TestCase
         $this->assertDatabaseCount('avance_evidencias', 0);
     }
 
+    public function test_does_not_duplicate_evidencia_when_dispatched_twice(): void
+    {
+        $avance = $this->createFullChain(period: '2026-Q1');
+        $programaId = $avance->indicador->mirNivel->programa_presupuestario_id;
+        $event = $this->makeEvent(sppProgramId: $programaId, period: '2026-Q1');
+
+        $listener = new StoreSnapshotHash();
+        $listener->handle($event);
+        $listener->handle($event);
+
+        $this->assertDatabaseCount('avance_evidencias', 1);
+    }
+
     public function test_logs_info_when_avance_not_found(): void
     {
         User::factory()->withPersonalTeam()->create();
