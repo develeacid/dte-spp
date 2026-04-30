@@ -40,30 +40,34 @@ class PadronSnapshotService
         $avance = $this->findAvanceParaComponente($componenteId, $period);
 
         return DB::transaction(function () use ($snapshotId, $hash, $rowCount, $cutoffDate, $period, $user, $avance) {
-            $evidencia = AvanceEvidencia::create([
-                'avance_id' => $avance?->id,
-                'nombre_archivo' => "snapshot-{$snapshotId}-{$cutoffDate}.csv",
-                'ruta_archivo' => '',
-                'mime_type' => 'text/csv',
-                'tamano_bytes' => 0,
-                'hash_archivo' => $hash,
-                'geobase_snapshot_id' => $snapshotId,
-                'nombre_documento' => "Snapshot Padrón Componente",
-                'area_generadora' => 'GeoBase (manual)',
-                'fecha_documento' => $cutoffDate,
-                'subido_por' => $user->id,
-            ]);
-
-            activity('padron-snapshot')
-                ->causedBy($user)
-                ->performedOn($evidencia)
-                ->withProperties([
-                    'snapshot_id' => $snapshotId,
-                    'period' => $period,
-                    'row_count' => $rowCount,
+            $evidencia = AvanceEvidencia::firstOrCreate(
+                ['geobase_snapshot_id' => $snapshotId],
+                [
                     'avance_id' => $avance?->id,
-                ])
-                ->log('Snapshot manual generado');
+                    'nombre_archivo' => "snapshot-{$snapshotId}-{$cutoffDate}.csv",
+                    'ruta_archivo' => '',
+                    'mime_type' => 'text/csv',
+                    'tamano_bytes' => 0,
+                    'hash_archivo' => $hash,
+                    'nombre_documento' => "Snapshot Padrón Componente",
+                    'area_generadora' => 'GeoBase (manual)',
+                    'fecha_documento' => $cutoffDate,
+                    'subido_por' => $user->id,
+                ]
+            );
+
+            if ($evidencia->wasRecentlyCreated) {
+                activity('padron-snapshot')
+                    ->causedBy($user)
+                    ->performedOn($evidencia)
+                    ->withProperties([
+                        'snapshot_id' => $snapshotId,
+                        'period' => $period,
+                        'row_count' => $rowCount,
+                        'avance_id' => $avance?->id,
+                    ])
+                    ->log('Snapshot manual generado');
+            }
 
             return $evidencia;
         });

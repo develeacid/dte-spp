@@ -51,18 +51,22 @@ class StoreSnapshotHash
             return;
         }
 
-        AvanceEvidencia::create([
-            'avance_id' => $avance->id,
-            'nombre_archivo' => "snapshot-{$event->snapshotId}-{$event->period}.csv",
-            'ruta_archivo' => '',
-            'mime_type' => 'text/csv',
-            'tamano_bytes' => 0,
-            'hash_archivo' => $event->snapshotHash,
-            'geobase_snapshot_id' => $event->snapshotId,
-            'nombre_documento' => "Snapshot GeoBase {$event->period}",
-            'area_generadora' => 'GeoBase (automatico)',
-            'fecha_documento' => now(),
-            'subido_por' => $avance->capturado_por,
-        ]);
+        AvanceEvidencia::firstOrCreate(
+            [
+                'avance_id' => $avance->id,
+                'geobase_snapshot_id' => $event->snapshotId,
+            ],
+            [
+                'nombre_archivo' => "snapshot-{$event->snapshotId}-{$event->period}.csv",
+                'ruta_archivo' => '',
+                'mime_type' => 'text/csv',
+                'tamano_bytes' => 0,
+                'hash_archivo' => $event->snapshotHash,
+                'nombre_documento' => "Snapshot GeoBase {$event->period}",
+                'area_generadora' => 'GeoBase (automatico)',
+                'fecha_documento' => now(),
+                'subido_por' => $avance->capturado_por,
+            ]
+        );
     }
 }

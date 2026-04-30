@@ -158,6 +158,24 @@ class PadronSnapshotServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_generar_no_duplica_evidencia_para_el_mismo_snapshot(): void
+    {
+        Http::fake([
+            '*/snapshots/generate' => Http::response([
+                'data' => ['id' => 100, 'snapshot_hash' => 'h', 'row_count' => 0, 'cutoff_date' => '2026-06-30'],
+            ], 201),
+        ]);
+
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
+        $user = User::factory()->withPersonalTeam()->create();
+
+        $service = app(PadronSnapshotService::class);
+        $service->generar($programa, 3, $user);
+        $service->generar($programa, 3, $user);
+
+        $this->assertSame(1, AvanceEvidencia::where('geobase_snapshot_id', 100)->count());
+    }
+
     public function test_generar_deja_avance_id_null_si_no_hay_avance_del_trimestre(): void
     {
         Carbon::setTestNow('2026-04-15 12:00:00');
