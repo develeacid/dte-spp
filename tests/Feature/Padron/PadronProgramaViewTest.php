@@ -97,7 +97,7 @@ class PadronProgramaViewTest extends TestCase
             ->assertSee('aún no tiene Componentes');
     }
 
-    public function test_modo_vivo_esta_deshabilitado_en_n3(): void
+    public function test_modo_vivo_disponible_cuando_hay_componente_seleccionado(): void
     {
         $programa = $this->programaConComponente();
         $user = User::factory()->withPersonalTeam()->create();
@@ -105,8 +105,33 @@ class PadronProgramaViewTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(PadronPrograma::class, ['programa' => $programa])
+            ->assertSet('modoVivoDisponible', true);
+    }
+
+    public function test_toggle_fuente_alterna_modo_y_consulta_coverage_en_vivo(): void
+    {
+        Http::fake([
+            '*/components/*/coverage' => Http::response([
+                'spp_mir_nivel_id' => 1,
+                'component_name' => 'C1',
+                'total_enrollments' => 200,
+                'total_beneficiaries' => 175,
+                'by_status' => ['aprobado' => 150, 'pendiente' => 50],
+                'by_municipality' => [],
+            ], 200),
+            '*/snapshots*' => Http::response(['data' => [], 'meta' => []], 200),
+        ]);
+
+        $programa = $this->programaConComponente();
+        $user = User::factory()->withPersonalTeam()->create();
+        $user->assignRole(SystemRole::PLANEADOR->value);
+
+        Livewire::actingAs($user)
+            ->test(PadronPrograma::class, ['programa' => $programa])
             ->assertSet('modoFuente', 'snapshot')
-            ->assertSet('modoVivoDisponible', false)
+            ->call('toggleFuente')
+            ->assertSet('modoFuente', 'vivo')
+            ->assertSet('kpis.total', 175)
             ->call('toggleFuente')
             ->assertSet('modoFuente', 'snapshot');
     }

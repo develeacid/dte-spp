@@ -23,10 +23,21 @@
                 <p><strong>🔒 Fuente:</strong> sin snapshot disponible para este Componente</p>
             @else
                 <p><strong>⚡ Fuente:</strong> consulta en vivo ({{ now()->format('H:i') }})</p>
+                <p class="text-xs opacity-75 mt-1">Total en tiempo real desde GeoBase. Desagregados solo en snapshots.</p>
             @endif
             @unless ($modoVivoDisponible)
-                <p class="text-xs opacity-75 mt-1">Modo "vivo" disponible próximamente.</p>
+                <p class="text-xs opacity-75 mt-1">Modo "vivo" disponible cuando hay un Componente seleccionado.</p>
             @endunless
         </div>
+        @if ($modoVivoDisponible)
+            <button
+                type="button"
+                wire:click="toggleFuente"
+                wire:loading.attr="disabled"
+                wire:target="toggleFuente"
+                class="shrink-0 text-xs font-medium underline-offset-2 hover:underline">
+                {{ $modoFuente === 'snapshot' ? 'Ver en vivo' : 'Volver a snapshot' }}
+            </button>
+        @endif
     </div>
 </div>
