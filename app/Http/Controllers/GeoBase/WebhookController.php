@@ -6,52 +6,175 @@ use App\Events\GeoBase\EnrollmentStatusChanged;
 use App\Events\GeoBase\SnapshotGenerated;
 use App\Events\GeoBase\SyncProcessed;
 use App\Http\Controllers\Controller;
+use App\Models\GeoBase\WebhookDelivery;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class WebhookController extends Controller
 {
+    private const PAYLOAD_TRUNCATE_BYTES = 16384;
+    private const PAYLOAD_PREVIEW_BYTES = 16000;
+    private const ERROR_MESSAGE_MAX = 497;
+
+    private const EVENT_ENROLLMENT_STATUS_CHANGED = 'enrollment.status_changed';
+    private const EVENT_SNAPSHOT_GENERATED = 'snapshot.generated';
+    private const EVENT_SYNC_PROCESSED = 'sync.processed';
+
     public function handle(Request $request): JsonResponse
     {
-        // GeoBase carries the event type in X-GeoBase-Event and the payload
-        // is the raw JSON body (no envelope). Old format with a {event,data}
-        // body envelope is supported as a fallback.
-        $eventType = $request->header('X-GeoBase-Event') ?? $request->input('event');
-        $data = $request->header('X-GeoBase-Event')
-            ? $request->all()
-            : $request->input('data', []);
+        $deliveryId = $request->header('X-GeoBase-Delivery');
+        $eventType = $request->header('X-GeoBase-Event');
+
+        if (! $deliveryId || ! $eventType) {
+            return response()->json([
+                'error' => 'Missing X-GeoBase-Delivery or X-GeoBase-Event header',
+            ], 400);
+        }
+
+        $existing = WebhookDelivery::where('delivery_id', $deliveryId)->first();
+        if ($existing) {
+            return response()->json([
+                'received' => true,
+                'idempotent' => true,
+                'first_seen_at' => $existing->created_at->toIso8601String(),
+            ]);
+        }
+
+        $payload = $request->all();
+
+        try {
+            $delivery = WebhookDelivery::create([
+                'delivery_id' => $deliveryId,
+                'event_type' => $eventType,
+                'signature_valid' => true,
+                'payload' => $this->maybeTruncate($request->getContent(), $payload),
+            ]);
+        } catch (QueryException $e) {
+            if ($this->isUniqueViolation($e)) {
+                $existing = WebhookDelivery::where('delivery_id', $deliveryId)->first();
+
+                return response()->json([
+                    'received' => true,
+                    'idempotent' => true,
+                    'first_seen_at' => $existing?->created_at?->toIso8601String(),
+                ]);
+            }
+            throw $e;
+        }
+
+        $rules = $this->rulesFor($eventType);
+        if ($rules !== null) {
+            $validator = Validator::make($payload, $rules);
+            if ($validator->fails()) {
+                $delivery->update([
+                    'status_code' => 422,
+                    'error_message' => Str::limit(
+                        json_encode($validator->errors()->toArray()),
+                        self::ERROR_MESSAGE_MAX - 3,  // Str::limit appends '...' (3 chars)
+                        '...'
+                    ),
+                    'processed_at' => now(),
+                ]);
+
+                activity('geobase-webhook')
+                    ->withProperties(array_merge($payload, ['_invalid' => true]))
+                    ->log("$eventType (invalid)");
+
+                return response()->json([
+                    'received' => false,
+                    'errors' => $validator->errors()->toArray(),
+                ], 422);
+            }
+        }
 
         activity('geobase-webhook')
-            ->withProperties($data)
+            ->withProperties($payload)
             ->log($eventType);
 
         match ($eventType) {
-            'enrollment.status_changed' => EnrollmentStatusChanged::dispatch(
-                enrollmentId: $data['enrollment_id'],
-                oldStatus: $data['old_status'],
-                newStatus: $data['new_status'],
-                sppProgramId: $data['spp_program_id'],
-                timestamp: $data['timestamp'],
+            self::EVENT_ENROLLMENT_STATUS_CHANGED => EnrollmentStatusChanged::dispatch(
+                enrollmentId: $payload['enrollment_id'],
+                oldStatus: $payload['old_status'],
+                newStatus: $payload['new_status'],
+                sppProgramId: $payload['spp_program_id'],
+                timestamp: $payload['timestamp'],
             ),
-            'snapshot.generated' => SnapshotGenerated::dispatch(
-                snapshotId: $data['snapshot_id'],
-                period: $data['period'],
-                snapshotHash: $data['sha256'],
-                sppMirNivelId: $data['spp_mir_nivel_id'],
-                sppProgramId: $data['spp_program_id'],
-                valorOficial: $data['valor_oficial'],
-                timestamp: $data['timestamp'],
+            self::EVENT_SNAPSHOT_GENERATED => SnapshotGenerated::dispatch(
+                snapshotId: $payload['snapshot_id'],
+                period: $payload['period'],
+                snapshotHash: $payload['sha256'],
+                sppMirNivelId: $payload['spp_mir_nivel_id'],
+                sppProgramId: $payload['spp_program_id'],
+                valorOficial: $payload['valor_oficial'],
+                timestamp: $payload['timestamp'],
             ),
-            'sync.processed' => SyncProcessed::dispatch(
-                entryId: $data['entry_id'],
-                operation: $data['operation'],
-                resultType: $data['result_type'] ?? null,
-                resultId: $data['result_id'] ?? null,
-                timestamp: $data['timestamp'],
+            self::EVENT_SYNC_PROCESSED => SyncProcessed::dispatch(
+                entryId: $payload['entry_id'],
+                operation: $payload['operation'],
+                resultType: $payload['result_type'] ?? null,
+                resultId: $payload['result_id'] ?? null,
+                timestamp: $payload['timestamp'],
             ),
             default => null,
         };
 
+        $delivery->update([
+            'status_code' => 200,
+            'processed_at' => now(),
+        ]);
+
         return response()->json(['received' => true]);
+    }
+
+    private function maybeTruncate(string $rawBody, array $parsed): array
+    {
+        if (strlen($rawBody) > self::PAYLOAD_TRUNCATE_BYTES) {
+            return [
+                '_truncated' => true,
+                'preview' => substr($rawBody, 0, self::PAYLOAD_PREVIEW_BYTES),
+            ];
+        }
+
+        return $parsed;
+    }
+
+    private function isUniqueViolation(QueryException $e): bool
+    {
+        return (string) $e->getCode() === '23505'
+            || str_contains($e->getMessage(), 'duplicate key')
+            || str_contains($e->getMessage(), 'UNIQUE constraint');
+    }
+
+    private function rulesFor(string $eventType): ?array
+    {
+        return match ($eventType) {
+            self::EVENT_ENROLLMENT_STATUS_CHANGED => [
+                'enrollment_id' => 'required|integer',
+                'old_status' => 'required|string',
+                'new_status' => 'required|string',
+                'spp_program_id' => 'required|integer',
+                'timestamp' => 'required|string',
+            ],
+            self::EVENT_SNAPSHOT_GENERATED => [
+                'snapshot_id' => 'required|integer',
+                'period' => 'required|string',
+                'sha256' => 'required|string',
+                'spp_mir_nivel_id' => 'required|integer',
+                'spp_program_id' => 'required|integer',
+                'valor_oficial' => 'required|integer',
+                'timestamp' => 'required|string',
+            ],
+            self::EVENT_SYNC_PROCESSED => [
+                'entry_id' => 'required|integer',
+                'operation' => 'required|string',
+                'result_type' => 'nullable|string',
+                'result_id' => 'nullable|integer',
+                'timestamp' => 'required|string',
+            ],
+            default => null,
+        };
     }
 }

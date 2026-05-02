@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\GeoBase\WebhookDelivery;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -15,3 +16,7 @@ Schedule::command('mir:cerrar-vencidos')->dailyAt('23:00');
 Schedule::command('app:embeddings-generate')->dailyAt('02:00')->withoutOverlapping();
 Schedule::command('reports:cleanup')->dailyAt('03:00');
 Schedule::command('llm:cleanup-logs')->monthly();
+Schedule::command('model:prune', ['--model' => [WebhookDelivery::class]])
+    ->dailyAt('03:30')
+    ->name('prune-geobase-webhook-deliveries')
+    ->withoutOverlapping();

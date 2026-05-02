@@ -172,4 +172,225 @@ class M5WebhookContractTest extends TestCase
         $this->postWebhook('enrollment.status_changed', $payload, signatureOverride: $bareHex)
             ->assertOk();
     }
+
+    public function test_persiste_delivery_row_al_recibir_evento_valido(): void
+    {
+        Event::fake([SyncProcessed::class]);
+
+        $payload = [
+            'entry_id' => 99,
+            'operation' => 'create',
+            'result_type' => 'enrollment',
+            'result_id' => 123,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+        ];
+
+        $this->postWebhook('sync.processed', $payload)->assertOk();
+
+        $this->assertDatabaseHas('geobase_webhook_deliveries', [
+            'delivery_id' => '42',
+            'event_type' => 'sync.processed',
+            'signature_valid' => true,
+            'status_code' => 200,
+        ]);
+
+        $delivery = \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->first();
+        $this->assertNotNull($delivery->processed_at);
+        $this->assertSame(99, $delivery->payload['entry_id']);
+    }
+
+    public function test_firma_invalida_no_persiste_delivery_row(): void
+    {
+        $payload = ['enrollment_id' => 1, 'old_status' => 'a', 'new_status' => 'b', 'spp_program_id' => 1, 'timestamp' => 't'];
+
+        $this->postWebhook('enrollment.status_changed', $payload, signatureOverride: 'sha256=feedface')
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('geobase_webhook_deliveries', ['delivery_id' => '42']);
+    }
+
+    public function test_payload_malformado_retorna_422_y_persiste_status_422(): void
+    {
+        Event::fake([EnrollmentStatusChanged::class]);
+
+        $payload = [
+            'old_status' => 'solicitado',
+            'new_status' => 'aprobado',
+            'spp_program_id' => 7,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+        ];
+
+        $this->postWebhook('enrollment.status_changed', $payload)
+            ->assertStatus(422);
+
+        Event::assertNotDispatched(EnrollmentStatusChanged::class);
+
+        $this->assertDatabaseHas('geobase_webhook_deliveries', [
+            'delivery_id' => '42',
+            'status_code' => 422,
+        ]);
+
+        $delivery = \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->first();
+        $this->assertNotNull($delivery->error_message);
+        $this->assertNotNull($delivery->processed_at);
+    }
+
+    public function test_falta_header_delivery_retorna_400_sin_row(): void
+    {
+        $payload = [
+            'enrollment_id' => 1,
+            'old_status' => 'a',
+            'new_status' => 'b',
+            'spp_program_id' => 1,
+            'timestamp' => 't',
+        ];
+
+        $body = json_encode($payload);
+        $signature = 'sha256=' . hash_hmac('sha256', $body, self::SECRET);
+
+        $this->call(
+            method: 'POST',
+            uri: '/api/webhooks/geobase',
+            server: [
+                'HTTP_X-GeoBase-Event' => 'enrollment.status_changed',
+                'HTTP_X-GeoBase-Signature' => $signature,
+                'HTTP_ACCEPT' => 'application/json',
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            content: $body,
+        )->assertStatus(400);
+
+        $this->assertSame(0, \App\Models\GeoBase\WebhookDelivery::count());
+    }
+
+    public function test_payload_truncado_si_excede_16kb(): void
+    {
+        $hugeString = str_repeat('A', 20000);
+
+        $payload = [
+            'entry_id' => 99,
+            'operation' => 'create',
+            'result_type' => 'enrollment',
+            'result_id' => 123,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+            'dummy_huge' => $hugeString,
+        ];
+
+        $this->postWebhook('sync.processed', $payload)->assertOk();
+
+        $delivery = \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->first();
+
+        $this->assertTrue($delivery->payload['_truncated']);
+        $this->assertLessThanOrEqual(16100, strlen($delivery->payload['preview']));
+    }
+
+    public function test_delivery_id_preexistente_responde_idempotente(): void
+    {
+        Event::fake([SyncProcessed::class]);
+
+        \App\Models\GeoBase\WebhookDelivery::create([
+            'delivery_id' => '42',
+            'event_type' => 'sync.processed',
+            'signature_valid' => true,
+            'payload' => [],
+            'status_code' => 200,
+            'processed_at' => now(),
+        ]);
+
+        $payload = [
+            'entry_id' => 99,
+            'operation' => 'create',
+            'result_type' => 'enrollment',
+            'result_id' => 123,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+        ];
+
+        $this->postWebhook('sync.processed', $payload)
+            ->assertOk()
+            ->assertJson(['idempotent' => true]);
+
+        Event::assertNotDispatched(SyncProcessed::class);
+    }
+
+    public function test_delivery_id_repetido_responde_idempotente_sin_redispatch(): void
+    {
+        Event::fake([SyncProcessed::class]);
+
+        $payload = [
+            'entry_id' => 99,
+            'operation' => 'create',
+            'result_type' => 'enrollment',
+            'result_id' => 123,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+        ];
+
+        $this->postWebhook('sync.processed', $payload)
+            ->assertOk()
+            ->assertJson(['received' => true]);
+
+        Event::assertDispatchedTimes(SyncProcessed::class, 1);
+
+        $this->postWebhook('sync.processed', $payload)
+            ->assertOk()
+            ->assertJson([
+                'received' => true,
+                'idempotent' => true,
+            ]);
+
+        Event::assertDispatchedTimes(SyncProcessed::class, 1);
+
+        $this->assertSame(
+            1,
+            \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->count()
+        );
+    }
+
+    public function test_is_unique_violation_detecta_sqlstate_23505(): void
+    {
+        // Use reflection to invoke the private isUniqueViolation method.
+        $controller = new \App\Http\Controllers\GeoBase\WebhookController();
+        $reflection = new \ReflectionClass($controller);
+        $method = $reflection->getMethod('isUniqueViolation');
+        $method->setAccessible(true);
+
+        // Real Postgres unique violation: message contains 'SQLSTATE[23505]: duplicate key'.
+        // PDOException always casts the code arg to int, so the str_contains fallback
+        // on $e->getMessage() is the path that actually fires in production.
+        $eRealPg = new \Illuminate\Database\QueryException(
+            'pgsql',
+            'INSERT INTO ...',
+            [],
+            new \PDOException('SQLSTATE[23505]: duplicate key value violates unique constraint "webhook_deliveries_delivery_id_unique"')
+        );
+        $this->assertTrue($method->invoke($controller, $eRealPg));
+
+        // Substring fallback: message contains 'duplicate key' without full SQLSTATE prefix.
+        $eByMsg = new \Illuminate\Database\QueryException(
+            'pgsql',
+            'INSERT INTO ...',
+            [],
+            new \PDOException('duplicate key value violates unique constraint')
+        );
+        $this->assertTrue($method->invoke($controller, $eByMsg));
+
+        // Negative: a different SQLSTATE with no unique-violation keywords.
+        $eOther = new \Illuminate\Database\QueryException(
+            'pgsql',
+            'INSERT INTO ...',
+            [],
+            new \PDOException('SQLSTATE[42P01]: undefined table')
+        );
+        $this->assertFalse($method->invoke($controller, $eOther));
+
+        // Code-based detection: PDOException casts the second arg to int, so
+        // the controller's `(string) $e->getCode() === '23505'` check covers
+        // both string and integer code variants.
+        $eByIntCode = new \Illuminate\Database\QueryException(
+            'pgsql',
+            'INSERT INTO ...',
+            [],
+            new \PDOException('some opaque message', 23505)
+        );
+        $this->assertTrue($method->invoke($controller, $eByIntCode));
+    }
 }
