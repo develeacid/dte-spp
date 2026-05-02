@@ -31,6 +31,8 @@ class DatasetAbierto extends Model
         'hash_sha256',
         'ruta_archivo',
         'dcat_metadata',
+        'creado_por',
+        'motivo_cambio_estado',
     ];
 
     protected function casts(): array
@@ -46,6 +48,11 @@ class DatasetAbierto extends Model
     public function aprobadoPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'aprobado_por');
+    }
+
+    public function creadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'creado_por');
     }
 
     /**
@@ -66,6 +73,8 @@ class DatasetAbierto extends Model
                 'aprobado_por',
                 'aprobado_en',
                 'publicado_en',
+                'creado_por',
+                'motivo_cambio_estado',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
