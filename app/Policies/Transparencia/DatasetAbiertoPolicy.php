@@ -8,18 +8,6 @@ use App\Models\User;
 
 class DatasetAbiertoPolicy
 {
-    /**
-     * Abilities donde el bypass de admin (Gate::before) NO aplica.
-     * Consultadas por AppServiceProvider para preservar segregación de funciones.
-     */
-    public const SEGREGATED_ABILITIES = [
-        'aprobar',
-        'rechazar',
-        'publicar',
-        'retirar',
-        'editarPlantilla',
-    ];
-
     public function viewAny(User $user): bool
     {
         return $user->can('ver_datasets_abiertos');

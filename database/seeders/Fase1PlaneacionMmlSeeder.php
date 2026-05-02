@@ -177,6 +177,11 @@ class Fase1PlaneacionMmlSeeder extends Seeder
         $programa->equipos()->syncWithoutDetaching([$team->id => ['rol' => 'coordinadora']]);
 
         if (isset($def['padron_geobase_activo']) && $def['padron_geobase_activo']) {
+            // El update dispara ProgramaPresupuestarioGeoBaseObserver que
+            // dispatcha RegisterProgramOnGeoBase a la cola geobase-sync. El
+            // job retry'll si geobase no responde — más resiliente que llamar
+            // PadronProvisioningService::register() síncrono aquí (que
+            // bloquearía el seed si geobase está caído durante migrate:fresh).
             $programa->update(['padron_geobase_activo' => true]);
         }
 

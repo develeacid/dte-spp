@@ -132,4 +132,28 @@ class DatasetAbiertoPolicyTest extends TestCase
 
         $this->assertTrue($admin->can('aprobar', $entrega));
     }
+
+    public function test_admin_no_ve_update_ni_enviar_a_revision_si_status_no_borrador(): void
+    {
+        // Regresión: con la lógica original de SEGREGATED_ABILITIES, admin
+        // veía botones state-gated (Editar borrador, Enviar a revisión) en
+        // datasets en revision/aprobado/publicado, click resultaba en
+        // DomainException. Ahora la Policy es autoritativa para admin sobre
+        // DatasetAbierto y los botones se ocultan correctamente.
+        $admin = $this->makeUserWithRole('admin');
+
+        $publicado = DatasetAbierto::factory()->create([
+            'periodo' => '2026-Q1',
+            'status' => EstadoDatasetAbierto::PUBLICADO,
+        ]);
+        $revision = DatasetAbierto::factory()->create([
+            'periodo' => '2026-Q1',
+            'status' => EstadoDatasetAbierto::REVISION,
+        ]);
+
+        $this->assertFalse($admin->can('update', $publicado));
+        $this->assertFalse($admin->can('update', $revision));
+        $this->assertFalse($admin->can('enviarARevision', $publicado));
+        $this->assertFalse($admin->can('enviarARevision', $revision));
+    }
 }

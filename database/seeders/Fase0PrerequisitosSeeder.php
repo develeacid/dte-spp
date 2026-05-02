@@ -117,6 +117,28 @@ class Fase0PrerequisitosSeeder extends Seeder
             $admin->forceFill(['current_team_id' => $firstTeam->id])->save();
         }
 
+        // ── 4b. RDA global (Responsable de Datos Abiertos) ───────────
+        // Cargo institucional, no por UR — único usuario con permiso
+        // aprobar_datos_abiertos. Asignado a SE-001 como team default.
+        $rda = User::firstOrCreate(
+            ['email' => 'rda@sistema.test'],
+            [
+                'name' => 'Responsable de Datos Abiertos',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+                'activated_at' => now(),
+                'active' => true,
+            ]
+        );
+        $rda->syncRoles([SystemRole::RESPONSABLE_DATOS_ABIERTOS->value]);
+        if ($firstTeam) {
+            $firstTeam->users()->syncWithoutDetaching([
+                $rda->id => ['role' => 'editor'],
+            ]);
+            $rda->forceFill(['current_team_id' => $firstTeam->id])->save();
+        }
+        $tableRows[] = ['Responsable de Datos Abiertos', 'rda@sistema.test', 'responsable_datos_abiertos', '-'];
+
         // ── 5. Resumen ──────────────────────────────────────────────
         $this->command->newLine();
         $this->command->info('Usuarios creados:');
