@@ -145,4 +145,20 @@ class ShowTest extends TestCase
         $this->assertSame(EstadoDatasetAbierto::RETIRADO, $fresh->status);
         $this->assertSame('Información detectada con error de fuente', $fresh->motivo_cambio_estado);
     }
+
+    public function test_retirar_requiere_motivo(): void
+    {
+        $rda = User::factory()->withPersonalTeam()->create();
+        $rda->assignRole('responsable_datos_abiertos');
+        $ds = DatasetAbierto::factory()->create([
+            'periodo' => '2026-Q1',
+            'status' => EstadoDatasetAbierto::PUBLICADO,
+        ]);
+
+        Livewire::actingAs($rda)
+            ->test(Show::class, ['dataset' => $ds])
+            ->set('motivo', '')
+            ->call('retirar')
+            ->assertHasErrors(['motivo']);
+    }
 }

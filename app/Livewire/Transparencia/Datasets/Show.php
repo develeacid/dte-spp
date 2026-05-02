@@ -17,7 +17,7 @@ class Show extends Component
 
     public function mount(DatasetAbierto $dataset): void
     {
-        $this->dataset = $dataset;
+        $this->dataset = $dataset->load(['creadoPor', 'aprobadoPor']);
     }
 
     public function enviarARevision(): void
@@ -86,7 +86,8 @@ class Show extends Component
 
     public function render()
     {
-        $actividad = Activity::where('subject_type', DatasetAbierto::class)
+        $actividad = Activity::with('causer')
+            ->where('subject_type', DatasetAbierto::class)
             ->where('subject_id', $this->dataset->id)
             ->orderByDesc('created_at')
             ->limit(20)
