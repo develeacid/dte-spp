@@ -87,4 +87,20 @@ class IndexTest extends TestCase
             ->assertSee('Match Search Foo')
             ->assertDontSee('Other Bar');
     }
+
+    public function test_search_escapa_wildcards_like(): void
+    {
+        $user = User::factory()->withPersonalTeam()->create();
+        $user->assignRole('planeador');
+        DatasetAbierto::factory()->create(['nombre' => 'Reporte 100% completo']);
+        DatasetAbierto::factory()->create(['nombre' => 'Otro nombre sin marca']);
+
+        // Si % se interpretara como wildcard LIKE, '100%' coincidiría con cualquier
+        // string que empiece con '100'. El test verifica que sólo coincide el literal.
+        Livewire::actingAs($user)
+            ->test(Index::class)
+            ->set('search', '100%')
+            ->assertSee('Reporte 100% completo')
+            ->assertDontSee('Otro nombre sin marca');
+    }
 }

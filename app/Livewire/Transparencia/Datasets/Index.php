@@ -32,12 +32,14 @@ class Index extends Component
 
     public function render()
     {
-        $query = DatasetAbierto::query()->with(['creadoPor', 'aprobadoPor']);
+        $query = DatasetAbierto::query()->with('creadoPor');
 
         if ($this->search !== '') {
-            $query->where(function ($q) {
-                $q->where('dataset_clave', 'ilike', "%{$this->search}%")
-                  ->orWhere('nombre', 'ilike', "%{$this->search}%");
+            // Escapa wildcards LIKE/ILIKE para que `%` y `_` se interpreten literales.
+            $term = '%' . addcslashes($this->search, '%_\\') . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('dataset_clave', 'ilike', $term)
+                  ->orWhere('nombre', 'ilike', $term);
             });
         }
 
