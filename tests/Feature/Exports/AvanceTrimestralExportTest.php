@@ -13,6 +13,7 @@ use Database\Seeders\DesarrolloSeeder;
 use Database\Seeders\QaTestingSeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
 
 class AvanceTrimestralExportTest extends TestCase
@@ -22,6 +23,8 @@ class AvanceTrimestralExportTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Stub la cola para que el observer de padron no intente conectar a geobase.
+        Bus::fake();
         $this->seed(RolesAndPermissionsSeeder::class);
         $this->seed(DesarrolloSeeder::class);
         $this->seed(QaTestingSeeder::class);

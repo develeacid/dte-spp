@@ -3,15 +3,21 @@
 namespace App\Observers;
 
 use App\Enums\TipoNivelMir;
+use App\Jobs\GeoBase\DeactivateProgramOnGeoBase;
+use App\Jobs\GeoBase\RegisterProgramOnGeoBase;
 use App\Jobs\GeoBase\SyncMirNivelToGeoBase;
 use App\Jobs\GeoBase\SyncProgramaToGeoBase;
 use App\Models\ProgramaPresupuestario;
 
 /**
- * When a programa with an active GeoBase padron has its identifying fields
- * edited, mirror them upstream. The observer is silent for programas that
- * never had padron activated and for changes outside the replicated set
- * (estado, planeacion_completada_at, the activo flag itself, etc.).
+ * Mantiene en sincronía el estado del padrón en GeoBase respecto a dte-spp.
+ *
+ * Cubre dos escenarios:
+ * 1. Cambio del flag padron_geobase_activo (false↔true): dispatcha el job
+ *    correspondiente que delega al PadronProvisioningService. Cubre paths
+ *    que evitan el service (seeders, factories, tinker).
+ * 2. Cambio de fields identificadores con padrón ya activo: replica la
+ *    nueva data upstream (lógica preexistente).
  */
 class ProgramaPresupuestarioGeoBaseObserver
 {
@@ -22,9 +28,22 @@ class ProgramaPresupuestarioGeoBaseObserver
 
     public function updated(ProgramaPresupuestario $programa): void
     {
-        // Only programas already linked to GeoBase need to be kept in sync.
-        // Activation/deactivation themselves are handled by the
-        // PadronProvisioningService and must not retrigger here.
+        // Cambio del flag: dispatcha activación o desactivación upstream.
+        // Idempotente — geobase upserts por spp_program_id, así que el path UI/CLI
+        // que ya invoca el service síncronamente no produce side effects al
+        // re-ejecutarse vía este job.
+        if ($programa->wasChanged('padron_geobase_activo')) {
+            $programa->padron_geobase_activo
+                ? RegisterProgramOnGeoBase::dispatch($programa->id)
+                : DeactivateProgramOnGeoBase::dispatch($programa->id);
+
+            // El job re-ejecuta el service que también sincroniza fields, así
+            // que SyncProgramaToGeoBase queda silenciado para evitar doble work
+            // cuando flag y fields cambian en el mismo update.
+            return;
+        }
+
+        // Path existente: cambios en fields identificadores cuando el flag ya es true.
         if (! $programa->padron_geobase_activo) {
             return;
         }
