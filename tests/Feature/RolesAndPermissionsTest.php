@@ -41,13 +41,29 @@ class RolesAndPermissionsTest extends TestCase
         $this->assertFalse($user->hasPermissionTo(SystemPermission::CREAR_PROGRAMA->value));
     }
 
-    public function test_admin_tiene_todos_los_permisos(): void
+    public function test_admin_tiene_todos_los_permisos_excepto_segregados(): void
     {
         $user = User::factory()->create();
         $user->assignRole(SystemRole::ADMIN->value);
 
+        // Permisos segregados: NO se otorgan a admin (segregación de funciones).
+        // Mantener sincronizado con $permisosSegregados en RolesAndPermissionsSeeder.
+        $segregados = [
+            SystemPermission::APROBAR_DATOS_ABIERTOS,
+        ];
+
         foreach (SystemPermission::cases() as $permiso) {
-            $this->assertTrue($user->hasPermissionTo($permiso->value));
+            if (in_array($permiso, $segregados, true)) {
+                $this->assertFalse(
+                    $user->hasPermissionTo($permiso->value),
+                    "Admin NO debe tener {$permiso->value} (permiso segregado)"
+                );
+            } else {
+                $this->assertTrue(
+                    $user->hasPermissionTo($permiso->value),
+                    "Admin debe tener {$permiso->value}"
+                );
+            }
         }
     }
 

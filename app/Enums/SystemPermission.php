@@ -36,4 +36,7 @@ enum SystemPermission: string
     case VER_PADRON = 'ver_padron';
     case GENERAR_SNAPSHOT_PADRON = 'generar_snapshot_padron';
     case EXPORTAR_PADRON_SHCP = 'exportar_padron_shcp';
+
+    // Transparencia
+    case APROBAR_DATOS_ABIERTOS = 'aprobar_datos_abiertos';
 }
