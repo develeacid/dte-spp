@@ -61,11 +61,27 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::before(function ($user, $ability) {
-            if ($user->hasRole('admin')) {
-                return true;
+        Gate::before(function ($user, $ability, $arguments = []) {
+            if (! $user->hasRole('admin')) {
+                return null;
             }
+
+            // Abilities de Policy de DatasetAbierto que NO admiten bypass de admin
+            // (segregación de funciones — solo RDA aprueba publicación de datos abiertos).
+            $segregadasDataset = ['aprobar', 'rechazar', 'publicar', 'retirar', 'editarPlantilla'];
+
+            if (in_array($ability, $segregadasDataset, true)
+                && ($arguments[0] ?? null) instanceof \App\Models\Transparencia\DatasetAbierto) {
+                return null; // No bypass; deferir al Policy → niega por permission
+            }
+
+            return true;
         });
+
+        Gate::policy(
+            \App\Models\Transparencia\DatasetAbierto::class,
+            \App\Policies\Transparencia\DatasetAbiertoPolicy::class
+        );
 
         // Registrar listeners GeoBase
         Event::listen(
