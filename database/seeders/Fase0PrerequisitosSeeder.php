@@ -28,6 +28,7 @@ class Fase0PrerequisitosSeeder extends Seeder
             JuridicoPermissionsSeeder::class,
             AsmPermissionsSeeder::class,
             PadronPermissionsSeeder::class,
+            TransparenciaPermissionsSeeder::class,
         ]);
 
         // ── 2. Admin global ──────────────────────────────────────────

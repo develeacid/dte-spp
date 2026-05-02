@@ -22,8 +22,16 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         // Crear roles de forma segura y asignar permisos
+        // Permisos segregados: NO se otorgan automáticamente a admin (segregación de funciones).
+        // Cada uno se asigna al rol específico via su seeder de dominio.
+        $permisosSegregados = [
+            SystemPermission::APROBAR_DATOS_ABIERTOS->value, // solo rol RDA (TransparenciaPermissionsSeeder)
+        ];
+
         $admin = Role::findOrCreate(SystemRole::ADMIN->value, 'web');
-        $admin->givePermissionTo(Permission::all());
+        $admin->givePermissionTo(
+            Permission::whereNotIn('name', $permisosSegregados)->get()
+        );
 
         $planeador = Role::findOrCreate(SystemRole::PLANEADOR->value, 'web');
         $planeador->givePermissionTo([
