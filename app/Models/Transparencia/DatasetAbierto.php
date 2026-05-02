@@ -147,6 +147,9 @@ class DatasetAbierto extends Model
         if (! preg_match('/^\d{4}(-Q[1-4])?$/', $periodo)) {
             throw new DomainException("Formato de periodo inválido: '{$periodo}'. Use YYYY o YYYY-Q[1-4].");
         }
+        if (self::where('dataset_clave', $this->dataset_clave)->where('periodo', $periodo)->exists()) {
+            throw new DomainException("Ya existe entrega {$this->dataset_clave} para periodo {$periodo}.");
+        }
 
         return self::create([
             'dataset_clave' => $this->dataset_clave,

@@ -131,6 +131,20 @@ class DatasetAbiertoModelTest extends TestCase
         $entrega->clonarParaPeriodo('2026-Q2', $autor);
     }
 
+    public function test_clonar_plantilla_falla_si_periodo_ya_existe(): void
+    {
+        $autor = User::factory()->create();
+        $plantilla = DatasetAbierto::factory()->create([
+            'dataset_clave' => 'DS-01',
+            'periodo' => null,
+        ]);
+        $plantilla->clonarParaPeriodo('2026-Q1', $autor);
+
+        $this->expectException(DomainException::class);
+        $this->expectExceptionMessage('Ya existe entrega DS-01 para periodo 2026-Q1.');
+        $plantilla->clonarParaPeriodo('2026-Q1', $autor);
+    }
+
     /** @dataProvider periodosInvalidosProvider */
     public function test_clonar_plantilla_falla_con_periodo_invalido(string $periodoInvalido): void
     {
