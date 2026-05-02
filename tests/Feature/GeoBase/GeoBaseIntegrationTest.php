@@ -24,9 +24,23 @@ class GeoBaseIntegrationTest extends TestCase
         ]);
     }
 
-    private function signPayload(array $payload): string
+    private function postWebhook(string $event, array $payload, string $deliveryId): \Illuminate\Testing\TestResponse
     {
-        return hash_hmac('sha256', json_encode($payload), $this->secret);
+        $body = json_encode($payload);
+        $signature = 'sha256=' . hash_hmac('sha256', $body, $this->secret);
+
+        return $this->call(
+            method: 'POST',
+            uri: '/api/webhooks/geobase',
+            server: [
+                'HTTP_X-GeoBase-Event' => $event,
+                'HTTP_X-GeoBase-Signature' => $signature,
+                'HTTP_X-GeoBase-Delivery' => $deliveryId,
+                'HTTP_ACCEPT' => 'application/json',
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            content: $body,
+        );
     }
 
     public function test_full_flow_webhook_to_coverage_refresh(): void
@@ -45,21 +59,16 @@ class GeoBaseIntegrationTest extends TestCase
         ]);
 
         $payload = [
-            'event' => 'enrollment.status_changed',
-            'data' => [
-                'enrollment_id' => 42,
-                'old_status' => 'solicitado',
-                'new_status' => 'aprobado',
-                'spp_program_id' => $programa->id,
-                'timestamp' => '2026-03-18T12:00:00-06:00',
-            ],
+            'enrollment_id' => 42,
+            'old_status' => 'solicitado',
+            'new_status' => 'aprobado',
+            'spp_program_id' => $programa->id,
+            'timestamp' => '2026-03-18T12:00:00-06:00',
         ];
 
         // 1. Webhook arrives
-        $response = $this->postJson('/api/webhooks/geobase', $payload, [
-            'X-GeoBase-Signature' => $this->signPayload($payload),
-        ]);
-        $response->assertStatus(200);
+        $this->postWebhook('enrollment.status_changed', $payload, 'integ-1')
+            ->assertStatus(200);
 
         // 2. Coverage was refreshed via HTTP
         Http::assertSent(function ($request) use ($programa) {
@@ -76,21 +85,16 @@ class GeoBaseIntegrationTest extends TestCase
     public function test_snapshot_webhook_is_logged(): void
     {
         $payload = [
-            'event' => 'snapshot.generated',
-            'data' => [
-                'snapshot_id' => 7,
-                'period' => '2026-Q1',
-                'sha256' => 'abc123def456',
-                'spp_mir_nivel_id' => 2,
-                'spp_program_id' => 3,
-                'valor_oficial' => 150,
-                'timestamp' => '2026-03-18T14:00:00-06:00',
-            ],
+            'snapshot_id' => 7,
+            'period' => '2026-Q1',
+            'sha256' => 'abc123def456',
+            'spp_mir_nivel_id' => 2,
+            'spp_program_id' => 3,
+            'valor_oficial' => 150,
+            'timestamp' => '2026-03-18T14:00:00-06:00',
         ];
 
-        $this->postJson('/api/webhooks/geobase', $payload, [
-            'X-GeoBase-Signature' => $this->signPayload($payload),
-        ])->assertStatus(200);
+        $this->postWebhook('snapshot.generated', $payload, 'integ-2')->assertStatus(200);
 
         $this->assertDatabaseHas('activity_log', [
             'log_name' => 'geobase-webhook',
@@ -126,17 +130,33 @@ class GeoBaseIntegrationTest extends TestCase
     public function test_hmac_verification_rejects_tampered_payload(): void
     {
         $payload = [
-            'event' => 'enrollment.status_changed',
-            'data' => ['enrollment_id' => 42, 'old_status' => 'a', 'new_status' => 'b', 'spp_program_id' => 1, 'timestamp' => now()->toIso8601String()],
+            'enrollment_id' => 42,
+            'old_status' => 'a',
+            'new_status' => 'b',
+            'spp_program_id' => 1,
+            'timestamp' => now()->toIso8601String(),
         ];
 
-        // Sign with correct secret, then change payload
-        $signature = $this->signPayload($payload);
-        $payload['data']['enrollment_id'] = 999; // tampered
+        // Sign one body, then send a tampered one
+        $originalBody = json_encode($payload);
+        $signature = 'sha256=' . hash_hmac('sha256', $originalBody, $this->secret);
 
-        $response = $this->postJson('/api/webhooks/geobase', $payload, [
-            'X-GeoBase-Signature' => $signature,
-        ]);
+        $tampered = $payload;
+        $tampered['enrollment_id'] = 999;
+        $tamperedBody = json_encode($tampered);
+
+        $response = $this->call(
+            method: 'POST',
+            uri: '/api/webhooks/geobase',
+            server: [
+                'HTTP_X-GeoBase-Event' => 'enrollment.status_changed',
+                'HTTP_X-GeoBase-Signature' => $signature,
+                'HTTP_X-GeoBase-Delivery' => 'integ-3',
+                'HTTP_ACCEPT' => 'application/json',
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            content: $tamperedBody,
+        );
 
         $response->assertStatus(403);
     }
