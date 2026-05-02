@@ -284,6 +284,34 @@ class M5WebhookContractTest extends TestCase
         $this->assertLessThanOrEqual(16100, strlen($delivery->payload['preview']));
     }
 
+    public function test_race_condition_unique_violation_responde_idempotente(): void
+    {
+        Event::fake([SyncProcessed::class]);
+
+        \App\Models\GeoBase\WebhookDelivery::create([
+            'delivery_id' => '42',
+            'event_type' => 'sync.processed',
+            'signature_valid' => true,
+            'payload' => [],
+            'status_code' => 200,
+            'processed_at' => now(),
+        ]);
+
+        $payload = [
+            'entry_id' => 99,
+            'operation' => 'create',
+            'result_type' => 'enrollment',
+            'result_id' => 123,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+        ];
+
+        $this->postWebhook('sync.processed', $payload)
+            ->assertOk()
+            ->assertJson(['idempotent' => true]);
+
+        Event::assertNotDispatched(SyncProcessed::class);
+    }
+
     public function test_delivery_id_repetido_responde_idempotente_sin_redispatch(): void
     {
         Event::fake([SyncProcessed::class]);
