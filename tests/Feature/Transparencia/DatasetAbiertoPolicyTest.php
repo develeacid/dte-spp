@@ -112,4 +112,20 @@ class DatasetAbiertoPolicyTest extends TestCase
         $this->assertFalse($admin->can('retirar', $publicado));
         $this->assertFalse($admin->can('editarPlantilla', $plantilla));
     }
+
+    public function test_admin_con_permiso_explicito_si_puede_aprobar(): void
+    {
+        // Documenta el escape hatch: si un dev otorga manualmente
+        // aprobar_datos_abiertos al admin (saltándose RolesAndPermissionsSeeder),
+        // hasPermissionTo retorna true y la Policy autoriza. Permisos directos
+        // ganan sobre la segregación de roles.
+        $admin = $this->makeUserWithRole('admin');
+        $admin->givePermissionTo('aprobar_datos_abiertos');
+        $entrega = DatasetAbierto::factory()->create([
+            'periodo' => '2026-Q1',
+            'status' => EstadoDatasetAbierto::REVISION,
+        ]);
+
+        $this->assertTrue($admin->can('aprobar', $entrega));
+    }
 }

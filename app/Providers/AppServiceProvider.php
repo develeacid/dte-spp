@@ -66,12 +66,15 @@ class AppServiceProvider extends ServiceProvider
                 return null;
             }
 
-            // Abilities de Policy de DatasetAbierto que NO admiten bypass de admin
-            // (segregación de funciones — solo RDA aprueba publicación de datos abiertos).
-            $segregadasDataset = ['aprobar', 'rechazar', 'publicar', 'retirar', 'editarPlantilla'];
+            // Segregación de funciones: las abilities listadas en
+            // DatasetAbiertoPolicy::SEGREGATED_ABILITIES NO admiten bypass de admin
+            // cuando el sujeto es un DatasetAbierto (instancia o FQCN).
+            $arg = $arguments[0] ?? null;
+            $sujetoEsDataset = $arg instanceof \App\Models\Transparencia\DatasetAbierto
+                || (is_string($arg) && is_a($arg, \App\Models\Transparencia\DatasetAbierto::class, true));
 
-            if (in_array($ability, $segregadasDataset, true)
-                && ($arguments[0] ?? null) instanceof \App\Models\Transparencia\DatasetAbierto) {
+            if ($sujetoEsDataset
+                && in_array($ability, \App\Policies\Transparencia\DatasetAbiertoPolicy::SEGREGATED_ABILITIES, true)) {
                 return null; // No bypass; deferir al Policy → niega por permission
             }
 
