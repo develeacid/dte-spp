@@ -30,3 +30,4 @@ require __DIR__ . '/web/tracking.php';
 require __DIR__ . '/web/evaluation.php';
 require __DIR__ . '/web/presupuesto.php';
 require __DIR__ . '/web/juridico.php';
+require __DIR__ . '/web/transparencia.php';
