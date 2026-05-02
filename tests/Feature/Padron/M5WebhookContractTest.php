@@ -263,6 +263,27 @@ class M5WebhookContractTest extends TestCase
         $this->assertSame(0, \App\Models\GeoBase\WebhookDelivery::count());
     }
 
+    public function test_payload_truncado_si_excede_16kb(): void
+    {
+        $hugeString = str_repeat('A', 20000);
+
+        $payload = [
+            'entry_id' => 99,
+            'operation' => 'create',
+            'result_type' => 'enrollment',
+            'result_id' => 123,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+            'dummy_huge' => $hugeString,
+        ];
+
+        $this->postWebhook('sync.processed', $payload)->assertOk();
+
+        $delivery = \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->first();
+
+        $this->assertTrue($delivery->payload['_truncated']);
+        $this->assertLessThanOrEqual(16100, strlen($delivery->payload['preview']));
+    }
+
     public function test_delivery_id_repetido_responde_idempotente_sin_redispatch(): void
     {
         Event::fake([SyncProcessed::class]);
