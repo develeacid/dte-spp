@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             AnexosTransversalesSeeder::class,
             CatalogoOrdenamientosSeeder::class,
             PoliticaClasificacionSeeder::class,
+            \Database\Seeders\Transparencia\DatasetsCatalogoSeeder::class,
             Fase1PlaneacionMmlSeeder::class,
             Fase2PresupuestoSeeder::class,
             Fase3JuridicoSeeder::class,
