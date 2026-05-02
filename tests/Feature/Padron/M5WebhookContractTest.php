@@ -284,7 +284,7 @@ class M5WebhookContractTest extends TestCase
         $this->assertLessThanOrEqual(16100, strlen($delivery->payload['preview']));
     }
 
-    public function test_race_condition_unique_violation_responde_idempotente(): void
+    public function test_delivery_id_preexistente_responde_idempotente(): void
     {
         Event::fake([SyncProcessed::class]);
 
@@ -343,5 +343,43 @@ class M5WebhookContractTest extends TestCase
             1,
             \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->count()
         );
+    }
+
+    public function test_is_unique_violation_detecta_sqlstate_23505(): void
+    {
+        // Use reflection to invoke the private isUniqueViolation method.
+        $controller = new \App\Http\Controllers\GeoBase\WebhookController();
+        $reflection = new \ReflectionClass($controller);
+        $method = $reflection->getMethod('isUniqueViolation');
+        $method->setAccessible(true);
+
+        // Real Postgres unique violation: message contains 'SQLSTATE[23505]: duplicate key'.
+        // PDOException always casts the code arg to int, so the str_contains fallback
+        // on $e->getMessage() is the path that actually fires in production.
+        $eRealPg = new \Illuminate\Database\QueryException(
+            'pgsql',
+            'INSERT INTO ...',
+            [],
+            new \PDOException('SQLSTATE[23505]: duplicate key value violates unique constraint "webhook_deliveries_delivery_id_unique"')
+        );
+        $this->assertTrue($method->invoke($controller, $eRealPg));
+
+        // Substring fallback: message contains 'duplicate key' without full SQLSTATE prefix.
+        $eByMsg = new \Illuminate\Database\QueryException(
+            'pgsql',
+            'INSERT INTO ...',
+            [],
+            new \PDOException('duplicate key value violates unique constraint')
+        );
+        $this->assertTrue($method->invoke($controller, $eByMsg));
+
+        // Negative: a different SQLSTATE with no unique-violation keywords.
+        $eOther = new \Illuminate\Database\QueryException(
+            'pgsql',
+            'INSERT INTO ...',
+            [],
+            new \PDOException('SQLSTATE[42P01]: undefined table')
+        );
+        $this->assertFalse($method->invoke($controller, $eOther));
     }
 }
