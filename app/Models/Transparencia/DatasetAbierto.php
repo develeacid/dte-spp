@@ -139,6 +139,27 @@ class DatasetAbierto extends Model
         $this->save();
     }
 
+    public function clonarParaPeriodo(string $periodo, User $autor): self
+    {
+        if ($this->periodo !== null) {
+            throw new DomainException('Solo se pueden clonar plantillas (periodo IS NULL).');
+        }
+        if (! preg_match('/^\d{4}(-Q[1-4])?$/', $periodo)) {
+            throw new DomainException("Formato de periodo inválido: '{$periodo}'. Use YYYY o YYYY-Q[1-4].");
+        }
+
+        return self::create([
+            'dataset_clave' => $this->dataset_clave,
+            'nombre' => $this->nombre,
+            'descripcion' => $this->descripcion,
+            'sistema_origen' => $this->sistema_origen,
+            'periodo' => $periodo,
+            'status' => EstadoDatasetAbierto::BORRADOR,
+            'dcat_metadata' => $this->dcat_metadata,
+            'creado_por' => $autor->id,
+        ]);
+    }
+
     // -------------------------------------------------------------------------
     // Scopes
     // -------------------------------------------------------------------------

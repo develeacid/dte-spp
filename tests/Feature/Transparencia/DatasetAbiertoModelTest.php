@@ -98,4 +98,57 @@ class DatasetAbiertoModelTest extends TestCase
         $this->assertCount(1, DatasetAbierto::plantillas()->get());
         $this->assertCount(1, DatasetAbierto::entregas()->get());
     }
+
+    public function test_clonar_plantilla_para_periodo_crea_entrega_con_creado_por(): void
+    {
+        $autor = User::factory()->create();
+        $plantilla = DatasetAbierto::factory()->create([
+            'dataset_clave' => 'DS-01',
+            'periodo' => null,
+            'nombre' => 'MIR por Programa',
+            'descripcion' => 'desc original',
+            'sistema_origen' => 'spp',
+            'dcat_metadata' => ['dct:license' => 'CC BY 4.0'],
+        ]);
+
+        $entrega = $plantilla->clonarParaPeriodo('2026-Q1', $autor);
+
+        $this->assertSame('DS-01', $entrega->dataset_clave);
+        $this->assertSame('2026-Q1', $entrega->periodo);
+        $this->assertSame('MIR por Programa', $entrega->nombre);
+        $this->assertSame('CC BY 4.0', $entrega->dcat_metadata['dct:license']);
+        $this->assertSame(EstadoDatasetAbierto::BORRADOR, $entrega->status);
+        $this->assertSame($autor->id, $entrega->creado_por);
+        $this->assertNotSame($plantilla->id, $entrega->id);
+    }
+
+    public function test_clonar_plantilla_falla_si_dataset_no_es_plantilla(): void
+    {
+        $autor = User::factory()->create();
+        $entrega = DatasetAbierto::factory()->create(['periodo' => '2026-Q1']);
+
+        $this->expectException(DomainException::class);
+        $entrega->clonarParaPeriodo('2026-Q2', $autor);
+    }
+
+    /** @dataProvider periodosInvalidosProvider */
+    public function test_clonar_plantilla_falla_con_periodo_invalido(string $periodoInvalido): void
+    {
+        $autor = User::factory()->create();
+        $plantilla = DatasetAbierto::factory()->create(['periodo' => null]);
+
+        $this->expectException(DomainException::class);
+        $plantilla->clonarParaPeriodo($periodoInvalido, $autor);
+    }
+
+    public static function periodosInvalidosProvider(): array
+    {
+        return [
+            'sin guion' => ['2026Q1'],
+            'con espacio' => [' 2026'],
+            'trimestre invalido' => ['2027-Q5'],
+            'vacio' => [''],
+            'solo guion' => ['2026-'],
+        ];
+    }
 }
