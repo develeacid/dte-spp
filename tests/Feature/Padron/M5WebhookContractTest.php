@@ -172,4 +172,40 @@ class M5WebhookContractTest extends TestCase
         $this->postWebhook('enrollment.status_changed', $payload, signatureOverride: $bareHex)
             ->assertOk();
     }
+
+    public function test_persiste_delivery_row_al_recibir_evento_valido(): void
+    {
+        Event::fake([SyncProcessed::class]);
+
+        $payload = [
+            'entry_id' => 99,
+            'operation' => 'create',
+            'result_type' => 'enrollment',
+            'result_id' => 123,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+        ];
+
+        $this->postWebhook('sync.processed', $payload)->assertOk();
+
+        $this->assertDatabaseHas('geobase_webhook_deliveries', [
+            'delivery_id' => '42',
+            'event_type' => 'sync.processed',
+            'signature_valid' => true,
+            'status_code' => 200,
+        ]);
+
+        $delivery = \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->first();
+        $this->assertNotNull($delivery->processed_at);
+        $this->assertSame(99, $delivery->payload['entry_id']);
+    }
+
+    public function test_firma_invalida_no_persiste_delivery_row(): void
+    {
+        $payload = ['enrollment_id' => 1, 'old_status' => 'a', 'new_status' => 'b', 'spp_program_id' => 1, 'timestamp' => 't'];
+
+        $this->postWebhook('enrollment.status_changed', $payload, signatureOverride: 'sha256=feedface')
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('geobase_webhook_deliveries', ['delivery_id' => '42']);
+    }
 }
