@@ -208,4 +208,37 @@ class M5WebhookContractTest extends TestCase
 
         $this->assertDatabaseMissing('geobase_webhook_deliveries', ['delivery_id' => '42']);
     }
+
+    public function test_delivery_id_repetido_responde_idempotente_sin_redispatch(): void
+    {
+        Event::fake([SyncProcessed::class]);
+
+        $payload = [
+            'entry_id' => 99,
+            'operation' => 'create',
+            'result_type' => 'enrollment',
+            'result_id' => 123,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+        ];
+
+        $this->postWebhook('sync.processed', $payload)
+            ->assertOk()
+            ->assertJson(['received' => true]);
+
+        Event::assertDispatchedTimes(SyncProcessed::class, 1);
+
+        $this->postWebhook('sync.processed', $payload)
+            ->assertOk()
+            ->assertJson([
+                'received' => true,
+                'idempotent' => true,
+            ]);
+
+        Event::assertDispatchedTimes(SyncProcessed::class, 1);
+
+        $this->assertSame(
+            1,
+            \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->count()
+        );
+    }
 }
