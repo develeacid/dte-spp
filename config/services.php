@@ -42,6 +42,7 @@ return [
         'timeout' => (int) env('GEOBASE_API_TIMEOUT', 15),
         'retry_times' => (int) env('GEOBASE_API_RETRY_TIMES', 3),
         'retry_sleep' => (int) env('GEOBASE_API_RETRY_SLEEP', 500),
+        'delivery_retention_days' => env('GEOBASE_DELIVERY_RETENTION_DAYS', 90),
     ],
 
     'embedding' => [
