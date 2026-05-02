@@ -5,6 +5,15 @@ namespace Database\Seeders\Transparencia;
 use App\Models\Transparencia\DatasetAbierto;
 use Illuminate\Database\Seeder;
 
+/**
+ * Carga el catálogo de plantillas de datasets abiertos (DS-01..DS-G04).
+ *
+ * Diseñado como snapshot del estado inicial: usa `firstOrCreate` para que
+ * un re-seed en un entorno con datos no pise ediciones del RDA en
+ * `dcat_metadata`, `nombre` o `descripcion`. Para propagar cambios al texto
+ * fuente del catálogo en producción, usar una migración explícita de datos
+ * (no este seeder).
+ */
 class DatasetsCatalogoSeeder extends Seeder
 {
     private const DCAT_BASE = [
@@ -17,7 +26,7 @@ class DatasetsCatalogoSeeder extends Seeder
     public function run(): void
     {
         foreach ($this->catalogo() as $entry) {
-            DatasetAbierto::updateOrCreate(
+            DatasetAbierto::firstOrCreate(
                 ['dataset_clave' => $entry['dataset_clave'], 'periodo' => null],
                 [
                     'nombre' => $entry['nombre'],

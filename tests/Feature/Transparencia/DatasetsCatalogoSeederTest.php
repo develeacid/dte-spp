@@ -54,4 +54,22 @@ class DatasetsCatalogoSeederTest extends TestCase
             $claves
         );
     }
+
+    public function test_re_seed_preserva_ediciones_del_rda(): void
+    {
+        $this->seed(DatasetsCatalogoSeeder::class);
+
+        $ds01 = DatasetAbierto::where('dataset_clave', 'DS-01')->whereNull('periodo')->first();
+        $editado = array_merge($ds01->dcat_metadata, ['dct:keywords' => ['mir', 'pbr-sed']]);
+        $ds01->forceFill([
+            'descripcion' => 'descripción editada por RDA',
+            'dcat_metadata' => $editado,
+        ])->save();
+
+        $this->seed(DatasetsCatalogoSeeder::class);
+
+        $ds01After = DatasetAbierto::where('dataset_clave', 'DS-01')->whereNull('periodo')->first();
+        $this->assertSame('descripción editada por RDA', $ds01After->descripcion);
+        $this->assertSame(['mir', 'pbr-sed'], $ds01After->dcat_metadata['dct:keywords']);
+    }
 }
