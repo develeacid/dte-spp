@@ -209,6 +209,34 @@ class M5WebhookContractTest extends TestCase
         $this->assertDatabaseMissing('geobase_webhook_deliveries', ['delivery_id' => '42']);
     }
 
+    public function test_falta_header_delivery_retorna_400_sin_row(): void
+    {
+        $payload = [
+            'enrollment_id' => 1,
+            'old_status' => 'a',
+            'new_status' => 'b',
+            'spp_program_id' => 1,
+            'timestamp' => 't',
+        ];
+
+        $body = json_encode($payload);
+        $signature = 'sha256=' . hash_hmac('sha256', $body, self::SECRET);
+
+        $this->call(
+            method: 'POST',
+            uri: '/api/webhooks/geobase',
+            server: [
+                'HTTP_X-GeoBase-Event' => 'enrollment.status_changed',
+                'HTTP_X-GeoBase-Signature' => $signature,
+                'HTTP_ACCEPT' => 'application/json',
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            content: $body,
+        )->assertStatus(400);
+
+        $this->assertSame(0, \App\Models\GeoBase\WebhookDelivery::count());
+    }
+
     public function test_delivery_id_repetido_responde_idempotente_sin_redispatch(): void
     {
         Event::fake([SyncProcessed::class]);
