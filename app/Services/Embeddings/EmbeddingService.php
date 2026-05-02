@@ -3,17 +3,22 @@
 namespace App\Services\Embeddings;
 
 use App\Contracts\EmbeddingServiceInterface;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\RateLimiter;
 
 class EmbeddingService implements EmbeddingServiceInterface
 {
     protected string $apiKey;
+
     protected string $apiUrl;
+
     protected string $model;
+
     protected int $dimension;
+
     protected int $timeout;
+
     protected int $maxTokens;
 
     public function __construct()
@@ -51,16 +56,16 @@ class EmbeddingService implements EmbeddingServiceInterface
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Authorization' => 'Bearer '.$this->apiKey,
                 'Content-Type' => 'application/json',
             ])
-            ->timeout($this->timeout)
-            ->post($this->apiUrl, [
-                'model' => $this->model,
-                'input' => array_values($cleanTexts),
-            ]);
+                ->timeout($this->timeout)
+                ->post($this->apiUrl, [
+                    'model' => $this->model,
+                    'input' => array_values($cleanTexts),
+                ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 $error = $response->json('error.message', 'Error desconocido');
                 $statusCode = $response->status();
 
@@ -80,7 +85,7 @@ class EmbeddingService implements EmbeddingServiceInterface
 
             return array_map(fn ($item) => $item['embedding'], $data);
 
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+        } catch (ConnectionException $e) {
             Log::error('Embedding batch API connection error', [
                 'message' => $e->getMessage(),
                 'count' => count($texts),
@@ -142,18 +147,18 @@ class EmbeddingService implements EmbeddingServiceInterface
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Authorization' => 'Bearer '.$this->apiKey,
                 'Content-Type' => 'application/json',
             ])
-            ->timeout($this->timeout)
-            ->post($this->apiUrl, [
-                'model' => $this->model,
-                'input' => $text,
-            ]);
+                ->timeout($this->timeout)
+                ->post($this->apiUrl, [
+                    'model' => $this->model,
+                    'input' => $text,
+                ]);
 
             return $this->parseResponse($response);
 
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+        } catch (ConnectionException $e) {
             Log::error('Embedding API connection error', [
                 'message' => $e->getMessage(),
                 'text_length' => strlen($text),
@@ -168,7 +173,7 @@ class EmbeddingService implements EmbeddingServiceInterface
      */
     protected function parseResponse($response): array
     {
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             $error = $response->json('error.message', 'Error desconocido');
             $statusCode = $response->status();
 
@@ -192,19 +197,19 @@ class EmbeddingService implements EmbeddingServiceInterface
      */
     protected function validateEmbedding(mixed $embedding): void
     {
-        if (!is_array($embedding)) {
+        if (! is_array($embedding)) {
             throw new \RuntimeException('Invalid embedding response: not an array');
         }
 
         if (count($embedding) !== $this->dimension) {
             throw new \RuntimeException(
-                "Invalid embedding dimension: expected {$this->dimension}, got " . count($embedding)
+                "Invalid embedding dimension: expected {$this->dimension}, got ".count($embedding)
             );
         }
 
         // Verificar que todos los elementos son numéricos
         foreach ($embedding as $i => $value) {
-            if (!is_float($value) && !is_int($value)) {
+            if (! is_float($value) && ! is_int($value)) {
                 throw new \RuntimeException("Invalid embedding value at index {$i}");
             }
         }

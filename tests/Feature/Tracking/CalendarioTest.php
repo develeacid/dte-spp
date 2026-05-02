@@ -22,12 +22,13 @@ class CalendarioTest extends TestCase
     use RefreshDatabase;
 
     private CalendarioService $service;
+
     private User $user;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new CalendarioService();
+        $this->service = new CalendarioService;
         $this->user = User::factory()->withPersonalTeam()->create();
     }
 
@@ -153,6 +154,7 @@ class CalendarioTest extends TestCase
             'frecuencia' => 'trimestral', 'meta' => 100,
             'activo_seguimiento' => true, 'orden' => 1,
         ]);
+
         return MetaPeriodo::create([
             'indicador_id' => $indicador->id,
             'periodo' => 1, 'meta_periodo' => 25,
@@ -187,6 +189,7 @@ class CalendarioTest extends TestCase
             'fecha_apertura' => now()->subDays(20),
             'fecha_cierre' => now()->subDay(),
         ]);
+
         return Avance::create([
             'meta_periodo_id' => $meta->id,
             'indicador_id' => $indicador->id,

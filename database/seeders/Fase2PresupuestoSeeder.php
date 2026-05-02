@@ -70,9 +70,9 @@ class Fase2PresupuestoSeeder extends Seeder
      * Sufijo de email para cada UR (financiero.<slug>@sistema.test).
      */
     private array $slugMap = [
-        'SE-001'     => 'se',
-        'SS-002'     => 'ss',
-        'SEG-003'    => 'seg',
+        'SE-001' => 'se',
+        'SS-002' => 'ss',
+        'SEG-003' => 'seg',
         'SECTUR-004' => 'sectur',
     ];
 
@@ -80,6 +80,7 @@ class Fase2PresupuestoSeeder extends Seeder
     {
         if (app()->environment('production')) {
             $this->command->error('No se puede ejecutar en producción.');
+
             return;
         }
 
@@ -93,6 +94,7 @@ class Fase2PresupuestoSeeder extends Seeder
 
             if (! $financieroUser) {
                 $this->command->warn("No se encontró financiero.{$urSlug}@sistema.test — saltando UR {$urClave}");
+
                 continue;
             }
 
@@ -101,6 +103,7 @@ class Fase2PresupuestoSeeder extends Seeder
 
                 if (! $programa) {
                     $this->command->warn("Programa {$progDef['clave']} no encontrado — saltando");
+
                     continue;
                 }
 
@@ -112,8 +115,8 @@ class Fase2PresupuestoSeeder extends Seeder
                 );
 
                 $totales['partidas'] += $counts['partidas'];
-                $totales['metas']    += $counts['metas'];
-                $totales['avances']  += $counts['avances'];
+                $totales['metas'] += $counts['metas'];
+                $totales['avances'] += $counts['avances'];
             }
         }
 
@@ -152,15 +155,15 @@ class Fase2PresupuestoSeeder extends Seeder
             $partida = PartidaPresupuestal::firstOrCreate(
                 [
                     'programa_presupuestario_id' => $programa->id,
-                    'clave_partida'              => $this->partidasCatalogo[$i][0],
-                    'ejercicio_fiscal'           => $programa->ejercicio_fiscal,
+                    'clave_partida' => $this->partidasCatalogo[$i][0],
+                    'ejercicio_fiscal' => $programa->ejercicio_fiscal,
                 ],
                 [
-                    'descripcion'      => $this->partidasCatalogo[$i][1],
-                    'monto_aprobado'   => $montoAprobado,
+                    'descripcion' => $this->partidasCatalogo[$i][1],
+                    'monto_aprobado' => $montoAprobado,
                     'monto_modificado' => $montoModificado,
-                    'team_id'          => $programa->team_id,
-                    'registrado_por'   => $financieroUser->id,
+                    'team_id' => $programa->team_id,
+                    'registrado_por' => $financieroUser->id,
                 ]
             );
 
@@ -173,7 +176,7 @@ class Fase2PresupuestoSeeder extends Seeder
                 MetaGastoTrimestral::firstOrCreate(
                     [
                         'partida_presupuestal_id' => $partida->id,
-                        'trimestre'               => $tri + 1,
+                        'trimestre' => $tri + 1,
                     ],
                     [
                         'monto_programado' => round($montoEfectivo * $pct, 2),
@@ -189,22 +192,22 @@ class Fase2PresupuestoSeeder extends Seeder
                 $metaProgramado = round($montoEfectivo * $this->distribucionTrimestral[$t - 1], 2);
 
                 $comprometido = round($metaProgramado * $factorComprometido, 2);
-                $devengado    = round($comprometido * 0.95, 2);
-                $pagado       = round($devengado * 0.90, 2);
+                $devengado = round($comprometido * 0.95, 2);
+                $pagado = round($devengado * 0.90, 2);
 
                 $observaciones = $this->observacionesPorEscenario($progDef['escenario'], $t);
 
                 AvanceFinanciero::firstOrCreate(
                     [
                         'partida_presupuestal_id' => $partida->id,
-                        'trimestre'               => $t,
+                        'trimestre' => $t,
                     ],
                     [
                         'monto_comprometido' => $comprometido,
-                        'monto_devengado'    => $devengado,
-                        'monto_pagado'       => $pagado,
-                        'registrado_por'     => $financieroUser->id,
-                        'observaciones'      => $observaciones,
+                        'monto_devengado' => $devengado,
+                        'monto_pagado' => $pagado,
+                        'registrado_por' => $financieroUser->id,
+                        'observaciones' => $observaciones,
                     ]
                 );
                 $counts['avances']++;
@@ -224,8 +227,8 @@ class Fase2PresupuestoSeeder extends Seeder
     private function factorComprometido(string $escenario, int $progIdx): float
     {
         return match ($escenario) {
-            'normal'         => 1.0 + ($progIdx * 0.02),        // 1.00, 1.02, 1.04, 1.06
-            'subejercicio'   => 0.45 + ($progIdx * 0.01),       // 0.45, 0.46
+            'normal' => 1.0 + ($progIdx * 0.02),        // 1.00, 1.02, 1.04, 1.06
+            'subejercicio' => 0.45 + ($progIdx * 0.01),       // 0.45, 0.46
             'sobreejercicio' => 1.40,
         };
     }
@@ -236,10 +239,8 @@ class Fase2PresupuestoSeeder extends Seeder
     private function observacionesPorEscenario(string $escenario, int $trimestre): ?string
     {
         return match (true) {
-            $escenario === 'subejercicio' && $trimestre === 3
-                => 'Subejercicio detectado: analizar causas de baja ejecución presupuestal.',
-            $escenario === 'sobreejercicio' && $trimestre >= 2
-                => 'Sobreejercicio: ampliación presupuestal autorizada por adecuación.',
+            $escenario === 'subejercicio' && $trimestre === 3 => 'Subejercicio detectado: analizar causas de baja ejecución presupuestal.',
+            $escenario === 'sobreejercicio' && $trimestre >= 2 => 'Sobreejercicio: ampliación presupuestal autorizada por adecuación.',
             default => null,
         };
     }

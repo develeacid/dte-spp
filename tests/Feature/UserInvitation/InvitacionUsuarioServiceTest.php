@@ -3,11 +3,12 @@
 namespace Tests\Feature\UserInvitation;
 
 use App\Mail\InvitacionUsuario;
-use App\Models\Team;
 use App\Models\User;
 use App\Services\InvitacionUsuarioService;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class InvitacionUsuarioServiceTest extends TestCase
@@ -17,9 +18,9 @@ class InvitacionUsuarioServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
         // Register temporary route for activar.show (created in Task 6)
-        \Illuminate\Support\Facades\Route::get('/activar/{token}', fn () => '')->name('activar.show');
+        Route::get('/activar/{token}', fn () => '')->name('activar.show');
         $this->app['router']->getRoutes()->refreshNameLookups();
     }
 
@@ -30,7 +31,7 @@ class InvitacionUsuarioServiceTest extends TestCase
         $admin = User::factory()->withPersonalTeam()->create();
         $team = $admin->currentTeam;
 
-        $service = new InvitacionUsuarioService();
+        $service = new InvitacionUsuarioService;
         $user = $service->invitar('nuevo@gob.mx', 'Nuevo Usuario', 'operador', $team->id);
 
         $this->assertDatabaseHas('users', [
@@ -50,7 +51,7 @@ class InvitacionUsuarioServiceTest extends TestCase
 
         $admin = User::factory()->withPersonalTeam()->create();
 
-        $service = new InvitacionUsuarioService();
+        $service = new InvitacionUsuarioService;
         $service->invitar('nuevo@gob.mx', 'Nuevo Usuario', 'operador', $admin->currentTeam->id);
 
         Mail::assertSent(InvitacionUsuario::class, function ($mail) {
@@ -65,7 +66,7 @@ class InvitacionUsuarioServiceTest extends TestCase
         $user = User::factory()->withPersonalTeam()->invited()->create();
         $oldToken = $user->invitation_token;
 
-        $service = new InvitacionUsuarioService();
+        $service = new InvitacionUsuarioService;
         $service->reenviarInvitacion($user);
 
         $user->refresh();
@@ -79,7 +80,7 @@ class InvitacionUsuarioServiceTest extends TestCase
         $user = User::factory()->withPersonalTeam()->invited()->create();
         $user->assignRole('operador');
 
-        $service = new InvitacionUsuarioService();
+        $service = new InvitacionUsuarioService;
         $service->reenviarInvitacion($user);
 
         Mail::assertSent(InvitacionUsuario::class, function ($mail) use ($user) {

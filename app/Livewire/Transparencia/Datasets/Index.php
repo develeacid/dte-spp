@@ -25,10 +25,25 @@ class Index extends Component
     #[Url(as: 'tipo', except: '')]
     public string $filtroTipo = '';
 
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function updatingFiltroStatus(): void { $this->resetPage(); }
-    public function updatingFiltroSistema(): void { $this->resetPage(); }
-    public function updatingFiltroTipo(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroSistema(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroTipo(): void
+    {
+        $this->resetPage();
+    }
 
     public function render()
     {
@@ -36,10 +51,10 @@ class Index extends Component
 
         if ($this->search !== '') {
             // Escapa wildcards LIKE/ILIKE para que `%` y `_` se interpreten literales.
-            $term = '%' . addcslashes($this->search, '%_\\') . '%';
+            $term = '%'.addcslashes($this->search, '%_\\').'%';
             $query->where(function ($q) use ($term) {
                 $q->where('dataset_clave', 'ilike', $term)
-                  ->orWhere('nombre', 'ilike', $term);
+                    ->orWhere('nombre', 'ilike', $term);
             });
         }
 

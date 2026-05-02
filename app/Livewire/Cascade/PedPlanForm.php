@@ -3,6 +3,7 @@
 namespace App\Livewire\Cascade;
 
 use App\Models\PedPlan;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class PedPlanForm extends Component
@@ -10,9 +11,13 @@ class PedPlanForm extends Component
     public ?PedPlan $plan = null;
 
     public string $nombre = '';
+
     public string $nivel_gobierno = 'estatal';
+
     public int $periodo_inicio;
+
     public int $periodo_fin;
+
     public bool $activo = false;
 
     public function mount(?PedPlan $plan = null): void
@@ -33,29 +38,29 @@ class PedPlanForm extends Component
     public function save(): void
     {
         $this->validate([
-            'nombre'         => ['required', 'string', 'max:255'],
+            'nombre' => ['required', 'string', 'max:255'],
             'nivel_gobierno' => ['required', 'in:estatal,municipal'],
             'periodo_inicio' => ['required', 'integer', 'min:2000', 'max:2100'],
-            'periodo_fin'    => ['required', 'integer', 'min:2000', 'max:2100', 'gt:periodo_inicio'],
-            'activo'         => ['boolean'],
+            'periodo_fin' => ['required', 'integer', 'min:2000', 'max:2100', 'gt:periodo_inicio'],
+            'activo' => ['boolean'],
         ]);
 
         if ($this->plan && $this->plan->exists) {
             $this->plan->update([
-                'nombre'         => $this->nombre,
+                'nombre' => $this->nombre,
                 'nivel_gobierno' => $this->nivel_gobierno,
                 'periodo_inicio' => $this->periodo_inicio,
-                'periodo_fin'    => $this->periodo_fin,
-                'activo'         => $this->activo,
+                'periodo_fin' => $this->periodo_fin,
+                'activo' => $this->activo,
             ]);
             session()->flash('message', 'Plan actualizado correctamente.');
         } else {
             PedPlan::create([
-                'nombre'         => $this->nombre,
+                'nombre' => $this->nombre,
                 'nivel_gobierno' => $this->nivel_gobierno,
                 'periodo_inicio' => $this->periodo_inicio,
-                'periodo_fin'    => $this->periodo_fin,
-                'activo'         => $this->activo,
+                'periodo_fin' => $this->periodo_fin,
+                'activo' => $this->activo,
             ]);
             session()->flash('message', 'Plan creado correctamente.');
         }
@@ -63,7 +68,7 @@ class PedPlanForm extends Component
         $this->redirect(route('cascade.ped.index'));
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.cascade.ped-plan-form');
     }

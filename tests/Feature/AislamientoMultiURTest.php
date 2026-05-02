@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
@@ -17,7 +18,7 @@ class AislamientoMultiURTest extends TestCase
     {
         parent::setUp();
         // Asegurar que existan roles (RolesAndPermissionsSeeder define: admin, planeador, operador)
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
 
         // Registrar la ruta de prueba UNA SOLA VEZ en setUp para evitar problemas
         // de aislamiento entre tests cuando se definen rutas con Route::get() dentro
@@ -39,8 +40,8 @@ class AislamientoMultiURTest extends TestCase
         $programa = ProgramaPresupuestario::create(['nombre' => 'Prog Test', 'clave' => 'P-001']);
 
         $this->actingAs($user)
-             ->get("/test-programa/{$programa->id}")
-             ->assertForbidden();
+            ->get("/test-programa/{$programa->id}")
+            ->assertForbidden();
     }
 
     public function test_coordinadora_accede(): void
@@ -56,7 +57,7 @@ class AislamientoMultiURTest extends TestCase
         $programa->equipos()->attach($team->id, ['rol' => 'coordinadora']);
 
         $this->actingAs($user)
-             ->get("/test-programa/{$programa->id}")
-             ->assertOk();
+            ->get("/test-programa/{$programa->id}")
+            ->assertOk();
     }
 }

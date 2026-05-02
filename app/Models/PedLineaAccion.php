@@ -63,6 +63,6 @@ class PedLineaAccion extends Model
 
     public function getClaveCompletaAttribute(): string
     {
-        return $this->estrategia->clave_completa . '.' . $this->clave;
+        return $this->estrategia->clave_completa.'.'.$this->clave;
     }
 }

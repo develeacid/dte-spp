@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Mml;
 
+use App\Contracts\LlmServiceInterface;
 use App\Enums\TipoArbol;
 use App\Enums\TipoNivelMir;
 use App\Enums\TipoNodo;
@@ -10,6 +11,7 @@ use App\Models\Mml\Alternativa;
 use App\Models\Mml\Arbol;
 use App\Models\Mml\ArbolNodo;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\MirVersion;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,6 +23,7 @@ class MirEditorTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
 
     protected function setUp(): void
@@ -210,7 +213,7 @@ class MirEditorTest extends TestCase
             'orden' => 1,
         ]);
 
-        $this->mock(\App\Contracts\LlmServiceInterface::class, function ($mock) {
+        $this->mock(LlmServiceInterface::class, function ($mock) {
             $mock->shouldReceive('isDegraded')->andReturn(false);
             $mock->shouldReceive('suggest')->once()->andReturn(
                 '((PIB agroindustrial año actual - PIB agroindustrial año anterior) / PIB agroindustrial año anterior) × 100'
@@ -290,7 +293,7 @@ class MirEditorTest extends TestCase
             'orden' => 1,
         ]);
 
-        $version = \App\Models\Mml\MirVersion::create([
+        $version = MirVersion::create([
             'programa_presupuestario_id' => $this->programa->id,
             'etiqueta' => 'v1 — Borrador inicial',
             'snapshot' => [

@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Enums\SystemRole;
 use App\Enums\SystemPermission;
+use App\Enums\SystemRole;
 use App\Models\User;
+use Database\Seeders\PresupuestoPermissionsSeeder;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -21,8 +23,8 @@ class RolesAndPermissionsTest extends TestCase
         // (RefreshDatabase resetea la BD pero no la caché de Spatie)
         $this->app->make(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-        $this->seed(\Database\Seeders\PresupuestoPermissionsSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $this->seed(PresupuestoPermissionsSeeder::class);
     }
 
     public function test_planeador_tiene_permiso_crear_programa(): void

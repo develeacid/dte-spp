@@ -16,18 +16,18 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('ped_objetivo_estrategico_id')
-                  ->constrained('ped_objetivos_estrategicos')
-                  ->cascadeOnDelete();
+                ->constrained('ped_objetivos_estrategicos')
+                ->cascadeOnDelete();
 
             $table->foreignId('pnd_objetivo_id')
-                  ->constrained('pnd_objetivos')
-                  ->cascadeOnDelete();
+                ->constrained('pnd_objetivos')
+                ->cascadeOnDelete();
 
             $table->timestamps();
 
             $table->unique([
                 'ped_objetivo_estrategico_id',
-                'pnd_objetivo_id'
+                'pnd_objetivo_id',
             ], 'alineacion_ped_pnd_unique');
         });
     }

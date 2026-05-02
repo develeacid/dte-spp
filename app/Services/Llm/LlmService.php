@@ -6,6 +6,7 @@ use App\Contracts\LlmServiceInterface;
 use App\DTOs\LlmValidationResult;
 use App\Exceptions\LlmException;
 use App\Models\LlmLog;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -62,7 +63,7 @@ class LlmService implements LlmServiceInterface
 
         $data = json_decode($responseText, true);
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw LlmException::invalidResponse('Response is not valid JSON');
         }
 
@@ -95,7 +96,7 @@ class LlmService implements LlmServiceInterface
 
     public function isDegraded(): bool
     {
-        if (!config('llm.fallback.enabled', true)) {
+        if (! config('llm.fallback.enabled', true)) {
             return false;
         }
 
@@ -130,7 +131,7 @@ class LlmService implements LlmServiceInterface
         $responseText = $this->call('validateProblema', $messages, $prompt, $templateKey, $version);
         $data = json_decode($responseText, true);
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw LlmException::invalidResponse('Response is not valid JSON');
         }
 
@@ -166,7 +167,7 @@ class LlmService implements LlmServiceInterface
         $responseText = $this->call('suggestNarrativeSyntax', $messages, $prompt, $templateKey, $version);
         $data = json_decode($responseText, true);
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw LlmException::invalidResponse('Response is not valid JSON');
         }
 
@@ -201,7 +202,7 @@ class LlmService implements LlmServiceInterface
         $responseText = $this->call('validateCremaa', $messages, $prompt, $templateKey, $version);
         $data = json_decode($responseText, true);
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw LlmException::invalidResponse('Response is not valid JSON');
         }
 
@@ -236,7 +237,7 @@ class LlmService implements LlmServiceInterface
         $responseText = $this->call('validateVerticalLogic', $messages, $prompt, $templateKey, $version);
         $data = json_decode($responseText, true);
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw LlmException::invalidResponse('Response is not valid JSON');
         }
 
@@ -271,7 +272,7 @@ class LlmService implements LlmServiceInterface
         $responseText = $this->call('validateHorizontalLogic', $messages, $prompt, $templateKey, $version);
         $data = json_decode($responseText, true);
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw LlmException::invalidResponse('Response is not valid JSON');
         }
 
@@ -306,7 +307,7 @@ class LlmService implements LlmServiceInterface
         $responseText = $this->call('extractVariables', $messages, $prompt, $templateKey, $version);
         $data = json_decode($responseText, true);
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             return [];
         }
 
@@ -412,17 +413,17 @@ class LlmService implements LlmServiceInterface
                 'Authorization' => 'Bearer '.config('llm.api_key'),
                 'Content-Type' => 'application/json',
             ])
-            ->timeout(config('llm.timeout', 60))
-            ->post(config('llm.api_url'), [
-                'model' => config('llm.model'),
-                'messages' => $messages,
-                'max_tokens' => config('llm.max_tokens', 2000),
-                'temperature' => config('llm.temperature', 0.7),
-            ]);
+                ->timeout(config('llm.timeout', 60))
+                ->post(config('llm.api_url'), [
+                    'model' => config('llm.model'),
+                    'messages' => $messages,
+                    'max_tokens' => config('llm.max_tokens', 2000),
+                    'temperature' => config('llm.temperature', 0.7),
+                ]);
 
             $durationMs = (int) ((microtime(true) - $startTime) * 1000);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 $errorMsg = $response->json('error.message', 'Unknown error');
                 $log->update([
                     'status' => 'error',
@@ -485,7 +486,7 @@ class LlmService implements LlmServiceInterface
                 return $this->degradedTextResponse();
             }
 
-            if ($e instanceof \Illuminate\Http\Client\ConnectionException) {
+            if ($e instanceof ConnectionException) {
                 throw LlmException::timeout();
             }
 
@@ -499,7 +500,7 @@ class LlmService implements LlmServiceInterface
             ['role' => 'system', 'content' => 'Eres un asistente especializado en metodología de marco lógico para programas presupuestarios del sector público mexicano.'],
         ];
 
-        if (!empty($context)) {
+        if (! empty($context)) {
             $contextStr = collect($context)->map(fn ($v, $k) => "{$k}: {$v}")->implode("\n");
             $messages[] = ['role' => 'user', 'content' => "Contexto:\n{$contextStr}\n\n{$prompt}"];
         } else {
@@ -514,7 +515,7 @@ class LlmService implements LlmServiceInterface
         $key = 'llm:'.(auth()->id() ?? 'system');
         $maxPerMinute = config('llm.rate_limit.max_per_minute', 30);
 
-        if (!RateLimiter::attempt($key, $maxPerMinute, fn () => true, 60)) {
+        if (! RateLimiter::attempt($key, $maxPerMinute, fn () => true, 60)) {
             throw LlmException::apiError('Rate limit exceeded', 429);
         }
     }
@@ -539,7 +540,7 @@ class LlmService implements LlmServiceInterface
 
     private function cacheKey(string $method, string $prompt, array $context = []): ?string
     {
-        if (!config('llm.cache.enabled', true)) {
+        if (! config('llm.cache.enabled', true)) {
             return null;
         }
 

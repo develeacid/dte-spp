@@ -2,8 +2,10 @@
 
 namespace App\Models\Mml;
 
+use App\Models\Tracking\Avance;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class MetaPeriodo extends Model
 {
@@ -36,8 +38,8 @@ class MetaPeriodo extends Model
         return $this->belongsTo(Indicador::class);
     }
 
-    public function avance(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function avance(): HasOne
     {
-        return $this->hasOne(\App\Models\Tracking\Avance::class);
+        return $this->hasOne(Avance::class);
     }
 }

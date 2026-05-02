@@ -18,13 +18,14 @@ class SemaforoTest extends TestCase
     use RefreshDatabase;
 
     private SemaforoService $service;
+
     private Indicador $indicador;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(RolesAndPermissionsSeeder::class);
-        $this->service = new SemaforoService();
+        $this->service = new SemaforoService;
 
         $user = User::factory()->withPersonalTeam()->create();
 

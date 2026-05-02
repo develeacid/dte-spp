@@ -15,7 +15,9 @@ class ProcessLlmRequest implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries;
+
     public array $backoff;
+
     public int $timeout;
 
     public function __construct(

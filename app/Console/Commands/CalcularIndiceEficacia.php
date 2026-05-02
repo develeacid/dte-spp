@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Evaluation\EvaluacionPrograma;
 use App\Models\ProgramaPresupuestario;
 use App\Services\Evaluation\IndiceEficaciaService;
 use App\Services\Evaluation\LogicaVerticalService;
@@ -29,6 +30,7 @@ class CalcularIndiceEficacia extends Command
 
         if (! $programaId) {
             $this->error('Debe proporcionar un programa_id o usar --all.');
+
             return self::FAILURE;
         }
 
@@ -36,6 +38,7 @@ class CalcularIndiceEficacia extends Command
 
         if (! $programa) {
             $this->error("Programa #{$programaId} no encontrado.");
+
             return self::FAILURE;
         }
 
@@ -60,6 +63,7 @@ class CalcularIndiceEficacia extends Command
 
         if ($programas->isEmpty()) {
             $this->warn("No se encontraron programas para el ejercicio {$ejercicio}.");
+
             return self::SUCCESS;
         }
 
@@ -82,7 +86,7 @@ class CalcularIndiceEficacia extends Command
         return self::SUCCESS;
     }
 
-    private function mostrarResultado(\App\Models\Evaluation\EvaluacionPrograma $evaluacion): void
+    private function mostrarResultado(EvaluacionPrograma $evaluacion): void
     {
         $this->info("Índice de eficacia: {$evaluacion->indice_eficacia}");
         $this->newLine();

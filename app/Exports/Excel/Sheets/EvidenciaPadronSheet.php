@@ -43,7 +43,7 @@ class EvidenciaPadronSheet implements FromCollection, WithHeadings, WithTitle
                 ->first();
 
             $rows->push([
-                'componente' => 'C' . $componente->orden,
+                'componente' => 'C'.$componente->orden,
                 'narrativa' => str($componente->resumen_narrativo)->limit(80),
                 'snapshot_id' => $evidencia?->geobase_snapshot_id ?? '—',
                 'hash' => $evidencia?->hash_archivo ?? '—',

@@ -10,6 +10,7 @@ use Livewire\Component;
 class AsmForm extends Component
 {
     public ?Asm $asm = null;
+
     public AsmFormData $form;
 
     public function mount(?Asm $asm = null): void

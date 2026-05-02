@@ -3,9 +3,7 @@
 namespace Tests\Feature\Juridico;
 
 use App\Enums\EstadoValidacionJuridica;
-use App\Enums\TipoDocumentoNormativo;
 use App\Enums\TipoSustentoLegal;
-use App\Models\Juridico\DocumentoNormativo;
 use App\Models\Juridico\ValidacionJuridicaPrograma;
 use App\Models\User;
 use App\Services\Juridico\ValidacionJuridicaService;
@@ -15,12 +13,15 @@ use Tests\Traits\JuridicoTestHelpers;
 
 class ValidacionJuridicaServiceTest extends TestCase
 {
-    use RefreshDatabase;
     use JuridicoTestHelpers;
+    use RefreshDatabase;
 
     private ValidacionJuridicaService $service;
+
     private User $user;
+
     private int $teamId;
+
     private int $programaId;
 
     protected function setUp(): void

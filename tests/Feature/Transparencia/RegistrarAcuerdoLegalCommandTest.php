@@ -13,9 +13,10 @@ class RegistrarAcuerdoLegalCommandTest extends TestCase
 
     private function archivoTemporal(string $contenido, string $nombre = 'test.md'): string
     {
-        $ruta = storage_path('app/legal/' . $nombre);
+        $ruta = storage_path('app/legal/'.$nombre);
         @mkdir(dirname($ruta), 0755, true);
         file_put_contents($ruta, $contenido);
+
         return $ruta;
     }
 
@@ -23,7 +24,7 @@ class RegistrarAcuerdoLegalCommandTest extends TestCase
     {
         $dir = storage_path('app/legal');
         if (is_dir($dir)) {
-            foreach (glob($dir . '/*') as $f) {
+            foreach (glob($dir.'/*') as $f) {
                 @unlink($f);
             }
         }
@@ -32,7 +33,7 @@ class RegistrarAcuerdoLegalCommandTest extends TestCase
 
     public function test_falla_si_ruta_no_existe(): void
     {
-        $this->artisan('legal:registrar-acuerdo', ['ruta' => '/tmp/no-existe-' . uniqid() . '.md'])
+        $this->artisan('legal:registrar-acuerdo', ['ruta' => '/tmp/no-existe-'.uniqid().'.md'])
             ->expectsOutputToContain('no existe')
             ->assertExitCode(1);
     }
@@ -142,7 +143,7 @@ class RegistrarAcuerdoLegalCommandTest extends TestCase
         $ruta = $this->archivoTemporal('contenido', 'cualquier.pdf');
 
         $this->artisan('legal:registrar-acuerdo', ['ruta' => $ruta, '--status' => 'inventado'])
-            ->expectsOutputToContain("--status inválido")
+            ->expectsOutputToContain('--status inválido')
             ->assertExitCode(1);
     }
 }

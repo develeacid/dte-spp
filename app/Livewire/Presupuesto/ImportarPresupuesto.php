@@ -4,6 +4,7 @@ namespace App\Livewire\Presupuesto;
 
 use App\Models\Presupuesto\PartidaPresupuestal;
 use App\Models\ProgramaPresupuestario;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -14,12 +15,19 @@ class ImportarPresupuesto extends Component
     use WithFileUploads;
 
     public $archivo;
+
     public array $preview = [];
+
     public array $errores = [];
+
     public int $ejercicioFiscal;
+
     public string $paso = 'upload'; // upload | preview | resultado
+
     public int $creados = 0;
+
     public int $actualizados = 0;
+
     public int $erroresCount = 0;
 
     public function mount(): void
@@ -44,6 +52,7 @@ class ImportarPresupuesto extends Component
         if (! $headers) {
             $this->errores[] = 'El archivo CSV está vacío o no tiene encabezados.';
             fclose($handle);
+
             return;
         }
 
@@ -53,8 +62,9 @@ class ImportarPresupuesto extends Component
         $missing = array_diff($required, $headers);
 
         if (! empty($missing)) {
-            $this->errores[] = 'Columnas faltantes: ' . implode(', ', $missing);
+            $this->errores[] = 'Columnas faltantes: '.implode(', ', $missing);
             fclose($handle);
+
             return;
         }
 
@@ -72,6 +82,7 @@ class ImportarPresupuesto extends Component
 
             if (! $programa) {
                 $this->errores[] = "Fila {$row}: Programa '{$mapped['clave_programa']}' no encontrado.";
+
                 continue;
             }
 
@@ -136,7 +147,7 @@ class ImportarPresupuesto extends Component
         $this->paso = 'upload';
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.presupuesto.importar-presupuesto');
     }

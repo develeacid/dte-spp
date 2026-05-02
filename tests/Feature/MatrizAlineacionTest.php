@@ -165,15 +165,15 @@ class MatrizAlineacionTest extends TestCase
         $pedObj->pndObjetivos()->attach($pndObj->id);
         $pndObj->odsMetas()->attach($odsMeta->id);
 
-        $linea = PedLineaAccion::whereHas('estrategia.objetivoEstrategico', fn($q) => $q->where('id', $pedObj->id))->first();
+        $linea = PedLineaAccion::whereHas('estrategia.objetivoEstrategico', fn ($q) => $q->where('id', $pedObj->id))->first();
 
-        if (!$linea) {
+        if (! $linea) {
             $estrategia = $pedObj->estrategias()->create(['clave' => '1', 'descripcion' => 'Test']);
             $linea = $estrategia->lineasAccion()->create(['clave' => '1', 'descripcion' => 'Test']);
         }
 
         $lineaConCadena = PedLineaAccion::with([
-            'estrategia.objetivoEstrategico.pndObjetivos.odsMetas'
+            'estrategia.objetivoEstrategico.pndObjetivos.odsMetas',
         ])->find($linea->id);
 
         $this->assertTrue($lineaConCadena->estrategia->objetivoEstrategico->pndObjetivos->contains($pndObj));

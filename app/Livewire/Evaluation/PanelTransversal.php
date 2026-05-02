@@ -4,10 +4,6 @@ namespace App\Livewire\Evaluation;
 
 use App\Models\Evaluation\AnexoTransversal;
 use App\Models\Evaluation\EvaluacionPrograma;
-use App\Models\OdsObjetivo;
-use App\Models\PedEje;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;

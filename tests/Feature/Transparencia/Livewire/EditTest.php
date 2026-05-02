@@ -6,8 +6,11 @@ use App\Enums\EstadoDatasetAbierto;
 use App\Livewire\Transparencia\Datasets\Edit;
 use App\Models\Transparencia\DatasetAbierto;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Database\Seeders\TransparenciaPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class EditTest extends TestCase
@@ -17,9 +20,9 @@ class EditTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-        $this->seed(\Database\Seeders\TransparenciaPermissionsSeeder::class);
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $this->seed(TransparenciaPermissionsSeeder::class);
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 
     public function test_autor_edita_su_borrador(): void

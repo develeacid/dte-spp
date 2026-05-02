@@ -17,25 +17,36 @@ use Livewire\Component;
 class ArbolProblemaBuilder extends Component
 {
     public ProgramaPresupuestario $programa;
+
     public ?int $arbolId = null;
 
     // Estado del formulario de nuevo nodo
     public bool $mostrarFormNuevoNodo = false;
+
     public ?int $parentIdNuevoNodo = null;
+
     public string $tipoNuevoNodo = '';
+
     public string $nuevoNodoDescripcion = '';
 
     // Estado del formulario de edición
     public ?int $editNodoId = null;
+
     public string $editNodoDescripcion = '';
 
     // Estado de IA
     public bool $sugiriendoConIa = false;
+
     public array $sugerenciasIa = [];
+
     public string $tipoSugerencia = 'causa_directa';
+
     public ?int $parentIdSugerencia = null;
+
     public array $arbolEjemploPreview = [];
+
     public bool $mostrarPreviewArbol = false;
+
     public bool $generandoArbol = false;
 
     public function mount(ProgramaPresupuestario $programa): void
@@ -115,6 +126,7 @@ class ArbolProblemaBuilder extends Component
 
         if ($nodo->tipo_nodo === TipoNodo::PROBLEMA_CENTRAL) {
             $this->dispatch('notify', message: 'El problema central no se puede eliminar.');
+
             return;
         }
 
@@ -125,7 +137,7 @@ class ArbolProblemaBuilder extends Component
     {
         $this->sugiriendoConIa = true;
         $this->sugerenciasIa = [];
-        $this->tipoSugerencia = match($tipoSugerencia) {
+        $this->tipoSugerencia = match ($tipoSugerencia) {
             'causa' => 'causa_directa',
             'efecto' => 'efecto_directo',
             default => $tipoSugerencia,
@@ -140,20 +152,20 @@ class ArbolProblemaBuilder extends Component
                 ->first();
 
             $nodosExistentes = $arbol->nodos()
-                ->where('tipo_nodo', 'like', $tipoSugerencia . '%')
+                ->where('tipo_nodo', 'like', $tipoSugerencia.'%')
                 ->pluck('descripcion')
                 ->implode(', ');
 
             $prompt = "Problema central: \"{$problemaCentral->descripcion}\". "
-                . "Nodos existentes de tipo {$tipoSugerencia}: [{$nodosExistentes}]. "
-                . "Sugiere 3 {$tipoSugerencia}s adicionales que no estén ya listados. "
-                . "Responde solo con una lista numerada, un elemento por línea.";
+                ."Nodos existentes de tipo {$tipoSugerencia}: [{$nodosExistentes}]. "
+                ."Sugiere 3 {$tipoSugerencia}s adicionales que no estén ya listados. "
+                .'Responde solo con una lista numerada, un elemento por línea.';
 
             $result = $llm->suggest($prompt);
 
             $this->sugerenciasIa = array_filter(
                 array_map('trim', explode("\n", $result)),
-                fn ($line) => !empty($line) && preg_match('/^\d/', $line)
+                fn ($line) => ! empty($line) && preg_match('/^\d/', $line)
             );
         } catch (\Exception $e) {
             session()->flash('error', 'No se pudieron generar sugerencias de IA.');
@@ -179,10 +191,10 @@ class ArbolProblemaBuilder extends Component
             $existentes = $causaDirecta->children()->pluck('descripcion')->implode('; ');
 
             $prompt = "Dado el problema central: \"{$problemaCentral->descripcion}\" "
-                . "y la causa directa: \"{$causaDirecta->descripcion}\", "
-                . "sugiere 3 causas indirectas (causas raíz que originan esta causa directa). "
-                . ($existentes ? "Ya existen estas causas indirectas: {$existentes}. No las repitas. " : '')
-                . "Responde solo con la lista numerada, sin explicaciones.";
+                ."y la causa directa: \"{$causaDirecta->descripcion}\", "
+                .'sugiere 3 causas indirectas (causas raíz que originan esta causa directa). '
+                .($existentes ? "Ya existen estas causas indirectas: {$existentes}. No las repitas. " : '')
+                .'Responde solo con la lista numerada, sin explicaciones.';
 
             $result = $llm->suggest($prompt);
             $this->sugerenciasIa = collect(explode("\n", $result))
@@ -236,21 +248,21 @@ class ArbolProblemaBuilder extends Component
 
             $llm = app(LlmServiceInterface::class);
             $prompt = "Dado el problema central: \"{$problemaCentral->descripcion}\", "
-                . "genera un árbol de problemas completo en formato JSON con exactamente esta estructura:\n"
-                . "{\n"
-                . "  \"causas_directas\": [\n"
-                . "    {\"descripcion\": \"...\", \"indirectas\": [\"...\", \"...\"]},\n"
-                . "    {\"descripcion\": \"...\", \"indirectas\": [\"...\", \"...\"]}\n"
-                . "  ],\n"
-                . "  \"efectos_directos\": [\"...\", \"...\"]\n"
-                . "}\n"
-                . "Exactamente 2 causas directas, 2 causas indirectas por cada directa, y 2 efectos directos. "
-                . "Las causas y efectos deben ser específicos, relevantes y no genéricos. "
-                . "Responde SOLO con el JSON, sin texto adicional.";
+                ."genera un árbol de problemas completo en formato JSON con exactamente esta estructura:\n"
+                ."{\n"
+                ."  \"causas_directas\": [\n"
+                ."    {\"descripcion\": \"...\", \"indirectas\": [\"...\", \"...\"]},\n"
+                ."    {\"descripcion\": \"...\", \"indirectas\": [\"...\", \"...\"]}\n"
+                ."  ],\n"
+                ."  \"efectos_directos\": [\"...\", \"...\"]\n"
+                ."}\n"
+                .'Exactamente 2 causas directas, 2 causas indirectas por cada directa, y 2 efectos directos. '
+                .'Las causas y efectos deben ser específicos, relevantes y no genéricos. '
+                .'Responde SOLO con el JSON, sin texto adicional.';
 
             $result = $llm->suggest($prompt);
             $this->arbolEjemploPreview = json_decode($result, true) ?? [];
-            $this->mostrarPreviewArbol = !empty($this->arbolEjemploPreview);
+            $this->mostrarPreviewArbol = ! empty($this->arbolEjemploPreview);
         } catch (\Throwable $e) {
             report($e);
             session()->flash('error', 'No se pudo generar el árbol de ejemplo.');
@@ -261,7 +273,9 @@ class ArbolProblemaBuilder extends Component
 
     public function confirmarArbolEjemplo(): void
     {
-        if (empty($this->arbolEjemploPreview)) return;
+        if (empty($this->arbolEjemploPreview)) {
+            return;
+        }
 
         $arbol = Arbol::findOrFail($this->arbolId);
         $problemaCentral = $arbol->nodos()

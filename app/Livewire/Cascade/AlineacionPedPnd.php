@@ -4,21 +4,24 @@ namespace App\Livewire\Cascade;
 
 use App\Models\PedObjetivoEstrategico;
 use App\Models\PndObjetivo;
-use Illuminate\Support\Str;
 use Livewire\Component;
 
 class AlineacionPedPnd extends Component
 {
     public bool $showForm = false;
+
     public string $searchPed = '';
+
     public string $searchPnd = '';
+
     public ?int $selectedPedId = null;
+
     public ?int $selectedPndId = null;
 
     public function toggleForm(): void
     {
-        $this->showForm = !$this->showForm;
-        if (!$this->showForm) {
+        $this->showForm = ! $this->showForm;
+        if (! $this->showForm) {
             $this->reset(['searchPed', 'searchPnd', 'selectedPedId', 'selectedPndId']);
         }
     }

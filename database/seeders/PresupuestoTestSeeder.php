@@ -15,6 +15,7 @@ class PresupuestoTestSeeder extends Seeder
     {
         if (app()->environment('production')) {
             $this->command->error('No se puede ejecutar PresupuestoTestSeeder en producción.');
+
             return;
         }
 
@@ -22,6 +23,7 @@ class PresupuestoTestSeeder extends Seeder
 
         if ($programas->count() < 3) {
             $this->command->warn('Se necesitan al menos 3 programas presupuestarios. Ejecuta QaTestingSeeder primero.');
+
             return;
         }
 
@@ -116,6 +118,6 @@ class PresupuestoTestSeeder extends Seeder
             }
         }
 
-        $this->command->info('PresupuestoTestSeeder: datos de prueba creados para ' . $programas->count() . ' programas.');
+        $this->command->info('PresupuestoTestSeeder: datos de prueba creados para '.$programas->count().' programas.');
     }
 }

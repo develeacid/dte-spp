@@ -7,7 +7,6 @@ use App\Exports\Pdf\MirPdfExport;
 use App\Jobs\GenerarReportePdfJob;
 use App\Models\Evaluation\EvaluacionPrograma;
 use App\Models\Mml\Indicador;
-use App\Models\Mml\MetaPeriodo;
 use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;

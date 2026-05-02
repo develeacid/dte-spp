@@ -11,18 +11,31 @@ use Livewire\Form;
 class AsmFormData extends Form
 {
     public ?int $programa_presupuestario_id = null;
+
     public ?int $evaluacion_id = null;
+
     public string $descripcion_aspecto = '';
+
     public string $accion_mejora = '';
+
     public string $tipo_plazo = '';
+
     public string $tipo_accion = '';
+
     public ?int $responsable_id = null;
+
     public string $area_responsable = '';
+
     public ?string $fecha_compromiso = null;
+
     public ?string $fecha_cumplimiento = null;
+
     public int $porcentaje_avance = 0;
+
     public ?string $observacion_ultimo_avance = null;
+
     public string $status = 'pendiente';
+
     public ?string $evidencia_url = null;
 
     public function rules(): array
@@ -32,8 +45,8 @@ class AsmFormData extends Form
             'evaluacion_id' => ['nullable', 'integer', 'exists:evaluaciones_programa,id'],
             'descripcion_aspecto' => ['required', 'string', 'min:10'],
             'accion_mejora' => ['required', 'string', 'min:10'],
-            'tipo_plazo' => ['required', 'in:' . implode(',', TipoPlazoAsm::values())],
-            'tipo_accion' => ['required', 'in:' . implode(',', TipoAccionAsm::values())],
+            'tipo_plazo' => ['required', 'in:'.implode(',', TipoPlazoAsm::values())],
+            'tipo_accion' => ['required', 'in:'.implode(',', TipoAccionAsm::values())],
             'responsable_id' => ['required', 'integer', 'exists:users,id'],
             'area_responsable' => ['required', 'string', 'max:255'],
             'fecha_compromiso' => ['required', 'date'],
@@ -45,7 +58,7 @@ class AsmFormData extends Form
             ],
             'porcentaje_avance' => ['integer', 'min:0', 'max:100'],
             'observacion_ultimo_avance' => ['nullable', 'string'],
-            'status' => ['required', 'in:' . implode(',', StatusAsm::values())],
+            'status' => ['required', 'in:'.implode(',', StatusAsm::values())],
             'evidencia_url' => ['nullable', 'url', 'max:2048'],
         ];
     }

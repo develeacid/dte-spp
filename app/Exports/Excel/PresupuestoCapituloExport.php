@@ -12,9 +12,7 @@ class PresupuestoCapituloExport implements WithMultipleSheets
 {
     use Exportable;
 
-    public function __construct(private PresupuestoCapituloReportService $service)
-    {
-    }
+    public function __construct(private PresupuestoCapituloReportService $service) {}
 
     public function sheets(): array
     {

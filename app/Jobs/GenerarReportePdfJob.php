@@ -39,7 +39,7 @@ class GenerarReportePdfJob implements ShouldQueue
 
         $disk = config('evaluation.exports.storage_disk');
         $path = config('evaluation.exports.storage_path');
-        $filename = "{$this->tipo}-" . now()->format('Ymd-His') . '-' . uniqid() . '.pdf';
+        $filename = "{$this->tipo}-".now()->format('Ymd-His').'-'.uniqid().'.pdf';
         $fullPath = "{$path}/{$filename}";
 
         Storage::disk($disk)->put($fullPath, $contenido);

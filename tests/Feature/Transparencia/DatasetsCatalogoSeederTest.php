@@ -3,8 +3,8 @@
 namespace Tests\Feature\Transparencia;
 
 use App\Models\Transparencia\DatasetAbierto;
-use Database\Seeders\Transparencia\DatasetsCatalogoSeeder;
 use Database\Seeders\PoliticaClasificacionSeeder;
+use Database\Seeders\Transparencia\DatasetsCatalogoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +44,7 @@ class DatasetsCatalogoSeederTest extends TestCase
         $this->assertSame($ds00Hash, $ds00After->hash_sha256);
     }
 
-    public function test_claves_son_DS_01_a_DS_06_y_DS_G01_a_DS_G04(): void
+    public function test_claves_son_d_s_01_a_d_s_06_y_d_s_g01_a_d_s_g04(): void
     {
         $this->seed(DatasetsCatalogoSeeder::class);
 

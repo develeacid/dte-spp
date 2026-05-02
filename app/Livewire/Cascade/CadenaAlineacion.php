@@ -8,6 +8,7 @@ use Livewire\Component;
 class CadenaAlineacion extends Component
 {
     public bool $showModal = false;
+
     public ?int $lineaAccionId = null;
 
     protected $listeners = ['verCadena' => 'loadCadena'];
@@ -26,7 +27,7 @@ class CadenaAlineacion extends Component
 
     public function getCadenaProperty(): ?array
     {
-        if (!$this->lineaAccionId) {
+        if (! $this->lineaAccionId) {
             return null;
         }
 
@@ -36,7 +37,7 @@ class CadenaAlineacion extends Component
             'programasDerivadosObjetivos.programa',
         ])->find($this->lineaAccionId);
 
-        if (!$lineaAccion) {
+        if (! $lineaAccion) {
             return null;
         }
 

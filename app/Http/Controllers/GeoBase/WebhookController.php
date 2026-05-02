@@ -16,11 +16,15 @@ use Illuminate\Support\Str;
 class WebhookController extends Controller
 {
     private const PAYLOAD_TRUNCATE_BYTES = 16384;
+
     private const PAYLOAD_PREVIEW_BYTES = 16000;
+
     private const ERROR_MESSAGE_MAX = 497;
 
     private const EVENT_ENROLLMENT_STATUS_CHANGED = 'enrollment.status_changed';
+
     private const EVENT_SNAPSHOT_GENERATED = 'snapshot.generated';
+
     private const EVENT_SYNC_PROCESSED = 'sync.processed';
 
     public function handle(Request $request): JsonResponse

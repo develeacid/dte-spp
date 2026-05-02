@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 use Laravel\Jetstream\Features;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
@@ -92,7 +92,7 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'password' => null,
             'activated_at' => null,
-            'invitation_token' => \Illuminate\Support\Str::random(64),
+            'invitation_token' => Str::random(64),
             'invitation_sent_at' => now(),
         ]);
     }

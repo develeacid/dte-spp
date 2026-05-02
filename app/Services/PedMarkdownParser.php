@@ -2,18 +2,14 @@
 
 namespace App\Services;
 
-use App\Models\PedEje;
-use App\Models\PedEstrategia;
-use App\Models\PedLineaAccion;
-use App\Models\PedObjetivoEstrategico;
 use App\Models\PedPlan;
-use App\Models\PedTema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class PedMarkdownParser
 {
     protected array $errors = [];
+
     protected array $tree = [];
 
     /**
@@ -47,7 +43,8 @@ class PedMarkdownParser
             if ($level === null) {
                 if (Str::startsWith($line, '-')) {
                     if ($estIdx < 0) {
-                        $this->addError($lineNumber, "Línea de acción sin estrategia padre");
+                        $this->addError($lineNumber, 'Línea de acción sin estrategia padre');
+
                         continue;
                     }
 
@@ -56,10 +53,11 @@ class PedMarkdownParser
                         $this->tree['ejes'][$ejeIdx]['temas'][$temaIdx]['objetivos'][$objIdx]['estrategias'][$estIdx]['lineas'][] = $lineaAccion;
                     }
                 }
+
                 continue;
             }
 
-            if (!$this->validateHierarchy($level, $lineNumber)) {
+            if (! $this->validateHierarchy($level, $lineNumber)) {
                 continue;
             }
 
@@ -71,8 +69,9 @@ class PedMarkdownParser
                     break;
 
                 case 2: // Eje
-                    if (!$hasPlan) {
-                        $this->addError($lineNumber, "Eje sin plan padre");
+                    if (! $hasPlan) {
+                        $this->addError($lineNumber, 'Eje sin plan padre');
+
                         continue 2;
                     }
                     $this->tree['ejes'][] = $this->parseEje($line);
@@ -82,7 +81,8 @@ class PedMarkdownParser
 
                 case 3: // Tema
                     if ($ejeIdx < 0) {
-                        $this->addError($lineNumber, "Tema sin eje padre");
+                        $this->addError($lineNumber, 'Tema sin eje padre');
+
                         continue 2;
                     }
                     $this->tree['ejes'][$ejeIdx]['temas'][] = $this->parseTema($line);
@@ -92,7 +92,8 @@ class PedMarkdownParser
 
                 case 4: // Objetivo Estratégico
                     if ($temaIdx < 0) {
-                        $this->addError($lineNumber, "Objetivo estratégico sin tema padre");
+                        $this->addError($lineNumber, 'Objetivo estratégico sin tema padre');
+
                         continue 2;
                     }
                     $this->tree['ejes'][$ejeIdx]['temas'][$temaIdx]['objetivos'][] = $this->parseObjetivo($line);
@@ -102,7 +103,8 @@ class PedMarkdownParser
 
                 case 5: // Estrategia
                     if ($objIdx < 0) {
-                        $this->addError($lineNumber, "Estrategia sin objetivo padre");
+                        $this->addError($lineNumber, 'Estrategia sin objetivo padre');
+
                         continue 2;
                     }
                     $this->tree['ejes'][$ejeIdx]['temas'][$temaIdx]['objetivos'][$objIdx]['estrategias'][] = $this->parseEstrategia($line);
@@ -113,7 +115,7 @@ class PedMarkdownParser
 
         // Validar que se encontró al menos un plan
         if (empty($this->tree)) {
-            $this->addError(0, "No se encontró ningún plan en el archivo");
+            $this->addError(0, 'No se encontró ningún plan en el archivo');
         }
 
         return [
@@ -128,11 +130,21 @@ class PedMarkdownParser
      */
     protected function detectHeadingLevel(string $line): ?int
     {
-        if (Str::startsWith($line, '#####')) return 5;
-        if (Str::startsWith($line, '####')) return 4;
-        if (Str::startsWith($line, '###')) return 3;
-        if (Str::startsWith($line, '##')) return 2;
-        if (Str::startsWith($line, '#')) return 1;
+        if (Str::startsWith($line, '#####')) {
+            return 5;
+        }
+        if (Str::startsWith($line, '####')) {
+            return 4;
+        }
+        if (Str::startsWith($line, '###')) {
+            return 3;
+        }
+        if (Str::startsWith($line, '##')) {
+            return 2;
+        }
+        if (Str::startsWith($line, '#')) {
+            return 1;
+        }
 
         return null;
     }
@@ -144,7 +156,8 @@ class PedMarkdownParser
     {
         // El primer elemento debe ser un plan (nivel 1)
         if (empty($this->tree) && $level !== 1) {
-            $this->addError($lineNumber, "El archivo debe comenzar con un Plan (heading nivel 1)");
+            $this->addError($lineNumber, 'El archivo debe comenzar con un Plan (heading nivel 1)');
+
             return false;
         }
 
@@ -376,7 +389,7 @@ class PedMarkdownParser
         $tree = $parsed['tree'];
 
         return [
-            'plan' => !empty($tree) ? 1 : 0,
+            'plan' => ! empty($tree) ? 1 : 0,
             'ejes' => count($tree['ejes'] ?? []),
             'temas' => $this->countRecursive($tree['ejes'] ?? [], 'temas'),
             'objetivos' => $this->countRecursive($tree['ejes'] ?? [], 'temas', 'objetivos'),

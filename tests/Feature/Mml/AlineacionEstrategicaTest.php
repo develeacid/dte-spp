@@ -4,6 +4,9 @@ namespace Tests\Feature\Mml;
 
 use App\Enums\TipoNivelMir;
 use App\Livewire\Mml\AlineacionEstrategica;
+use App\Models\Mml\Alternativa;
+use App\Models\Mml\Arbol;
+use App\Models\Mml\ArbolNodo;
 use App\Models\Mml\MirNivel;
 use App\Models\PedEje;
 use App\Models\PedObjetivoEstrategico;
@@ -20,6 +23,7 @@ class AlineacionEstrategicaTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
 
     protected function setUp(): void
@@ -38,6 +42,7 @@ class AlineacionEstrategicaTest extends TestCase
         $plan = PedPlan::create(['nombre' => 'PED 2024-2030', 'periodo_inicio' => 2024, 'periodo_fin' => 2030]);
         $eje = PedEje::create(['ped_plan_id' => $plan->id, 'numero' => 1, 'nombre' => 'Eje 1']);
         $tema = PedTema::create(['ped_eje_id' => $eje->id, 'numero' => '1', 'nombre' => 'Educación', 'descripcion' => 'Tema educación']);
+
         return PedObjetivoEstrategico::create([
             'ped_tema_id' => $tema->id,
             'clave' => '1',
@@ -106,17 +111,17 @@ class AlineacionEstrategicaTest extends TestCase
         ]);
 
         // Create objectives tree with required nodes
-        $arbolObj = \App\Models\Mml\Arbol::create([
+        $arbolObj = Arbol::create([
             'programa_presupuestario_id' => $this->programa->id,
             'tipo' => 'objetivos',
         ]);
-        $objetivoCentral = \App\Models\Mml\ArbolNodo::create([
+        $objetivoCentral = ArbolNodo::create([
             'arbol_id' => $arbolObj->id,
             'tipo_nodo' => 'objetivo_central',
             'descripcion' => 'Objetivo central de prueba',
             'orden' => 1,
         ]);
-        $medioDirecto = \App\Models\Mml\ArbolNodo::create([
+        $medioDirecto = ArbolNodo::create([
             'arbol_id' => $arbolObj->id,
             'parent_id' => $objetivoCentral->id,
             'tipo_nodo' => 'medio_directo',
@@ -125,7 +130,7 @@ class AlineacionEstrategicaTest extends TestCase
         ]);
 
         // Create selected alternative
-        $alternativa = \App\Models\Mml\Alternativa::create([
+        $alternativa = Alternativa::create([
             'programa_presupuestario_id' => $this->programa->id,
             'nombre' => 'Alternativa 1',
             'seleccionada' => true,

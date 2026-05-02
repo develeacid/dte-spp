@@ -4,10 +4,12 @@ namespace Tests\Feature\Transparencia;
 
 use App\Enums\SystemPermission;
 use App\Enums\SystemRole;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\TransparenciaPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class PermisosTransparenciaTest extends TestCase
@@ -34,10 +36,10 @@ class PermisosTransparenciaTest extends TestCase
         // permiso de transparencia porque aún no existe), luego TransparenciaPermissionsSeeder
         // (crea aprobar_datos_abiertos pero deliberadamente NO lo asigna a admin).
         // Esto verifica la segregación EFECTIVA en producción, no solo el aislamiento del SUT.
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
         $this->seed(TransparenciaPermissionsSeeder::class);
 
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $admin = Role::where('name', SystemRole::ADMIN->value)->first();
         $this->assertNotNull($admin, 'El rol admin debe existir');
@@ -65,10 +67,10 @@ class PermisosTransparenciaTest extends TestCase
 
     public function test_admin_tiene_ver_y_gestionar_pero_no_aprobar(): void
     {
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
         $this->seed(TransparenciaPermissionsSeeder::class);
 
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $admin = Role::where('name', SystemRole::ADMIN->value)->first();
         $this->assertTrue($admin->hasPermissionTo(SystemPermission::VER_DATASETS_ABIERTOS->value));
@@ -88,10 +90,10 @@ class PermisosTransparenciaTest extends TestCase
 
     public function test_planeador_tiene_ver_y_gestionar(): void
     {
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
         $this->seed(TransparenciaPermissionsSeeder::class);
 
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $planeador = Role::where('name', SystemRole::PLANEADOR->value)->first();
         $this->assertTrue($planeador->hasPermissionTo(SystemPermission::VER_DATASETS_ABIERTOS->value));

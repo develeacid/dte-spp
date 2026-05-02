@@ -81,11 +81,12 @@ class GenerateEmbedding implements ShouldQueue
         // Verificar que el modelo existe
         $model = $this->modelClass::find($this->modelId);
 
-        if (!$model) {
+        if (! $model) {
             Log::warning('Model not found for embedding generation', [
                 'model_class' => $this->modelClass,
                 'model_id' => $this->modelId,
             ]);
+
             return;
         }
 
@@ -120,7 +121,7 @@ class GenerateEmbedding implements ShouldQueue
     protected function saveEmbedding($model, array $embedding): void
     {
         $tableName = $model->getTable();
-        $embeddingString = '[' . implode(',', $embedding) . ']';
+        $embeddingString = '['.implode(',', $embedding).']';
 
         // Usar raw SQL porque Eloquent no soporta nativamente columnas vectoriales
         DB::statement(

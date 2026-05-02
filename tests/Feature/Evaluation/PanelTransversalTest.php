@@ -11,7 +11,6 @@ use App\Models\Mml\MirNivel;
 use App\Models\OdsMeta;
 use App\Models\OdsObjetivo;
 use App\Models\PedEje;
-use App\Models\PedEstrategia;
 use App\Models\PedObjetivoEstrategico;
 use App\Models\PedPlan;
 use App\Models\PedTema;

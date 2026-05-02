@@ -49,7 +49,7 @@ class PadronSnapshotService
                     'mime_type' => 'text/csv',
                     'tamano_bytes' => 0,
                     'hash_archivo' => $hash,
-                    'nombre_documento' => "Snapshot Padrón Componente",
+                    'nombre_documento' => 'Snapshot Padrón Componente',
                     'area_generadora' => 'GeoBase (manual)',
                     'fecha_documento' => $cutoffDate,
                     'subido_por' => $user->id,
@@ -100,7 +100,7 @@ class PadronSnapshotService
         $mes = now()->month;
         $trim = (int) ceil($mes / 3);
 
-        return now()->year . "-Q{$trim}";
+        return now()->year."-Q{$trim}";
     }
 
     private function fechaCorteActual(): string

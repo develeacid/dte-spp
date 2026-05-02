@@ -7,6 +7,7 @@ use App\Models\Presupuesto\MetaGastoTrimestral;
 use App\Models\Presupuesto\PartidaPresupuestal;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,7 +16,9 @@ class ModelosPresupuestoTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
+
     private PartidaPresupuestal $partida;
 
     protected function setUp(): void
@@ -109,7 +112,7 @@ class ModelosPresupuestoTest extends TestCase
 
     public function test_partida_unique_constraint(): void
     {
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         PartidaPresupuestal::create([
             'programa_presupuestario_id' => $this->programa->id,
@@ -163,7 +166,7 @@ class ModelosPresupuestoTest extends TestCase
             'registrado_por' => $this->user->id,
         ]);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         AvanceFinanciero::create([
             'partida_presupuestal_id' => $this->partida->id,
@@ -177,7 +180,7 @@ class ModelosPresupuestoTest extends TestCase
 
     public function test_avance_check_pagado_le_devengado(): void
     {
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         AvanceFinanciero::create([
             'partida_presupuestal_id' => $this->partida->id,
@@ -191,7 +194,7 @@ class ModelosPresupuestoTest extends TestCase
 
     public function test_avance_check_devengado_le_comprometido(): void
     {
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         AvanceFinanciero::create([
             'partida_presupuestal_id' => $this->partida->id,
@@ -205,7 +208,7 @@ class ModelosPresupuestoTest extends TestCase
 
     public function test_avance_check_trimestre_rango(): void
     {
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         AvanceFinanciero::create([
             'partida_presupuestal_id' => $this->partida->id,
@@ -246,7 +249,7 @@ class ModelosPresupuestoTest extends TestCase
 
     public function test_meta_gasto_check_trimestre_rango(): void
     {
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         MetaGastoTrimestral::create([
             'partida_presupuestal_id' => $this->partida->id,
@@ -257,7 +260,7 @@ class ModelosPresupuestoTest extends TestCase
 
     public function test_meta_gasto_check_monto_positivo(): void
     {
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         MetaGastoTrimestral::create([
             'partida_presupuestal_id' => $this->partida->id,
@@ -285,7 +288,7 @@ class ModelosPresupuestoTest extends TestCase
             'monto_programado' => 200000,
         ]);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         MetaGastoTrimestral::create([
             'partida_presupuestal_id' => $this->partida->id,

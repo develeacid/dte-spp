@@ -10,9 +10,7 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 
 class PresupuestoCapitulosSheet implements FromCollection, WithHeadings, WithTitle
 {
-    public function __construct(private PresupuestoCapituloReportService $service)
-    {
-    }
+    public function __construct(private PresupuestoCapituloReportService $service) {}
 
     public function collection(): Collection
     {

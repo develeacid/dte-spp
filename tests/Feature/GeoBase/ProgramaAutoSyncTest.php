@@ -7,6 +7,7 @@ use App\Jobs\GeoBase\SyncMirNivelToGeoBase;
 use App\Jobs\GeoBase\SyncProgramaToGeoBase;
 use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
+use App\Services\GeoBase\GeoBaseClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -127,7 +128,7 @@ class ProgramaAutoSyncTest extends TestCase
             ejercicioFiscal: 2026,
         );
 
-        $job->handle(app(\App\Services\GeoBase\GeoBaseClient::class));
+        $job->handle(app(GeoBaseClient::class));
 
         Http::assertSent(function ($req) {
             return $req->method() === 'POST'

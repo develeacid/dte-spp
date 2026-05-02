@@ -11,7 +11,7 @@ class GlosarioConfigTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->glosario = require __DIR__ . '/../../config/glosario.php';
+        $this->glosario = require __DIR__.'/../../config/glosario.php';
     }
 
     /** @test */

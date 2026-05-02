@@ -43,7 +43,7 @@ class GenerateEmbeddingJobTest extends TestCase
         ]);
 
         $result = DB::selectOne(
-            "SELECT embedding FROM ods_objetivos WHERE id = ?",
+            'SELECT embedding FROM ods_objetivos WHERE id = ?',
             [$odsObjetivo->id]
         );
 
@@ -107,7 +107,7 @@ class GenerateEmbeddingJobTest extends TestCase
         $tags = $job->tags();
 
         $this->assertContains('embedding', $tags);
-        $this->assertContains('model:' . OdsObjetivo::class, $tags);
+        $this->assertContains('model:'.OdsObjetivo::class, $tags);
         $this->assertContains('id:123', $tags);
     }
 

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Http;
 class GeoBaseClient
 {
     private string $baseUrl;
+
     private string $token;
 
     public function __construct()

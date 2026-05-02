@@ -6,6 +6,8 @@ use App\Enums\TipoNivelMir;
 use App\Jobs\GeoBase\SyncMirNivelToGeoBase;
 use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
+use App\Services\GeoBase\GeoBaseClient;
+use App\Services\GeoBase\GeoBaseException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -106,7 +108,7 @@ class MirNivelAutoSyncTest extends TestCase
             activo: true,
         );
 
-        $job->handle(app(\App\Services\GeoBase\GeoBaseClient::class));
+        $job->handle(app(GeoBaseClient::class));
 
         Http::assertSent(function ($req) {
             return $req->method() === 'POST'
@@ -130,7 +132,7 @@ class MirNivelAutoSyncTest extends TestCase
             activo: true,
         );
 
-        $this->expectException(\App\Services\GeoBase\GeoBaseException::class);
-        $job->handle(app(\App\Services\GeoBase\GeoBaseClient::class));
+        $this->expectException(GeoBaseException::class);
+        $job->handle(app(GeoBaseClient::class));
     }
 }

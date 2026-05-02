@@ -12,8 +12,7 @@ class IaffFinancialReportService
         private readonly ProgramaPresupuestario $programa,
         private readonly int $ejercicioFiscal,
         private readonly int $trimestre,
-    ) {
-    }
+    ) {}
 
     public function rows(): Collection
     {

@@ -20,7 +20,7 @@ enum TipoNodo: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PROBLEMA_CENTRAL => 'Problema Central',
             self::CAUSA_DIRECTA => 'Causa Directa',
             self::CAUSA_INDIRECTA => 'Causa Indirecta',
@@ -47,12 +47,12 @@ enum TipoNodo: string
 
     public function esObjetivo(): bool
     {
-        return !$this->esProblema();
+        return ! $this->esProblema();
     }
 
     public function colorClass(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PROBLEMA_CENTRAL => 'bg-red-100 text-red-800 border-red-300',
             self::CAUSA_DIRECTA => 'bg-orange-100 text-orange-800 border-orange-300',
             self::CAUSA_INDIRECTA => 'bg-amber-100 text-amber-800 border-amber-300',

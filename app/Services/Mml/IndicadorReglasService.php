@@ -11,7 +11,7 @@ class IndicadorReglasService
 {
     public static function tipoPermitido(TipoNivelMir $nivel): array
     {
-        return match($nivel) {
+        return match ($nivel) {
             TipoNivelMir::FIN, TipoNivelMir::PROPOSITO => [TipoIndicador::ESTRATEGICO],
             TipoNivelMir::COMPONENTE => [TipoIndicador::ESTRATEGICO, TipoIndicador::GESTION],
             TipoNivelMir::ACTIVIDAD => [TipoIndicador::GESTION],
@@ -25,7 +25,7 @@ class IndicadorReglasService
 
     public static function tipoDefault(TipoNivelMir $nivel): TipoIndicador
     {
-        return match($nivel) {
+        return match ($nivel) {
             TipoNivelMir::FIN, TipoNivelMir::PROPOSITO => TipoIndicador::ESTRATEGICO,
             TipoNivelMir::COMPONENTE => TipoIndicador::ESTRATEGICO,
             TipoNivelMir::ACTIVIDAD => TipoIndicador::GESTION,
@@ -34,7 +34,7 @@ class IndicadorReglasService
 
     public static function dimensionesPermitidas(TipoNivelMir $nivel): array
     {
-        return match($nivel) {
+        return match ($nivel) {
             TipoNivelMir::FIN => [DimensionIndicador::EFICACIA],
             TipoNivelMir::PROPOSITO => [DimensionIndicador::EFICACIA, DimensionIndicador::EFICIENCIA],
             TipoNivelMir::COMPONENTE => [DimensionIndicador::EFICACIA, DimensionIndicador::EFICIENCIA, DimensionIndicador::CALIDAD],
@@ -44,7 +44,7 @@ class IndicadorReglasService
 
     public static function frecuenciasPermitidas(TipoNivelMir $nivel): array
     {
-        return match($nivel) {
+        return match ($nivel) {
             TipoNivelMir::FIN => [FrecuenciaMedicion::ANUAL, FrecuenciaMedicion::BIANUAL, FrecuenciaMedicion::SEXENAL],
             TipoNivelMir::PROPOSITO => [FrecuenciaMedicion::SEMESTRAL, FrecuenciaMedicion::ANUAL],
             TipoNivelMir::COMPONENTE => [FrecuenciaMedicion::TRIMESTRAL, FrecuenciaMedicion::SEMESTRAL],

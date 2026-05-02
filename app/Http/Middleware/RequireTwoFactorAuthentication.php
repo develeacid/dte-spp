@@ -37,7 +37,7 @@ class RequireTwoFactorAuthentication
                 'user-profile-information.update',
                 'user-two-factor.enable',
                 'user-two-factor.confirm',
-                'logout'
+                'logout',
             ];
 
             if ($request->routeIs($allowedRoutes)) {

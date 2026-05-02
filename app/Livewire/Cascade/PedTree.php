@@ -12,13 +12,19 @@ use Livewire\Component;
 class PedTree extends Component
 {
     public ?int $selectedPlanId = null;
+
     public ?int $selectedEjeId = null;
+
     public ?int $selectedTemaId = null;
+
     public ?int $selectedObjetivoId = null;
+
     public ?int $selectedEstrategiaId = null;
+
     public ?int $selectedLineaId = null;
 
     public string $activeTab = 'plan';
+
     public array $expandedNodes = [];
 
     protected $listeners = [
@@ -51,7 +57,7 @@ class PedTree extends Component
 
     public function selectNode(string $type, int $id): void
     {
-        match($type) {
+        match ($type) {
             'plan' => $this->selectedPlanId = $id,
             'eje' => $this->selectedEjeId = $id,
             'tema' => $this->selectedTemaId = $id,
@@ -65,7 +71,7 @@ class PedTree extends Component
 
     public function getDependentsCount(string $type, int $id): array
     {
-        return match($type) {
+        return match ($type) {
             'plan' => ['ejes' => PedPlan::find($id)?->ejes()->count() ?? 0],
             'eje' => ['temas' => PedEje::find($id)?->temas()->count() ?? 0],
             'tema' => ['objetivos' => PedTema::find($id)?->objetivosEstrategicos()->count() ?? 0],
@@ -78,11 +84,11 @@ class PedTree extends Component
     public function render()
     {
         $planes = PedPlan::with([
-            'ejes.temas.objetivosEstrategicos.estrategias.lineasAccion'
+            'ejes.temas.objetivosEstrategicos.estrategias.lineasAccion',
         ])
-        ->orderBy('activo', 'desc')
-        ->orderBy('periodo_inicio', 'desc')
-        ->get();
+            ->orderBy('activo', 'desc')
+            ->orderBy('periodo_inicio', 'desc')
+            ->get();
 
         return view('livewire.cascade.ped-tree', [
             'planes' => $planes,

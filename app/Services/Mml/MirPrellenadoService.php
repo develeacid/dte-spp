@@ -20,7 +20,7 @@ class MirPrellenadoService
             ->where('tipo', TipoArbol::OBJETIVOS->value)
             ->first();
 
-        if (!$arbolObj) {
+        if (! $arbolObj) {
             return;
         }
 

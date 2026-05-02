@@ -1,8 +1,16 @@
 <?php
 
+use App\Http\Middleware\AislamientoMultiUR;
+use App\Http\Middleware\EnsureUserIsActivated;
+use App\Http\Middleware\RequireTwoFactorAuthentication;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,21 +22,21 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(
             at: '*',
-            headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR
-                   | \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST
-                   | \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT
-                   | \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO,
+            headers: Request::HEADER_X_FORWARDED_FOR
+                   | Request::HEADER_X_FORWARDED_HOST
+                   | Request::HEADER_X_FORWARDED_PORT
+                   | Request::HEADER_X_FORWARDED_PROTO,
         );
         $middleware->alias([
-            'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
-            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
-            'ur.aislamiento'     => \App\Http\Middleware\AislamientoMultiUR::class,
+            'role' => RoleMiddleware::class,
+            'permission' => PermissionMiddleware::class,
+            'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'ur.aislamiento' => AislamientoMultiUR::class,
         ]);
         $middleware->web(append: [
-            \App\Http\Middleware\EnsureUserIsActivated::class,
-            \App\Http\Middleware\RequireTwoFactorAuthentication::class,
-            \App\Http\Middleware\SecurityHeaders::class,
+            EnsureUserIsActivated::class,
+            RequireTwoFactorAuthentication::class,
+            SecurityHeaders::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

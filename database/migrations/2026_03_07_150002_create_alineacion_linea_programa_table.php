@@ -16,18 +16,18 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('ped_linea_accion_id')
-                  ->constrained('ped_lineas_accion')
-                  ->cascadeOnDelete();
+                ->constrained('ped_lineas_accion')
+                ->cascadeOnDelete();
 
             $table->foreignId('programa_derivado_objetivo_id')
-                  ->constrained('programas_derivados_objetivos')
-                  ->cascadeOnDelete();
+                ->constrained('programas_derivados_objetivos')
+                ->cascadeOnDelete();
 
             $table->timestamps();
 
             $table->unique([
                 'ped_linea_accion_id',
-                'programa_derivado_objetivo_id'
+                'programa_derivado_objetivo_id',
             ], 'alineacion_linea_programa_unique');
         });
     }

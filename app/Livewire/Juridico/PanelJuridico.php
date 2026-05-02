@@ -4,9 +4,8 @@ namespace App\Livewire\Juridico;
 
 use App\Enums\EstadoValidacionJuridica;
 use App\Models\Juridico\DocumentoNormativo;
-use App\Models\Juridico\ValidacionJuridicaPrograma;
 use App\Models\ProgramaPresupuestario;
-use App\Services\Juridico\ValidacionJuridicaService;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -14,6 +13,7 @@ use Livewire\Component;
 class PanelJuridico extends Component
 {
     public int $filtroEjercicio;
+
     public string $filtroEstado = '';
 
     public function mount(): void
@@ -21,7 +21,7 @@ class PanelJuridico extends Component
         $this->filtroEjercicio = config('presupuesto.ejercicio_default');
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         $teamId = auth()->user()->currentTeam->id;
 

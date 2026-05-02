@@ -89,7 +89,7 @@ class JetstreamCustomizationTest extends TestCase
         $user = User::factory()->withPersonalTeam()->create();
         $user->assignRole('admin');
 
-        $response = $this->actingAs($user)->get('/teams/' . $user->currentTeam->id);
+        $response = $this->actingAs($user)->get('/teams/'.$user->currentTeam->id);
         $response->assertSee('Unidad Responsable');
     }
 

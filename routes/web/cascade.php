@@ -9,7 +9,7 @@ Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
-    'permission:gestionar_catalogos'
+    'permission:gestionar_catalogos',
 ])->prefix('cascade')->name('cascade.')->group(function () {
 
     Route::prefix('ped')->name('ped.')->group(function () {

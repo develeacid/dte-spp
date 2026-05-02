@@ -16,8 +16,9 @@ class PedSeeder extends Seeder
     {
         $path = base_path('docs/data/ped-oaxaca-2022-2028.md');
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             $this->command->error("Archivo fuente no encontrado: {$path}");
+
             return;
         }
 

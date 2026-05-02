@@ -48,7 +48,7 @@ class ConcentradoCapturaExcelExport implements FromCollection, WithHeadings, Wit
         foreach ($avances as $avance) {
             $programaClave = $avance->indicador->mirNivel->programa->clave ?? "\u{2014}";
             $indicadorNombre = $avance->indicador->nombre;
-            $key = $programaClave . '|' . $indicadorNombre;
+            $key = $programaClave.'|'.$indicadorNombre;
 
             if (! $agrupado->has($key)) {
                 $agrupado[$key] = [

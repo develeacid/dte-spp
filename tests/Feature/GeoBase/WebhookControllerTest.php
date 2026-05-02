@@ -25,7 +25,7 @@ class WebhookControllerTest extends TestCase
     private function postWebhook(string $event, array $payload, string $deliveryId = 'wct-1'): TestResponse
     {
         $body = json_encode($payload);
-        $signature = 'sha256=' . hash_hmac('sha256', $body, $this->secret);
+        $signature = 'sha256='.hash_hmac('sha256', $body, $this->secret);
 
         return $this->call(
             method: 'POST',

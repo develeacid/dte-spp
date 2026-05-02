@@ -17,9 +17,13 @@ class UrCoadyuvanteTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
+
     private MirNivel $componente;
+
     private MirNivel $fin;
+
     private Team $otherTeam;
 
     protected function setUp(): void

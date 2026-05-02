@@ -11,7 +11,7 @@ enum DimensionIndicador: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::EFICACIA => 'Eficacia',
             self::EFICIENCIA => 'Eficiencia',
             self::CALIDAD => 'Calidad',

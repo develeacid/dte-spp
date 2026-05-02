@@ -6,6 +6,7 @@ use App\Models\PedEje;
 use App\Models\PedPlan;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -294,7 +295,7 @@ class PedCrudTest extends TestCase
             'activo' => true,
         ]);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         PedPlan::create([
             'nombre' => 'Plan Activo 2',

@@ -12,12 +12,14 @@ use Livewire\Component;
 class ListaProgramas extends Component
 {
     public string $nuevoNombre = '';
+
     public string $nuevoClave = '';
+
     public bool $mostrarFormulario = false;
 
     public function toggleFormulario(): void
     {
-        $this->mostrarFormulario = !$this->mostrarFormulario;
+        $this->mostrarFormulario = ! $this->mostrarFormulario;
         $this->reset(['nuevoNombre', 'nuevoClave']);
         $this->resetValidation();
     }

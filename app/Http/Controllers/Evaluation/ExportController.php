@@ -18,10 +18,13 @@ use App\Jobs\GenerarReportePdfJob;
 use App\Models\Evaluation\EvaluacionPrograma;
 use App\Models\Mml\Indicador;
 use App\Models\ProgramaPresupuestario;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportController extends Controller
 {
@@ -37,7 +40,7 @@ class ExportController extends Controller
             default => abort(404, 'Tipo de reporte no encontrado'),
         };
 
-        $filename = "{$tipo}-" . now()->format('Ymd-His') . '.pdf';
+        $filename = "{$tipo}-".now()->format('Ymd-His').'.pdf';
 
         return new Response($contenido, 200, [
             'Content-Type' => 'application/pdf',
@@ -45,9 +48,9 @@ class ExportController extends Controller
         ]);
     }
 
-    public function excel(Request $request, string $tipo, ?int $id = null): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function excel(Request $request, string $tipo, ?int $id = null): BinaryFileResponse
     {
-        $filename = "{$tipo}-" . now()->format('Ymd-His') . '.xlsx';
+        $filename = "{$tipo}-".now()->format('Ymd-His').'.xlsx';
 
         $export = match ($tipo) {
             'mir' => new MirExcelExport(
@@ -73,7 +76,7 @@ class ExportController extends Controller
         return Excel::download($export, $filename);
     }
 
-    public function async(Request $request, string $formato, string $tipo): \Illuminate\Http\JsonResponse
+    public function async(Request $request, string $formato, string $tipo): JsonResponse
     {
         $request->validate([
             'parametros' => 'required|array',
@@ -93,9 +96,9 @@ class ExportController extends Controller
         ]);
     }
 
-    public function descargar(string $filename): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function descargar(string $filename): StreamedResponse
     {
-        $path = config('evaluation.exports.storage_path') . '/' . $filename;
+        $path = config('evaluation.exports.storage_path').'/'.$filename;
         $disk = config('evaluation.exports.storage_disk');
 
         abort_unless(Storage::disk($disk)->exists($path), 404, 'Archivo no encontrado');

@@ -5,7 +5,6 @@ namespace App\Livewire\Admin;
 use App\Models\LlmBudget;
 use App\Models\LlmLog;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
@@ -186,12 +185,12 @@ class MonitoreoIa extends Component
     {
         abort_unless(auth()->user()->can('administrar_usuarios'), 403);
 
-        $apiKey  = config('services.embedding.api_key', '');
-        $apiUrl  = config('services.embedding.url', 'https://api.openai.com/v1/embeddings');
-        $model   = config('services.embedding.model', 'text-embedding-ada-002');
+        $apiKey = config('services.embedding.api_key', '');
+        $apiUrl = config('services.embedding.url', 'https://api.openai.com/v1/embeddings');
+        $model = config('services.embedding.model', 'text-embedding-ada-002');
 
         $keyPreview = strlen($apiKey) >= 6
-            ? '...' . substr($apiKey, -6)
+            ? '...'.substr($apiKey, -6)
             : '(no configurada)';
 
         $inicio = microtime(true);
@@ -211,34 +210,34 @@ class MonitoreoIa extends Component
                 $embedding = $data['data'][0]['embedding'] ?? [];
 
                 $this->resultadoConexion = [
-                    'estado'          => 'ok',
-                    'modelo'          => $data['model'] ?? $model,
-                    'dimensiones'     => count($embedding),
-                    'latencia_ms'     => $latencia,
-                    'tokens_usados'   => $data['usage']['total_tokens'] ?? 0,
-                    'costo_usd'       => round(($data['usage']['total_tokens'] ?? 0) * 0.0000001, 8),
+                    'estado' => 'ok',
+                    'modelo' => $data['model'] ?? $model,
+                    'dimensiones' => count($embedding),
+                    'latencia_ms' => $latencia,
+                    'tokens_usados' => $data['usage']['total_tokens'] ?? 0,
+                    'costo_usd' => round(($data['usage']['total_tokens'] ?? 0) * 0.0000001, 8),
                     'api_key_preview' => $keyPreview,
-                    'url'             => $apiUrl,
+                    'url' => $apiUrl,
                 ];
             } else {
                 $error = $response->json('error.message') ?? $response->body();
                 $this->resultadoConexion = [
-                    'estado'          => 'error',
-                    'latencia_ms'     => $latencia,
+                    'estado' => 'error',
+                    'latencia_ms' => $latencia,
                     'api_key_preview' => $keyPreview,
-                    'url'             => $apiUrl,
-                    'http_status'     => $response->status(),
-                    'mensaje_error'   => $error,
+                    'url' => $apiUrl,
+                    'http_status' => $response->status(),
+                    'mensaje_error' => $error,
                 ];
             }
         } catch (\Throwable $e) {
             $latencia = (int) round((microtime(true) - $inicio) * 1000);
             $this->resultadoConexion = [
-                'estado'          => 'error',
-                'latencia_ms'     => $latencia,
+                'estado' => 'error',
+                'latencia_ms' => $latencia,
                 'api_key_preview' => $keyPreview,
-                'url'             => $apiUrl,
-                'mensaje_error'   => $e->getMessage(),
+                'url' => $apiUrl,
+                'mensaje_error' => $e->getMessage(),
             ];
         }
     }

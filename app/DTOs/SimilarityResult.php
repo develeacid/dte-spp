@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 readonly class SimilarityResult
 {
     /**
-     * @param Model $model Modelo encontrado
-     * @param float $score Score de similitud (0-1, donde 1 es máxima similitud)
-     * @param float $distance Distancia coseno (0-2, donde 0 es idéntico)
+     * @param  Model  $model  Modelo encontrado
+     * @param  float  $score  Score de similitud (0-1, donde 1 es máxima similitud)
+     * @param  float  $distance  Distancia coseno (0-2, donde 0 es idéntico)
      */
     public function __construct(
         public Model $model,
@@ -23,7 +23,7 @@ readonly class SimilarityResult
     public static function fromQuery(object $result, string $modelClass): self
     {
         /** @var Model $model */
-        $model = (new $modelClass())->newInstance();
+        $model = (new $modelClass)->newInstance();
 
         $attributes = (array) $result;
         unset($attributes['score'], $attributes['distance'], $attributes['embedding']);
@@ -43,7 +43,7 @@ readonly class SimilarityResult
      */
     public function getPercentageAttribute(): string
     {
-        return round($this->score * 100, 1) . '%';
+        return round($this->score * 100, 1).'%';
     }
 
     /**

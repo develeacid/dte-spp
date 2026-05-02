@@ -4,12 +4,14 @@ namespace Tests\Feature\Evaluation\Exports;
 
 use App\Enums\SystemPermission;
 use App\Enums\SystemRole;
-use App\Models\ProgramaPresupuestario;
 use App\Models\Presupuesto\PartidaPresupuestal;
+use App\Models\ProgramaPresupuestario;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Tests\TestCase;
 
 class PresupuestoCapituloExportTest extends TestCase
@@ -63,7 +65,7 @@ class PresupuestoCapituloExportTest extends TestCase
         $programa = ProgramaPresupuestario::factory()->create(['clave' => 'EDU-TEST']);
 
         $response = $this->actingAs($user)->get(
-            route('evaluation.exportar.presupuesto-capitulo', $programa) . '?ejercicio=2026&trimestre=1'
+            route('evaluation.exportar.presupuesto-capitulo', $programa).'?ejercicio=2026&trimestre=1'
         );
 
         $response->assertOk();
@@ -97,13 +99,13 @@ class PresupuestoCapituloExportTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get(
-            route('evaluation.exportar.presupuesto-capitulo', $programa) . '?ejercicio=2026&trimestre=1'
+            route('evaluation.exportar.presupuesto-capitulo', $programa).'?ejercicio=2026&trimestre=1'
         );
 
         $response->assertOk();
 
-        $tmp = tempnam(sys_get_temp_dir(), 'xlsx') . '.xlsx';
-        if ($response instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse) {
+        $tmp = tempnam(sys_get_temp_dir(), 'xlsx').'.xlsx';
+        if ($response instanceof BinaryFileResponse) {
             copy($response->getFile()->getRealPath(), $tmp);
         } else {
             ob_start();
@@ -111,7 +113,7 @@ class PresupuestoCapituloExportTest extends TestCase
             file_put_contents($tmp, ob_get_clean());
         }
 
-        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx')->load($tmp);
+        $spreadsheet = IOFactory::createReader('Xlsx')->load($tmp);
         $sheets = $spreadsheet->getSheetNames();
 
         $this->assertContains('Capítulos', $sheets);

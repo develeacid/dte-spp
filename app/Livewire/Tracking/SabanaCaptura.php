@@ -2,10 +2,15 @@
 
 namespace App\Livewire\Tracking;
 
+use App\Exports\Excel\SabanaCapturaExcelExport;
+use App\Exports\Pdf\SabanaCapturaPdfExport;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\ProgramaPresupuestario;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Layout('layouts.app')]
 class SabanaCaptura extends Component
@@ -85,9 +90,9 @@ class SabanaCaptura extends Component
         ]);
     }
 
-    public function exportarPdf(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportarPdf(): StreamedResponse
     {
-        $export = new \App\Exports\Pdf\SabanaCapturaPdfExport(
+        $export = new SabanaCapturaPdfExport(
             auth()->user(),
             $this->filtroPrograma,
             $this->filtroTrimestre,
@@ -95,22 +100,22 @@ class SabanaCaptura extends Component
         );
 
         $contenido = $export->generate();
-        $filename = 'sabana-captura-' . now()->format('Ymd-His') . '.pdf';
+        $filename = 'sabana-captura-'.now()->format('Ymd-His').'.pdf';
 
-        return response()->streamDownload(fn () => print($contenido), $filename, [
+        return response()->streamDownload(fn () => print ($contenido), $filename, [
             'Content-Type' => 'application/pdf',
         ]);
     }
 
-    public function exportarExcel(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function exportarExcel(): BinaryFileResponse
     {
-        $export = new \App\Exports\Excel\SabanaCapturaExcelExport(
+        $export = new SabanaCapturaExcelExport(
             auth()->user(),
             $this->filtroPrograma,
             $this->filtroTrimestre,
             $this->filtroEstado,
         );
 
-        return \Maatwebsite\Excel\Facades\Excel::download($export, 'sabana-captura-' . now()->format('Ymd-His') . '.xlsx');
+        return Excel::download($export, 'sabana-captura-'.now()->format('Ymd-His').'.xlsx');
     }
 }

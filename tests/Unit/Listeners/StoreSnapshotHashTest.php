@@ -9,7 +9,6 @@ use App\Models\Mml\MetaPeriodo;
 use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Tracking\Avance;
-use App\Models\Tracking\AvanceEvidencia;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
@@ -80,7 +79,7 @@ class StoreSnapshotHashTest extends TestCase
         $avance = $this->createFullChain(period: '2026-Q1');
         $programaId = $avance->indicador->mirNivel->programa_presupuestario_id;
 
-        $listener = new StoreSnapshotHash();
+        $listener = new StoreSnapshotHash;
         $listener->handle($this->makeEvent(sppProgramId: $programaId, period: '2026-Q1'));
 
         $this->assertDatabaseHas('avance_evidencias', [
@@ -102,7 +101,7 @@ class StoreSnapshotHashTest extends TestCase
             ->once()
             ->withArgs(fn (string $msg) => str_contains($msg, 'programa'));
 
-        $listener = new StoreSnapshotHash();
+        $listener = new StoreSnapshotHash;
         $listener->handle($this->makeEvent(sppProgramId: 999999));
 
         $this->assertDatabaseCount('avance_evidencias', 0);
@@ -114,7 +113,7 @@ class StoreSnapshotHashTest extends TestCase
         $programaId = $avance->indicador->mirNivel->programa_presupuestario_id;
         $event = $this->makeEvent(sppProgramId: $programaId, period: '2026-Q1');
 
-        $listener = new StoreSnapshotHash();
+        $listener = new StoreSnapshotHash;
         $listener->handle($event);
         $listener->handle($event);
 
@@ -135,7 +134,7 @@ class StoreSnapshotHashTest extends TestCase
             ->once()
             ->withArgs(fn (string $msg) => str_contains($msg, 'avance'));
 
-        $listener = new StoreSnapshotHash();
+        $listener = new StoreSnapshotHash;
         $listener->handle($this->makeEvent(sppProgramId: $programa->id, period: '2026-Q1'));
 
         $this->assertDatabaseCount('avance_evidencias', 0);

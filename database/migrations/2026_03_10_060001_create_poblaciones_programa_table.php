@@ -25,7 +25,7 @@ return new class extends Migration
             $table->unique(['programa_id', 'anio_ejercicio']);
         });
 
-        DB::statement("
+        DB::statement('
             ALTER TABLE poblaciones_programa
             ADD CONSTRAINT chk_embudo_logico CHECK (
                 objetivo_cantidad <= potencial_cantidad AND
@@ -34,7 +34,7 @@ return new class extends Migration
                 potencial_cantidad > 0 AND
                 objetivo_cantidad > 0
             )
-        ");
+        ');
     }
 
     public function down(): void

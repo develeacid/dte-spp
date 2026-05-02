@@ -62,12 +62,12 @@ class PedTema extends Model
             'id', // PK local
             'id'  // PK intermedio 2
         )->join('ped_objetivos_estrategicos', 'ped_estrategias.ped_objetivo_estrategico_id', '=', 'ped_objetivos_estrategicos.id')
-         ->where('ped_objetivos_estrategicos.ped_tema_id', $this->id);
+            ->where('ped_objetivos_estrategicos.ped_tema_id', $this->id);
     }
 
     // Accessor para clave completa
     public function getClaveCompletaAttribute(): string
     {
-        return $this->eje->numero . '.' . $this->numero;
+        return $this->eje->numero.'.'.$this->numero;
     }
 }

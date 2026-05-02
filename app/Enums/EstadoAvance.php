@@ -12,7 +12,7 @@ enum EstadoAvance: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::EN_CAPTURA => 'En captura',
             self::EN_REVISION => 'En revisión',
             self::OBSERVADO => 'Observado',
@@ -23,7 +23,7 @@ enum EstadoAvance: string
 
     public function colorClass(): string
     {
-        return match($this) {
+        return match ($this) {
             self::EN_CAPTURA => 'bg-blue-100 text-blue-800',
             self::EN_REVISION => 'bg-yellow-100 text-yellow-800',
             self::OBSERVADO => 'bg-orange-100 text-orange-800',

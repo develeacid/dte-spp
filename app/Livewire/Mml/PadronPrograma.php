@@ -187,7 +187,7 @@ class PadronPrograma extends Component
 
         $this->componentesDelPrograma = $componentes
             ->mapWithKeys(fn ($n) => [
-                $n->id => 'C' . $n->orden . ' — ' . str($n->resumen_narrativo)->limit(60),
+                $n->id => 'C'.$n->orden.' — '.str($n->resumen_narrativo)->limit(60),
             ])
             ->toArray();
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Mml;
 
+use App\Contracts\LlmServiceInterface;
 use App\Enums\TipoArbol;
 use App\Enums\TipoNodo;
 use App\Livewire\Mml\ArbolProblemaBuilder;
@@ -18,8 +19,11 @@ class ArbolProblemaBuilderTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
+
     private Arbol $arbol;
+
     private ArbolNodo $problemaCentral;
 
     protected function setUp(): void
@@ -147,9 +151,9 @@ class ArbolProblemaBuilderTest extends TestCase
 
     public function test_sugerir_efectos_agrega_como_efecto_directo(): void
     {
-        $this->mock(\App\Contracts\LlmServiceInterface::class, function ($mock) {
+        $this->mock(LlmServiceInterface::class, function ($mock) {
             $mock->shouldReceive('isDegraded')->andReturn(false);
-            $mock->shouldReceive('suggest')->once()->andReturn("1. Efecto sugerido por IA");
+            $mock->shouldReceive('suggest')->once()->andReturn('1. Efecto sugerido por IA');
         });
 
         Livewire::actingAs($this->user)
@@ -166,9 +170,9 @@ class ArbolProblemaBuilderTest extends TestCase
 
     public function test_sugerir_causas_agrega_como_causa_directa(): void
     {
-        $this->mock(\App\Contracts\LlmServiceInterface::class, function ($mock) {
+        $this->mock(LlmServiceInterface::class, function ($mock) {
             $mock->shouldReceive('isDegraded')->andReturn(false);
-            $mock->shouldReceive('suggest')->once()->andReturn("1. Causa sugerida por IA");
+            $mock->shouldReceive('suggest')->once()->andReturn('1. Causa sugerida por IA');
         });
 
         Livewire::actingAs($this->user)
@@ -185,7 +189,7 @@ class ArbolProblemaBuilderTest extends TestCase
 
     public function test_generar_arbol_ejemplo_produce_preview_sin_persistir(): void
     {
-        $this->mock(\App\Contracts\LlmServiceInterface::class, function ($mock) {
+        $this->mock(LlmServiceInterface::class, function ($mock) {
             $mock->shouldReceive('isDegraded')->andReturn(false);
             $mock->shouldReceive('suggest')->once()->andReturn(json_encode([
                 'causas_directas' => [
@@ -199,7 +203,7 @@ class ArbolProblemaBuilderTest extends TestCase
         Livewire::actingAs($this->user)
             ->test(ArbolProblemaBuilder::class, ['programa' => $this->programa])
             ->call('generarArbolEjemplo')
-            ->assertSet('arbolEjemploPreview', fn ($val) => !empty($val))
+            ->assertSet('arbolEjemploPreview', fn ($val) => ! empty($val))
             ->assertSet('mostrarPreviewArbol', true);
 
         // Verify nothing was persisted to database
@@ -234,7 +238,7 @@ class ArbolProblemaBuilderTest extends TestCase
             'orden' => 1,
         ]);
 
-        $this->mock(\App\Contracts\LlmServiceInterface::class, function ($mock) {
+        $this->mock(LlmServiceInterface::class, function ($mock) {
             $mock->shouldReceive('isDegraded')->andReturn(false);
             $mock->shouldReceive('suggest')->once()->andReturn(
                 "1. Presupuesto insuficiente para formación\n2. Ausencia de programas de desarrollo profesional"

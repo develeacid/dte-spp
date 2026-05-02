@@ -22,7 +22,9 @@ class LogicaVerticalTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
+
     private EvaluacionPrograma $evaluacion;
 
     protected function setUp(): void
@@ -137,7 +139,7 @@ class LogicaVerticalTest extends TestCase
         $nivel = MirNivel::create([
             'programa_presupuestario_id' => $this->programa->id,
             'tipo_nivel' => $tipoNivel->value,
-            'resumen_narrativo' => $tipoNivel->label() . ' test',
+            'resumen_narrativo' => $tipoNivel->label().' test',
             'supuestos' => $supuestos,
             'orden' => $tipoNivel->orden(),
         ]);

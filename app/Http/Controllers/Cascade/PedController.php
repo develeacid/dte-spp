@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Cascade;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
 use App\Http\Requests\Cascade\StorePedEjeRequest;
 use App\Http\Requests\Cascade\StorePedEstrategiaRequest;
 use App\Http\Requests\Cascade\StorePedLineaAccionRequest;
@@ -17,13 +15,15 @@ use App\Models\PedLineaAccion;
 use App\Models\PedObjetivoEstrategico;
 use App\Models\PedPlan;
 use App\Models\PedTema;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class PedController extends Controller
 {
     public function index()
     {
         $planes = PedPlan::with([
-            'ejes.temas.objetivosEstrategicos.estrategias.lineasAccion'
+            'ejes.temas.objetivosEstrategicos.estrategias.lineasAccion',
         ])->orderBy('activo', 'desc')->orderBy('periodo_inicio', 'desc')->get();
 
         return view('cascade.ped.index', compact('planes'));
@@ -57,7 +57,7 @@ class PedController extends Controller
         $plan->update($request->validated());
 
         return redirect()->route('cascade.ped.index')
-            ->with('flash.banner', "Plan actualizado exitosamente.")
+            ->with('flash.banner', 'Plan actualizado exitosamente.')
             ->with('flash.bannerStyle', 'success');
     }
 
@@ -142,7 +142,7 @@ class PedController extends Controller
         $hijos = $tema->objetivosEstrategicos()->count();
         $tema->delete();
 
-        $mensaje = "Tema eliminado.";
+        $mensaje = 'Tema eliminado.';
         if ($hijos > 0) {
             $mensaje .= " Se eliminaron {$hijos} objetivos y sus descendientes.";
         }
@@ -179,7 +179,7 @@ class PedController extends Controller
         $hijos = $objetivo->estrategias()->count();
         $objetivo->delete();
 
-        $mensaje = "Objetivo Estratégico eliminado.";
+        $mensaje = 'Objetivo Estratégico eliminado.';
         if ($hijos > 0) {
             $mensaje .= " Se eliminaron {$hijos} estrategias y sus líneas de acción.";
         }
@@ -216,7 +216,7 @@ class PedController extends Controller
         $hijos = $estrategia->lineasAccion()->count();
         $estrategia->delete();
 
-        $mensaje = "Estrategia eliminada.";
+        $mensaje = 'Estrategia eliminada.';
         if ($hijos > 0) {
             $mensaje .= " Se eliminaron {$hijos} líneas de acción.";
         }
@@ -235,14 +235,14 @@ class PedController extends Controller
         $tipo = $request->query('tipo');
         $parentId = $request->query('parent_id');
 
-        abort_if(!in_array($tipo, ['eje', 'tema', 'objetivo', 'estrategia', 'linea']), 400);
+        abort_if(! in_array($tipo, ['eje', 'tema', 'objetivo', 'estrategia', 'linea']), 400);
 
         return view('cascade.ped.nodo.create', compact('tipo', 'parentId'));
     }
 
     public function editNodo(string $tipo, int $id): View
     {
-        abort_if(!in_array($tipo, ['eje', 'tema', 'objetivo', 'estrategia', 'linea']), 400);
+        abort_if(! in_array($tipo, ['eje', 'tema', 'objetivo', 'estrategia', 'linea']), 400);
 
         return view('cascade.ped.nodo.edit', compact('tipo', 'id'));
     }

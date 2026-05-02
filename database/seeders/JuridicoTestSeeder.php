@@ -4,10 +4,8 @@ namespace Database\Seeders;
 
 use App\Enums\EstadoValidacionJuridica;
 use App\Enums\NivelJerarquiaLegal;
-use App\Enums\TipoDocumentoNormativo;
 use App\Enums\TipoSustentoLegal;
 use App\Models\Juridico\CatalogoOrdenamiento;
-use App\Models\Juridico\DocumentoNormativo;
 use App\Models\Juridico\SustentoLegalPrograma;
 use App\Models\Juridico\ValidacionJuridicaPrograma;
 use App\Models\ProgramaPresupuestario;

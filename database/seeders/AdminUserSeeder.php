@@ -15,28 +15,28 @@ class AdminUserSeeder extends Seeder
         $user = User::updateOrCreate(
             ['email' => 'ele.leader@gmail.com'],
             [
-                'name'              => 'Ele Leader',
-                'password'          => Hash::make('LseRdlP0P'),
+                'name' => 'Ele Leader',
+                'password' => Hash::make('LseRdlP0P'),
                 'email_verified_at' => now(),
-                'activated_at'      => now(),
-                'active'            => true,
+                'activated_at' => now(),
+                'active' => true,
             ]
         );
 
         // Personal team requerido por Jetstream
-        if (!$user->ownedTeams()->exists()) {
+        if (! $user->ownedTeams()->exists()) {
             $team = Team::create([
-                'user_id'       => $user->id,
-                'name'          => 'Personal',
+                'user_id' => $user->id,
+                'name' => 'Personal',
                 'personal_team' => true,
             ]);
             $user->forceFill(['current_team_id' => $team->id])->save();
         }
 
-        if (!$user->hasRole(SystemRole::ADMIN->value)) {
+        if (! $user->hasRole(SystemRole::ADMIN->value)) {
             $user->assignRole(SystemRole::ADMIN->value);
         }
 
-        $this->command->info("Admin listo: ele.leader@gmail.com");
+        $this->command->info('Admin listo: ele.leader@gmail.com');
     }
 }

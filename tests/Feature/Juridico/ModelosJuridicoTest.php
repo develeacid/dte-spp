@@ -16,8 +16,8 @@ use Tests\Traits\JuridicoTestHelpers;
 
 class ModelosJuridicoTest extends TestCase
 {
-    use RefreshDatabase;
     use JuridicoTestHelpers;
+    use RefreshDatabase;
 
     protected function setUp(): void
     {

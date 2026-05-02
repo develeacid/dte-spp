@@ -66,7 +66,7 @@ class PedEje extends Model
             'id', // PK local
             'id'  // PK intermedio
         )->join('ped_temas', 'ped_objetivos_estrategicos.ped_tema_id', '=', 'ped_temas.id')
-         ->where('ped_temas.ped_eje_id', $this->id);
+            ->where('ped_temas.ped_eje_id', $this->id);
     }
 
     public function lineasAccion()

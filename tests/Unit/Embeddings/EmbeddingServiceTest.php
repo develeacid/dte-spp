@@ -32,7 +32,7 @@ class EmbeddingServiceTest extends TestCase
             ], 200),
         ]);
 
-        $service = new EmbeddingService();
+        $service = new EmbeddingService;
         $embedding = $service->generate('Texto de prueba');
 
         $this->assertCount(1536, $embedding);
@@ -41,7 +41,7 @@ class EmbeddingServiceTest extends TestCase
 
     public function test_lanza_excepcion_si_texto_vacio(): void
     {
-        $service = new EmbeddingService();
+        $service = new EmbeddingService;
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('no puede estar vacío');
@@ -51,7 +51,7 @@ class EmbeddingServiceTest extends TestCase
 
     public function test_lanza_excepcion_si_texto_solo_espacios(): void
     {
-        $service = new EmbeddingService();
+        $service = new EmbeddingService;
 
         $this->expectException(\InvalidArgumentException::class);
 
@@ -66,7 +66,7 @@ class EmbeddingServiceTest extends TestCase
             ], 401),
         ]);
 
-        $service = new EmbeddingService();
+        $service = new EmbeddingService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Embedding API error');
@@ -84,7 +84,7 @@ class EmbeddingServiceTest extends TestCase
             ], 200),
         ]);
 
-        $service = new EmbeddingService();
+        $service = new EmbeddingService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Invalid embedding dimension');
@@ -102,7 +102,7 @@ class EmbeddingServiceTest extends TestCase
             ], 200),
         ]);
 
-        $service = new EmbeddingService();
+        $service = new EmbeddingService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('not an array');
@@ -120,7 +120,7 @@ class EmbeddingServiceTest extends TestCase
             ], 200),
         ]);
 
-        $service = new EmbeddingService();
+        $service = new EmbeddingService;
         $textoLargo = str_repeat('a', 50000);
 
         $embedding = $service->generate($textoLargo);
@@ -130,20 +130,21 @@ class EmbeddingServiceTest extends TestCase
         // Verificar que se truncó antes de enviar
         Http::assertSent(function ($request) {
             $input = $request->data()['input'];
+
             return strlen($input) <= 32000; // 8000 * 4
         });
     }
 
     public function test_get_dimension(): void
     {
-        $service = new EmbeddingService();
+        $service = new EmbeddingService;
 
         $this->assertEquals(1536, $service->getDimension());
     }
 
     public function test_get_model(): void
     {
-        $service = new EmbeddingService();
+        $service = new EmbeddingService;
 
         $this->assertEquals('test-model', $service->getModel());
     }
@@ -154,7 +155,7 @@ class EmbeddingServiceTest extends TestCase
             'api.test.com/*' => Http::failedConnection(),
         ]);
 
-        $service = new EmbeddingService();
+        $service = new EmbeddingService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Connection error');

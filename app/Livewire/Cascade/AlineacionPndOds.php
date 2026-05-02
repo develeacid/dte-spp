@@ -9,15 +9,19 @@ use Livewire\Component;
 class AlineacionPndOds extends Component
 {
     public bool $showForm = false;
+
     public string $searchPnd = '';
+
     public string $searchOds = '';
+
     public ?int $selectedPndId = null;
+
     public ?int $selectedOdsId = null;
 
     public function toggleForm(): void
     {
-        $this->showForm = !$this->showForm;
-        if (!$this->showForm) {
+        $this->showForm = ! $this->showForm;
+        if (! $this->showForm) {
             $this->reset(['searchPnd', 'searchOds', 'selectedPndId', 'selectedOdsId']);
         }
     }

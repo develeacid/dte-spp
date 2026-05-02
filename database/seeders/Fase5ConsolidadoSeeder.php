@@ -12,6 +12,7 @@ class Fase5ConsolidadoSeeder extends Seeder
     {
         if (app()->environment('production')) {
             $this->command->error('No se puede ejecutar en producción.');
+
             return;
         }
 

@@ -13,7 +13,7 @@ enum FrecuenciaMedicion: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::MENSUAL => 'Mensual',
             self::TRIMESTRAL => 'Trimestral',
             self::SEMESTRAL => 'Semestral',

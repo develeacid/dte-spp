@@ -8,14 +8,15 @@ use App\Support\KAnonymityMasker;
 class Anexo11ExportService
 {
     private const GENERO_KEYS = ['masculino', 'femenino', 'otro'];
+
     private const GRUPO_EDAD_KEYS = ['infantes', 'ninios', 'adolescentes', 'jovenes', 'adultos', 'adultos_mayores'];
+
     private const TIPO_DISCAPACIDAD_KEYS = ['motriz', 'visual', 'auditiva', 'intelectual', 'psicosocial', 'multiple', 'ninguna'];
 
     public function __construct(
         private readonly GeoBaseClient $client,
         private readonly KAnonymityMasker $masker,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  int  $sppProgramId  the dte-spp programa.id (geobase resolves it)

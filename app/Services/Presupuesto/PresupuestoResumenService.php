@@ -3,6 +3,7 @@
 namespace App\Services\Presupuesto;
 
 use App\Models\Presupuesto\PartidaPresupuestal;
+use App\Models\ProgramaPresupuestario;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -91,7 +92,7 @@ class PresupuestoResumenService
         }
 
         // Calcular % avance físico promedio
-        $programa = \App\Models\ProgramaPresupuestario::with([
+        $programa = ProgramaPresupuestario::with([
             'mirNiveles.indicadores.metasPeriodo' => fn ($q) => $q->where('periodo', '<=', $trimestre)
                 ->where('ejercicio_fiscal', $ejercicio),
             'mirNiveles.indicadores.avances' => fn ($q) => $q->where('periodo', '<=', $trimestre),
@@ -138,7 +139,7 @@ class PresupuestoResumenService
             "presupuesto:alertas:{$teamId}:{$ejercicio}",
             self::TTL,
             function () use ($teamId, $ejercicio, $umbral) {
-                $programas = \App\Models\ProgramaPresupuestario::paraTeam($teamId)
+                $programas = ProgramaPresupuestario::paraTeam($teamId)
                     ->ejercicio($ejercicio)
                     ->with(['partidasPresupuestales' => fn ($q) => $q->with('avancesFinancieros')])
                     ->get();

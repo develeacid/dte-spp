@@ -67,7 +67,7 @@ class CapturaAvance extends Component
             $variablesMap[$variable->simbolo] = (float) $valor;
         }
 
-        $evaluator = new FormulaEvaluatorService();
+        $evaluator = new FormulaEvaluatorService;
         $resultado = $evaluator->evaluar($indicador->formula_texto, $variablesMap);
 
         if ($resultado === null) {
@@ -79,7 +79,7 @@ class CapturaAvance extends Component
 
         $this->resultado = $resultado;
 
-        $semaforoService = new SemaforoService();
+        $semaforoService = new SemaforoService;
         $metaPeriodo = $this->avance->metaPeriodo
             ? (float) $this->avance->metaPeriodo->meta_periodo
             : null;

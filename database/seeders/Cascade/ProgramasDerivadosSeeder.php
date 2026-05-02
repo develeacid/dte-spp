@@ -17,8 +17,9 @@ class ProgramasDerivadosSeeder extends Seeder
         // Obtener plan activo
         $plan = PedPlan::where('activo', true)->first();
 
-        if (!$plan) {
+        if (! $plan) {
             $this->command->error('No existe un plan activo. Ejecuta PedSeeder primero.');
+
             return;
         }
 
@@ -76,17 +77,17 @@ class ProgramasDerivadosSeeder extends Seeder
                 [
                     'Sectorial',
                     $economico->nombre,
-                    $economico->objetivos()->count()
+                    $economico->objetivos()->count(),
                 ],
                 [
                     'Sectorial',
                     $salud->nombre,
-                    $salud->objetivos()->count()
+                    $salud->objetivos()->count(),
                 ],
                 [
                     'Sectorial',
                     $seguridad->nombre,
-                    $seguridad->objetivos()->count()
+                    $seguridad->objetivos()->count(),
                 ],
             ]
         );
@@ -103,10 +104,10 @@ class ProgramasDerivadosSeeder extends Seeder
             ProgramaDerivadoObjetivo::updateOrCreate(
                 [
                     'programa_derivado_id' => $programa->id,
-                    'clave' => (string) $clave
+                    'clave' => (string) $clave,
                 ],
                 [
-                    'descripcion' => $descripcion
+                    'descripcion' => $descripcion,
                 ]
             );
         }

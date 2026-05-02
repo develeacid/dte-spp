@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\LlmLog;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class LlmLogsCleanup extends Command
 {

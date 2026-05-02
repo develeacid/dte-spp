@@ -18,8 +18,8 @@ class StoreIndicadorRequest extends FormRequest
     {
         $nivel = TipoNivelMir::tryFrom($this->input('nivel'));
 
-        if (!$nivel) {
-            return ['nivel' => 'required|in:' . implode(',', TipoNivelMir::values())];
+        if (! $nivel) {
+            return ['nivel' => 'required|in:'.implode(',', TipoNivelMir::values())];
         }
 
         $reglas = IndicadorReglasService::reglasParaNivel($nivel);

@@ -6,6 +6,7 @@ use App\Models\Presupuesto\AvanceFinanciero;
 use App\Models\Presupuesto\MetaGastoTrimestral;
 use App\Models\Presupuesto\PartidaPresupuestal;
 use App\Models\ProgramaPresupuestario;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -13,6 +14,7 @@ use Livewire\Component;
 class CapturaAvanceFinanciero extends Component
 {
     public ProgramaPresupuestario $programa;
+
     public string $seccion = 'calendarizacion'; // calendarizacion | avance
 
     // Calendarización: metas[partida_id][trimestre] = monto_programado
@@ -60,6 +62,7 @@ class CapturaAvanceFinanciero extends Component
                     MetaGastoTrimestral::where('partida_presupuestal_id', $partidaId)
                         ->where('trimestre', $trimestre)
                         ->delete();
+
                     continue;
                 }
 
@@ -103,10 +106,12 @@ class CapturaAvanceFinanciero extends Component
                 // Validar ordenamiento: pagado ≤ devengado ≤ comprometido
                 if ((float) $pagado > (float) $devengado) {
                     $this->addError("avances.{$partidaId}.{$trimestre}.pagado", 'Pagado no puede ser mayor que devengado.');
+
                     return;
                 }
                 if ((float) $devengado > (float) $comprometido) {
                     $this->addError("avances.{$partidaId}.{$trimestre}.devengado", 'Devengado no puede ser mayor que comprometido.');
+
                     return;
                 }
 
@@ -127,7 +132,7 @@ class CapturaAvanceFinanciero extends Component
         $this->cargarDatos();
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         $partidas = PartidaPresupuestal::where('programa_presupuestario_id', $this->programa->id)
             ->paraTeam(auth()->user()->currentTeam->id)

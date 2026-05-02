@@ -17,11 +17,14 @@ use Livewire\Component;
 class ArbolObjetivosBuilder extends Component
 {
     public ProgramaPresupuestario $programa;
+
     public ?int $arbolProblemaId = null;
+
     public ?int $arbolObjetivosId = null;
 
     // Edición
     public ?int $editNodoId = null;
+
     public string $editDescripcion = '';
 
     // IA
@@ -47,7 +50,7 @@ class ArbolObjetivosBuilder extends Component
             $arbolObjetivos = $programa->arboles()
                 ->where('tipo', TipoArbol::OBJETIVOS->value)->first();
 
-            if (!$arbolObjetivos) {
+            if (! $arbolObjetivos) {
                 $arbolObjetivos = $this->generarArbolObjetivos($arbolProblema);
             }
 
@@ -82,7 +85,7 @@ class ArbolObjetivosBuilder extends Component
 
         $tipoObjetivo = self::MAPEO_TIPOS[$tipoOriginal] ?? null;
 
-        if (!$tipoObjetivo) {
+        if (! $tipoObjetivo) {
             return;
         }
 
@@ -90,7 +93,7 @@ class ArbolObjetivosBuilder extends Component
             'arbol_id' => $arbolObjetivos->id,
             'parent_id' => $parentObjetivoId,
             'tipo_nodo' => $tipoObjetivo,
-            'descripcion' => '[Pendiente de transformación] ' . $nodoProblema->descripcion,
+            'descripcion' => '[Pendiente de transformación] '.$nodoProblema->descripcion,
             'nodo_origen_id' => $nodoProblema->id,
             'orden' => $nodoProblema->orden,
         ]);
@@ -105,7 +108,7 @@ class ArbolObjetivosBuilder extends Component
         $nodoObj = ArbolNodo::findOrFail($nodoObjetivoId);
         $nodoOrigen = $nodoObj->nodoOrigen;
 
-        if (!$nodoOrigen) {
+        if (! $nodoOrigen) {
             return;
         }
 
@@ -135,7 +138,7 @@ class ArbolObjetivosBuilder extends Component
 
     public function transformarTodosConIa(): void
     {
-        if (!$this->arbolObjetivosId) {
+        if (! $this->arbolObjetivosId) {
             return;
         }
 

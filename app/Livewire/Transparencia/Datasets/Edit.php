@@ -11,8 +11,11 @@ use Livewire\Component;
 class Edit extends Component
 {
     public DatasetAbierto $dataset;
+
     public string $nombre = '';
+
     public string $descripcion = '';
+
     public string $dcat_metadata_json = '';
 
     public function mount(DatasetAbierto $dataset): void

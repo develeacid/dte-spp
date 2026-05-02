@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Exports;
 
+use App\Livewire\Tracking\ConcentradoCaptura;
 use App\Models\Team;
 use App\Models\User;
 use Database\Seeders\DesarrolloSeeder;
@@ -50,7 +51,7 @@ class ConcentradoCapturaTest extends TestCase
         $user = User::where('email', 'ele.operador@gmail.com')->firstOrFail();
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Tracking\ConcentradoCaptura::class)
+            ->test(ConcentradoCaptura::class)
             ->assertSee('Concentrado de Captura');
     }
 
@@ -59,7 +60,7 @@ class ConcentradoCapturaTest extends TestCase
         $user = User::where('email', 'ele.operador@gmail.com')->firstOrFail();
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Tracking\ConcentradoCaptura::class)
+            ->test(ConcentradoCaptura::class)
             ->set('fechaDesde', '2026-01-01')
             ->set('fechaHasta', '2026-12-31')
             ->assertStatus(200);

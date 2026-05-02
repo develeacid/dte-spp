@@ -4,12 +4,20 @@ namespace App\Models;
 
 use App\Enums\EstadoPrograma;
 use App\Enums\OrigenPrograma;
+use App\Models\Juridico\DocumentoNormativo;
+use App\Models\Juridico\SustentoLegalPrograma;
+use App\Models\Juridico\ValidacionJuridicaPrograma;
+use App\Models\Mml\Alternativa;
+use App\Models\Mml\Arbol;
+use App\Models\Mml\PoblacionPrograma;
+use App\Models\Presupuesto\PartidaPresupuestal;
+use App\Services\GeoBase\GeoBaseClient;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProgramaPresupuestario extends Model
@@ -54,13 +62,13 @@ class ProgramaPresupuestario extends Model
     public function equipos()
     {
         return $this->belongsToMany(Team::class, 'programa_team')
-                    ->withPivot('rol')
-                    ->withTimestamps();
+            ->withPivot('rol')
+            ->withTimestamps();
     }
 
     public function arboles(): HasMany
     {
-        return $this->hasMany(\App\Models\Mml\Arbol::class, 'programa_presupuestario_id');
+        return $this->hasMany(Arbol::class, 'programa_presupuestario_id');
     }
 
     public function arbolProblema()
@@ -75,7 +83,7 @@ class ProgramaPresupuestario extends Model
 
     public function alternativas(): HasMany
     {
-        return $this->hasMany(\App\Models\Mml\Alternativa::class, 'programa_presupuestario_id');
+        return $this->hasMany(Alternativa::class, 'programa_presupuestario_id');
     }
 
     public function mirNiveles(): HasMany
@@ -90,27 +98,27 @@ class ProgramaPresupuestario extends Model
 
     public function poblacion(): HasOne
     {
-        return $this->hasOne(\App\Models\Mml\PoblacionPrograma::class, 'programa_id');
+        return $this->hasOne(PoblacionPrograma::class, 'programa_id');
     }
 
     public function partidasPresupuestales(): HasMany
     {
-        return $this->hasMany(\App\Models\Presupuesto\PartidaPresupuestal::class);
+        return $this->hasMany(PartidaPresupuestal::class);
     }
 
     public function sustentosLegales(): HasMany
     {
-        return $this->hasMany(\App\Models\Juridico\SustentoLegalPrograma::class);
+        return $this->hasMany(SustentoLegalPrograma::class);
     }
 
     public function documentosNormativos(): HasMany
     {
-        return $this->hasMany(\App\Models\Juridico\DocumentoNormativo::class);
+        return $this->hasMany(DocumentoNormativo::class);
     }
 
     public function validacionJuridica(): HasOne
     {
-        return $this->hasOne(\App\Models\Juridico\ValidacionJuridicaPrograma::class)
+        return $this->hasOne(ValidacionJuridicaPrograma::class)
             ->where('ejercicio_fiscal', config('presupuesto.ejercicio_default'));
     }
 
@@ -133,7 +141,7 @@ class ProgramaPresupuestario extends Model
             return null;
         }
 
-        return app(\App\Services\GeoBase\GeoBaseClient::class)
+        return app(GeoBaseClient::class)
             ->getProgramCoverage($this->id);
     }
 

@@ -38,7 +38,7 @@ class KAnonymityMaskerTest extends TestCase
 
     public function test_default_threshold_is_five(): void
     {
-        $masker = new KAnonymityMasker();
+        $masker = new KAnonymityMasker;
 
         $this->assertSame('<5', $masker->mask(4));
         $this->assertSame(5, $masker->mask(5));
@@ -85,7 +85,7 @@ class KAnonymityMaskerTest extends TestCase
 
     public function test_mask_rejects_negative_count(): void
     {
-        $masker = new KAnonymityMasker();
+        $masker = new KAnonymityMasker;
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/-3/');

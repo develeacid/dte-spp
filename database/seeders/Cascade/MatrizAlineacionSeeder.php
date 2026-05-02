@@ -108,15 +108,17 @@ class MatrizAlineacionSeeder extends Seeder
         $count = 0;
         foreach ($map as $pedClave => $pndClaves) {
             $pedObj = PedObjetivoEstrategico::where('clave', $pedClave)->first();
-            if (!$pedObj) {
+            if (! $pedObj) {
                 $this->command->warn("  PED Objetivo {$pedClave} no encontrado");
+
                 continue;
             }
 
             foreach ($pndClaves as $pndClave) {
                 $pndObj = PndObjetivo::where('clave', $pndClave)->first();
-                if (!$pndObj) {
+                if (! $pndObj) {
                     $this->command->warn("  PND Objetivo {$pndClave} no encontrado");
+
                     continue;
                 }
 
@@ -205,15 +207,17 @@ class MatrizAlineacionSeeder extends Seeder
         $count = 0;
         foreach ($map as $pndClave => $odsClaves) {
             $pndObj = PndObjetivo::where('clave', $pndClave)->first();
-            if (!$pndObj) {
+            if (! $pndObj) {
                 $this->command->warn("  PND Objetivo {$pndClave} no encontrado");
+
                 continue;
             }
 
             foreach ($odsClaves as $odsClave) {
                 $odsMeta = OdsMeta::where('clave', $odsClave)->first();
-                if (!$odsMeta) {
+                if (! $odsMeta) {
                     $this->command->warn("  ODS Meta {$odsClave} no encontrada");
+
                     continue;
                 }
 

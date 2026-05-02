@@ -3,16 +3,13 @@
 namespace Tests\Feature\Mml;
 
 use App\DTOs\ImportedMirData;
-use App\Enums\EstadoPrograma;
-use App\Enums\FrecuenciaMedicion;
+use App\Models\Mml\ImportacionReporte;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MetaPeriodo;
-use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
 use App\Services\Mml\CalendarizacionService;
 use App\Services\Mml\MirPersistenciaService;
-use App\Models\Mml\ImportacionReporte;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,13 +18,14 @@ class CalendarizacionTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private CalendarizacionService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->user = User::factory()->withPersonalTeam()->create();
-        $this->service = new CalendarizacionService();
+        $this->service = new CalendarizacionService;
     }
 
     public function test_genera_12_periodos_para_mensual(): void
@@ -168,7 +166,7 @@ class CalendarizacionTest extends TestCase
         );
 
         // Update activo_seguimiento if needed
-        if (!$activoSeguimiento) {
+        if (! $activoSeguimiento) {
             Indicador::whereIn('mir_nivel_id', $programa->mirNiveles()->pluck('id'))
                 ->update(['activo_seguimiento' => false]);
         }

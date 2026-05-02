@@ -18,9 +18,7 @@ class Anexo11GrupoEdadSheet implements FromArray, WithHeadings, WithTitle
         'adultos_mayores' => 'Adultos mayores (65+)',
     ];
 
-    public function __construct(private readonly Anexo11ReportData $data)
-    {
-    }
+    public function __construct(private readonly Anexo11ReportData $data) {}
 
     public function title(): string
     {
@@ -38,6 +36,7 @@ class Anexo11GrupoEdadSheet implements FromArray, WithHeadings, WithTitle
         foreach (self::LABELS as $key => $label) {
             $rows[] = [$label, $this->data->porGrupoEdad[$key] ?? '<5'];
         }
+
         return $rows;
     }
 }

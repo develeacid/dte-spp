@@ -2,6 +2,7 @@
 
 namespace App\Models\Mml;
 
+use App\Models\CatalogoUnidadMedida;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -42,6 +43,6 @@ class IndicadorVariable extends Model
 
     public function unidadMedida(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\CatalogoUnidadMedida::class, 'unidad_medida_id');
+        return $this->belongsTo(CatalogoUnidadMedida::class, 'unidad_medida_id');
     }
 }

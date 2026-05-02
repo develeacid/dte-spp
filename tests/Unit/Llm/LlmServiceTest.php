@@ -4,7 +4,7 @@ namespace Tests\Unit\Llm;
 
 use App\Contracts\LlmServiceInterface;
 use App\DTOs\LlmValidationResult;
-use App\Models\LlmLog;
+use App\Exceptions\LlmException;
 use App\Services\Llm\LlmService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -23,7 +23,7 @@ class LlmServiceTest extends TestCase
         config(['llm.api_url' => 'https://api.openai.com/v1/chat/completions']);
         config(['llm.model' => 'gpt-4o-mini']);
         config(['llm.logging.enabled' => true]);
-        $this->service = new LlmService();
+        $this->service = new LlmService;
     }
 
     public function test_suggest_returns_text(): void
@@ -94,13 +94,13 @@ class LlmServiceTest extends TestCase
     public function test_handles_api_error_with_fallback_disabled(): void
     {
         config(['llm.fallback.enabled' => false]);
-        $this->service = new LlmService();
+        $this->service = new LlmService;
 
         Http::fake([
             'api.openai.com/*' => Http::response(['error' => ['message' => 'Rate limited']], 429),
         ]);
 
-        $this->expectException(\App\Exceptions\LlmException::class);
+        $this->expectException(LlmException::class);
 
         $this->service->suggest('Test prompt');
     }
@@ -127,7 +127,7 @@ class LlmServiceTest extends TestCase
 
         try {
             $this->service->suggest('Test prompt');
-        } catch (\App\Exceptions\LlmException $e) {
+        } catch (LlmException $e) {
             // Expected
         }
 

@@ -38,7 +38,7 @@ class GenerarReporteExcelJob implements ShouldQueue
         };
 
         $path = config('evaluation.exports.storage_path');
-        $filename = "{$this->tipo}-" . now()->format('Ymd-His') . '-' . uniqid() . '.xlsx';
+        $filename = "{$this->tipo}-".now()->format('Ymd-His').'-'.uniqid().'.xlsx';
         $fullPath = "{$path}/{$filename}";
 
         $disk = config('evaluation.exports.storage_disk');

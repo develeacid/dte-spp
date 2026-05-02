@@ -57,7 +57,9 @@ class GenerateEmbeddings extends Command
      * Stats tracking.
      */
     protected int $generated = 0;
+
     protected int $failed = 0;
+
     protected int $skipped = 0;
 
     /**
@@ -76,12 +78,13 @@ class GenerateEmbeddings extends Command
 
         if (empty($tablesToProcess)) {
             $this->error("Table '{$tableFilter}' is not a valid embeddable table.");
-            $this->line('Valid tables: ' . implode(', ', array_keys($this->tableMap)));
+            $this->line('Valid tables: '.implode(', ', array_keys($this->tableMap)));
+
             return self::FAILURE;
         }
 
         $this->info('Starting embedding generation...');
-        $this->info("Options: chunk-size={$chunkSize}, delay={$delayMs}ms, force=" . ($force ? 'yes' : 'no'));
+        $this->info("Options: chunk-size={$chunkSize}, delay={$delayMs}ms, force=".($force ? 'yes' : 'no'));
         $this->newLine();
 
         foreach ($tablesToProcess as $tableName => $modelClass) {
@@ -133,7 +136,7 @@ class GenerateEmbeddings extends Command
     ): void {
         $query = $modelClass::query();
 
-        if (!$force) {
+        if (! $force) {
             $query->needsEmbedding();
         }
 
@@ -141,6 +144,7 @@ class GenerateEmbeddings extends Command
 
         if ($total === 0) {
             $this->line("  [{$tableName}] No records to process.");
+
             return;
         }
 
@@ -151,7 +155,7 @@ class GenerateEmbeddings extends Command
         $isFirstChunk = true;
 
         $modelClass::query()
-            ->when(!$force, fn ($q) => $q->needsEmbedding())
+            ->when(! $force, fn ($q) => $q->needsEmbedding())
             ->chunkById($chunkSize, function ($records) use (
                 $embeddingService,
                 $tableName,
@@ -162,7 +166,7 @@ class GenerateEmbeddings extends Command
                 &$isFirstChunk
             ) {
                 // Rate limiting: sleep between chunks (not before the first)
-                if (!$isFirstChunk && $delayMs > 0) {
+                if (! $isFirstChunk && $delayMs > 0) {
                     usleep($delayMs * 1000);
                 }
                 $isFirstChunk = false;
@@ -173,6 +177,7 @@ class GenerateEmbeddings extends Command
                     if (empty(trim($text))) {
                         $this->skipped++;
                         $bar->advance();
+
                         continue;
                     }
 
@@ -215,6 +220,7 @@ class GenerateEmbeddings extends Command
                 $this->logSuccess($tableName, $record->id, $text, count($embedding));
 
                 $this->generated++;
+
                 return;
 
             } catch (\Exception $e) {
@@ -245,7 +251,7 @@ class GenerateEmbeddings extends Command
     protected function saveEmbedding($model, array $embedding): void
     {
         $tableName = $model->getTable();
-        $embeddingString = '[' . implode(',', $embedding) . ']';
+        $embeddingString = '['.implode(',', $embedding).']';
 
         DB::statement(
             "UPDATE {$tableName} SET embedding = ?::vector WHERE id = ?",
@@ -288,9 +294,9 @@ class GenerateEmbeddings extends Command
         );
 
         if ($this->failed > 0) {
-            $this->warn("Some records failed. Check logs for details.");
+            $this->warn('Some records failed. Check logs for details.');
         } else {
-            $this->info("All records processed successfully.");
+            $this->info('All records processed successfully.');
         }
     }
 }

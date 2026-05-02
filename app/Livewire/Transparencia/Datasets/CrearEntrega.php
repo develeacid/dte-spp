@@ -11,6 +11,7 @@ use Livewire\Component;
 class CrearEntrega extends Component
 {
     public DatasetAbierto $dataset;
+
     public string $periodo = '';
 
     public function mount(DatasetAbierto $dataset): void

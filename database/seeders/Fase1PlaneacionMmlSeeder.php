@@ -31,14 +31,18 @@ use Illuminate\Database\Seeder;
 class Fase1PlaneacionMmlSeeder extends Seeder
 {
     private int $indicadorGlobalIndex = 0;
+
     private array $sentidoPool;
+
     private array $pedObjetivoIds;
+
     private array $pedLineaIds;
 
     public function run(): void
     {
         if (app()->environment('production')) {
             $this->command->error('No se puede ejecutar este seeder en producción.');
+
             return;
         }
 
@@ -57,9 +61,9 @@ class Fase1PlaneacionMmlSeeder extends Seeder
         shuffle($this->sentidoPool);
 
         $teams = [
-            'SE-001'     => Team::where('clave_ur', 'SE-001')->first(),
-            'SS-002'     => Team::where('clave_ur', 'SS-002')->first(),
-            'SEG-003'    => Team::where('clave_ur', 'SEG-003')->first(),
+            'SE-001' => Team::where('clave_ur', 'SE-001')->first(),
+            'SS-002' => Team::where('clave_ur', 'SS-002')->first(),
+            'SEG-003' => Team::where('clave_ur', 'SEG-003')->first(),
             'SECTUR-004' => Team::where('clave_ur', 'SECTUR-004')->first(),
         ];
 
@@ -69,7 +73,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             $team = $teams[$def['ur']];
             $slug = $slugMap[$def['ur']];
             $planeador = User::where('email', "planeador.{$slug}@sistema.test")->first()
-                ?? User::where('email', 'like', "planeador.%@sistema.test")->first();
+                ?? User::where('email', 'like', 'planeador.%@sistema.test')->first();
 
             $this->crearPrograma($def, $team, $planeador, $teams);
         }
@@ -84,77 +88,77 @@ class Fase1PlaneacionMmlSeeder extends Seeder
         return [
             // SE-001
             ['ur' => 'SE-001', 'clave' => 'ISM-001', 'nombre' => 'Impulso al Sector Mezcalero', 'transversal' => 'SECTUR-004',
-             'problema' => 'Baja competitividad del sector mezcalero estatal',
-             'objetivo' => 'Incrementar la competitividad del sector mezcalero estatal',
-             'poblacion' => ['ref' => 85000, 'pot' => 32000, 'obj' => 8500, 'unidad' => 'Productores'],
-             'padron_geobase_activo' => true],
+                'problema' => 'Baja competitividad del sector mezcalero estatal',
+                'objetivo' => 'Incrementar la competitividad del sector mezcalero estatal',
+                'poblacion' => ['ref' => 85000, 'pot' => 32000, 'obj' => 8500, 'unidad' => 'Productores'],
+                'padron_geobase_activo' => true],
             ['ur' => 'SE-001', 'clave' => 'EDU-002', 'nombre' => 'Educación Básica de Calidad',
-             'problema' => 'Bajo rendimiento académico en educación básica',
-             'objetivo' => 'Mejorar el rendimiento académico en educación básica',
-             'poblacion' => ['ref' => 1200000, 'pot' => 450000, 'obj' => 120000, 'unidad' => 'Estudiantes']],
+                'problema' => 'Bajo rendimiento académico en educación básica',
+                'objetivo' => 'Mejorar el rendimiento académico en educación básica',
+                'poblacion' => ['ref' => 1200000, 'pot' => 450000, 'obj' => 120000, 'unidad' => 'Estudiantes']],
             ['ur' => 'SE-001', 'clave' => 'EDU-003', 'nombre' => 'Becas para Educación Superior',
-             'problema' => 'Alta deserción en educación superior por falta de recursos económicos',
-             'objetivo' => 'Reducir la deserción en educación superior mediante apoyo económico',
-             'poblacion' => ['ref' => 280000, 'pot' => 95000, 'obj' => 25000, 'unidad' => 'Estudiantes'],
-             'padron_geobase_activo' => true],
+                'problema' => 'Alta deserción en educación superior por falta de recursos económicos',
+                'objetivo' => 'Reducir la deserción en educación superior mediante apoyo económico',
+                'poblacion' => ['ref' => 280000, 'pot' => 95000, 'obj' => 25000, 'unidad' => 'Estudiantes'],
+                'padron_geobase_activo' => true],
             ['ur' => 'SE-001', 'clave' => 'EDU-004', 'nombre' => 'Infraestructura Escolar',
-             'problema' => 'Deterioro de la infraestructura en planteles educativos',
-             'objetivo' => 'Rehabilitar la infraestructura de planteles educativos',
-             'poblacion' => ['ref' => 4500, 'pot' => 1800, 'obj' => 600, 'unidad' => 'Planteles']],
+                'problema' => 'Deterioro de la infraestructura en planteles educativos',
+                'objetivo' => 'Rehabilitar la infraestructura de planteles educativos',
+                'poblacion' => ['ref' => 4500, 'pot' => 1800, 'obj' => 600, 'unidad' => 'Planteles']],
             // SS-002
             ['ur' => 'SS-002', 'clave' => 'PEC-001', 'nombre' => 'Prevención de Enfermedades Crónicas',
-             'problema' => 'Alta incidencia de enfermedades crónico-degenerativas en la población adulta',
-             'objetivo' => 'Reducir la incidencia de enfermedades crónico-degenerativas',
-             'poblacion' => ['ref' => 2500000, 'pot' => 800000, 'obj' => 200000, 'unidad' => 'Personas'],
-             'padron_geobase_activo' => true],
+                'problema' => 'Alta incidencia de enfermedades crónico-degenerativas en la población adulta',
+                'objetivo' => 'Reducir la incidencia de enfermedades crónico-degenerativas',
+                'poblacion' => ['ref' => 2500000, 'pot' => 800000, 'obj' => 200000, 'unidad' => 'Personas'],
+                'padron_geobase_activo' => true],
             ['ur' => 'SS-002', 'clave' => 'SAL-002', 'nombre' => 'Vacunación Universal',
-             'problema' => 'Cobertura de vacunación insuficiente en menores de 5 años',
-             'objetivo' => 'Ampliar la cobertura de vacunación en menores de 5 años',
-             'poblacion' => ['ref' => 350000, 'pot' => 180000, 'obj' => 150000, 'unidad' => 'Menores']],
+                'problema' => 'Cobertura de vacunación insuficiente en menores de 5 años',
+                'objetivo' => 'Ampliar la cobertura de vacunación en menores de 5 años',
+                'poblacion' => ['ref' => 350000, 'pot' => 180000, 'obj' => 150000, 'unidad' => 'Menores']],
             ['ur' => 'SS-002', 'clave' => 'SAL-003', 'nombre' => 'Salud Materna e Infantil',
-             'problema' => 'Mortalidad materna e infantil por encima de la media nacional',
-             'objetivo' => 'Disminuir la mortalidad materna e infantil',
-             'poblacion' => ['ref' => 120000, 'pot' => 45000, 'obj' => 30000, 'unidad' => 'Mujeres embarazadas'],
-             'padron_geobase_activo' => true],
+                'problema' => 'Mortalidad materna e infantil por encima de la media nacional',
+                'objetivo' => 'Disminuir la mortalidad materna e infantil',
+                'poblacion' => ['ref' => 120000, 'pot' => 45000, 'obj' => 30000, 'unidad' => 'Mujeres embarazadas'],
+                'padron_geobase_activo' => true],
             ['ur' => 'SS-002', 'clave' => 'SAL-004', 'nombre' => 'Atención Hospitalaria',
-             'problema' => 'Saturación de servicios hospitalarios de segundo nivel',
-             'objetivo' => 'Mejorar la capacidad de atención hospitalaria de segundo nivel',
-             'poblacion' => ['ref' => 3200000, 'pot' => 900000, 'obj' => 350000, 'unidad' => 'Personas']],
+                'problema' => 'Saturación de servicios hospitalarios de segundo nivel',
+                'objetivo' => 'Mejorar la capacidad de atención hospitalaria de segundo nivel',
+                'poblacion' => ['ref' => 3200000, 'pot' => 900000, 'obj' => 350000, 'unidad' => 'Personas']],
             // SEG-003
             ['ur' => 'SEG-003', 'clave' => 'FSP-001', 'nombre' => 'Fortalecimiento de la Seguridad Pública Municipal',
-             'problema' => 'Debilidad institucional de los cuerpos de seguridad municipal',
-             'objetivo' => 'Fortalecer las capacidades institucionales de seguridad municipal',
-             'poblacion' => ['ref' => 570, 'pot' => 250, 'obj' => 120, 'unidad' => 'Municipios']],
+                'problema' => 'Debilidad institucional de los cuerpos de seguridad municipal',
+                'objetivo' => 'Fortalecer las capacidades institucionales de seguridad municipal',
+                'poblacion' => ['ref' => 570, 'pot' => 250, 'obj' => 120, 'unidad' => 'Municipios']],
             ['ur' => 'SEG-003', 'clave' => 'SEG-002', 'nombre' => 'Prevención del Delito',
-             'problema' => 'Incremento de la incidencia delictiva en zonas urbanas',
-             'objetivo' => 'Reducir la incidencia delictiva mediante acciones de prevención social',
-             'poblacion' => ['ref' => 1800000, 'pot' => 600000, 'obj' => 150000, 'unidad' => 'Personas']],
+                'problema' => 'Incremento de la incidencia delictiva en zonas urbanas',
+                'objetivo' => 'Reducir la incidencia delictiva mediante acciones de prevención social',
+                'poblacion' => ['ref' => 1800000, 'pot' => 600000, 'obj' => 150000, 'unidad' => 'Personas']],
             ['ur' => 'SEG-003', 'clave' => 'SEG-003P', 'nombre' => 'Reinserción Social',
-             'problema' => 'Alta reincidencia delictiva por falta de programas de reinserción',
-             'objetivo' => 'Disminuir la reincidencia delictiva mediante programas de reinserción',
-             'poblacion' => ['ref' => 12000, 'pot' => 5500, 'obj' => 2800, 'unidad' => 'Personas privadas de libertad']],
+                'problema' => 'Alta reincidencia delictiva por falta de programas de reinserción',
+                'objetivo' => 'Disminuir la reincidencia delictiva mediante programas de reinserción',
+                'poblacion' => ['ref' => 12000, 'pot' => 5500, 'obj' => 2800, 'unidad' => 'Personas privadas de libertad']],
             ['ur' => 'SEG-003', 'clave' => 'SEG-004', 'nombre' => 'Protección Civil',
-             'problema' => 'Insuficiente capacidad de respuesta ante desastres naturales',
-             'objetivo' => 'Fortalecer la capacidad estatal de respuesta ante desastres naturales',
-             'poblacion' => ['ref' => 4200000, 'pot' => 1200000, 'obj' => 500000, 'unidad' => 'Personas']],
+                'problema' => 'Insuficiente capacidad de respuesta ante desastres naturales',
+                'objetivo' => 'Fortalecer la capacidad estatal de respuesta ante desastres naturales',
+                'poblacion' => ['ref' => 4200000, 'pot' => 1200000, 'obj' => 500000, 'unidad' => 'Personas']],
             // SECTUR-004
             ['ur' => 'SECTUR-004', 'clave' => 'DDT-001', 'nombre' => 'Destinos Turísticos Sustentables',
-             'problema' => 'Degradación ambiental de destinos turísticos prioritarios',
-             'objetivo' => 'Conservar y rehabilitar los destinos turísticos prioritarios',
-             'poblacion' => ['ref' => 45, 'pot' => 20, 'obj' => 12, 'unidad' => 'Destinos turísticos'],
-             'padron_geobase_activo' => true],
+                'problema' => 'Degradación ambiental de destinos turísticos prioritarios',
+                'objetivo' => 'Conservar y rehabilitar los destinos turísticos prioritarios',
+                'poblacion' => ['ref' => 45, 'pot' => 20, 'obj' => 12, 'unidad' => 'Destinos turísticos'],
+                'padron_geobase_activo' => true],
             ['ur' => 'SECTUR-004', 'clave' => 'TUR-002', 'nombre' => 'Promoción Turística Digital',
-             'problema' => 'Baja visibilidad del estado como destino turístico en medios digitales',
-             'objetivo' => 'Incrementar la visibilidad turística del estado en plataformas digitales',
-             'poblacion' => ['ref' => 5000000, 'pot' => 2000000, 'obj' => 800000, 'unidad' => 'Visitantes potenciales']],
+                'problema' => 'Baja visibilidad del estado como destino turístico en medios digitales',
+                'objetivo' => 'Incrementar la visibilidad turística del estado en plataformas digitales',
+                'poblacion' => ['ref' => 5000000, 'pot' => 2000000, 'obj' => 800000, 'unidad' => 'Visitantes potenciales']],
             ['ur' => 'SECTUR-004', 'clave' => 'TUR-003', 'nombre' => 'Turismo Comunitario',
-             'problema' => 'Escasa participación de comunidades rurales en la actividad turística',
-             'objetivo' => 'Incorporar comunidades rurales a la cadena de valor turística',
-             'poblacion' => ['ref' => 2500, 'pot' => 800, 'obj' => 250, 'unidad' => 'Comunidades']],
+                'problema' => 'Escasa participación de comunidades rurales en la actividad turística',
+                'objetivo' => 'Incorporar comunidades rurales a la cadena de valor turística',
+                'poblacion' => ['ref' => 2500, 'pot' => 800, 'obj' => 250, 'unidad' => 'Comunidades']],
             ['ur' => 'SECTUR-004', 'clave' => 'TUR-004', 'nombre' => 'Capacitación Sector Hotelero',
-             'problema' => 'Baja calidad en el servicio del sector hotelero estatal',
-             'objetivo' => 'Elevar la calidad del servicio en el sector hotelero estatal',
-             'poblacion' => ['ref' => 18000, 'pot' => 8000, 'obj' => 3500, 'unidad' => 'Trabajadores del sector']],
+                'problema' => 'Baja calidad en el servicio del sector hotelero estatal',
+                'objetivo' => 'Elevar la calidad del servicio en el sector hotelero estatal',
+                'poblacion' => ['ref' => 18000, 'pot' => 8000, 'obj' => 3500, 'unidad' => 'Trabajadores del sector']],
         ];
     }
 
@@ -176,7 +180,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             $programa->update(['padron_geobase_activo' => true]);
         }
 
-        if (!empty($def['transversal'])) {
+        if (! empty($def['transversal'])) {
             $coadTeam = $teams[$def['transversal']];
             $programa->equipos()->syncWithoutDetaching([$coadTeam->id => ['rol' => 'coadyuvante']]);
         }
@@ -334,7 +338,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
     private function crearMir(ProgramaPresupuestario $programa, array $def, Team $team, array $teams, User $planeador): void
     {
         $mirData = $this->mirDefinitions($def);
-        $isTransversal = !empty($def['transversal']);
+        $isTransversal = ! empty($def['transversal']);
         $coadTeam = $isTransversal ? $teams[$def['transversal']] : null;
 
         $pedObjId = $this->pedObjetivoIds ? $this->pedObjetivoIds[array_rand($this->pedObjetivoIds)] : null;
@@ -344,7 +348,9 @@ class Fase1PlaneacionMmlSeeder extends Seeder
 
         // Create COMPONENTES first (needed for ACTIVIDAD componente_id)
         foreach ($mirData as $key => $nivel) {
-            if ($nivel['tipo'] !== TipoNivelMir::COMPONENTE) continue;
+            if ($nivel['tipo'] !== TipoNivelMir::COMPONENTE) {
+                continue;
+            }
 
             $teamId = null;
             if ($isTransversal && $nivel['orden'] === 2) {
@@ -364,7 +370,9 @@ class Fase1PlaneacionMmlSeeder extends Seeder
 
         // Create FIN, PROPOSITO, ACTIVIDAD
         foreach ($mirData as $nivel) {
-            if ($nivel['tipo'] === TipoNivelMir::COMPONENTE) continue;
+            if ($nivel['tipo'] === TipoNivelMir::COMPONENTE) {
+                continue;
+            }
 
             $attrs = [
                 'resumen_narrativo' => $nivel['resumen'], 'supuestos' => $nivel['supuesto'],
@@ -396,12 +404,14 @@ class Fase1PlaneacionMmlSeeder extends Seeder
 
     private function crearIndicadorCompleto(MirNivel $mirNivel, array $nivelDef, ProgramaPresupuestario $programa): void
     {
-        if ($mirNivel->indicadores()->exists()) return;
+        if ($mirNivel->indicadores()->exists()) {
+            return;
+        }
 
         $idx = $this->indicadorGlobalIndex++;
         $sentido = $this->sentidoPool[$idx % count($this->sentidoPool)];
         $frecuencia = $nivelDef['frecuencia'];
-        $activoSeguimiento = !($nivelDef['tipo'] === TipoNivelMir::FIN && $frecuencia === FrecuenciaMedicion::SEXENAL);
+        $activoSeguimiento = ! ($nivelDef['tipo'] === TipoNivelMir::FIN && $frecuencia === FrecuenciaMedicion::SEXENAL);
 
         $indAttrs = [
             'mir_nivel_id' => $mirNivel->id,
@@ -503,7 +513,9 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             ->get();
 
         foreach ($indicadores as $ind) {
-            if ($ind->metasPeriodo()->exists()) continue;
+            if ($ind->metasPeriodo()->exists()) {
+                continue;
+            }
 
             $this->crearPeriodosParaAnio($ind, 2025);
             $this->crearPeriodosParaAnio($ind, 2026, true);
@@ -568,7 +580,9 @@ class Fase1PlaneacionMmlSeeder extends Seeder
 
     private function crearSnapshots(ProgramaPresupuestario $programa, User $planeador): void
     {
-        if ($programa->mirVersiones()->exists()) return;
+        if ($programa->mirVersiones()->exists()) {
+            return;
+        }
 
         $snapshotService = app(MirSnapshotService::class);
         $snapshotService->crear($programa, 'Versión inicial', $planeador->id);
@@ -576,7 +590,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
         $fin = $programa->mirNiveles()->where('tipo_nivel', TipoNivelMir::FIN)->first();
         if ($fin) {
             $original = $fin->resumen_narrativo;
-            $fin->update(['resumen_narrativo' => $original . ' — alineado con PED']);
+            $fin->update(['resumen_narrativo' => $original.' — alineado con PED']);
             $snapshotService->crear($programa, 'Post-alineación PED', $planeador->id);
             $fin->update(['resumen_narrativo' => $original]);
         }
@@ -601,12 +615,14 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             'Degradación' => 'Conservación', 'degradación' => 'conservación',
         ];
         $result = str_replace(array_keys($replacements), array_values($replacements), $desc);
-        return $result !== $desc ? $result : 'Se contribuye a resolver: ' . lcfirst($desc);
+
+        return $result !== $desc ? $result : 'Se contribuye a resolver: '.lcfirst($desc);
     }
 
     private function mirDefinitions(array $def): array
     {
         $mirTemplates = $this->mirTemplates();
+
         return $mirTemplates[$def['clave']] ?? $this->mirGenericTemplate($def);
     }
 
@@ -622,54 +638,54 @@ class Fase1PlaneacionMmlSeeder extends Seeder
         // ── ISM-001: Impulso al Sector Mezcalero ──
         $programs['ISM-001'] = $this->buildMirLevels(
             fin: ['Contribuir al desarrollo económico del sector mezcalero estatal', 'Las condiciones macroeconómicas se mantienen estables',
-                  'Tasa de crecimiento del PIB mezcalero estatal', '(A / B) x 100', FrecuenciaMedicion::ANUAL, DimensionIndicador::EFICACIA, 2.5, 5.0, 1,
-                  'PIB mezcalero actual', 'PIB mezcalero esperado', 'Cuentas estatales INEGI', 'Sistema de Cuentas Nacionales INEGI'],
+                'Tasa de crecimiento del PIB mezcalero estatal', '(A / B) x 100', FrecuenciaMedicion::ANUAL, DimensionIndicador::EFICACIA, 2.5, 5.0, 1,
+                'PIB mezcalero actual', 'PIB mezcalero esperado', 'Cuentas estatales INEGI', 'Sistema de Cuentas Nacionales INEGI'],
             proposito: ['Productores mezcaleros incrementan su competitividad y acceso a mercados', 'Los productores participan activamente en las capacitaciones',
-                        'Porcentaje de productores con certificación de calidad', '(A / B) x 100', FrecuenciaMedicion::SEMESTRAL, DimensionIndicador::EFICACIA, 15.0, 35.0, 2,
-                        'Productores certificados', 'Total de productores registrados', 'Padrón de productores mezcaleros', 'Registro estatal de productores'],
+                'Porcentaje de productores con certificación de calidad', '(A / B) x 100', FrecuenciaMedicion::SEMESTRAL, DimensionIndicador::EFICACIA, 15.0, 35.0, 2,
+                'Productores certificados', 'Total de productores registrados', 'Padrón de productores mezcaleros', 'Registro estatal de productores'],
             c1: ['Programa de capacitación y certificación mezcalera implementado', 'Se cuenta con instructores especializados disponibles',
-                 'Porcentaje de capacitaciones realizadas conforme a programa', '(A / B) x 100', FrecuenciaMedicion::TRIMESTRAL, DimensionIndicador::EFICACIA, 80.0, 95.0, 3,
-                 'Capacitaciones realizadas', 'Capacitaciones programadas', 'Informes trimestrales de capacitación', 'Sistema de control de capacitaciones'],
+                'Porcentaje de capacitaciones realizadas conforme a programa', '(A / B) x 100', FrecuenciaMedicion::TRIMESTRAL, DimensionIndicador::EFICACIA, 80.0, 95.0, 3,
+                'Capacitaciones realizadas', 'Capacitaciones programadas', 'Informes trimestrales de capacitación', 'Sistema de control de capacitaciones'],
             c2: ['Estrategia de promoción turístico-mezcalera diseñada e implementada', 'Existe coordinación efectiva con SECTUR',
-                 'Índice de satisfacción en rutas mezcaleras', '(A / B) x 100', FrecuenciaMedicion::SEMESTRAL, DimensionIndicador::CALIDAD, 70.0, 90.0, 4,
-                 'Visitantes satisfechos', 'Total de visitantes encuestados', 'Encuesta de satisfacción turística', 'Dirección de Turismo Alternativo'],
+                'Índice de satisfacción en rutas mezcaleras', '(A / B) x 100', FrecuenciaMedicion::SEMESTRAL, DimensionIndicador::CALIDAD, 70.0, 90.0, 4,
+                'Visitantes satisfechos', 'Total de visitantes encuestados', 'Encuesta de satisfacción turística', 'Dirección de Turismo Alternativo'],
             a11: ['Realizar talleres de certificación en denominación de origen', 'Los productores asisten a los talleres convocados',
-                  'Número de talleres impartidos', 'A', FrecuenciaMedicion::MENSUAL, DimensionIndicador::EFICACIA, 0, 48, 5, 'Talleres realizados', null, 'Listas de asistencia y minutas', 'Coordinación de Capacitación'],
+                'Número de talleres impartidos', 'A', FrecuenciaMedicion::MENSUAL, DimensionIndicador::EFICACIA, 0, 48, 5, 'Talleres realizados', null, 'Listas de asistencia y minutas', 'Coordinación de Capacitación'],
             a12: ['Otorgar asistencia técnica para mejora de procesos productivos', 'Los productores implementan las recomendaciones técnicas',
-                  'Porcentaje de asistencias técnicas completadas', '(A / B) x 100', FrecuenciaMedicion::TRIMESTRAL, DimensionIndicador::EFICIENCIA, 60.0, 90.0, 6,
-                  'Asistencias completadas', 'Asistencias programadas', 'Bitácora de asistencia técnica', 'Subdirección de Desarrollo Productivo'],
+                'Porcentaje de asistencias técnicas completadas', '(A / B) x 100', FrecuenciaMedicion::TRIMESTRAL, DimensionIndicador::EFICIENCIA, 60.0, 90.0, 6,
+                'Asistencias completadas', 'Asistencias programadas', 'Bitácora de asistencia técnica', 'Subdirección de Desarrollo Productivo'],
             a21: ['Diseñar rutas turístico-mezcaleras', 'Las comunidades mezcaleras participan en el diseño de rutas',
-                  'Número de rutas turísticas diseñadas', 'A', FrecuenciaMedicion::TRIMESTRAL, DimensionIndicador::EFICACIA, 0, 6, 7, 'Rutas diseñadas', null, 'Documentos de diseño de rutas', 'SECTUR Dirección de Planeación'],
+                'Número de rutas turísticas diseñadas', 'A', FrecuenciaMedicion::TRIMESTRAL, DimensionIndicador::EFICACIA, 0, 6, 7, 'Rutas diseñadas', null, 'Documentos de diseño de rutas', 'SECTUR Dirección de Planeación'],
             a22: ['Ejecutar campañas de difusión de la cultura mezcalera', 'Los medios de comunicación difunden las campañas',
-                  'Costo promedio por campaña ejecutada', '(A / B)', FrecuenciaMedicion::MENSUAL, DimensionIndicador::ECONOMIA, 0, 150000, 8,
-                  'Presupuesto ejercido en campañas', 'Número de campañas ejecutadas', 'Reportes financieros de campañas', 'Coordinación de Comunicación Social'],
+                'Costo promedio por campaña ejecutada', '(A / B)', FrecuenciaMedicion::MENSUAL, DimensionIndicador::ECONOMIA, 0, 150000, 8,
+                'Presupuesto ejercido en campañas', 'Número de campañas ejecutadas', 'Reportes financieros de campañas', 'Coordinación de Comunicación Social'],
         );
 
         // ── EDU-002: Educación Básica de Calidad ──
         $programs['EDU-002'] = $this->buildMirLevels(
             fin: ['Contribuir a mejorar la calidad educativa en el nivel básico del estado', 'La política educativa federal mantiene sus lineamientos',
-                  'Variación del puntaje promedio estatal en pruebas estandarizadas', '(A - B) / B x 100', FrecuenciaMedicion::ANUAL, DimensionIndicador::EFICACIA, 1.2, 3.5, 1,
-                  'Puntaje promedio actual', 'Puntaje promedio año anterior', 'Resultados pruebas PLANEA', 'SEP Dirección de Evaluación'],
+                'Variación del puntaje promedio estatal en pruebas estandarizadas', '(A - B) / B x 100', FrecuenciaMedicion::ANUAL, DimensionIndicador::EFICACIA, 1.2, 3.5, 1,
+                'Puntaje promedio actual', 'Puntaje promedio año anterior', 'Resultados pruebas PLANEA', 'SEP Dirección de Evaluación'],
             proposito: ['Estudiantes de educación básica mejoran su rendimiento académico', 'Los docentes aplican las metodologías de enseñanza actualizadas',
-                        'Porcentaje de estudiantes con rendimiento satisfactorio', '(A / B) x 100', FrecuenciaMedicion::ANUAL, DimensionIndicador::EFICACIA, 55.0, 70.0, 2,
-                        'Estudiantes con nivel satisfactorio', 'Total estudiantes evaluados', 'Evaluaciones estatales de aprendizaje', 'IEEPO Sistema de Evaluación'],
+                'Porcentaje de estudiantes con rendimiento satisfactorio', '(A / B) x 100', FrecuenciaMedicion::ANUAL, DimensionIndicador::EFICACIA, 55.0, 70.0, 2,
+                'Estudiantes con nivel satisfactorio', 'Total estudiantes evaluados', 'Evaluaciones estatales de aprendizaje', 'IEEPO Sistema de Evaluación'],
             c1: ['Programa de actualización docente implementado', 'Los docentes cuentan con disponibilidad para capacitarse',
-                 'Porcentaje de docentes capacitados', '(A / B) x 100', FrecuenciaMedicion::SEMESTRAL, DimensionIndicador::EFICACIA, 40.0, 80.0, 3,
-                 'Docentes capacitados', 'Total docentes del sistema', 'Constancias de capacitación', 'Dirección de Formación Continua'],
+                'Porcentaje de docentes capacitados', '(A / B) x 100', FrecuenciaMedicion::SEMESTRAL, DimensionIndicador::EFICACIA, 40.0, 80.0, 3,
+                'Docentes capacitados', 'Total docentes del sistema', 'Constancias de capacitación', 'Dirección de Formación Continua'],
             c2: ['Materiales didácticos distribuidos en planteles prioritarios', 'Existe suficiencia presupuestal para adquisición de materiales',
-                 'Eficiencia en la distribución de materiales didácticos', '(A / B) x 100', FrecuenciaMedicion::TRIMESTRAL, DimensionIndicador::EFICIENCIA, 70.0, 95.0, 5,
-                 'Materiales entregados', 'Materiales programados', 'Acuses de recibo de materiales', 'Almacén Central Educativo'],
+                'Eficiencia en la distribución de materiales didácticos', '(A / B) x 100', FrecuenciaMedicion::TRIMESTRAL, DimensionIndicador::EFICIENCIA, 70.0, 95.0, 5,
+                'Materiales entregados', 'Materiales programados', 'Acuses de recibo de materiales', 'Almacén Central Educativo'],
             a11: ['Impartir cursos de formación pedagógica continua', 'Se cuenta con facilitadores certificados',
-                  'Número de cursos impartidos', 'A', FrecuenciaMedicion::MENSUAL, DimensionIndicador::EFICACIA, 0, 120, 3, 'Cursos realizados', null, 'Programa anual de formación', 'Instituto de Formación Docente'],
+                'Número de cursos impartidos', 'A', FrecuenciaMedicion::MENSUAL, DimensionIndicador::EFICACIA, 0, 120, 3, 'Cursos realizados', null, 'Programa anual de formación', 'Instituto de Formación Docente'],
             a12: ['Aplicar evaluaciones diagnósticas a docentes', 'Los docentes participan voluntariamente',
-                  'Costo por evaluación docente aplicada', '(A / B)', FrecuenciaMedicion::TRIMESTRAL, DimensionIndicador::ECONOMIA, 0, 500, 4,
-                  'Presupuesto en evaluaciones', 'Evaluaciones aplicadas', 'Informes de evaluación docente', 'Coordinación de Evaluación'],
+                'Costo por evaluación docente aplicada', '(A / B)', FrecuenciaMedicion::TRIMESTRAL, DimensionIndicador::ECONOMIA, 0, 500, 4,
+                'Presupuesto en evaluaciones', 'Evaluaciones aplicadas', 'Informes de evaluación docente', 'Coordinación de Evaluación'],
             a21: ['Adquirir materiales didácticos para planteles prioritarios', 'Los proveedores cumplen con los tiempos de entrega',
-                  'Porcentaje del presupuesto ejercido en materiales', '(A / B) x 100', FrecuenciaMedicion::TRIMESTRAL, DimensionIndicador::EFICIENCIA, 50.0, 95.0, 6,
-                  'Presupuesto ejercido', 'Presupuesto asignado', 'Reportes de ejercicio presupuestal', 'Subdirección de Recursos Materiales'],
+                'Porcentaje del presupuesto ejercido en materiales', '(A / B) x 100', FrecuenciaMedicion::TRIMESTRAL, DimensionIndicador::EFICIENCIA, 50.0, 95.0, 6,
+                'Presupuesto ejercido', 'Presupuesto asignado', 'Reportes de ejercicio presupuestal', 'Subdirección de Recursos Materiales'],
             a22: ['Distribuir materiales a planteles según calendario establecido', 'Las vías de comunicación permiten la distribución oportuna',
-                  'Porcentaje de planteles que reciben materiales en tiempo', '(A / B) x 100', FrecuenciaMedicion::MENSUAL, DimensionIndicador::EFICACIA, 60.0, 90.0, 7,
-                  'Planteles atendidos en tiempo', 'Total planteles programados', 'Bitácora de distribución', 'Logística Educativa'],
+                'Porcentaje de planteles que reciben materiales en tiempo', '(A / B) x 100', FrecuenciaMedicion::MENSUAL, DimensionIndicador::EFICACIA, 60.0, 90.0, 7,
+                'Planteles atendidos en tiempo', 'Total planteles programados', 'Bitácora de distribución', 'Logística Educativa'],
         );
 
         // Remaining 14 programs use generic but realistic templates
@@ -733,10 +749,18 @@ class Fase1PlaneacionMmlSeeder extends Seeder
         $dimCycle++;
 
         $propDim = $dimCycle % 2 === 0 ? DimensionIndicador::EFICIENCIA : DimensionIndicador::EFICACIA;
-        $c1Dim = match ($dimCycle % 3) { 0 => DimensionIndicador::CALIDAD, 1 => DimensionIndicador::EFICACIA, 2 => DimensionIndicador::EFICIENCIA };
-        $c2Dim = match ($dimCycle % 3) { 0 => DimensionIndicador::EFICACIA, 1 => DimensionIndicador::CALIDAD, 2 => DimensionIndicador::EFICACIA };
-        $a1Dim = match ($dimCycle % 3) { 0 => DimensionIndicador::ECONOMIA, 1 => DimensionIndicador::EFICACIA, 2 => DimensionIndicador::EFICIENCIA };
-        $a2Dim = match ($dimCycle % 3) { 0 => DimensionIndicador::EFICACIA, 1 => DimensionIndicador::ECONOMIA, 2 => DimensionIndicador::EFICACIA };
+        $c1Dim = match ($dimCycle % 3) {
+            0 => DimensionIndicador::CALIDAD, 1 => DimensionIndicador::EFICACIA, 2 => DimensionIndicador::EFICIENCIA
+        };
+        $c2Dim = match ($dimCycle % 3) {
+            0 => DimensionIndicador::EFICACIA, 1 => DimensionIndicador::CALIDAD, 2 => DimensionIndicador::EFICACIA
+        };
+        $a1Dim = match ($dimCycle % 3) {
+            0 => DimensionIndicador::ECONOMIA, 1 => DimensionIndicador::EFICACIA, 2 => DimensionIndicador::EFICIENCIA
+        };
+        $a2Dim = match ($dimCycle % 3) {
+            0 => DimensionIndicador::EFICACIA, 1 => DimensionIndicador::ECONOMIA, 2 => DimensionIndicador::EFICACIA
+        };
 
         $finFreq = $dimCycle % 3 === 0 ? FrecuenciaMedicion::SEXENAL : ($dimCycle % 3 === 1 ? FrecuenciaMedicion::BIANUAL : FrecuenciaMedicion::ANUAL);
         $propFreq = $dimCycle % 2 === 0 ? FrecuenciaMedicion::ANUAL : FrecuenciaMedicion::SEMESTRAL;
@@ -750,29 +774,29 @@ class Fase1PlaneacionMmlSeeder extends Seeder
 
         return $this->buildMirLevels(
             fin: ["Contribuir a la mejora de {$tema} en el estado", 'Las condiciones socioeconómicas se mantienen favorables',
-                  "Tasa de variación en {$tema}", '(A - B) / B x 100', $finFreq, DimensionIndicador::EFICACIA, round($lb * 0.1, 1), round($mt * 0.15, 1), 1,
-                  "Valor actual de {$tema}", "Valor anterior de {$tema}", "Informe anual de {$tema}", "Sistema estatal de información"],
+                "Tasa de variación en {$tema}", '(A - B) / B x 100', $finFreq, DimensionIndicador::EFICACIA, round($lb * 0.1, 1), round($mt * 0.15, 1), 1,
+                "Valor actual de {$tema}", "Valor anterior de {$tema}", "Informe anual de {$tema}", 'Sistema estatal de información'],
             proposito: ["Los {$beneficiario} reciben servicios de calidad del programa", 'La población objetivo participa activamente',
-                        "Porcentaje de {$beneficiario} atendidos respecto a la meta", '(A / B) x 100', $propFreq, $propDim, $lb * 1.0, $mt * 1.0, 2,
-                        ucfirst($beneficiario) . ' atendidos', ucfirst($beneficiario) . ' programados', "Padrón de {$beneficiario}", 'Sistema de registro de beneficiarios'],
-            c1: [ucfirst($entregable) . ' del programa realizados conforme a plan', 'Se cuenta con recursos humanos suficientes',
-                 "Porcentaje de {$entregable} completados", '(A / B) x 100', $c1Freq, $c1Dim, $lb * 0.8, $mt * 0.9, 3,
-                 ucfirst($entregable) . ' completados', ucfirst($entregable) . ' programados', "Reportes de avance de {$entregable}", 'Coordinación operativa del programa'],
+                "Porcentaje de {$beneficiario} atendidos respecto a la meta", '(A / B) x 100', $propFreq, $propDim, $lb * 1.0, $mt * 1.0, 2,
+                ucfirst($beneficiario).' atendidos', ucfirst($beneficiario).' programados', "Padrón de {$beneficiario}", 'Sistema de registro de beneficiarios'],
+            c1: [ucfirst($entregable).' del programa realizados conforme a plan', 'Se cuenta con recursos humanos suficientes',
+                "Porcentaje de {$entregable} completados", '(A / B) x 100', $c1Freq, $c1Dim, $lb * 0.8, $mt * 0.9, 3,
+                ucfirst($entregable).' completados', ucfirst($entregable).' programados', "Reportes de avance de {$entregable}", 'Coordinación operativa del programa'],
             c2: ['Informes técnicos y de seguimiento generados', 'Los sistemas de información operan correctamente',
-                 'Porcentaje de informes entregados en tiempo', '(A / B) x 100', $c2Freq, $c2Dim, $lb * 0.7, $mt * 0.85, 5,
-                 'Informes entregados en tiempo', 'Informes programados', 'Control de gestión documental', 'Sistema de gestión de calidad'],
+                'Porcentaje de informes entregados en tiempo', '(A / B) x 100', $c2Freq, $c2Dim, $lb * 0.7, $mt * 0.85, 5,
+                'Informes entregados en tiempo', 'Informes programados', 'Control de gestión documental', 'Sistema de gestión de calidad'],
             a11: ["Ejecutar las actividades operativas de {$entregable}", 'El personal operativo está disponible',
-                  "Número de {$entregable} ejecutados en el periodo", 'A', $aFreq1, $a1Dim, 0, round($mt * 2), 6,
-                  ucfirst($entregable) . ' ejecutados', null, "Bitácora operativa de {$entregable}", 'Subdirección operativa'],
+                "Número de {$entregable} ejecutados en el periodo", 'A', $aFreq1, $a1Dim, 0, round($mt * 2), 6,
+                ucfirst($entregable).' ejecutados', null, "Bitácora operativa de {$entregable}", 'Subdirección operativa'],
             a12: ['Dar seguimiento y supervisión a las actividades operativas', 'Las condiciones logísticas permiten la supervisión',
-                  'Porcentaje de supervisiones realizadas', '(A / B) x 100', $aFreq2, $a2Dim, $lb * 0.5, $mt * 0.8, 7,
-                  'Supervisiones realizadas', 'Supervisiones programadas', 'Informes de supervisión', 'Área de supervisión y control'],
+                'Porcentaje de supervisiones realizadas', '(A / B) x 100', $aFreq2, $a2Dim, $lb * 0.5, $mt * 0.8, 7,
+                'Supervisiones realizadas', 'Supervisiones programadas', 'Informes de supervisión', 'Área de supervisión y control'],
             a21: ['Elaborar informes técnicos del programa', 'La información base está disponible oportunamente',
-                  'Porcentaje de informes técnicos elaborados', '(A / B) x 100', $aFreq1, DimensionIndicador::EFICACIA, $lb * 0.6, $mt * 0.9, 8,
-                  'Informes elaborados', 'Informes requeridos', 'Control de informes técnicos', 'Área de planeación y evaluación'],
+                'Porcentaje de informes técnicos elaborados', '(A / B) x 100', $aFreq1, DimensionIndicador::EFICACIA, $lb * 0.6, $mt * 0.9, 8,
+                'Informes elaborados', 'Informes requeridos', 'Control de informes técnicos', 'Área de planeación y evaluación'],
             a22: ['Integrar expedientes documentales de las acciones realizadas', 'El marco normativo se mantiene vigente',
-                  'Costo promedio de integración documental', '(A / B)', $aFreq2, DimensionIndicador::ECONOMIA, 0, round($mt * 100), 4,
-                  'Presupuesto ejercido en integración', 'Expedientes integrados', 'Sistema de gestión documental', 'Archivo institucional'],
+                'Costo promedio de integración documental', '(A / B)', $aFreq2, DimensionIndicador::ECONOMIA, 0, round($mt * 100), 4,
+                'Presupuesto ejercido en integración', 'Expedientes integrados', 'Sistema de gestión documental', 'Archivo institucional'],
         );
     }
 
@@ -814,18 +838,17 @@ class Fase1PlaneacionMmlSeeder extends Seeder
                 "Escasa coordinación interinstitucional en materia de {$prob}",
             ],
             'causas_indirectas' => [
-                "Falta de diagnósticos actualizados sobre la situación",
-                "Ausencia de mecanismos formales de coordinación entre dependencias",
+                'Falta de diagnósticos actualizados sobre la situación',
+                'Ausencia de mecanismos formales de coordinación entre dependencias',
             ],
             'efectos_directos' => [
-                "Persistencia del problema y afectación a la población objetivo",
-                "Ineficiencia en el uso de recursos públicos destinados al programa",
+                'Persistencia del problema y afectación a la población objetivo',
+                'Ineficiencia en el uso de recursos públicos destinados al programa',
             ],
             'efectos_indirectos' => [
-                "Deterioro de la confianza ciudadana en las instituciones públicas",
-                "Ampliación de brechas de desigualdad en la entidad",
+                'Deterioro de la confianza ciudadana en las instituciones públicas',
+                'Ampliación de brechas de desigualdad en la entidad',
             ],
         ];
     }
-
 }

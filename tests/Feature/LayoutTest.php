@@ -2,11 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Enums\SystemPermission;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class LayoutTest extends TestCase
@@ -16,7 +14,7 @@ class LayoutTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
     }
 
     private function createUserWithRole(string $roleName): User

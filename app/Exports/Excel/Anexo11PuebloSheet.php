@@ -9,9 +9,7 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 
 class Anexo11PuebloSheet implements FromArray, WithHeadings, WithTitle
 {
-    public function __construct(private readonly Anexo11ReportData $data)
-    {
-    }
+    public function __construct(private readonly Anexo11ReportData $data) {}
 
     public function title(): string
     {
@@ -32,6 +30,7 @@ class Anexo11PuebloSheet implements FromArray, WithHeadings, WithTitle
         foreach ($this->data->porPueblo as $clave => $count) {
             $rows[] = [$clave, $count];
         }
+
         return $rows;
     }
 }

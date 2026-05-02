@@ -13,7 +13,9 @@ use Livewire\Component;
 class DashboardIndicadores extends Component
 {
     public ProgramaPresupuestario $programa;
+
     public array $expandedNiveles = [];
+
     public ?int $indicadorDetalleId = null;
 
     public function mount(ProgramaPresupuestario $programa): void

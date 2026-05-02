@@ -4,6 +4,7 @@ namespace App\Livewire\Juridico;
 
 use App\Models\Juridico\SustentoLegalPrograma as SustentoModel;
 use App\Models\ProgramaPresupuestario;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -30,7 +31,7 @@ class SustentoLegalPrograma extends Component
         session()->flash('message', 'Fundamento eliminado.');
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         $teamId = auth()->user()->currentTeam->id;
 

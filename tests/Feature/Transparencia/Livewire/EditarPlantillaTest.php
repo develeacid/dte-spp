@@ -5,8 +5,11 @@ namespace Tests\Feature\Transparencia\Livewire;
 use App\Livewire\Transparencia\Datasets\EditarPlantilla;
 use App\Models\Transparencia\DatasetAbierto;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Database\Seeders\TransparenciaPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class EditarPlantillaTest extends TestCase
@@ -16,9 +19,9 @@ class EditarPlantillaTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-        $this->seed(\Database\Seeders\TransparenciaPermissionsSeeder::class);
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $this->seed(TransparenciaPermissionsSeeder::class);
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 
     public function test_rda_edita_plantilla(): void

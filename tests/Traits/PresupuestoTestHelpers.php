@@ -10,7 +10,6 @@ use App\Models\ProgramaPresupuestario;
 use App\Models\User;
 use Database\Seeders\PresupuestoPermissionsSeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
-use Illuminate\Database\Eloquent\Collection;
 use Laravel\Jetstream\Team;
 use Spatie\Permission\PermissionRegistrar;
 

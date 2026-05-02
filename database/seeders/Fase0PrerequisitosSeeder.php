@@ -16,6 +16,7 @@ class Fase0PrerequisitosSeeder extends Seeder
         // Guardia de producción
         if (app()->environment('production')) {
             $this->command->error('No se puede ejecutar este seeder en producción.');
+
             return;
         }
 
@@ -35,11 +36,11 @@ class Fase0PrerequisitosSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['email' => 'admin@sistema.test'],
             [
-                'name'              => 'Administrador Sistema',
-                'password'          => Hash::make('password'),
+                'name' => 'Administrador Sistema',
+                'password' => Hash::make('password'),
                 'email_verified_at' => now(),
-                'activated_at'      => now(),
-                'active'            => true,
+                'activated_at' => now(),
+                'active' => true,
             ]
         );
         $admin->assignRole(SystemRole::ADMIN->value);
@@ -63,11 +64,11 @@ class Fase0PrerequisitosSeeder extends Seeder
             $team = Team::firstOrCreate(
                 ['clave_ur' => $ur['clave']],
                 [
-                    'name'          => $ur['nombre'],
-                    'user_id'       => $admin->id,
-                    'titular'       => $ur['titular'],
-                    'tipo_ur'       => $ur['tipo'],
-                    'activa'        => true,
+                    'name' => $ur['nombre'],
+                    'user_id' => $admin->id,
+                    'titular' => $ur['titular'],
+                    'tipo_ur' => $ur['tipo'],
+                    'activa' => true,
                     'personal_team' => false,
                 ]
             );
@@ -90,11 +91,11 @@ class Fase0PrerequisitosSeeder extends Seeder
                 $user = User::firstOrCreate(
                     ['email' => $email],
                     [
-                        'name'              => "{$def['label']} {$ur['clave']}",
-                        'password'          => Hash::make('password'),
+                        'name' => "{$def['label']} {$ur['clave']}",
+                        'password' => Hash::make('password'),
                         'email_verified_at' => now(),
-                        'activated_at'      => now(),
-                        'active'            => true,
+                        'activated_at' => now(),
+                        'active' => true,
                     ]
                 );
 
@@ -104,7 +105,7 @@ class Fase0PrerequisitosSeeder extends Seeder
                 ]);
                 $user->forceFill(['current_team_id' => $team->id])->save();
 
-                $tableRows[] = [$def['label'] . ' ' . $ur['clave'], $email, $def['spatie']->value, $ur['nombre']];
+                $tableRows[] = [$def['label'].' '.$ur['clave'], $email, $def['spatie']->value, $ur['nombre']];
             }
         }
 

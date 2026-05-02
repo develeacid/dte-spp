@@ -9,9 +9,7 @@ use Illuminate\Support\Collection;
 
 class AsmReportService
 {
-    public function __construct(private readonly array $filters = [])
-    {
-    }
+    public function __construct(private readonly array $filters = []) {}
 
     public function rows(): Collection
     {

@@ -9,7 +9,7 @@ enum OrigenPrograma: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::NUEVO => 'Nuevo',
             self::IMPORTADO => 'Importado',
         };

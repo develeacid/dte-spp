@@ -10,6 +10,7 @@ use App\Notifications\LlmBudgetAlertNotification;
 use App\Services\Llm\LlmBudgetService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
@@ -134,7 +135,7 @@ class MonitoreoIaTest extends TestCase
             'total_tokens' => 15000,
         ]);
 
-        $service = new LlmBudgetService();
+        $service = new LlmBudgetService;
         $service->checkAndAlert($log);
 
         $budget->refresh();
@@ -159,7 +160,7 @@ class MonitoreoIaTest extends TestCase
             'status' => 'success',
         ]);
         // Force-update the created_at via DB to avoid model timestamp interference
-        \Illuminate\Support\Facades\DB::table('llm_logs')
+        DB::table('llm_logs')
             ->where('id', $oldLog->id)
             ->update(['created_at' => now()->subDays(100)]);
 

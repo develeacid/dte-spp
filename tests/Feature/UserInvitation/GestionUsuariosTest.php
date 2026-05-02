@@ -2,9 +2,14 @@
 
 namespace Tests\Feature\UserInvitation;
 
+use App\Livewire\Admin\GestionUsuarios;
+use App\Models\Team;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class GestionUsuariosTest extends TestCase
@@ -14,9 +19,9 @@ class GestionUsuariosTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
         // Register temporary route for activar.show (created in Task 6)
-        \Illuminate\Support\Facades\Route::get('/activar/{token}', fn() => '')->name('activar.show');
+        Route::get('/activar/{token}', fn () => '')->name('activar.show');
         app('router')->getRoutes()->refreshNameLookups();
     }
 
@@ -24,6 +29,7 @@ class GestionUsuariosTest extends TestCase
     {
         $user = User::factory()->withPersonalTeam()->create();
         $user->assignRole('admin');
+
         return $user;
     }
 
@@ -53,14 +59,14 @@ class GestionUsuariosTest extends TestCase
         $admin = $this->createAdmin();
 
         // Crear un team no personal para la invitación
-        $team = \App\Models\Team::forceCreate([
+        $team = Team::forceCreate([
             'name' => 'Secretaría de Economía',
             'user_id' => $admin->id,
             'personal_team' => false,
         ]);
 
-        \Livewire\Livewire::actingAs($admin)
-            ->test(\App\Livewire\Admin\GestionUsuarios::class)
+        Livewire::actingAs($admin)
+            ->test(GestionUsuarios::class)
             ->set('showInviteForm', true)
             ->set('inviteEmail', 'test@gob.mx')
             ->set('inviteName', 'Test User')
@@ -79,8 +85,8 @@ class GestionUsuariosTest extends TestCase
     {
         $admin = $this->createAdmin();
 
-        \Livewire\Livewire::actingAs($admin)
-            ->test(\App\Livewire\Admin\GestionUsuarios::class)
+        Livewire::actingAs($admin)
+            ->test(GestionUsuarios::class)
             ->set('showInviteForm', true)
             ->set('inviteEmail', 'not-an-email')
             ->set('inviteName', 'Test')
@@ -107,8 +113,8 @@ class GestionUsuariosTest extends TestCase
         $admin = $this->createAdmin();
         $user = User::factory()->withPersonalTeam()->create(['active' => true]);
 
-        \Livewire\Livewire::actingAs($admin)
-            ->test(\App\Livewire\Admin\GestionUsuarios::class)
+        Livewire::actingAs($admin)
+            ->test(GestionUsuarios::class)
             ->call('toggleActive', $user->id);
 
         $user->refresh();
@@ -119,8 +125,8 @@ class GestionUsuariosTest extends TestCase
     {
         $admin = $this->createAdmin();
 
-        \Livewire\Livewire::actingAs($admin)
-            ->test(\App\Livewire\Admin\GestionUsuarios::class)
+        Livewire::actingAs($admin)
+            ->test(GestionUsuarios::class)
             ->call('toggleActive', $admin->id)
             ->assertStatus(403);
     }

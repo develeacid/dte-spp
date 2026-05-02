@@ -13,8 +13,9 @@ class PndSeeder extends Seeder
     {
         $path = base_path('docs/data/pnd-vigente.md');
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             $this->command->error("Archivo fuente no encontrado: {$path}");
+
             return;
         }
 
@@ -44,7 +45,7 @@ class PndSeeder extends Seeder
             }
 
             // Descripción del Eje (línea no-heading después del título)
-            elseif ($currentEje && !$currentObjetivo && !preg_match('/^#/', $line) && $line) {
+            elseif ($currentEje && ! $currentObjetivo && ! preg_match('/^#/', $line) && $line) {
                 $currentEje->update(['descripcion' => $line]);
             }
 
@@ -61,7 +62,7 @@ class PndSeeder extends Seeder
             }
 
             // Descripción del Objetivo (línea siguiente si no tenía descripción en el título)
-            elseif ($currentObjetivo && !$currentObjetivo->descripcion && !preg_match('/^#/', $line) && $line) {
+            elseif ($currentObjetivo && ! $currentObjetivo->descripcion && ! preg_match('/^#/', $line) && $line) {
                 $currentObjetivo->update(['descripcion' => $line]);
             }
 
@@ -78,9 +79,9 @@ class PndSeeder extends Seeder
             }
 
             // Descripción de Estrategia (línea siguiente)
-            elseif (isset($matches[1]) && !preg_match('/^#/', $line) && $line) {
+            elseif (isset($matches[1]) && ! preg_match('/^#/', $line) && $line) {
                 $lastEstrategia = PndEstrategia::where('clave', $matches[1])->first();
-                if ($lastEstrategia && !$lastEstrategia->descripcion) {
+                if ($lastEstrategia && ! $lastEstrategia->descripcion) {
                     $lastEstrategia->update(['descripcion' => $line]);
                 }
             }

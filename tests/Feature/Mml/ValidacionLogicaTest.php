@@ -3,13 +3,8 @@
 namespace Tests\Feature\Mml;
 
 use App\Contracts\LlmServiceInterface;
-use App\Enums\DimensionIndicador;
-use App\Enums\FrecuenciaMedicion;
-use App\Enums\TipoIndicador;
 use App\Enums\TipoNivelMir;
 use App\Livewire\Mml\MirEditor;
-use App\Models\Mml\Indicador;
-use App\Models\Mml\MedioVerificacion;
 use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
@@ -24,6 +19,7 @@ class ValidacionLogicaTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
 
     protected function setUp(): void
@@ -73,6 +69,7 @@ class ValidacionLogicaTest extends TestCase
                 if (str_contains($prompt, 'cadena causal') || str_contains($prompt, 'lógica vertical')) {
                     return json_encode($verticalResponse);
                 }
+
                 return json_encode($horizontalResponse ?? ['coherente' => true, 'hallazgos' => []]);
             });
 

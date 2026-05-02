@@ -55,7 +55,7 @@ class CalendarizarMetas extends Component
      */
     public function confirmar(): void
     {
-        if (!$this->programa) {
+        if (! $this->programa) {
             return;
         }
 

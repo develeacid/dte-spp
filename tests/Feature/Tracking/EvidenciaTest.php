@@ -24,6 +24,7 @@ class EvidenciaTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Avance $avance;
 
     protected function setUp(): void

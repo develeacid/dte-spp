@@ -25,7 +25,7 @@ class MatrizAlineacionController extends Controller
 
         $alineacionesLineaPrograma = PedLineaAccion::with([
             'programasDerivadosObjetivos.programa',
-            'estrategia.objetivoEstrategico.tema.eje.plan'
+            'estrategia.objetivoEstrategico.tema.eje.plan',
         ])
             ->whereHas('programasDerivadosObjetivos')
             ->get();
@@ -131,12 +131,12 @@ class MatrizAlineacionController extends Controller
 
         $resultados = PedObjetivoEstrategico::with('tema.eje.plan')
             ->where('descripcion', 'ilike', "%{$search}%")
-            ->orWhereHas('tema', fn($q) => $q->where('nombre', 'ilike', "%{$search}%"))
+            ->orWhereHas('tema', fn ($q) => $q->where('nombre', 'ilike', "%{$search}%"))
             ->limit(20)
             ->get()
-            ->map(fn($obj) => [
+            ->map(fn ($obj) => [
                 'id' => $obj->id,
-                'text' => $obj->clave_completa . ' - ' . Str::limit($obj->descripcion, 60),
+                'text' => $obj->clave_completa.' - '.Str::limit($obj->descripcion, 60),
                 'clave' => $obj->clave_completa,
                 'plan' => $obj->tema->eje->plan->nombre ?? null,
             ]);
@@ -153,9 +153,9 @@ class MatrizAlineacionController extends Controller
             ->orWhere('clave', 'ilike', "%{$search}%")
             ->limit(20)
             ->get()
-            ->map(fn($obj) => [
+            ->map(fn ($obj) => [
                 'id' => $obj->id,
-                'text' => $obj->clave . ' - ' . Str::limit($obj->descripcion, 60),
+                'text' => $obj->clave.' - '.Str::limit($obj->descripcion, 60),
                 'clave' => $obj->clave,
                 'eje' => $obj->eje->nombre ?? null,
             ]);
@@ -172,11 +172,11 @@ class MatrizAlineacionController extends Controller
             ->orWhere('clave', 'ilike', "%{$search}%")
             ->limit(20)
             ->get()
-            ->map(fn($meta) => [
+            ->map(fn ($meta) => [
                 'id' => $meta->id,
-                'text' => $meta->clave . ' - ' . Str::limit($meta->descripcion, 60),
+                'text' => $meta->clave.' - '.Str::limit($meta->descripcion, 60),
                 'clave' => $meta->clave,
-                'ods' => 'ODS ' . $meta->objetivo->numero . ': ' . $meta->objetivo->nombre,
+                'ods' => 'ODS '.$meta->objetivo->numero.': '.$meta->objetivo->nombre,
             ]);
 
         return response()->json(['results' => $resultados]);
@@ -190,9 +190,9 @@ class MatrizAlineacionController extends Controller
             ->where('descripcion', 'ilike', "%{$search}%")
             ->limit(20)
             ->get()
-            ->map(fn($linea) => [
+            ->map(fn ($linea) => [
                 'id' => $linea->id,
-                'text' => $linea->clave_completa . ' - ' . Str::limit($linea->descripcion, 60),
+                'text' => $linea->clave_completa.' - '.Str::limit($linea->descripcion, 60),
                 'clave' => $linea->clave_completa,
                 'plan' => $linea->estrategia->objetivoEstrategico->tema->eje->plan->nombre ?? null,
             ]);
@@ -208,9 +208,9 @@ class MatrizAlineacionController extends Controller
             ->where('descripcion', 'ilike', "%{$search}%")
             ->limit(20)
             ->get()
-            ->map(fn($obj) => [
+            ->map(fn ($obj) => [
                 'id' => $obj->id,
-                'text' => $obj->clave_completa . ' - ' . Str::limit($obj->descripcion, 60),
+                'text' => $obj->clave_completa.' - '.Str::limit($obj->descripcion, 60),
                 'clave' => $obj->clave_completa,
                 'programa' => $obj->programa->nombre,
                 'tipo' => $obj->programa->tipo->label(),

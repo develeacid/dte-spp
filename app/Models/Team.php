@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TipoUnidadResponsable;
+use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Laravel\Jetstream\Events\TeamCreated;
@@ -12,7 +13,7 @@ use Laravel\Jetstream\Team as JetstreamTeam;
 
 class Team extends JetstreamTeam
 {
-    /** @use HasFactory<\Database\Factories\TeamFactory> */
+    /** @use HasFactory<TeamFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -42,7 +43,7 @@ class Team extends JetstreamTeam
     public function programas(): BelongsToMany
     {
         return $this->belongsToMany(ProgramaPresupuestario::class, 'programa_team')
-                    ->withPivot('rol')
-                    ->withTimestamps();
+            ->withPivot('rol')
+            ->withTimestamps();
     }
 }

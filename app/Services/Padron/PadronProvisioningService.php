@@ -23,8 +23,8 @@ class PadronProvisioningService
     /**
      * @return array{programa: int, componentes_registrados: int}
      *
-     * @throws GeoBaseException  bubbled up if geobase fails — caller decides
-     *                           whether to surface a flash or rethrow.
+     * @throws GeoBaseException bubbled up if geobase fails — caller decides
+     *                          whether to surface a flash or rethrow.
      */
     public function register(ProgramaPresupuestario $programa): array
     {

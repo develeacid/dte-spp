@@ -22,9 +22,13 @@ class JustificacionTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private MirNivel $nivel;
+
     private Indicador $indicador;
+
     private MetaPeriodo $metaPeriodo;
+
     private Avance $avance;
 
     protected function setUp(): void

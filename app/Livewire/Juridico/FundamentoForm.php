@@ -8,6 +8,7 @@ use App\Models\Juridico\CatalogoOrdenamiento;
 use App\Models\Juridico\SustentoLegalPrograma as SustentoModel;
 use App\Models\ProgramaPresupuestario;
 use App\Services\Juridico\ValidacionJuridicaService;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -15,14 +16,21 @@ use Livewire\Component;
 class FundamentoForm extends Component
 {
     public ProgramaPresupuestario $programa;
+
     public ?SustentoModel $fundamento = null;
 
     public string $tipo = '';
+
     public string $catalogo_ordenamiento_id = '';
+
     public string $ordenamiento = '';
+
     public string $articulo = '';
+
     public string $descripcion = '';
+
     public string $nivel_jerarquia = '';
+
     public bool $vigente = true;
 
     public function mount(ProgramaPresupuestario $programa, ?SustentoModel $fundamento = null): void
@@ -94,7 +102,7 @@ class FundamentoForm extends Component
         $this->redirect(route('juridico.programa', $this->programa));
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         $catalogoOrdenamientos = CatalogoOrdenamiento::activos()
             ->orderBy('orden')

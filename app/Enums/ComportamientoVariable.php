@@ -9,7 +9,7 @@ enum ComportamientoVariable: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ACUMULABLE => 'Acumulable',
             self::CONTINUA => 'Continua',
         };

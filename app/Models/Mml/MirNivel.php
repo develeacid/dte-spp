@@ -6,6 +6,7 @@ use App\Enums\TipoNivelMir;
 use App\Models\PedLineaAccion;
 use App\Models\PedObjetivoEstrategico;
 use App\Models\ProgramaPresupuestario;
+use App\Models\Team;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,6 +16,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class MirNivel extends Model
 {
     use LogsActivity;
+
     protected $table = 'mir_niveles';
 
     protected $fillable = [
@@ -72,7 +74,7 @@ class MirNivel extends Model
 
     public function team(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Team::class);
+        return $this->belongsTo(Team::class);
     }
 
     public function indicadores(): HasMany

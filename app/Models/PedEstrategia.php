@@ -51,6 +51,6 @@ class PedEstrategia extends Model
 
     public function getClaveCompletaAttribute(): string
     {
-        return $this->objetivoEstrategico->clave_completa . '.' . $this->clave;
+        return $this->objetivoEstrategico->clave_completa.'.'.$this->clave;
     }
 }

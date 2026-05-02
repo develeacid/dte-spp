@@ -24,26 +24,22 @@ class MirPersistenciaService
      */
     private const ACCENT_MAP = [
         'estratégico' => 'estrategico',
-        'gestión'     => 'gestion',
-        'economía'    => 'economia',
+        'gestión' => 'gestion',
+        'economía' => 'economia',
     ];
 
     /**
      * Persist ImportedMirData into the database, creating a ProgramaPresupuestario
      * with its full MIR hierarchy (niveles, indicadores, variables, medios).
      *
-     * @param  ImportedMirData  $data
-     * @param  int              $teamId
-     * @param  int              $userId
-     * @param  array|null       $diagnostico  Gaps array from MirDiagnosticoService
-     * @return ProgramaPresupuestario
+     * @param  array|null  $diagnostico  Gaps array from MirDiagnosticoService
      */
     public function persistir(ImportedMirData $data, int $teamId, int $userId, ?array $diagnostico = null): ProgramaPresupuestario
     {
         return DB::transaction(function () use ($data, $teamId, $userId, $diagnostico) {
             $programa = ProgramaPresupuestario::create([
                 'nombre' => $data->nombre ?? 'Programa importado',
-                'clave' => $data->clave ?? 'IMP-' . now()->format('YmdHis'),
+                'clave' => $data->clave ?? 'IMP-'.now()->format('YmdHis'),
                 'team_id' => $teamId,
                 'ejercicio_fiscal' => $data->ejercicioFiscal ?? (int) date('Y'),
                 'origen' => OrigenPrograma::IMPORTADO,
@@ -121,7 +117,7 @@ class MirPersistenciaService
                 'linea_base' => $indData['linea_base'] ?? null,
                 'meta' => $indData['meta'] ?? null,
                 'orden' => $indData['orden'] ?? $ii,
-                'activo_seguimiento' => !$hasCriticalGap,
+                'activo_seguimiento' => ! $hasCriticalGap,
             ]);
 
             // Create variables
@@ -167,8 +163,8 @@ class MirPersistenciaService
      * Try to resolve a string to an enum value, handling accented variants.
      *
      * @template T of \BackedEnum
+     *
      * @param  class-string<T>  $enumClass
-     * @param  string           $value
      * @return T|null
      */
     private function resolveEnum(string $enumClass, string $value): mixed

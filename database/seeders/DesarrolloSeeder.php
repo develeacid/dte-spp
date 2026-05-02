@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\SystemRole;
 use App\Enums\TipoUnidadResponsable;
-
 use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
 use App\Models\User;
@@ -17,6 +16,7 @@ class DesarrolloSeeder extends Seeder
         // 1. Guardia de seguridad: NUNCA correr en producción
         if (app()->environment('production')) {
             $this->command->error('No se puede ejecutar este seeder con contraseñas hardcoded en producción.');
+
             return;
         }
 
@@ -24,7 +24,7 @@ class DesarrolloSeeder extends Seeder
 
         // 2. ADMIN GLOBAL
         $admin = User::factory()->create([
-            'name'  => 'Administrador Sistema',
+            'name' => 'Administrador Sistema',
             'email' => 'admin@sistema.test',
         ]);
         $admin->assignRole(SystemRole::ADMIN->value);
@@ -34,19 +34,19 @@ class DesarrolloSeeder extends Seeder
             $team = Team::firstOrCreate(
                 ['clave_ur' => $clave],
                 [
-                    'name'          => $nombre,
-                    'user_id'       => $admin->id, // Owner de los teams (Admin)
-                    'titular'       => $titular,
-                    'tipo_ur'       => $tipo, // Eloquent handles the Enum cast automatically
-                    'activa'        => true,
+                    'name' => $nombre,
+                    'user_id' => $admin->id, // Owner de los teams (Admin)
+                    'titular' => $titular,
+                    'tipo_ur' => $tipo, // Eloquent handles the Enum cast automatically
+                    'activa' => true,
                     'personal_team' => false,
                 ]
             );
 
             // Crear Planeador
             $planeador = User::factory()->create([
-                'name'  => "Planeador {$clave}",
-                'email' => "planeador." . strtolower($clave) . "@sistema.test",
+                'name' => "Planeador {$clave}",
+                'email' => 'planeador.'.strtolower($clave).'@sistema.test',
             ]);
             $planeador->assignRole(SystemRole::PLANEADOR->value);
             $team->users()->attach($planeador, ['role' => 'planeador']);
@@ -54,8 +54,8 @@ class DesarrolloSeeder extends Seeder
 
             // Crear Operador
             $operador = User::factory()->create([
-                'name'  => "Operador {$clave}",
-                'email' => "operador." . strtolower($clave) . "@sistema.test",
+                'name' => "Operador {$clave}",
+                'email' => 'operador.'.strtolower($clave).'@sistema.test',
             ]);
             $operador->assignRole(SystemRole::OPERADOR->value);
             $team->users()->attach($operador, ['role' => 'operador']);
@@ -66,9 +66,9 @@ class DesarrolloSeeder extends Seeder
 
         // 3. Crear URs usando el helper
         $urEducacion = $crearUR('Secretaría de Educación', 'SE-001', 'Dr. Juan Pérez', TipoUnidadResponsable::SUSTANTIVA);
-        $urSalud     = $crearUR('Secretaría de Salud', 'SS-002', 'Dra. María López', TipoUnidadResponsable::APOYO);
+        $urSalud = $crearUR('Secretaría de Salud', 'SS-002', 'Dra. María López', TipoUnidadResponsable::APOYO);
         $urSeguridad = $crearUR('Secretaría de Seguridad', 'SEG-003', 'Lic. Roberto Sánchez', TipoUnidadResponsable::SUSTANTIVA);
-        $urTurismo   = $crearUR('Secretaría de Turismo', 'SECTUR-004', 'Lic. Ana García Mendoza', TipoUnidadResponsable::SUSTANTIVA);
+        $urTurismo = $crearUR('Secretaría de Turismo', 'SECTUR-004', 'Lic. Ana García Mendoza', TipoUnidadResponsable::SUSTANTIVA);
 
         // 4. Crear Programa Transversal (Requerido para el testeo del Middleware S1-T5)
         $programaTransversal = ProgramaPresupuestario::firstOrCreate(
@@ -80,12 +80,12 @@ class DesarrolloSeeder extends Seeder
 
         // Educación es Coordinadora (Acceso total)
         $programaTransversal->equipos()->syncWithoutDetaching([
-            $urEducacion->id => ['rol' => 'coordinadora']
+            $urEducacion->id => ['rol' => 'coordinadora'],
         ]);
 
         // Salud es Coadyuvante (Acceso limitado a su nivel MIR)
         $programaTransversal->equipos()->syncWithoutDetaching([
-            $urSalud->id => ['rol' => 'coadyuvante']
+            $urSalud->id => ['rol' => 'coadyuvante'],
         ]);
 
         // Seguridad NO se agrega intencionalmente. Si el planeador de SEG intenta entrar, debe arrojar 403.

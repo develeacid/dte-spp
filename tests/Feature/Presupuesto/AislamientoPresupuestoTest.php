@@ -2,7 +2,11 @@
 
 namespace Tests\Feature\Presupuesto;
 
+use App\Livewire\Presupuesto\CapturaAvanceFinanciero;
+use App\Livewire\Presupuesto\GestionPartidas;
+use App\Livewire\Presupuesto\PanelPresupuestal;
 use App\Models\Presupuesto\PartidaPresupuestal;
+use App\Models\ProgramaPresupuestario;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -11,15 +15,19 @@ use Tests\Traits\PresupuestoTestHelpers;
 
 class AislamientoPresupuestoTest extends TestCase
 {
-    use RefreshDatabase;
     use PresupuestoTestHelpers;
+    use RefreshDatabase;
 
     private User $financieroA;
+
     private User $financieroB;
 
     private int $teamAId;
+
     private int $teamBId;
+
     private int $programaAId;
+
     private int $programaBId;
 
     protected function setUp(): void
@@ -57,7 +65,7 @@ class AislamientoPresupuestoTest extends TestCase
     public function test_financiero_solo_ve_partidas_de_su_team(): void
     {
         Livewire::actingAs($this->financieroA)
-            ->test(\App\Livewire\Presupuesto\GestionPartidas::class)
+            ->test(GestionPartidas::class)
             ->assertSee('1000')
             ->assertDontSee('2000');
     }
@@ -96,8 +104,8 @@ class AislamientoPresupuestoTest extends TestCase
         // Financiero A accede a captura de programa de Team B → página carga
         // pero no muestra partidas (filtro por team en el componente)
         Livewire::actingAs($this->financieroA)
-            ->test(\App\Livewire\Presupuesto\CapturaAvanceFinanciero::class, [
-                'programa' => \App\Models\ProgramaPresupuestario::find($this->programaBId),
+            ->test(CapturaAvanceFinanciero::class, [
+                'programa' => ProgramaPresupuestario::find($this->programaBId),
             ])
             ->assertDontSee('2000'); // No ve la partida del otro team
     }
@@ -105,7 +113,7 @@ class AislamientoPresupuestoTest extends TestCase
     public function test_panel_presupuestal_muestra_solo_datos_del_team(): void
     {
         Livewire::actingAs($this->financieroA)
-            ->test(\App\Livewire\Presupuesto\PanelPresupuestal::class)
+            ->test(PanelPresupuestal::class)
             ->assertSee('PA-001')
             ->assertDontSee('PB-001');
     }

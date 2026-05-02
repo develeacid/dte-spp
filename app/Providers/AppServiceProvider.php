@@ -3,6 +3,14 @@
 namespace App\Providers;
 
 use App\Contracts\EmbeddingServiceInterface;
+use App\Contracts\LlmServiceInterface;
+use App\Events\GeoBase\EnrollmentStatusChanged;
+use App\Events\GeoBase\SnapshotGenerated;
+use App\Listeners\GeoBase\StoreSnapshotHash;
+use App\Listeners\GeoBase\UpdateAvanceFromEnrollment;
+use App\Models\Juridico\DocumentoNormativo;
+use App\Models\Juridico\SustentoLegalPrograma;
+use App\Models\Mml\MirNivel;
 use App\Models\OdsMeta;
 use App\Models\OdsObjetivo;
 use App\Models\PedEje;
@@ -15,8 +23,10 @@ use App\Models\PndEje;
 use App\Models\PndEstrategia;
 use App\Models\PndObjetivo;
 use App\Models\ProgramaDerivadoObjetivo;
+use App\Models\ProgramaPresupuestario;
+use App\Models\Transparencia\DatasetAbierto;
+use App\Observers\DocumentoNormativoObserver;
 use App\Observers\MirNivelGeoBaseObserver;
-use App\Observers\ProgramaPresupuestarioGeoBaseObserver;
 use App\Observers\OdsMetaObserver;
 use App\Observers\OdsObjetivoObserver;
 use App\Observers\PedObserver;
@@ -24,13 +34,9 @@ use App\Observers\PndEjeObserver;
 use App\Observers\PndEstrategiaObserver;
 use App\Observers\PndObjetivoObserver;
 use App\Observers\ProgramaDerivadoObjetivoObserver;
+use App\Observers\ProgramaPresupuestarioGeoBaseObserver;
 use App\Observers\SustentoLegalObserver;
-use App\Observers\DocumentoNormativoObserver;
-use App\Models\Juridico\SustentoLegalPrograma;
-use App\Models\Juridico\DocumentoNormativo;
-use App\Models\Mml\MirNivel;
-use App\Models\ProgramaPresupuestario;
-use App\Contracts\LlmServiceInterface;
+use App\Policies\Transparencia\DatasetAbiertoPolicy;
 use App\Services\Embeddings\EmbeddingService;
 use App\Services\Embeddings\SemanticSearchService;
 use App\Services\Llm\LlmService;
@@ -46,7 +52,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(EmbeddingServiceInterface::class, function ($app) {
-            return new EmbeddingService();
+            return new EmbeddingService;
         });
 
         $this->app->singleton(SemanticSearchService::class, function ($app) {
@@ -70,11 +76,11 @@ class AppServiceProvider extends ServiceProvider
             // DatasetAbiertoPolicy::SEGREGATED_ABILITIES NO admiten bypass de admin
             // cuando el sujeto es un DatasetAbierto (instancia o FQCN).
             $arg = $arguments[0] ?? null;
-            $sujetoEsDataset = $arg instanceof \App\Models\Transparencia\DatasetAbierto
-                || (is_string($arg) && is_a($arg, \App\Models\Transparencia\DatasetAbierto::class, true));
+            $sujetoEsDataset = $arg instanceof DatasetAbierto
+                || (is_string($arg) && is_a($arg, DatasetAbierto::class, true));
 
             if ($sujetoEsDataset
-                && in_array($ability, \App\Policies\Transparencia\DatasetAbiertoPolicy::SEGREGATED_ABILITIES, true)) {
+                && in_array($ability, DatasetAbiertoPolicy::SEGREGATED_ABILITIES, true)) {
                 return null; // No bypass; deferir al Policy → niega por permission
             }
 
@@ -82,19 +88,19 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::policy(
-            \App\Models\Transparencia\DatasetAbierto::class,
-            \App\Policies\Transparencia\DatasetAbiertoPolicy::class
+            DatasetAbierto::class,
+            DatasetAbiertoPolicy::class
         );
 
         // Registrar listeners GeoBase
         Event::listen(
-            \App\Events\GeoBase\EnrollmentStatusChanged::class,
-            \App\Listeners\GeoBase\UpdateAvanceFromEnrollment::class,
+            EnrollmentStatusChanged::class,
+            UpdateAvanceFromEnrollment::class,
         );
 
         Event::listen(
-            \App\Events\GeoBase\SnapshotGenerated::class,
-            \App\Listeners\GeoBase\StoreSnapshotHash::class,
+            SnapshotGenerated::class,
+            StoreSnapshotHash::class,
         );
 
         // Registrar Observers Jurídico (siempre activos)

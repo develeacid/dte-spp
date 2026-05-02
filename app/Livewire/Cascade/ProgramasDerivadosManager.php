@@ -15,22 +15,30 @@ class ProgramasDerivadosManager extends Component
 
     // Estado de modales
     public bool $showProgramaModal = false;
+
     public bool $showObjetivoModal = false;
+
     public bool $showDeleteModal = false;
 
     // Programa seleccionado
     public ?ProgramaDerivado $programaSeleccionado = null;
+
     public ?ProgramaDerivadoObjetivo $objetivoSeleccionado = null;
 
     // Formulario de programa
     public string $programaNombre = '';
+
     public string $programaDescripcion = '';
+
     public string $programaTipo = '';
+
     public string $programaMode = 'create';
 
     // Formulario de objetivo
     public string $objetivoClave = '';
+
     public string $objetivoDescripcion = '';
+
     public string $objetivoMode = 'create';
 
     // Estado de expansión
@@ -83,7 +91,7 @@ class ProgramasDerivadosManager extends Component
 
     public function expandAll(): void
     {
-        $this->programas->each(fn($p) => $this->expandedProgramas[$p->id] = true);
+        $this->programas->each(fn ($p) => $this->expandedProgramas[$p->id] = true);
     }
 
     public function collapseAll(): void
@@ -117,13 +125,14 @@ class ProgramasDerivadosManager extends Component
         $this->validate([
             'programaNombre' => ['required', 'string', 'max:255'],
             'programaDescripcion' => ['nullable', 'string', 'max:1000'],
-            'programaTipo' => ['required', 'in:' . implode(',', TipoProgramaDerivado::values())],
+            'programaTipo' => ['required', 'in:'.implode(',', TipoProgramaDerivado::values())],
         ]);
 
         $planActivo = PedPlan::where('activo', true)->first();
 
-        if (!$planActivo && $this->programaMode === 'create') {
+        if (! $planActivo && $this->programaMode === 'create') {
             session()->flash('error', 'No existe un PED activo.');
+
             return;
         }
 
@@ -253,8 +262,8 @@ class ProgramasDerivadosManager extends Component
     public function getProgramasProperty()
     {
         return ProgramaDerivado::with('objetivos')
-            ->when($this->filtroTipo !== 'todos', fn($q) => $q->where('tipo', $this->filtroTipo))
-            ->when($this->planActivo, fn($q) => $q->where('ped_plan_id', $this->planActivo->id))
+            ->when($this->filtroTipo !== 'todos', fn ($q) => $q->where('tipo', $this->filtroTipo))
+            ->when($this->planActivo, fn ($q) => $q->where('ped_plan_id', $this->planActivo->id))
             ->orderBy('tipo')
             ->orderBy('nombre')
             ->get();
@@ -262,7 +271,7 @@ class ProgramasDerivadosManager extends Component
 
     public function getStatsProperty(): array
     {
-        $query = ProgramaDerivado::when($this->planActivo, fn($q) => $q->where('ped_plan_id', $this->planActivo->id));
+        $query = ProgramaDerivado::when($this->planActivo, fn ($q) => $q->where('ped_plan_id', $this->planActivo->id));
 
         return [
             'total' => $query->count(),

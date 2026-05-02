@@ -6,10 +6,15 @@ use App\DTOs\ImportedMirData;
 use App\Livewire\Mml\VincularAlineacion;
 use App\Models\Mml\ImportacionReporte;
 use App\Models\Mml\MirNivel;
+use App\Models\PedEje;
+use App\Models\PedObjetivoEstrategico;
+use App\Models\PedPlan;
+use App\Models\PedTema;
 use App\Models\User;
 use App\Services\Embeddings\SemanticSearchService;
 use App\Services\Mml\MirPersistenciaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -67,24 +72,24 @@ class VincularAlineacionImportTest extends TestCase
         $this->assertNull($nivel->ped_objetivo_estrategico_id);
 
         // Create PED parent chain: plan → eje → tema → objetivo
-        $plan = \App\Models\PedPlan::create([
+        $plan = PedPlan::create([
             'nombre' => 'PED Test',
             'nivel_gobierno' => 'estatal',
             'periodo_inicio' => 2025,
             'periodo_fin' => 2030,
             'activo' => true,
         ]);
-        $eje = \App\Models\PedEje::create([
+        $eje = PedEje::create([
             'ped_plan_id' => $plan->id,
             'numero' => '1',
             'nombre' => 'Eje Test',
         ]);
-        $tema = \App\Models\PedTema::create([
+        $tema = PedTema::create([
             'ped_eje_id' => $eje->id,
             'numero' => '1.1',
             'nombre' => 'Tema Test',
         ]);
-        $objetivo = \App\Models\PedObjetivoEstrategico::create([
+        $objetivo = PedObjetivoEstrategico::create([
             'ped_tema_id' => $tema->id,
             'clave' => '1.1.1',
             'descripcion' => 'Objetivo estrategico de prueba',
@@ -101,7 +106,7 @@ class VincularAlineacionImportTest extends TestCase
     public function test_finalizar_redirige(): void
     {
         // Register the calendarizar route (will be implemented in S5-T4)
-        \Illuminate\Support\Facades\Route::get('/mml/importar/{importacion}/calendarizar', fn () => '')
+        Route::get('/mml/importar/{importacion}/calendarizar', fn () => '')
             ->name('mml.importar.calendarizar')
             ->middleware(['web']);
 

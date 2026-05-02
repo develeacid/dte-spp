@@ -18,6 +18,7 @@ class DefinicionProblemaTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
 
     protected function setUp(): void

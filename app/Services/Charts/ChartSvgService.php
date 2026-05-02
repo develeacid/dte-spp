@@ -30,12 +30,11 @@ class ChartSvgService
     /**
      * Donut chart SVG.
      *
-     * @param  array        $data       [['label' => 'Verde', 'value' => 10], ...]
-     * @param  array        $colors     hex colors (falls back to SERIES)
-     * @param  string|null  $centerText
+     * @param  array  $data  [['label' => 'Verde', 'value' => 10], ...]
+     * @param  array  $colors  hex colors (falls back to SERIES)
      * @return string SVG markup
      */
-    public function donut(array $data, array $colors = [], string $centerText = null): string
+    public function donut(array $data, array $colors = [], ?string $centerText = null): string
     {
         $size = 200;
         $cx = $size / 2;
@@ -48,7 +47,7 @@ class ChartSvgService
             return $this->emptySvg($size, $size, 'Sin datos');
         }
 
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $size . '" height="' . $size . '" viewBox="0 0 ' . $size . ' ' . $size . '">';
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'.$size.'" height="'.$size.'" viewBox="0 0 '.$size.' '.$size.'">';
 
         $currentAngle = -90; // start at top
 
@@ -75,30 +74,30 @@ class ChartSvgService
 
         // Center text
         if ($centerText !== null) {
-            $svg .= '<text x="' . $cx . '" y="' . ($cy + 5) . '" text-anchor="middle" font-size="16" font-weight="bold" fill="#1F2937">'
-                . $this->escSvg($centerText) . '</text>';
+            $svg .= '<text x="'.$cx.'" y="'.($cy + 5).'" text-anchor="middle" font-size="16" font-weight="bold" fill="#1F2937">'
+                .$this->escSvg($centerText).'</text>';
         }
 
         // Legend below (compact)
         $legendY = $size;
         $legendHeight = count($data) * 18 + 8;
         $svg = str_replace(
-            'viewBox="0 0 ' . $size . ' ' . $size . '"',
-            'viewBox="0 0 ' . $size . ' ' . ($size + $legendHeight) . '"',
+            'viewBox="0 0 '.$size.' '.$size.'"',
+            'viewBox="0 0 '.$size.' '.($size + $legendHeight).'"',
             $svg
         );
         $svg = str_replace(
-            'height="' . $size . '"',
-            'height="' . ($size + $legendHeight) . '"',
+            'height="'.$size.'"',
+            'height="'.($size + $legendHeight).'"',
             $svg
         );
 
         foreach ($data as $i => $item) {
             $color = $colors[$i] ?? self::SERIES[$i % count(self::SERIES)];
             $ly = $legendY + 14 + ($i * 18);
-            $svg .= '<rect x="10" y="' . ($ly - 9) . '" width="10" height="10" fill="' . $color . '" />';
-            $svg .= '<text x="25" y="' . $ly . '" font-size="11" fill="#374151">'
-                . $this->escSvg($item['label'] ?? '') . ' (' . $item['value'] . ')</text>';
+            $svg .= '<rect x="10" y="'.($ly - 9).'" width="10" height="10" fill="'.$color.'" />';
+            $svg .= '<text x="25" y="'.$ly.'" font-size="11" fill="#374151">'
+                .$this->escSvg($item['label'] ?? '').' ('.$item['value'].')</text>';
         }
 
         $svg .= '</svg>';
@@ -109,9 +108,8 @@ class ChartSvgService
     /**
      * Horizontal bar chart SVG.
      *
-     * @param  array       $categories  labels
-     * @param  array       $series      [['name' => 'Real', 'data' => [75, 50]], ...]
-     * @param  float|null  $referenceLine
+     * @param  array  $categories  labels
+     * @param  array  $series  [['name' => 'Real', 'data' => [75, 50]], ...]
      * @return string SVG markup
      */
     public function barHorizontal(array $categories, array $series, ?float $referenceLine = null): string
@@ -138,24 +136,24 @@ class ChartSvgService
             $maxVal = 100;
         }
 
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $width . '" height="' . $height . '" viewBox="0 0 ' . $width . ' ' . $height . '">';
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'.$width.'" height="'.$height.'" viewBox="0 0 '.$width.' '.$height.'">';
 
         // Legend row at top
         foreach ($series as $si => $s) {
             $color = self::SERIES[$si % count(self::SERIES)];
             $lx = $labelWidth + ($si * 120);
-            $svg .= '<rect x="' . $lx . '" y="5" width="10" height="10" fill="' . $color . '" />';
-            $svg .= '<text x="' . ($lx + 14) . '" y="14" font-size="10" fill="#374151">' . $this->escSvg($s['name'] ?? '') . '</text>';
+            $svg .= '<rect x="'.$lx.'" y="5" width="10" height="10" fill="'.$color.'" />';
+            $svg .= '<text x="'.($lx + 14).'" y="14" font-size="10" fill="#374151">'.$this->escSvg($s['name'] ?? '').'</text>';
         }
 
         foreach ($categories as $ci => $cat) {
             $groupY = $topPadding + $ci * ($groupHeight + $groupGap);
 
             // Category label (truncate if too long)
-            $displayLabel = mb_strlen($cat) > 18 ? mb_substr($cat, 0, 17) . '...' : $cat;
+            $displayLabel = mb_strlen($cat) > 18 ? mb_substr($cat, 0, 17).'...' : $cat;
             $labelY = $groupY + ($groupHeight / 2) + 4;
-            $svg .= '<text x="' . ($labelWidth - 5) . '" y="' . $labelY . '" text-anchor="end" font-size="11" fill="#374151">'
-                . $this->escSvg($displayLabel) . '</text>';
+            $svg .= '<text x="'.($labelWidth - 5).'" y="'.$labelY.'" text-anchor="end" font-size="11" fill="#374151">'
+                .$this->escSvg($displayLabel).'</text>';
 
             foreach ($series as $si => $s) {
                 $val = (float) ($s['data'][$ci] ?? 0);
@@ -164,23 +162,23 @@ class ChartSvgService
                 $barY = $groupY + $si * ($barHeight + $barGap);
                 $color = self::SERIES[$si % count(self::SERIES)];
 
-                $svg .= '<rect x="' . $labelWidth . '" y="' . $barY . '" width="' . round($barW, 1)
-                    . '" height="' . $barHeight . '" fill="' . $color . '" rx="2" />';
+                $svg .= '<rect x="'.$labelWidth.'" y="'.$barY.'" width="'.round($barW, 1)
+                    .'" height="'.$barHeight.'" fill="'.$color.'" rx="2" />';
 
                 // Value label
-                $svg .= '<text x="' . ($labelWidth + $barW + 4) . '" y="' . ($barY + $barHeight - 5)
-                    . '" font-size="10" fill="#6B7280">' . round($val, 1) . '</text>';
+                $svg .= '<text x="'.($labelWidth + $barW + 4).'" y="'.($barY + $barHeight - 5)
+                    .'" font-size="10" fill="#6B7280">'.round($val, 1).'</text>';
             }
         }
 
         // Reference line
         if ($referenceLine !== null && $maxVal > 0) {
             $lineX = $labelWidth + ($referenceLine / $maxVal) * $barAreaWidth;
-            $svg .= '<line x1="' . round($lineX, 1) . '" y1="' . $topPadding
-                . '" x2="' . round($lineX, 1) . '" y2="' . ($height - 10)
-                . '" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="4,3" />';
-            $svg .= '<text x="' . round($lineX, 1) . '" y="' . ($topPadding - 3)
-                . '" text-anchor="middle" font-size="9" fill="#EF4444">' . round($referenceLine, 1) . '</text>';
+            $svg .= '<line x1="'.round($lineX, 1).'" y1="'.$topPadding
+                .'" x2="'.round($lineX, 1).'" y2="'.($height - 10)
+                .'" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="4,3" />';
+            $svg .= '<text x="'.round($lineX, 1).'" y="'.($topPadding - 3)
+                .'" text-anchor="middle" font-size="9" fill="#EF4444">'.round($referenceLine, 1).'</text>';
         }
 
         $svg .= '</svg>';
@@ -191,10 +189,9 @@ class ChartSvgService
     /**
      * Gauge (semicircle) SVG.
      *
-     * @param  float  $value   current value
-     * @param  float  $max     maximum value
+     * @param  float  $value  current value
+     * @param  float  $max  maximum value
      * @param  array  $ranges  [['min' => 0, 'max' => 60, 'color' => '#EF4444'], ...]
-     * @param  string $label
      * @return string SVG markup
      */
     public function gauge(float $value, float $max = 100, array $ranges = [], string $label = ''): string
@@ -215,7 +212,7 @@ class ChartSvgService
             ];
         }
 
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $width . '" height="' . $height . '" viewBox="0 0 ' . $width . ' ' . $height . '">';
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'.$width.'" height="'.$height.'" viewBox="0 0 '.$width.' '.$height.'">';
 
         // Draw range arcs (semicircle goes from 180 to 360 degrees)
         foreach ($ranges as $range) {
@@ -236,24 +233,24 @@ class ChartSvgService
         $nx = $cx + $needleLen * cos($needleRad);
         $ny = $cy + $needleLen * sin($needleRad);
 
-        $svg .= '<line x1="' . $cx . '" y1="' . $cy . '" x2="' . round($nx, 2) . '" y2="' . round($ny, 2)
-            . '" stroke="#1F2937" stroke-width="2.5" stroke-linecap="round" />';
+        $svg .= '<line x1="'.$cx.'" y1="'.$cy.'" x2="'.round($nx, 2).'" y2="'.round($ny, 2)
+            .'" stroke="#1F2937" stroke-width="2.5" stroke-linecap="round" />';
         // Needle center dot
-        $svg .= '<circle cx="' . $cx . '" cy="' . $cy . '" r="4" fill="#1F2937" />';
+        $svg .= '<circle cx="'.$cx.'" cy="'.$cy.'" r="4" fill="#1F2937" />';
 
         // Value text
-        $svg .= '<text x="' . $cx . '" y="' . ($cy + 20) . '" text-anchor="middle" font-size="18" font-weight="bold" fill="#1F2937">'
-            . round($clampedValue, 1) . '</text>';
+        $svg .= '<text x="'.$cx.'" y="'.($cy + 20).'" text-anchor="middle" font-size="18" font-weight="bold" fill="#1F2937">'
+            .round($clampedValue, 1).'</text>';
 
         // Label
         if ($label !== '') {
-            $svg .= '<text x="' . $cx . '" y="' . ($height - 2) . '" text-anchor="middle" font-size="10" fill="#6B7280">'
-                . $this->escSvg($label) . '</text>';
+            $svg .= '<text x="'.$cx.'" y="'.($height - 2).'" text-anchor="middle" font-size="10" fill="#6B7280">'
+                .$this->escSvg($label).'</text>';
         }
 
         // Min and max labels
-        $svg .= '<text x="' . ($cx - $radius - 5) . '" y="' . ($cy + 14) . '" text-anchor="middle" font-size="9" fill="#9CA3AF">0</text>';
-        $svg .= '<text x="' . ($cx + $radius + 5) . '" y="' . ($cy + 14) . '" text-anchor="middle" font-size="9" fill="#9CA3AF">' . round($max) . '</text>';
+        $svg .= '<text x="'.($cx - $radius - 5).'" y="'.($cy + 14).'" text-anchor="middle" font-size="9" fill="#9CA3AF">0</text>';
+        $svg .= '<text x="'.($cx + $radius + 5).'" y="'.($cy + 14).'" text-anchor="middle" font-size="9" fill="#9CA3AF">'.round($max).'</text>';
 
         $svg .= '</svg>';
 
@@ -263,7 +260,7 @@ class ChartSvgService
     /**
      * Bullet chart SVG for multiple indicators.
      *
-     * @param  array $indicadores [['nombre' => '...', 'resultado' => 78, 'meta' => 85, 'rango_verde_min' => ..., 'rango_amarillo_min' => ...], ...]
+     * @param  array  $indicadores  [['nombre' => '...', 'resultado' => 78, 'meta' => 85, 'rango_verde_min' => ..., 'rango_amarillo_min' => ...], ...]
      * @return string SVG markup
      */
     public function bullet(array $indicadores): string
@@ -285,7 +282,7 @@ class ChartSvgService
             $maxVal = max($maxVal, (float) ($ind['resultado'] ?? 0), (float) ($ind['meta'] ?? 0), 100);
         }
 
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $width . '" height="' . $height . '" viewBox="0 0 ' . $width . ' ' . $height . '">';
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'.$width.'" height="'.$height.'" viewBox="0 0 '.$width.' '.$height.'">';
 
         foreach ($indicadores as $i => $ind) {
             $y = $i * $rowHeight + 5;
@@ -294,10 +291,10 @@ class ChartSvgService
             $meta = (float) ($ind['meta'] ?? 0);
 
             // Label (truncated)
-            $nombre = $ind['nombre'] ?? 'Indicador ' . ($i + 1);
-            $displayName = mb_strlen($nombre) > 22 ? mb_substr($nombre, 0, 21) . '...' : $nombre;
-            $svg .= '<text x="' . ($labelWidth - 5) . '" y="' . ($barY + $barHeight / 2 + 4)
-                . '" text-anchor="end" font-size="10" fill="#374151">' . $this->escSvg($displayName) . '</text>';
+            $nombre = $ind['nombre'] ?? 'Indicador '.($i + 1);
+            $displayName = mb_strlen($nombre) > 22 ? mb_substr($nombre, 0, 21).'...' : $nombre;
+            $svg .= '<text x="'.($labelWidth - 5).'" y="'.($barY + $barHeight / 2 + 4)
+                .'" text-anchor="end" font-size="10" fill="#374151">'.$this->escSvg($displayName).'</text>';
 
             // Background range bands
             $rangeVerdeMin = (float) ($ind['rango_verde_min'] ?? 80);
@@ -305,41 +302,41 @@ class ChartSvgService
 
             // Rojo band (0 to amarillo min)
             $rojoW = ($rangeAmarilloMin / $maxVal) * $barAreaWidth;
-            $svg .= '<rect x="' . $labelWidth . '" y="' . $barY . '" width="' . round($rojoW, 1)
-                . '" height="' . $barHeight . '" fill="' . self::SEMAFORO_LIGHT['rojo'] . '" />';
+            $svg .= '<rect x="'.$labelWidth.'" y="'.$barY.'" width="'.round($rojoW, 1)
+                .'" height="'.$barHeight.'" fill="'.self::SEMAFORO_LIGHT['rojo'].'" />';
 
             // Amarillo band
             $amarilloStart = $rojoW;
             $amarilloW = (($rangeVerdeMin - $rangeAmarilloMin) / $maxVal) * $barAreaWidth;
-            $svg .= '<rect x="' . ($labelWidth + round($amarilloStart, 1)) . '" y="' . $barY
-                . '" width="' . round($amarilloW, 1) . '" height="' . $barHeight
-                . '" fill="' . self::SEMAFORO_LIGHT['amarillo'] . '" />';
+            $svg .= '<rect x="'.($labelWidth + round($amarilloStart, 1)).'" y="'.$barY
+                .'" width="'.round($amarilloW, 1).'" height="'.$barHeight
+                .'" fill="'.self::SEMAFORO_LIGHT['amarillo'].'" />';
 
             // Verde band
             $verdeStart = $amarilloStart + $amarilloW;
             $verdeW = $barAreaWidth - $verdeStart + $labelWidth;
             // Recalculate properly
             $verdeW = (($maxVal - $rangeVerdeMin) / $maxVal) * $barAreaWidth;
-            $svg .= '<rect x="' . ($labelWidth + round($rojoW + $amarilloW, 1)) . '" y="' . $barY
-                . '" width="' . round($verdeW, 1) . '" height="' . $barHeight
-                . '" fill="' . self::SEMAFORO_LIGHT['verde'] . '" />';
+            $svg .= '<rect x="'.($labelWidth + round($rojoW + $amarilloW, 1)).'" y="'.$barY
+                .'" width="'.round($verdeW, 1).'" height="'.$barHeight
+                .'" fill="'.self::SEMAFORO_LIGHT['verde'].'" />';
 
             // Resultado bar (thinner, darker)
             $resW = ($resultado / $maxVal) * $barAreaWidth;
             $resBarHeight = 10;
             $resBarY = $barY + ($barHeight - $resBarHeight) / 2;
-            $svg .= '<rect x="' . $labelWidth . '" y="' . round($resBarY, 1) . '" width="' . round($resW, 1)
-                . '" height="' . $resBarHeight . '" fill="#1F2937" rx="1" />';
+            $svg .= '<rect x="'.$labelWidth.'" y="'.round($resBarY, 1).'" width="'.round($resW, 1)
+                .'" height="'.$resBarHeight.'" fill="#1F2937" rx="1" />';
 
             // Meta marker (vertical line)
             $metaX = $labelWidth + ($meta / $maxVal) * $barAreaWidth;
-            $svg .= '<line x1="' . round($metaX, 1) . '" y1="' . $barY
-                . '" x2="' . round($metaX, 1) . '" y2="' . ($barY + $barHeight)
-                . '" stroke="#DC2626" stroke-width="2" />';
+            $svg .= '<line x1="'.round($metaX, 1).'" y1="'.$barY
+                .'" x2="'.round($metaX, 1).'" y2="'.($barY + $barHeight)
+                .'" stroke="#DC2626" stroke-width="2" />';
 
             // Value label to the right
-            $svg .= '<text x="' . ($labelWidth + $barAreaWidth + 5) . '" y="' . ($barY + $barHeight / 2 + 4)
-                . '" font-size="10" font-weight="bold" fill="#1F2937">' . round($resultado, 1) . '</text>';
+            $svg .= '<text x="'.($labelWidth + $barAreaWidth + 5).'" y="'.($barY + $barHeight / 2 + 4)
+                .'" font-size="10" font-weight="bold" fill="#1F2937">'.round($resultado, 1).'</text>';
         }
 
         $svg .= '</svg>';
@@ -350,9 +347,9 @@ class ChartSvgService
     /**
      * Heatmap as HTML table (DomPDF handles tables better than SVG grids).
      *
-     * @param  array $rows     [['nombre' => 'Programa A'], ...]
-     * @param  array $columns  ['T1', 'T2', 'T3', 'T4']
-     * @param  array $values   [row_index][col_index] => ['valor' => 75, 'semaforo' => 'verde']
+     * @param  array  $rows  [['nombre' => 'Programa A'], ...]
+     * @param  array  $columns  ['T1', 'T2', 'T3', 'T4']
+     * @param  array  $values  [row_index][col_index] => ['valor' => 75, 'semaforo' => 'verde']
      * @return string HTML table markup
      */
     public function heatmap(array $rows, array $columns, array $values): string
@@ -364,7 +361,7 @@ class ChartSvgService
         $html .= '<th style="padding:6px 8px;text-align:left;border:1px solid #D1D5DB;background:#F3F4F6;">Programa</th>';
         foreach ($columns as $col) {
             $html .= '<th style="padding:6px 8px;text-align:center;border:1px solid #D1D5DB;background:#F3F4F6;">'
-                . htmlspecialchars($col, ENT_QUOTES, 'UTF-8') . '</th>';
+                .htmlspecialchars($col, ENT_QUOTES, 'UTF-8').'</th>';
         }
         $html .= '</tr>';
 
@@ -372,7 +369,7 @@ class ChartSvgService
         foreach ($rows as $ri => $row) {
             $html .= '<tr>';
             $html .= '<td style="padding:6px 8px;border:1px solid #D1D5DB;background:#FFFFFF;font-weight:600;">'
-                . htmlspecialchars($row['nombre'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                .htmlspecialchars($row['nombre'] ?? '', ENT_QUOTES, 'UTF-8').'</td>';
 
             foreach ($columns as $ci => $col) {
                 $cell = $values[$ri][$ci] ?? null;
@@ -382,8 +379,8 @@ class ChartSvgService
                 $textColor = $semaforo === 'rojo' ? '#991B1B' : ($semaforo === 'verde' ? '#166534' : '#1F2937');
 
                 $html .= '<td style="padding:6px 8px;text-align:center;border:1px solid #D1D5DB;background:'
-                    . $bgColor . ';color:' . $textColor . ';font-weight:bold;">'
-                    . htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8') . '</td>';
+                    .$bgColor.';color:'.$textColor.';font-weight:bold;">'
+                    .htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8').'</td>';
             }
 
             $html .= '</tr>';
@@ -397,8 +394,8 @@ class ChartSvgService
     /**
      * Lollipop chart SVG showing deviations from zero.
      *
-     * @param  array $data       [['nombre' => '...', 'desviacion' => -23], ...]
-     * @param  float $threshold  alert threshold (negative value below which items are highlighted)
+     * @param  array  $data  [['nombre' => '...', 'desviacion' => -23], ...]
+     * @param  float  $threshold  alert threshold (negative value below which items are highlighted)
      * @return string SVG markup
      */
     public function lollipop(array $data, float $threshold = -20): string
@@ -431,18 +428,18 @@ class ChartSvgService
 
         $centerX = $labelWidth + $chartWidth / 2;
 
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $width . '" height="' . $height . '" viewBox="0 0 ' . $width . ' ' . $height . '">';
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'.$width.'" height="'.$height.'" viewBox="0 0 '.$width.' '.$height.'">';
 
         // Zero center line
-        $svg .= '<line x1="' . $centerX . '" y1="' . $topPadding . '" x2="' . $centerX . '" y2="' . ($height - 5)
-            . '" stroke="#D1D5DB" stroke-width="1" />';
-        $svg .= '<text x="' . $centerX . '" y="' . ($topPadding - 5) . '" text-anchor="middle" font-size="9" fill="#9CA3AF">0%</text>';
+        $svg .= '<line x1="'.$centerX.'" y1="'.$topPadding.'" x2="'.$centerX.'" y2="'.($height - 5)
+            .'" stroke="#D1D5DB" stroke-width="1" />';
+        $svg .= '<text x="'.$centerX.'" y="'.($topPadding - 5).'" text-anchor="middle" font-size="9" fill="#9CA3AF">0%</text>';
 
         // Threshold lines (if within range)
         if (abs($threshold) <= $maxAbs) {
             $threshX = $centerX + ($threshold / $maxAbs) * ($chartWidth / 2);
-            $svg .= '<line x1="' . round($threshX, 1) . '" y1="' . $topPadding . '" x2="' . round($threshX, 1) . '" y2="' . ($height - 5)
-                . '" stroke="#EF4444" stroke-width="1" stroke-dasharray="3,3" />';
+            $svg .= '<line x1="'.round($threshX, 1).'" y1="'.$topPadding.'" x2="'.round($threshX, 1).'" y2="'.($height - 5)
+                .'" stroke="#EF4444" stroke-width="1" stroke-dasharray="3,3" />';
         }
 
         foreach ($data as $i => $item) {
@@ -451,26 +448,26 @@ class ChartSvgService
 
             // Label
             $nombre = $item['nombre'] ?? '';
-            $displayName = mb_strlen($nombre) > 20 ? mb_substr($nombre, 0, 19) . '...' : $nombre;
-            $svg .= '<text x="' . ($labelWidth - 5) . '" y="' . ($y + 4) . '" text-anchor="end" font-size="10" fill="#374151">'
-                . $this->escSvg($displayName) . '</text>';
+            $displayName = mb_strlen($nombre) > 20 ? mb_substr($nombre, 0, 19).'...' : $nombre;
+            $svg .= '<text x="'.($labelWidth - 5).'" y="'.($y + 4).'" text-anchor="end" font-size="10" fill="#374151">'
+                .$this->escSvg($displayName).'</text>';
 
             // Line from center to value
             $endX = $centerX + ($desv / $maxAbs) * ($chartWidth / 2);
             $isAlert = $desv < $threshold;
             $color = $isAlert ? self::SEMAFORO['rojo'] : ($desv >= 0 ? self::SEMAFORO['verde'] : self::SEMAFORO['amarillo']);
 
-            $svg .= '<line x1="' . $centerX . '" y1="' . $y . '" x2="' . round($endX, 1) . '" y2="' . $y
-                . '" stroke="' . $color . '" stroke-width="2" />';
+            $svg .= '<line x1="'.$centerX.'" y1="'.$y.'" x2="'.round($endX, 1).'" y2="'.$y
+                .'" stroke="'.$color.'" stroke-width="2" />';
 
             // Circle at end
-            $svg .= '<circle cx="' . round($endX, 1) . '" cy="' . $y . '" r="5" fill="' . $color . '" />';
+            $svg .= '<circle cx="'.round($endX, 1).'" cy="'.$y.'" r="5" fill="'.$color.'" />';
 
             // Value label
             $valLabelX = $desv >= 0 ? $endX + 8 : $endX - 8;
             $anchor = $desv >= 0 ? 'start' : 'end';
-            $svg .= '<text x="' . round($valLabelX, 1) . '" y="' . ($y + 3.5) . '" text-anchor="' . $anchor
-                . '" font-size="9" font-weight="bold" fill="' . $color . '">' . round($desv, 1) . '%</text>';
+            $svg .= '<text x="'.round($valLabelX, 1).'" y="'.($y + 3.5).'" text-anchor="'.$anchor
+                .'" font-size="9" font-weight="bold" fill="'.$color.'">'.round($desv, 1).'%</text>';
         }
 
         $svg .= '</svg>';
@@ -481,9 +478,9 @@ class ChartSvgService
     /**
      * Radar chart SVG (polygon).
      *
-     * @param  array      $labels           axis labels
-     * @param  array      $values           data values (0-100)
-     * @param  array|null $referenceValues   optional second series
+     * @param  array  $labels  axis labels
+     * @param  array  $values  data values (0-100)
+     * @param  array|null  $referenceValues  optional second series
      * @return string SVG markup
      */
     public function radar(array $labels, array $values, ?array $referenceValues = null): string
@@ -499,7 +496,7 @@ class ChartSvgService
             return $this->emptySvg($size, $size, 'Se necesitan al menos 3 ejes');
         }
 
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $size . '" height="' . $size . '" viewBox="0 0 ' . $size . ' ' . $size . '">';
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'.$size.'" height="'.$size.'" viewBox="0 0 '.$size.' '.$size.'">';
 
         // Background grid polygons
         for ($level = 1; $level <= $levels; $level++) {
@@ -509,10 +506,10 @@ class ChartSvgService
                 $angle = (2 * M_PI * $i / $n) - M_PI / 2; // start from top
                 $px = $cx + $r * cos($angle);
                 $py = $cy + $r * sin($angle);
-                $points[] = round($px, 2) . ',' . round($py, 2);
+                $points[] = round($px, 2).','.round($py, 2);
             }
-            $svg .= '<polygon points="' . implode(' ', $points)
-                . '" fill="none" stroke="#E5E7EB" stroke-width="0.8" />';
+            $svg .= '<polygon points="'.implode(' ', $points)
+                .'" fill="none" stroke="#E5E7EB" stroke-width="0.8" />';
         }
 
         // Axis lines from center to each vertex
@@ -520,8 +517,8 @@ class ChartSvgService
             $angle = (2 * M_PI * $i / $n) - M_PI / 2;
             $px = $cx + $radius * cos($angle);
             $py = $cy + $radius * sin($angle);
-            $svg .= '<line x1="' . $cx . '" y1="' . $cy . '" x2="' . round($px, 2) . '" y2="' . round($py, 2)
-                . '" stroke="#D1D5DB" stroke-width="0.8" />';
+            $svg .= '<line x1="'.$cx.'" y1="'.$cy.'" x2="'.round($px, 2).'" y2="'.round($py, 2)
+                .'" stroke="#D1D5DB" stroke-width="0.8" />';
         }
 
         // Reference polygon (if provided)
@@ -548,10 +545,10 @@ class ChartSvgService
             }
 
             $label = $labels[$i] ?? '';
-            $displayLabel = mb_strlen($label) > 15 ? mb_substr($label, 0, 14) . '...' : $label;
-            $svg .= '<text x="' . round($lx, 2) . '" y="' . round($ly + 3, 2)
-                . '" text-anchor="' . $anchor . '" font-size="9" fill="#4B5563">'
-                . $this->escSvg($displayLabel) . '</text>';
+            $displayLabel = mb_strlen($label) > 15 ? mb_substr($label, 0, 14).'...' : $label;
+            $svg .= '<text x="'.round($lx, 2).'" y="'.round($ly + 3, 2)
+                .'" text-anchor="'.$anchor.'" font-size="9" fill="#4B5563">'
+                .$this->escSvg($displayLabel).'</text>';
         }
 
         $svg .= '</svg>';
@@ -578,10 +575,10 @@ class ChartSvgService
 
         $largeArc = ($endAngle - $startAngle) > 180 ? 1 : 0;
 
-        $d = 'M ' . round($x1, 2) . ' ' . round($y1, 2)
-            . ' A ' . $r . ' ' . $r . ' 0 ' . $largeArc . ' 1 ' . round($x2, 2) . ' ' . round($y2, 2);
+        $d = 'M '.round($x1, 2).' '.round($y1, 2)
+            .' A '.$r.' '.$r.' 0 '.$largeArc.' 1 '.round($x2, 2).' '.round($y2, 2);
 
-        return '<path d="' . $d . '" fill="none" stroke="' . $color . '" stroke-width="' . $strokeWidth . '" stroke-linecap="butt" />';
+        return '<path d="'.$d.'" fill="none" stroke="'.$color.'" stroke-width="'.$strokeWidth.'" stroke-linecap="butt" />';
     }
 
     /**
@@ -608,13 +605,13 @@ class ChartSvgService
         $largeArc = $angleDiff > 180 ? 1 : 0;
 
         // Path: outer arc clockwise, line to inner, inner arc counter-clockwise, close
-        $d = 'M ' . round($ox1, 2) . ' ' . round($oy1, 2)
-            . ' A ' . $outerR . ' ' . $outerR . ' 0 ' . $largeArc . ' 1 ' . round($ox2, 2) . ' ' . round($oy2, 2)
-            . ' L ' . round($ix2, 2) . ' ' . round($iy2, 2)
-            . ' A ' . $innerR . ' ' . $innerR . ' 0 ' . $largeArc . ' 0 ' . round($ix1, 2) . ' ' . round($iy1, 2)
-            . ' Z';
+        $d = 'M '.round($ox1, 2).' '.round($oy1, 2)
+            .' A '.$outerR.' '.$outerR.' 0 '.$largeArc.' 1 '.round($ox2, 2).' '.round($oy2, 2)
+            .' L '.round($ix2, 2).' '.round($iy2, 2)
+            .' A '.$innerR.' '.$innerR.' 0 '.$largeArc.' 0 '.round($ix1, 2).' '.round($iy1, 2)
+            .' Z';
 
-        return '<path d="' . $d . '" fill="' . $color . '" />';
+        return '<path d="'.$d.'" fill="'.$color.'" />';
     }
 
     /**
@@ -632,8 +629,8 @@ class ChartSvgService
 
         $largeArc = ($endAngle - $startAngle) > 180 ? 1 : 0;
 
-        return 'M ' . round($x1, 2) . ' ' . round($y1, 2)
-            . ' A ' . $r . ' ' . $r . ' 0 ' . $largeArc . ' 1 ' . round($x2, 2) . ' ' . round($y2, 2);
+        return 'M '.round($x1, 2).' '.round($y1, 2)
+            .' A '.$r.' '.$r.' 0 '.$largeArc.' 1 '.round($x2, 2).' '.round($y2, 2);
     }
 
     /**
@@ -650,16 +647,16 @@ class ChartSvgService
             $angle = (2 * M_PI * $i / $n) - M_PI / 2;
             $px = $cx + $r * cos($angle);
             $py = $cy + $r * sin($angle);
-            $points[] = round($px, 2) . ',' . round($py, 2);
+            $points[] = round($px, 2).','.round($py, 2);
         }
 
-        $svg .= '<polygon points="' . implode(' ', $points)
-            . '" fill="' . $fillColor . '" stroke="' . $strokeColor . '" stroke-width="2" />';
+        $svg .= '<polygon points="'.implode(' ', $points)
+            .'" fill="'.$fillColor.'" stroke="'.$strokeColor.'" stroke-width="2" />';
 
         // Data points
         foreach (explode(' ', implode(' ', $points)) as $point) {
             [$px, $py] = explode(',', $point);
-            $svg .= '<circle cx="' . $px . '" cy="' . $py . '" r="3" fill="' . $strokeColor . '" />';
+            $svg .= '<circle cx="'.$px.'" cy="'.$py.'" r="3" fill="'.$strokeColor.'" />';
         }
 
         return $svg;
@@ -679,13 +676,13 @@ class ChartSvgService
     private function formatCurrency(float $value): string
     {
         if ($value >= 1e6) {
-            return '$' . number_format($value / 1e6, 1) . 'M';
+            return '$'.number_format($value / 1e6, 1).'M';
         }
         if ($value >= 1e3) {
-            return '$' . number_format($value / 1e3, 0) . 'K';
+            return '$'.number_format($value / 1e3, 0).'K';
         }
 
-        return '$' . number_format($value);
+        return '$'.number_format($value);
     }
 
     /**
@@ -693,9 +690,9 @@ class ChartSvgService
      */
     private function emptySvg(int $width, int $height, string $message): string
     {
-        return '<svg xmlns="http://www.w3.org/2000/svg" width="' . $width . '" height="' . $height . '" viewBox="0 0 ' . $width . ' ' . $height . '">'
-            . '<rect width="' . $width . '" height="' . $height . '" fill="#F9FAFB" rx="4" />'
-            . '<text x="' . ($width / 2) . '" y="' . ($height / 2 + 4) . '" text-anchor="middle" font-size="12" fill="#9CA3AF">'
-            . $this->escSvg($message) . '</text></svg>';
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="'.$width.'" height="'.$height.'" viewBox="0 0 '.$width.' '.$height.'">'
+            .'<rect width="'.$width.'" height="'.$height.'" fill="#F9FAFB" rx="4" />'
+            .'<text x="'.($width / 2).'" y="'.($height / 2 + 4).'" text-anchor="middle" font-size="12" fill="#9CA3AF">'
+            .$this->escSvg($message).'</text></svg>';
     }
 }

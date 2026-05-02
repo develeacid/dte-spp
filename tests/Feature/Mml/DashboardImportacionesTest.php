@@ -5,6 +5,7 @@ namespace Tests\Feature\Mml;
 use App\Enums\SystemRole;
 use App\Models\Mml\ImportacionReporte;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -20,7 +21,7 @@ class DashboardImportacionesTest extends TestCase
         parent::setUp();
 
         $this->app->make(PermissionRegistrar::class)->forgetCachedPermissions();
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
 
         $this->user = User::factory()->withPersonalTeam()->create();
         $this->user->assignRole(SystemRole::PLANEADOR->value);

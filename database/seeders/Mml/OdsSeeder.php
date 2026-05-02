@@ -12,8 +12,9 @@ class OdsSeeder extends Seeder
     {
         $path = base_path('docs/data/ods-agenda-2030.md');
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             $this->command->error("Archivo fuente no encontrado: {$path}");
+
             return;
         }
 
@@ -37,7 +38,7 @@ class OdsSeeder extends Seeder
             }
 
             // Detectar descripción del ODS (línea siguiente al título, no vacía, no encabezado, no meta)
-            elseif ($currentObjetivo && !str_starts_with($line, '#') && !str_starts_with($line, '-') && trim($line)) {
+            elseif ($currentObjetivo && ! str_starts_with($line, '#') && ! str_starts_with($line, '-') && trim($line)) {
                 $currentObjetivo->update(['descripcion' => trim($line)]);
             }
 
@@ -53,6 +54,6 @@ class OdsSeeder extends Seeder
             }
         }
 
-        $this->command->info("ODS cargados: " . OdsObjetivo::count() . " objetivos, " . OdsMeta::count() . " metas");
+        $this->command->info('ODS cargados: '.OdsObjetivo::count().' objetivos, '.OdsMeta::count().' metas');
     }
 }

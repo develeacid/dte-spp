@@ -3,6 +3,8 @@
 namespace App\Services\Mml;
 
 use App\DTOs\ImportedMirData;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MirParserService
 {
@@ -32,19 +34,22 @@ class MirParserService
             if (preg_match('/^#\s+Programa:\s*(.+?)\s*\((\S+)\)\s*$/', $trimmed, $m)) {
                 $nombre = trim($m[1]);
                 $clave = trim($m[2]);
+
                 continue;
             }
 
             // Parse ejercicio: ## Ejercicio: 2026
             if (preg_match('/^##\s+Ejercicio:\s*(\d{4})/', $trimmed, $m)) {
                 $ejercicioFiscal = (int) $m[1];
+
                 continue;
             }
 
             // Detect table rows (pipe-delimited)
             if (str_starts_with($trimmed, '|')) {
-                if (!$inTable) {
+                if (! $inTable) {
                     $inTable = true;
+
                     // First row is the header — skip it
                     continue;
                 }
@@ -93,6 +98,7 @@ class MirParserService
         while (($row = fgetcsv($handle)) !== false) {
             if ($isHeader) {
                 $isHeader = false;
+
                 continue;
             }
             $rows[] = $row;
@@ -116,14 +122,14 @@ class MirParserService
      */
     public function fromExcel(string $path): ImportedMirData
     {
-        if (!class_exists(\Maatwebsite\Excel\Facades\Excel::class)) {
+        if (! class_exists(Excel::class)) {
             throw new \RuntimeException('maatwebsite/laravel-excel is not installed.');
         }
 
-        $data = \Maatwebsite\Excel\Facades\Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\WithHeadingRow {}, $path);
+        $data = Excel::toArray(new class implements WithHeadingRow {}, $path);
 
         $rows = [];
-        if (!empty($data[0])) {
+        if (! empty($data[0])) {
             foreach ($data[0] as $row) {
                 $rows[] = array_values($row);
             }
@@ -145,8 +151,6 @@ class MirParserService
      * Columns expected (by index):
      *   0: Nivel, 1: Resumen Narrativo, 2: Indicador, 3: Formula,
      *   4: Tipo, 5: Dimension, 6: Frecuencia, 7: Medio Verificacion, 8: Supuestos
-     *
-     * @return array
      */
     private function buildNiveles(array $rows): array
     {

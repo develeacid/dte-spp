@@ -15,9 +15,7 @@ class Anexo11SexoSheet implements FromArray, WithHeadings, WithTitle
         'otro' => 'Otro',
     ];
 
-    public function __construct(private readonly Anexo11ReportData $data)
-    {
-    }
+    public function __construct(private readonly Anexo11ReportData $data) {}
 
     public function title(): string
     {
@@ -35,6 +33,7 @@ class Anexo11SexoSheet implements FromArray, WithHeadings, WithTitle
         foreach (self::LABELS as $key => $label) {
             $rows[] = [$label, $this->data->porGenero[$key] ?? '<5'];
         }
+
         return $rows;
     }
 }

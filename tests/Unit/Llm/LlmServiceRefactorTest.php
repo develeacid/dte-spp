@@ -3,7 +3,6 @@
 namespace Tests\Unit\Llm;
 
 use App\DTOs\LlmValidationResult;
-use App\Models\LlmLog;
 use App\Services\Llm\LlmService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;

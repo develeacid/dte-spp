@@ -18,7 +18,9 @@ class ArbolObjetivosBuilderTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
+
     private Arbol $arbolProblema;
 
     protected function setUp(): void

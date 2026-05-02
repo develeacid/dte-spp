@@ -31,6 +31,6 @@ class Alternativa extends Model
     public function nodos(): BelongsToMany
     {
         return $this->belongsToMany(ArbolNodo::class, 'alternativa_nodo')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 }

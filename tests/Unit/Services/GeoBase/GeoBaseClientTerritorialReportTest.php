@@ -3,6 +3,7 @@
 namespace Tests\Unit\Services\GeoBase;
 
 use App\Services\GeoBase\GeoBaseClient;
+use App\Services\GeoBase\GeoBaseException;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -66,9 +67,9 @@ class GeoBaseClientTerritorialReportTest extends TestCase
 
         Http::fake(['*' => Http::response(['error' => 'boom'], 500)]);
 
-        $this->expectException(\App\Services\GeoBase\GeoBaseException::class);
+        $this->expectException(GeoBaseException::class);
 
-        app(\App\Services\GeoBase\GeoBaseClient::class)->getTerritorialReport(42);
+        app(GeoBaseClient::class)->getTerritorialReport(42);
     }
 
     public function test_get_territorial_report_rejects_non_positive_program_id(): void
@@ -77,6 +78,6 @@ class GeoBaseClientTerritorialReportTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
 
-        app(\App\Services\GeoBase\GeoBaseClient::class)->getTerritorialReport(0);
+        app(GeoBaseClient::class)->getTerritorialReport(0);
     }
 }

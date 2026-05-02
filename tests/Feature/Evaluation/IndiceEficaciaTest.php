@@ -19,7 +19,9 @@ class IndiceEficaciaTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
+
     private IndiceEficaciaService $service;
 
     protected function setUp(): void
@@ -274,14 +276,14 @@ class IndiceEficaciaTest extends TestCase
                 'tipo_nivel' => $tipoNivel->value,
             ],
             [
-                'resumen_narrativo' => $tipoNivel->label() . ' test',
+                'resumen_narrativo' => $tipoNivel->label().' test',
                 'orden' => $tipoNivel->orden(),
             ]
         );
 
         $indicador = Indicador::create([
             'mir_nivel_id' => $nivel->id,
-            'nombre' => "Indicador {$tipoNivel->value} " . uniqid(),
+            'nombre' => "Indicador {$tipoNivel->value} ".uniqid(),
             'tipo' => 'estrategico',
             'dimension' => 'eficacia',
             'frecuencia' => 'trimestral',

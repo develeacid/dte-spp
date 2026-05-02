@@ -13,6 +13,7 @@ use Spatie\Permission\Models\Permission;
 class AbrirPeriodosCaptura extends Command
 {
     protected $signature = 'mir:abrir-periodos';
+
     protected $description = 'Abre periodos de captura cuya fecha de apertura ya se cumplio y crea avances EN_CAPTURA';
 
     public function handle(): int
@@ -43,7 +44,7 @@ class AbrirPeriodosCaptura extends Command
                 $usuarios = User::permission('capturar_avance')
                     ->where(function ($q) use ($teamId) {
                         $q->whereHas('teams', fn ($sub) => $sub->where('teams.id', $teamId))
-                          ->orWhereHas('ownedTeams', fn ($sub) => $sub->where('teams.id', $teamId));
+                            ->orWhereHas('ownedTeams', fn ($sub) => $sub->where('teams.id', $teamId));
                     })
                     ->get();
 
@@ -70,6 +71,7 @@ class AbrirPeriodosCaptura extends Command
         }
 
         $this->info("Periodos abiertos: {$count}");
+
         return self::SUCCESS;
     }
 }

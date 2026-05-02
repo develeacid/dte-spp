@@ -14,7 +14,7 @@ enum TipoProgramaDerivado: string
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::SECTORIAL => 'Programa Sectorial',
             self::ESPECIAL => 'Programa Especial',
             self::INSTITUCIONAL => 'Programa Institucional',
@@ -27,7 +27,7 @@ enum TipoProgramaDerivado: string
      */
     public function descripcion(): string
     {
-        return match($this) {
+        return match ($this) {
             self::SECTORIAL => 'Programas que abordan temas sectoriales específicos del desarrollo estatal.',
             self::ESPECIAL => 'Programas diseñados para atender problemáticas específicas o emergentes.',
             self::INSTITUCIONAL => 'Programas que orientan la gestión interna de una institución.',
@@ -40,7 +40,7 @@ enum TipoProgramaDerivado: string
      */
     public function prefijo(): string
     {
-        return match($this) {
+        return match ($this) {
             self::SECTORIAL => 'OS',
             self::ESPECIAL => 'OE',
             self::INSTITUCIONAL => 'OI',
@@ -53,7 +53,7 @@ enum TipoProgramaDerivado: string
      */
     public function colorClass(): string
     {
-        return match($this) {
+        return match ($this) {
             self::SECTORIAL => 'bg-blue-100 text-blue-800',
             self::ESPECIAL => 'bg-green-100 text-green-800',
             self::INSTITUCIONAL => 'bg-purple-100 text-purple-800',

@@ -12,7 +12,7 @@ class FormulaEvaluatorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new FormulaEvaluatorService();
+        $this->service = new FormulaEvaluatorService;
     }
 
     public function test_evalua_formula_basica(): void

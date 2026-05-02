@@ -3,6 +3,7 @@
 namespace Tests\Feature\Padron;
 
 use App\Models\GeoBase\WebhookDelivery;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -57,7 +58,7 @@ class M5WebhookDeliveryModelTest extends TestCase
             'payload' => [],
         ]);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
         WebhookDelivery::create([
             'delivery_id' => 'd-dup',
             'event_type' => 'sync.processed',

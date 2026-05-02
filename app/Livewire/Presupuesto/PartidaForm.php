@@ -4,6 +4,7 @@ namespace App\Livewire\Presupuesto;
 
 use App\Models\Presupuesto\PartidaPresupuestal;
 use App\Models\ProgramaPresupuestario;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -13,10 +14,15 @@ class PartidaForm extends Component
     public ?PartidaPresupuestal $partida = null;
 
     public string $programa_presupuestario_id = '';
+
     public string $clave_partida = '';
+
     public string $descripcion = '';
+
     public string $monto_aprobado = '';
+
     public string $monto_modificado = '';
+
     public int $ejercicio_fiscal;
 
     public function mount(?PartidaPresupuestal $partida = null): void
@@ -67,7 +73,7 @@ class PartidaForm extends Component
         $this->redirect(route('presupuesto.partidas'));
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         $teamId = auth()->user()->currentTeam->id;
 

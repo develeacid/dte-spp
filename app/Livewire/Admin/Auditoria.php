@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
@@ -125,7 +126,7 @@ class Auditoria extends Component
         return view('livewire.admin.auditoria', [
             'activities' => $query->paginate(25),
             'subjectTypes' => $this->getSubjectTypes(),
-            'usuarios' => \App\Models\User::orderBy('name')->pluck('name', 'id'),
+            'usuarios' => User::orderBy('name')->pluck('name', 'id'),
         ]);
     }
 }

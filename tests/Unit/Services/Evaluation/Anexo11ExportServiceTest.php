@@ -40,7 +40,7 @@ class Anexo11ExportServiceTest extends TestCase
             'meta' => ['total_rows' => 2, 'refreshed_at' => '2026-04-24T12:00:00Z'],
         ]);
 
-        $service = new Anexo11ExportService($client, new KAnonymityMasker());
+        $service = new Anexo11ExportService($client, new KAnonymityMasker);
         $data = $service->build(42);
 
         $this->assertInstanceOf(Anexo11ReportData::class, $data);
@@ -67,7 +67,7 @@ class Anexo11ExportServiceTest extends TestCase
             'meta' => ['total_rows' => 0, 'refreshed_at' => '2026-04-24T12:00:00Z'],
         ]);
 
-        $service = new Anexo11ExportService($client, new KAnonymityMasker());
+        $service = new Anexo11ExportService($client, new KAnonymityMasker);
         $data = $service->build(99, programaNombre: 'Sin beneficiarios');
 
         $this->assertSame(0, $data->totalBeneficiarios);

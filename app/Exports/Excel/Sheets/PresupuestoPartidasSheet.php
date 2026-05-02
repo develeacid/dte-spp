@@ -10,16 +10,14 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 
 class PresupuestoPartidasSheet implements FromCollection, WithHeadings, WithTitle
 {
-    public function __construct(private PresupuestoCapituloReportService $service)
-    {
-    }
+    public function __construct(private PresupuestoCapituloReportService $service) {}
 
     public function collection(): Collection
     {
         return $this->service->partidas()->map(fn (array $r) => [
             $r['clave_partida'],
             $r['descripcion'],
-            $r['capitulo'] . ' — ' . $r['capitulo_label'],
+            $r['capitulo'].' — '.$r['capitulo_label'],
             $r['monto_aprobado'],
             $r['monto_modificado'] ?? $r['monto_aprobado'],
             $r['monto_comprometido'],

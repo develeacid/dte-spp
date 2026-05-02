@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\TipoProgramaDerivado;
+use App\Livewire\Cascade\ProgramasDerivadosManager;
 use App\Models\PedPlan;
 use App\Models\ProgramaDerivado;
-use App\Models\ProgramaDerivadoObjetivo;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -81,7 +81,7 @@ class ProgramasDerivadosCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Cascade\ProgramasDerivadosManager::class)
+            ->test(ProgramasDerivadosManager::class)
             ->call('createPrograma')
             ->set('programaNombre', 'Programa Sectorial de Educación')
             ->set('programaTipo', TipoProgramaDerivado::SECTORIAL->value)
@@ -114,7 +114,7 @@ class ProgramasDerivadosCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Cascade\ProgramasDerivadosManager::class)
+            ->test(ProgramasDerivadosManager::class)
             ->call('editPrograma', $programa->id)
             ->set('programaNombre', 'Programa Editado')
             ->call('savePrograma');
@@ -141,7 +141,7 @@ class ProgramasDerivadosCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Cascade\ProgramasDerivadosManager::class)
+            ->test(ProgramasDerivadosManager::class)
             ->call('confirmDeletePrograma', $programa->id)
             ->call('deletePrograma');
 
@@ -171,7 +171,7 @@ class ProgramasDerivadosCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Cascade\ProgramasDerivadosManager::class)
+            ->test(ProgramasDerivadosManager::class)
             ->call('createObjetivo', $programa->id)
             ->set('objetivoClave', '1')
             ->set('objetivoDescripcion', 'Objetivo de prueba')
@@ -208,7 +208,7 @@ class ProgramasDerivadosCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Cascade\ProgramasDerivadosManager::class)
+            ->test(ProgramasDerivadosManager::class)
             ->call('deleteObjetivo', $objetivo->id);
 
         $this->assertDatabaseMissing('programas_derivados_objetivos', ['id' => $objetivo->id]);
@@ -243,7 +243,7 @@ class ProgramasDerivadosCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Cascade\ProgramasDerivadosManager::class)
+            ->test(ProgramasDerivadosManager::class)
             ->set('filtroTipo', TipoProgramaDerivado::SECTORIAL->value)
             ->assertSee('PS Educacion Test')
             ->assertDontSee('PE Salud Test');
@@ -266,7 +266,7 @@ class ProgramasDerivadosCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Cascade\ProgramasDerivadosManager::class)
+            ->test(ProgramasDerivadosManager::class)
             ->call('createPrograma')
             ->set('programaNombre', 'Programa sin tipo')
             ->set('programaTipo', '')
@@ -287,7 +287,7 @@ class ProgramasDerivadosCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Cascade\ProgramasDerivadosManager::class)
+            ->test(ProgramasDerivadosManager::class)
             ->call('createPrograma')
             ->set('programaNombre', 'Programa con tipo inválido')
             ->set('programaTipo', 'tipo_inexistente')
@@ -314,7 +314,7 @@ class ProgramasDerivadosCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Cascade\ProgramasDerivadosManager::class)
+            ->test(ProgramasDerivadosManager::class)
             ->call('createObjetivo', $programa->id)
             ->set('objetivoClave', '1')
             ->set('objetivoDescripcion', str_repeat('a', 501))
@@ -350,7 +350,7 @@ class ProgramasDerivadosCrudTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Cascade\ProgramasDerivadosManager::class)
+            ->test(ProgramasDerivadosManager::class)
             ->call('confirmDeletePrograma', $programa->id)
             ->assertSet('programaSeleccionado.objetivos_count', 1)
             ->call('deletePrograma');

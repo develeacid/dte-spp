@@ -16,18 +16,18 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('pnd_objetivo_id')
-                  ->constrained()
-                  ->cascadeOnDelete();
+                ->constrained()
+                ->cascadeOnDelete();
 
             $table->foreignId('ods_meta_id')
-                  ->constrained()
-                  ->cascadeOnDelete();
+                ->constrained()
+                ->cascadeOnDelete();
 
             $table->timestamps();
 
             $table->unique([
                 'pnd_objetivo_id',
-                'ods_meta_id'
+                'ods_meta_id',
             ], 'alineacion_pnd_ods_unique');
         });
     }

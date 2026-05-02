@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\EstadoValidacionPrograma;
-use App\Models\Mml\MirNivel;
 use App\Models\Juridico\ValidacionJuridicaPrograma;
+use App\Models\Mml\MirNivel;
 use App\Models\Presupuesto\PartidaPresupuestal;
 use App\Models\ProgramaPresupuestario;
 use Illuminate\Support\Collection;
@@ -258,7 +258,7 @@ class EstadoConsolidadoService
     {
         $partes = [];
         foreach ($areas as $nombre => $info) {
-            $partes[] = ucfirst($nombre) . ': ' . $info['label'];
+            $partes[] = ucfirst($nombre).': '.$info['label'];
         }
 
         return implode(', ', $partes);

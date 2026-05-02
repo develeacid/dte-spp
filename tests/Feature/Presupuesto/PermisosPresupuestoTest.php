@@ -10,11 +10,13 @@ use Tests\Traits\PresupuestoTestHelpers;
 
 class PermisosPresupuestoTest extends TestCase
 {
-    use RefreshDatabase;
     use PresupuestoTestHelpers;
+    use RefreshDatabase;
 
     private User $financiero;
+
     private User $planeador;
+
     private User $operador;
 
     private int $programaId;

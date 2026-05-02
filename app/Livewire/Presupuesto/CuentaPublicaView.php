@@ -3,6 +3,7 @@
 namespace App\Livewire\Presupuesto;
 
 use App\Services\Presupuesto\CuentaPublicaService;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -10,6 +11,7 @@ use Livewire\Component;
 class CuentaPublicaView extends Component
 {
     public int $filtroEjercicio;
+
     public bool $vistaEje = false;
 
     public function mount(): void
@@ -22,7 +24,7 @@ class CuentaPublicaView extends Component
         $this->vistaEje = ! $this->vistaEje;
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         $service = app(CuentaPublicaService::class);
         $teamId = auth()->user()->currentTeam->id;

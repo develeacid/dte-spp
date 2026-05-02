@@ -2,11 +2,9 @@
 
 namespace Tests\Feature\Mml;
 
+use App\Http\Requests\Mml\StoreIndicadorRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Requests\Mml\StoreIndicadorRequest;
-use App\Enums\TipoNivelMir;
-use App\Services\Mml\IndicadorReglasService;
 use Tests\TestCase;
 
 class StoreIndicadorRequestTest extends TestCase
@@ -15,7 +13,7 @@ class StoreIndicadorRequestTest extends TestCase
 
     private function validateRequest(array $data): \Illuminate\Validation\Validator
     {
-        $request = new StoreIndicadorRequest();
+        $request = new StoreIndicadorRequest;
         $request->merge($data);
 
         return Validator::make($data, $request->rules(), $request->messages());

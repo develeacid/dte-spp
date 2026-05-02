@@ -33,9 +33,9 @@ class MirDiagnosticoService
             }
 
             // Check tipo_nivel is valid
-            if (!empty($nivel['tipo_nivel'])) {
+            if (! empty($nivel['tipo_nivel'])) {
                 $validNiveles = TipoNivelMir::values();
-                if (!in_array($nivel['tipo_nivel'], $validNiveles, true)) {
+                if (! in_array($nivel['tipo_nivel'], $validNiveles, true)) {
                     $gaps[] = $this->gap($ni, null, 'tipo_nivel', 'advertencia', "Tipo de nivel no reconocido: \"{$nivel['tipo_nivel']}\".");
                 }
             }
@@ -68,10 +68,10 @@ class MirDiagnosticoService
                 if (empty($ind['sentido'])) {
                     $gaps[] = $this->gap($ni, $ii, 'sentido', 'menor', 'Falta el sentido del indicador.');
                 }
-                if (!isset($ind['linea_base']) || $ind['linea_base'] === null) {
+                if (! isset($ind['linea_base']) || $ind['linea_base'] === null) {
                     $gaps[] = $this->gap($ni, $ii, 'linea_base', 'menor', 'Falta la línea base.');
                 }
-                if (!isset($ind['meta']) || $ind['meta'] === null) {
+                if (! isset($ind['meta']) || $ind['meta'] === null) {
                     $gaps[] = $this->gap($ni, $ii, 'meta', 'menor', 'Falta la meta.');
                 }
                 if (empty($ind['rangos_semaforo'])) {
@@ -79,16 +79,16 @@ class MirDiagnosticoService
                 }
 
                 // Warning: unrecognized enum values
-                if (!empty($ind['tipo']) && !in_array($ind['tipo'], TipoIndicador::values(), true)) {
+                if (! empty($ind['tipo']) && ! in_array($ind['tipo'], TipoIndicador::values(), true)) {
                     $gaps[] = $this->gap($ni, $ii, 'tipo', 'advertencia', "Tipo de indicador no reconocido: \"{$ind['tipo']}\".");
                 }
-                if (!empty($ind['dimension']) && !in_array($ind['dimension'], DimensionIndicador::values(), true)) {
+                if (! empty($ind['dimension']) && ! in_array($ind['dimension'], DimensionIndicador::values(), true)) {
                     $gaps[] = $this->gap($ni, $ii, 'dimension', 'advertencia', "Dimensión no reconocida: \"{$ind['dimension']}\".");
                 }
-                if (!empty($ind['frecuencia']) && !in_array($ind['frecuencia'], FrecuenciaMedicion::values(), true)) {
+                if (! empty($ind['frecuencia']) && ! in_array($ind['frecuencia'], FrecuenciaMedicion::values(), true)) {
                     $gaps[] = $this->gap($ni, $ii, 'frecuencia', 'advertencia', "Frecuencia no reconocida: \"{$ind['frecuencia']}\".");
                 }
-                if (!empty($ind['sentido']) && !in_array($ind['sentido'], SentidoIndicador::values(), true)) {
+                if (! empty($ind['sentido']) && ! in_array($ind['sentido'], SentidoIndicador::values(), true)) {
                     $gaps[] = $this->gap($ni, $ii, 'sentido', 'advertencia', "Sentido no reconocido: \"{$ind['sentido']}\".");
                 }
             }

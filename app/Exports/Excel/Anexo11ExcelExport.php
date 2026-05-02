@@ -10,9 +10,7 @@ class Anexo11ExcelExport implements WithMultipleSheets
 {
     use Exportable;
 
-    public function __construct(private readonly Anexo11ReportData $data)
-    {
-    }
+    public function __construct(private readonly Anexo11ReportData $data) {}
 
     public function sheets(): array
     {

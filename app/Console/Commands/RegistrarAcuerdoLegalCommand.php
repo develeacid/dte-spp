@@ -20,17 +20,20 @@ class RegistrarAcuerdoLegalCommand extends Command
 
         if (! is_file($ruta)) {
             $this->error("El archivo {$ruta} no existe");
+
             return self::FAILURE;
         }
 
         if (filesize($ruta) === 0) {
             $this->error("El archivo {$ruta} está vacío");
+
             return self::FAILURE;
         }
 
         $hash = @hash_file('sha256', $ruta);
         if ($hash === false) {
             $this->error("No se pudo leer {$ruta} (¿permisos? ¿desapareció?)");
+
             return self::FAILURE;
         }
 
@@ -48,6 +51,7 @@ class RegistrarAcuerdoLegalCommand extends Command
             && $existente->ruta_archivo === $rutaRelativa
         ) {
             $this->info('Sin cambios — el acuerdo ya está registrado con el mismo hash y status.');
+
             return self::SUCCESS;
         }
 
@@ -81,10 +85,11 @@ class RegistrarAcuerdoLegalCommand extends Command
 
     private function rutaRelativa(string $rutaAbsoluta): string
     {
-        $base = base_path() . DIRECTORY_SEPARATOR;
+        $base = base_path().DIRECTORY_SEPARATOR;
         if (str_starts_with($rutaAbsoluta, $base)) {
             return str_replace(DIRECTORY_SEPARATOR, '/', substr($rutaAbsoluta, strlen($base)));
         }
+
         return $rutaAbsoluta;
     }
 
@@ -95,9 +100,11 @@ class RegistrarAcuerdoLegalCommand extends Command
             $status = EstadoDatasetAbierto::tryFrom($statusFlag);
             if ($status === null) {
                 $valores = array_map(fn ($c) => $c->value, EstadoDatasetAbierto::cases());
-                $this->error("--status inválido: '{$statusFlag}'. Valores: " . implode(', ', $valores));
+                $this->error("--status inválido: '{$statusFlag}'. Valores: ".implode(', ', $valores));
+
                 return null;
             }
+
             return $status;
         }
 
@@ -113,12 +120,14 @@ class RegistrarAcuerdoLegalCommand extends Command
         // Forzar el uso de --status para evitar clasificación silenciosa por defecto.
         if (! $this->input->isInteractive()) {
             $this->error('Ruta no canónica y entrada no interactiva. Use --status=borrador|publicado.');
+
             return null;
         }
 
         if ($this->confirm('La ruta no encaja en patrones conocidos. ¿Marcar como publicado?', false)) {
             return EstadoDatasetAbierto::PUBLICADO;
         }
+
         return EstadoDatasetAbierto::BORRADOR;
     }
 }

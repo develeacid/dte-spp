@@ -26,7 +26,7 @@ class CogCapituloCategorizer
             return null;
         }
 
-        return $m[1] . '000';
+        return $m[1].'000';
     }
 
     public static function label(string $capitulo): string

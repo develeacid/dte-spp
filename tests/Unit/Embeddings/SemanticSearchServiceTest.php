@@ -7,6 +7,7 @@ use App\DTOs\SimilarityResult;
 use App\Models\OdsMeta;
 use App\Models\OdsObjetivo;
 use App\Models\PedLineaAccion;
+use App\Models\User;
 use App\Services\Embeddings\SemanticSearchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -54,8 +55,8 @@ class SemanticSearchServiceTest extends TestCase
         ]);
 
         // Insertar embeddings simulados
-        DB::statement("UPDATE ods_metas SET embedding = '[" . implode(',', array_fill(0, 1536, 0.5)) . "]'::vector WHERE id = ?", [$meta1->id]);
-        DB::statement("UPDATE ods_metas SET embedding = '[" . implode(',', array_fill(0, 1536, 0.4)) . "]'::vector WHERE id = ?", [$meta2->id]);
+        DB::statement("UPDATE ods_metas SET embedding = '[".implode(',', array_fill(0, 1536, 0.5))."]'::vector WHERE id = ?", [$meta1->id]);
+        DB::statement("UPDATE ods_metas SET embedding = '[".implode(',', array_fill(0, 1536, 0.4))."]'::vector WHERE id = ?", [$meta2->id]);
 
         $service = new SemanticSearchService($mockEmbedding);
         $results = $service->findSimilar('reducir pobreza', OdsMeta::class);
@@ -74,7 +75,7 @@ class SemanticSearchServiceTest extends TestCase
 
         $objetivo = OdsObjetivo::create(['numero' => 1, 'nombre' => 'Test']);
 
-        $embeddingVector = '[' . implode(',', array_fill(0, 1536, 0.5)) . ']';
+        $embeddingVector = '['.implode(',', array_fill(0, 1536, 0.5)).']';
         for ($i = 1; $i <= 10; $i++) {
             $meta = OdsMeta::create([
                 'ods_objetivo_id' => $objetivo->id,
@@ -104,14 +105,14 @@ class SemanticSearchServiceTest extends TestCase
             'clave' => '1.1',
             'descripcion' => 'Alta similitud',
         ]);
-        DB::statement("UPDATE ods_metas SET embedding = '[" . implode(',', array_fill(0, 1536, 0.5)) . "]'::vector WHERE id = ?", [$meta1->id]);
+        DB::statement("UPDATE ods_metas SET embedding = '[".implode(',', array_fill(0, 1536, 0.5))."]'::vector WHERE id = ?", [$meta1->id]);
 
         $meta2 = OdsMeta::create([
             'ods_objetivo_id' => $objetivo->id,
             'clave' => '1.2',
             'descripcion' => 'Baja similitud',
         ]);
-        DB::statement("UPDATE ods_metas SET embedding = '[" . implode(',', array_fill(0, 1536, -0.9)) . "]'::vector WHERE id = ?", [$meta2->id]);
+        DB::statement("UPDATE ods_metas SET embedding = '[".implode(',', array_fill(0, 1536, -0.9))."]'::vector WHERE id = ?", [$meta2->id]);
 
         $service = new SemanticSearchService($mockEmbedding);
         $results = $service->findSimilar('test', OdsMeta::class, threshold: 0.9);
@@ -131,7 +132,7 @@ class SemanticSearchServiceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('is not searchable');
 
-        $service->findSimilar('test', \App\Models\User::class);
+        $service->findSimilar('test', User::class);
     }
 
     public function test_lanza_excepcion_si_threshold_invalido(): void
@@ -162,7 +163,7 @@ class SemanticSearchServiceTest extends TestCase
             'clave' => '1.1',
             'descripcion' => 'Test descripcion',
         ]);
-        DB::statement("UPDATE ods_metas SET embedding = '[" . implode(',', array_fill(0, 1536, 0.5)) . "]'::vector WHERE id = ?", [$meta->id]);
+        DB::statement("UPDATE ods_metas SET embedding = '[".implode(',', array_fill(0, 1536, 0.5))."]'::vector WHERE id = ?", [$meta->id]);
 
         $service = new SemanticSearchService($mockEmbedding);
         $results = $service->findSimilar('test', OdsMeta::class);
@@ -179,7 +180,7 @@ class SemanticSearchServiceTest extends TestCase
     public function test_dto_get_percentage_attribute(): void
     {
         $result = new SimilarityResult(
-            model: new OdsMeta(),
+            model: new OdsMeta,
             score: 0.856,
             distance: 0.144
         );
@@ -190,13 +191,13 @@ class SemanticSearchServiceTest extends TestCase
     public function test_dto_is_high_quality(): void
     {
         $highQuality = new SimilarityResult(
-            model: new OdsMeta(),
+            model: new OdsMeta,
             score: 0.90,
             distance: 0.10
         );
 
         $lowQuality = new SimilarityResult(
-            model: new OdsMeta(),
+            model: new OdsMeta,
             score: 0.80,
             distance: 0.20
         );
@@ -245,6 +246,6 @@ class SemanticSearchServiceTest extends TestCase
         $service = new SemanticSearchService($mockEmbedding);
 
         $this->assertTrue($service->isSearchable(OdsMeta::class));
-        $this->assertFalse($service->isSearchable(\App\Models\User::class));
+        $this->assertFalse($service->isSearchable(User::class));
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Livewire\Cascade;
 
 use App\Services\PedMarkdownParser;
-use App\Models\PedPlan;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -12,16 +11,24 @@ class PedImporter extends Component
     use WithFileUploads;
 
     public $archivo;
+
     public bool $showPreview = false;
+
     public bool $showSuccess = false;
+
     public array $parsedData = [];
+
     public array $stats = [];
+
     public array $parseErrors = [];
 
     // Datos del plan (editables)
     public string $planNombre = '';
+
     public int $planPeriodoInicio = 2025;
+
     public int $planPeriodoFin = 2030;
+
     public bool $planActivo = true;
 
     protected $listeners = ['refresh' => '$refresh'];
@@ -53,7 +60,7 @@ class PedImporter extends Component
         try {
             $content = $this->archivo->get();
 
-            $parser = new PedMarkdownParser();
+            $parser = new PedMarkdownParser;
             $result = $parser->parse($content);
 
             $this->parseErrors = $result['errors'];
@@ -71,7 +78,7 @@ class PedImporter extends Component
         } catch (\Exception $e) {
             $this->parseErrors = [[
                 'line' => 0,
-                'message' => 'Error al procesar el archivo: ' . $e->getMessage(),
+                'message' => 'Error al procesar el archivo: '.$e->getMessage(),
             ]];
             $this->showPreview = false;
         }
@@ -94,7 +101,7 @@ class PedImporter extends Component
             $this->parsedData['periodo_inicio'] = $this->planPeriodoInicio;
             $this->parsedData['periodo_fin'] = $this->planPeriodoFin;
 
-            $parser = new PedMarkdownParser();
+            $parser = new PedMarkdownParser;
             $plan = $parser->import($this->parsedData, $this->planActivo);
 
             $this->showPreview = false;
@@ -105,7 +112,7 @@ class PedImporter extends Component
         } catch (\Exception $e) {
             $this->parseErrors = [[
                 'line' => 0,
-                'message' => 'Error al importar: ' . $e->getMessage(),
+                'message' => 'Error al importar: '.$e->getMessage(),
             ]];
         }
     }
@@ -169,7 +176,7 @@ class PedImporter extends Component
 MD;
 
         return response()->streamDownload(
-            fn() => print($contenido),
+            fn () => print ($contenido),
             'ejemplo-ped.md',
             ['Content-Type' => 'text/markdown']
         );

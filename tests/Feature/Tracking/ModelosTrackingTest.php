@@ -23,7 +23,9 @@ class ModelosTrackingTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Indicador $indicador;
+
     private MetaPeriodo $metaPeriodo;
 
     protected function setUp(): void

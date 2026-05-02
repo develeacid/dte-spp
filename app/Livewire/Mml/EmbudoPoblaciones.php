@@ -61,12 +61,14 @@ class EmbudoPoblaciones extends Component
         if ($this->potencial_cantidad > $this->referencia_cantidad) {
             $this->addError('potencial_cantidad',
                 "La Población Potencial ({$this->potencial_cantidad}) no puede ser mayor a la de Referencia ({$this->referencia_cantidad}).");
+
             return;
         }
 
         if ($this->objetivo_cantidad > $this->potencial_cantidad) {
             $this->addError('objetivo_cantidad',
                 "La Población Objetivo ({$this->objetivo_cantidad}) no puede ser mayor a la Potencial ({$this->potencial_cantidad}). Revisa las cifras o ajusta la Población Objetivo.");
+
             return;
         }
 

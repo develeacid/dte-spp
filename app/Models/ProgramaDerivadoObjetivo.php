@@ -56,6 +56,6 @@ class ProgramaDerivadoObjetivo extends Model
      */
     public function getClaveCompletaAttribute(): string
     {
-        return $this->programa->prefijoClave() . '.' . $this->clave;
+        return $this->programa->prefijoClave().'.'.$this->clave;
     }
 }

@@ -4,8 +4,10 @@ namespace Tests\Feature\GeoBase;
 
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
+use App\Services\GeoBase\GeoBaseClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class GeoBaseIntegrationTest extends TestCase
@@ -24,10 +26,10 @@ class GeoBaseIntegrationTest extends TestCase
         ]);
     }
 
-    private function postWebhook(string $event, array $payload, string $deliveryId): \Illuminate\Testing\TestResponse
+    private function postWebhook(string $event, array $payload, string $deliveryId): TestResponse
     {
         $body = json_encode($payload);
-        $signature = 'sha256=' . hash_hmac('sha256', $body, $this->secret);
+        $signature = 'sha256='.hash_hmac('sha256', $body, $this->secret);
 
         return $this->call(
             method: 'POST',
@@ -114,7 +116,7 @@ class GeoBaseIntegrationTest extends TestCase
             '*/snapshots/generate' => Http::response(['data' => ['id' => 1, 'snapshot_hash' => 'abc']], 201),
         ]);
 
-        $client = app(\App\Services\GeoBase\GeoBaseClient::class);
+        $client = app(GeoBaseClient::class);
 
         $client->upsertBeneficiary(['curp_rfc' => 'TEST', 'type' => 'persona_fisica', 'nombre' => 'A', 'apellidos' => 'B', 'address_municipality' => 'X', 'address_state' => 'Y']);
         $client->getBeneficiary(1);
@@ -139,7 +141,7 @@ class GeoBaseIntegrationTest extends TestCase
 
         // Sign one body, then send a tampered one
         $originalBody = json_encode($payload);
-        $signature = 'sha256=' . hash_hmac('sha256', $originalBody, $this->secret);
+        $signature = 'sha256='.hash_hmac('sha256', $originalBody, $this->secret);
 
         $tampered = $payload;
         $tampered['enrollment_id'] = 999;

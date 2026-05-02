@@ -3,6 +3,7 @@
 namespace App\Services\Evaluation;
 
 use App\Models\Evaluation\EvaluacionPrograma;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
@@ -43,10 +44,10 @@ class DatosAbiertosService
         $registros = $this->obtenerRegistros($ejercicio);
 
         $csv = self::BOM;
-        $csv .= implode(',', self::COLUMNAS) . "\n";
+        $csv .= implode(',', self::COLUMNAS)."\n";
 
         foreach ($registros as $registro) {
-            $csv .= $this->registroACsvLinea($registro) . "\n";
+            $csv .= $this->registroACsvLinea($registro)."\n";
         }
 
         return $csv;
@@ -75,7 +76,7 @@ class DatosAbiertosService
         $csv .= "campo,tipo,descripcion,ejemplo\n";
 
         foreach (self::DICCIONARIO as $fila) {
-            $csv .= implode(',', array_map(fn ($v) => '"' . str_replace('"', '""', $v) . '"', $fila)) . "\n";
+            $csv .= implode(',', array_map(fn ($v) => '"'.str_replace('"', '""', $v).'"', $fila))."\n";
         }
 
         return $csv;
@@ -101,7 +102,7 @@ class DatosAbiertosService
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, EvaluacionPrograma>
+     * @return Collection<int, EvaluacionPrograma>
      */
     private function obtenerRegistros(int $ejercicio)
     {
@@ -139,7 +140,7 @@ class DatosAbiertosService
                 return '';
             }
             if (is_string($v)) {
-                return '"' . str_replace('"', '""', $v) . '"';
+                return '"'.str_replace('"', '""', $v).'"';
             }
 
             return $v;

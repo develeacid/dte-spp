@@ -7,7 +7,6 @@ use App\Enums\TipoNivelMir;
 use App\Livewire\Mml\PadronPrograma;
 use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
-use App\Models\Tracking\AvanceEvidencia;
 use App\Models\User;
 use App\Services\Padron\PadronProvisioningService;
 use Database\Seeders\AsmPermissionsSeeder;

@@ -3,9 +3,14 @@
 namespace App\Livewire\Tracking;
 
 use App\Enums\EstadoAvance;
+use App\Exports\Excel\ConcentradoCapturaExcelExport;
+use App\Exports\Pdf\ConcentradoCapturaPdfExport;
 use App\Models\Tracking\Avance;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Layout('layouts.app')]
 class ConcentradoCaptura extends Component
@@ -61,7 +66,7 @@ class ConcentradoCaptura extends Component
             $programaClave = $avance->indicador->mirNivel->programa->clave ?? "\u{2014}";
             $programaNombre = $avance->indicador->mirNivel->programa->nombre ?? "\u{2014}";
             $indicadorNombre = $avance->indicador->nombre;
-            $key = $programaClave . '|' . $indicadorNombre;
+            $key = $programaClave.'|'.$indicadorNombre;
 
             if (! $agrupado->has($key)) {
                 $agrupado[$key] = [
@@ -102,30 +107,30 @@ class ConcentradoCaptura extends Component
         ]);
     }
 
-    public function exportarPdf(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportarPdf(): StreamedResponse
     {
-        $export = new \App\Exports\Pdf\ConcentradoCapturaPdfExport(
+        $export = new ConcentradoCapturaPdfExport(
             auth()->user(),
             $this->fechaDesde,
             $this->fechaHasta,
         );
 
         $contenido = $export->generate();
-        $filename = 'concentrado-captura-' . now()->format('Ymd-His') . '.pdf';
+        $filename = 'concentrado-captura-'.now()->format('Ymd-His').'.pdf';
 
-        return response()->streamDownload(fn () => print($contenido), $filename, [
+        return response()->streamDownload(fn () => print ($contenido), $filename, [
             'Content-Type' => 'application/pdf',
         ]);
     }
 
-    public function exportarExcel(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function exportarExcel(): BinaryFileResponse
     {
-        $export = new \App\Exports\Excel\ConcentradoCapturaExcelExport(
+        $export = new ConcentradoCapturaExcelExport(
             auth()->user(),
             $this->fechaDesde,
             $this->fechaHasta,
         );
 
-        return \Maatwebsite\Excel\Facades\Excel::download($export, 'concentrado-captura-' . now()->format('Ymd-His') . '.xlsx');
+        return Excel::download($export, 'concentrado-captura-'.now()->format('Ymd-His').'.xlsx');
     }
 }

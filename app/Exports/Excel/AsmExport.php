@@ -12,9 +12,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class AsmExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
-    public function __construct(private readonly AsmReportService $service)
-    {
-    }
+    public function __construct(private readonly AsmReportService $service) {}
 
     public function collection()
     {
@@ -54,6 +52,7 @@ class AsmExport implements FromCollection, WithHeadings, WithMapping, WithStyles
     {
         if (isset($row->__totals)) {
             $t = $row->totals;
+
             return [
                 '',
                 "TOTALES — Total: {$t['total']} | Cumplidos: {$t['cumplidos']} | En proceso: {$t['en_proceso']} | Pendientes: {$t['pendientes']} | Vencidos: {$t['vencidos']}",
@@ -67,7 +66,7 @@ class AsmExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 
         return [
             $asm->id,
-            ($asm->programa->clave ?? '') . ' — ' . ($asm->programa->nombre ?? ''),
+            ($asm->programa->clave ?? '').' — '.($asm->programa->nombre ?? ''),
             $asm->descripcion_aspecto,
             $asm->accion_mejora,
             $asm->tipo_accion->label(),

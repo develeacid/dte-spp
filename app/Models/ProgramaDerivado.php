@@ -74,7 +74,7 @@ class ProgramaDerivado extends Model
      */
     public function prefijoClave(): string
     {
-        return match($this->tipo) {
+        return match ($this->tipo) {
             TipoProgramaDerivado::SECTORIAL => 'OS',
             TipoProgramaDerivado::ESPECIAL => 'OE',
             TipoProgramaDerivado::INSTITUCIONAL => 'OI',

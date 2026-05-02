@@ -3,7 +3,6 @@
 namespace App\Exports\Pdf;
 
 use App\Models\Mml\MetaPeriodo;
-use App\Models\ProgramaPresupuestario;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 

@@ -3,7 +3,6 @@
 namespace Tests\Feature\Seeders;
 
 use App\Enums\EstadoAvance;
-use App\Enums\SystemRole;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\Mml\MirNivel;
@@ -89,9 +88,9 @@ class QaTestingSeederTest extends TestCase
     {
         $this->seed(QaTestingSeeder::class);
 
-        $se     = Team::where('clave_ur', 'SE-001')->first();
-        $ss     = Team::where('clave_ur', 'SS-002')->first();
-        $seg    = Team::where('clave_ur', 'SEG-003')->first();
+        $se = Team::where('clave_ur', 'SE-001')->first();
+        $ss = Team::where('clave_ur', 'SS-002')->first();
+        $seg = Team::where('clave_ur', 'SEG-003')->first();
         $sectur = Team::where('clave_ur', 'SECTUR-004')->first();
 
         $this->assertEquals($se->id, ProgramaPresupuestario::where('clave', 'ISM-001')->first()->team_id);

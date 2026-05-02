@@ -4,6 +4,7 @@ namespace Tests\Feature\Evaluation\Asm;
 
 use App\Enums\SystemPermission;
 use App\Enums\SystemRole;
+use App\Models\Evaluation\Asm;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
@@ -68,8 +69,8 @@ class AccessControlTest extends TestCase
         $user = User::factory()->create();
         $user->assignRole(SystemRole::PLANEADOR->value);
 
-        $asm1 = \App\Models\Evaluation\Asm::factory()->create();
-        $asm2 = \App\Models\Evaluation\Asm::factory()->create();
+        $asm1 = Asm::factory()->create();
+        $asm2 = Asm::factory()->create();
 
         $response = $this->actingAs($user)->get(
             route('evaluation.asms.index', ['programa' => $asm1->programa_presupuestario_id])

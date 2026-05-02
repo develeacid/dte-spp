@@ -6,8 +6,12 @@ use App\Enums\DimensionIndicador;
 use App\Enums\FrecuenciaMedicion;
 use App\Enums\SentidoIndicador;
 use App\Enums\TipoIndicador;
+use App\Models\CatalogoUnidadMedida;
+use App\Models\Evaluation\AnexoTransversal;
+use App\Models\Tracking\Avance;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Activitylog\LogOptions;
@@ -16,6 +20,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Indicador extends Model
 {
     use LogsActivity;
+
     protected $table = 'indicadores';
 
     protected $fillable = [
@@ -79,7 +84,7 @@ class Indicador extends Model
 
     public function unidadMedida(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\CatalogoUnidadMedida::class, 'unidad_medida_id');
+        return $this->belongsTo(CatalogoUnidadMedida::class, 'unidad_medida_id');
     }
 
     public function metasPeriodo(): HasMany
@@ -87,15 +92,15 @@ class Indicador extends Model
         return $this->hasMany(MetaPeriodo::class)->orderBy('periodo');
     }
 
-    public function avances(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function avances(): HasMany
     {
-        return $this->hasMany(\App\Models\Tracking\Avance::class);
+        return $this->hasMany(Avance::class);
     }
 
-    public function anexosTransversales(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function anexosTransversales(): BelongsToMany
     {
         return $this->belongsToMany(
-            \App\Models\Evaluation\AnexoTransversal::class,
+            AnexoTransversal::class,
             'indicador_anexo_transversal'
         );
     }

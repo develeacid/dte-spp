@@ -10,7 +10,7 @@ class CalendarioService
 {
     public function calcularFechas(int $ejercicio, FrecuenciaMedicion $frecuencia): array
     {
-        $calendarizacion = new CalendarizacionService();
+        $calendarizacion = new CalendarizacionService;
         $numPeriodos = $calendarizacion->numeroPeriodos($frecuencia);
         $periodos = [];
         for ($i = 1; $i <= $numPeriodos; $i++) {
@@ -28,6 +28,7 @@ class CalendarioService
                 'fecha_cierre' => $fechaCierre->toDateString(),
             ];
         }
+
         return $periodos;
     }
 

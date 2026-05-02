@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Presupuesto;
 
-use App\Models\Presupuesto\PartidaPresupuestal;
 use App\Models\ProgramaPresupuestario;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -17,7 +17,7 @@ class PanelPresupuestal extends Component
         $this->filtroEjercicio = config('presupuesto.ejercicio_default');
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         $teamId = auth()->user()->currentTeam->id;
 

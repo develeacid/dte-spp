@@ -18,13 +18,16 @@ use Livewire\Component;
 class SeleccionAlternativas extends Component
 {
     public ProgramaPresupuestario $programa;
+
     public ?int $arbolObjetivosId = null;
 
     public string $nuevaAlternativaNombre = '';
+
     public string $justificacionSeleccion = '';
 
     // IA
     public bool $evaluandoConIa = false;
+
     public array $evaluacionIa = [];
 
     public function mount(ProgramaPresupuestario $programa): void

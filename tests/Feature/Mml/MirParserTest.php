@@ -13,7 +13,7 @@ class MirParserTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->parser = new MirParserService();
+        $this->parser = new MirParserService;
     }
 
     public function test_parse_markdown_extracts_header_metadata(): void

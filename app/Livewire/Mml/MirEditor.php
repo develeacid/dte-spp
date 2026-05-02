@@ -4,14 +4,17 @@ namespace App\Livewire\Mml;
 
 use App\Contracts\LlmServiceInterface;
 use App\Enums\TipoNivelMir;
+use App\Models\CatalogoUnidadMedida;
 use App\Models\Evaluation\AnexoTransversal;
 use App\Models\Mml\CremaaValidacion;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\IndicadorVariable;
 use App\Models\Mml\MedioVerificacion;
 use App\Models\Mml\MirNivel;
-use App\Models\CatalogoUnidadMedida;
+use App\Models\PedLineaAccion;
+use App\Models\PedObjetivoEstrategico;
 use App\Models\ProgramaPresupuestario;
+use App\Models\Team;
 use App\Services\Embeddings\SemanticSearchService;
 use App\Services\Mml\IndicadorReglasService;
 use App\Services\Mml\MirLogicaValidacionService;
@@ -26,14 +29,23 @@ use Livewire\Component;
 class MirEditor extends Component
 {
     public ProgramaPresupuestario $programa;
+
     public array $hallazgosLogica = [];
+
     public bool $validacionLogicaEjecutada = false;
+
     public array $sugerenciasAlineacion = [];
+
     public ?int $nivelAlineacionActivo = null;
+
     public string $snapshotEtiqueta = '';
+
     public bool $mostrarVersiones = false;
+
     public ?int $editandoNivelId = null;
+
     public ?int $viendoVersionId = null;
+
     public ?array $snapshotData = null;
 
     public function mount(ProgramaPresupuestario $programa): void
@@ -41,7 +53,7 @@ class MirEditor extends Component
         $this->programa = $programa;
 
         // Prellenar desde EAP si no hay niveles
-        (new MirPrellenadoService())->prellenar($programa);
+        (new MirPrellenadoService)->prellenar($programa);
     }
 
     public function guardarNivel(int $nivelId, string $campo, string $valor): void
@@ -112,9 +124,9 @@ class MirEditor extends Component
 
         $validated = validator($data, [
             'nombre' => 'required|string|max:255',
-            'tipo' => 'required|in:' . implode(',', $reglas['tipos']),
-            'dimension' => 'required|in:' . implode(',', $reglas['dimensiones']),
-            'frecuencia' => 'required|in:' . implode(',', $reglas['frecuencias']),
+            'tipo' => 'required|in:'.implode(',', $reglas['tipos']),
+            'dimension' => 'required|in:'.implode(',', $reglas['dimensiones']),
+            'frecuencia' => 'required|in:'.implode(',', $reglas['frecuencias']),
         ])->validate();
 
         $indicador->update($validated);
@@ -172,7 +184,7 @@ class MirEditor extends Component
             $result = $llm->suggest($promptText);
             $data = json_decode($result, true);
 
-            if (!is_array($data)) {
+            if (! is_array($data)) {
                 return;
             }
 
@@ -237,11 +249,11 @@ class MirEditor extends Component
 
         $llm = app(LlmServiceInterface::class);
         $prompt = "Para el indicador \"{$indicador->nombre}\" "
-            . "(tipo: {$indicador->tipo->value}, dimensión: {$indicador->dimension->value}) "
-            . "del nivel MIR \"{$nivel->tipo_nivel->label()}: {$nivel->resumen_narrativo}\", "
-            . "sugiere una fórmula de cálculo clara y precisa. "
-            . "La fórmula debe usar nombres de variables descriptivos. "
-            . "Responde SOLO con la fórmula, sin explicaciones.";
+            ."(tipo: {$indicador->tipo->value}, dimensión: {$indicador->dimension->value}) "
+            ."del nivel MIR \"{$nivel->tipo_nivel->label()}: {$nivel->resumen_narrativo}\", "
+            .'sugiere una fórmula de cálculo clara y precisa. '
+            .'La fórmula debe usar nombres de variables descriptivos. '
+            .'Responde SOLO con la fórmula, sin explicaciones.';
 
         try {
             $formula = $llm->suggest($prompt);
@@ -260,7 +272,7 @@ class MirEditor extends Component
             return;
         }
 
-        $promptView = 'prompts.mir.validar-sintaxis-' . $nivel->tipo_nivel->value;
+        $promptView = 'prompts.mir.validar-sintaxis-'.$nivel->tipo_nivel->value;
         $promptText = view($promptView, ['texto' => $nivel->resumen_narrativo])->render();
 
         try {
@@ -300,7 +312,7 @@ class MirEditor extends Component
             $result = $llm->suggest($promptText);
             $data = json_decode($result, true);
 
-            if (!is_array($data)) {
+            if (! is_array($data)) {
                 return;
             }
 
@@ -309,7 +321,7 @@ class MirEditor extends Component
 
             foreach ($cremaaFields as $field) {
                 $upsertData[$field] = (bool) ($data[$field] ?? false);
-                $upsertData[$field . '_observacion'] = $data[$field . '_observacion'] ?? null;
+                $upsertData[$field.'_observacion'] = $data[$field.'_observacion'] ?? null;
             }
 
             CremaaValidacion::updateOrCreate(
@@ -339,13 +351,13 @@ class MirEditor extends Component
             if (in_array($nivel->tipo_nivel, [TipoNivelMir::FIN, TipoNivelMir::PROPOSITO])) {
                 $results = $search->findSimilar(
                     $nivel->resumen_narrativo,
-                    \App\Models\PedObjetivoEstrategico::class,
+                    PedObjetivoEstrategico::class,
                     5
                 );
             } else {
                 $results = $search->findSimilar(
                     $nivel->resumen_narrativo,
-                    \App\Models\PedLineaAccion::class,
+                    PedLineaAccion::class,
                     5
                 );
             }
@@ -358,7 +370,7 @@ class MirEditor extends Component
             ])->toArray();
         } catch (\Exception $e) {
             $this->sugerenciasAlineacion = [];
-            session()->flash('error', 'No se pudo buscar alineación: ' . $e->getMessage());
+            session()->flash('error', 'No se pudo buscar alineación: '.$e->getMessage());
         }
     }
 
@@ -409,7 +421,7 @@ class MirEditor extends Component
     {
         $nivel = MirNivel::findOrFail($nivelId);
 
-        if (!in_array($nivel->tipo_nivel, [TipoNivelMir::COMPONENTE, TipoNivelMir::ACTIVIDAD])) {
+        if (! in_array($nivel->tipo_nivel, [TipoNivelMir::COMPONENTE, TipoNivelMir::ACTIVIDAD])) {
             return;
         }
 
@@ -428,7 +440,7 @@ class MirEditor extends Component
                 ->where('team_id', $oldTeamId)
                 ->exists();
 
-            if (!$otrosNiveles) {
+            if (! $otrosNiveles) {
                 $this->programa->equipos()
                     ->wherePivot('rol', 'coadyuvante')
                     ->detach($oldTeamId);
@@ -466,9 +478,10 @@ class MirEditor extends Component
 
     public function cargarVersion(?int $versionId): void
     {
-        if (!$versionId) {
+        if (! $versionId) {
             $this->viendoVersionId = null;
             $this->snapshotData = null;
+
             return;
         }
         $version = $this->programa->mirVersiones()->findOrFail($versionId);
@@ -484,7 +497,7 @@ class MirEditor extends Component
 
     public function toggleVersiones(): void
     {
-        $this->mostrarVersiones = !$this->mostrarVersiones;
+        $this->mostrarVersiones = ! $this->mostrarVersiones;
     }
 
     public function render()
@@ -517,7 +530,7 @@ class MirEditor extends Component
 
         $versiones = $this->programa->mirVersiones()->with('creador')->latest()->get();
 
-        $teams = \App\Models\Team::orderBy('name')->get();
+        $teams = Team::orderBy('name')->get();
         $anexosTransversales = AnexoTransversal::activos()->get();
 
         return view('livewire.mml.mir-editor', [

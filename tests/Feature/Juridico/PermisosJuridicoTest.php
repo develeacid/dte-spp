@@ -10,12 +10,15 @@ use Tests\Traits\JuridicoTestHelpers;
 
 class PermisosJuridicoTest extends TestCase
 {
-    use RefreshDatabase;
     use JuridicoTestHelpers;
+    use RefreshDatabase;
 
     private User $juridico;
+
     private User $planeador;
+
     private User $operador;
+
     private int $programaId;
 
     protected function setUp(): void

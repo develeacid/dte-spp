@@ -47,8 +47,8 @@ return [
 
     'embedding' => [
         'api_key' => env('EMBEDDING_API_KEY', ''),
-        'url'     => env('EMBEDDING_API_URL', 'https://api.openai.com/v1/embeddings'),
-        'model'   => env('EMBEDDING_MODEL', 'text-embedding-ada-002'),
+        'url' => env('EMBEDDING_API_URL', 'https://api.openai.com/v1/embeddings'),
+        'model' => env('EMBEDDING_MODEL', 'text-embedding-ada-002'),
     ],
 
 ];

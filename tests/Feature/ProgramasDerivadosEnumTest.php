@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\TipoProgramaDerivado;
 use App\Models\PedPlan;
 use App\Models\ProgramaDerivado;
+use Database\Seeders\Cascade\PedSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ class ProgramasDerivadosEnumTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\Cascade\PedSeeder::class);
+        $this->seed(PedSeeder::class);
     }
 
     public function test_enum_php_contiene_los_cuatro_tipos(): void

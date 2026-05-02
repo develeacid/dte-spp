@@ -12,12 +12,12 @@ class PedMarkdownParserTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->parser = new PedMarkdownParser();
+        $this->parser = new PedMarkdownParser;
     }
 
     public function test_parsea_plan_basico(): void
     {
-        $content = "# Plan Estatal de Desarrollo 2025-2030";
+        $content = '# Plan Estatal de Desarrollo 2025-2030';
 
         $result = $this->parser->parse($content);
 
@@ -69,7 +69,7 @@ MD;
 
     public function test_detecta_error_sin_plan(): void
     {
-        $content = "## Eje 1: Sin plan";
+        $content = '## Eje 1: Sin plan';
 
         $result = $this->parser->parse($content);
 
@@ -137,7 +137,7 @@ MD;
 
     public function test_extrae_periodo_con_guion_largo(): void
     {
-        $content = "# Plan Estatal de Desarrollo 2025–2030";
+        $content = '# Plan Estatal de Desarrollo 2025–2030';
 
         $result = $this->parser->parse($content);
 

@@ -6,7 +6,6 @@ use App\Enums\SystemRole;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
 use Tests\TestCase;
 
 class PlaneadorDashboardTest extends TestCase

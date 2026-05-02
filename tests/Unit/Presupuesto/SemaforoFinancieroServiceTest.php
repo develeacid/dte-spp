@@ -2,7 +2,6 @@
 
 namespace Tests\Unit\Presupuesto;
 
-use App\Models\Presupuesto\PartidaPresupuestal;
 use App\Services\Presupuesto\SemaforoFinancieroService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -10,12 +9,15 @@ use Tests\Traits\PresupuestoTestHelpers;
 
 class SemaforoFinancieroServiceTest extends TestCase
 {
-    use RefreshDatabase;
     use PresupuestoTestHelpers;
+    use RefreshDatabase;
 
     private SemaforoFinancieroService $service;
+
     private int $teamId;
+
     private int $userId;
+
     private int $programaId;
 
     protected function setUp(): void

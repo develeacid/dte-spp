@@ -3,8 +3,9 @@
 namespace App\Livewire\Mml;
 
 use App\DTOs\ImportedMirData;
-use App\Models\Mml\Indicador;
+use App\Enums\TipoNivelMir;
 use App\Models\Mml\ImportacionReporte;
+use App\Models\Mml\Indicador;
 use App\Models\Mml\MirNivel;
 use App\Services\Mml\MirPersistenciaService;
 use Livewire\Attributes\Layout;
@@ -16,6 +17,7 @@ use Livewire\Component;
 class CompletarHuecos extends Component
 {
     public ImportacionReporte $reporte;
+
     public int $programaId;
 
     /** @var array Niveles with their indicators for the view */
@@ -31,7 +33,7 @@ class CompletarHuecos extends Component
         $this->reporte = $importacion;
 
         // If not yet persisted, persist now
-        if (!$this->reporte->programa_presupuestario_id) {
+        if (! $this->reporte->programa_presupuestario_id) {
             $data = ImportedMirData::fromArray($this->reporte->datos_parseados);
 
             $programa = app(MirPersistenciaService::class)->persistir(
@@ -54,7 +56,7 @@ class CompletarHuecos extends Component
     {
         $allowedFields = ['formula_texto', 'tipo', 'dimension', 'frecuencia'];
 
-        if (!in_array($campo, $allowedFields, true)) {
+        if (! in_array($campo, $allowedFields, true)) {
             return;
         }
 
@@ -62,7 +64,7 @@ class CompletarHuecos extends Component
 
         // Verify the indicator belongs to this programa
         $nivel = MirNivel::find($indicador->mir_nivel_id);
-        if (!$nivel || $nivel->programa_presupuestario_id !== $this->programaId) {
+        if (! $nivel || $nivel->programa_presupuestario_id !== $this->programaId) {
             return;
         }
 
@@ -115,7 +117,7 @@ class CompletarHuecos extends Component
             ->map(fn (MirNivel $nivel) => [
                 'id' => $nivel->id,
                 'tipo_nivel' => $nivel->tipo_nivel->value ?? $nivel->tipo_nivel,
-                'tipo_nivel_label' => $nivel->tipo_nivel instanceof \App\Enums\TipoNivelMir
+                'tipo_nivel_label' => $nivel->tipo_nivel instanceof TipoNivelMir
                     ? $nivel->tipo_nivel->label()
                     : $nivel->tipo_nivel,
                 'resumen_narrativo' => $nivel->resumen_narrativo,

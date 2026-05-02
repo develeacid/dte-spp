@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Exports;
 
+use App\Livewire\Tracking\SabanaCaptura;
 use App\Models\Team;
 use App\Models\User;
 use Database\Seeders\DesarrolloSeeder;
@@ -60,7 +61,7 @@ class SabanaCapturaTest extends TestCase
         $user = User::where('email', 'ele.planeador@gmail.com')->firstOrFail();
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Tracking\SabanaCaptura::class)
+            ->test(SabanaCaptura::class)
             ->assertSee('Sabana de Captura');
     }
 
@@ -69,7 +70,7 @@ class SabanaCapturaTest extends TestCase
         $user = User::where('email', 'ele.planeador@gmail.com')->firstOrFail();
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\Tracking\SabanaCaptura::class)
+            ->test(SabanaCaptura::class)
             ->set('filtroTrimestre', 1)
             ->assertStatus(200);
     }

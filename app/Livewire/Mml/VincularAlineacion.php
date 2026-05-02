@@ -47,8 +47,9 @@ class VincularAlineacion extends Component
     {
         $nivel = $this->nivelActual();
 
-        if (!$nivel || empty($nivel->resumen_narrativo)) {
+        if (! $nivel || empty($nivel->resumen_narrativo)) {
             $this->sugerencias = [];
+
             return;
         }
 
@@ -85,7 +86,7 @@ class VincularAlineacion extends Component
     {
         $nivel = $this->nivelActual();
 
-        if (!$nivel) {
+        if (! $nivel) {
             return;
         }
 
@@ -97,7 +98,7 @@ class VincularAlineacion extends Component
             $updateData['ped_linea_accion_id'] = $entidadId;
         }
 
-        if (!empty($updateData)) {
+        if (! empty($updateData)) {
             $nivel->update($updateData);
         }
 
@@ -166,7 +167,7 @@ class VincularAlineacion extends Component
 
     private function nivelActual(): ?MirNivel
     {
-        if (!isset($this->nivelesIds[$this->pasoActual])) {
+        if (! isset($this->nivelesIds[$this->pasoActual])) {
             return null;
         }
 

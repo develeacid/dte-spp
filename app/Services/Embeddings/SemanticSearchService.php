@@ -4,6 +4,17 @@ namespace App\Services\Embeddings;
 
 use App\Contracts\EmbeddingServiceInterface;
 use App\DTOs\SimilarityResult;
+use App\Models\OdsMeta;
+use App\Models\OdsObjetivo;
+use App\Models\PedEje;
+use App\Models\PedEstrategia;
+use App\Models\PedLineaAccion;
+use App\Models\PedObjetivoEstrategico;
+use App\Models\PedTema;
+use App\Models\PndEje;
+use App\Models\PndEstrategia;
+use App\Models\PndObjetivo;
+use App\Models\ProgramaDerivadoObjetivo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -12,25 +23,28 @@ use Illuminate\Support\Facades\Log;
 class SemanticSearchService
 {
     protected EmbeddingServiceInterface $embeddingService;
+
     protected float $defaultThreshold;
+
     protected int $defaultLimit;
+
     protected int $hnswEfSearch;
 
     /**
      * Modelos que tienen columna embedding y son buscables.
      */
     protected array $searchableModels = [
-        \App\Models\OdsObjetivo::class,
-        \App\Models\OdsMeta::class,
-        \App\Models\PndEje::class,
-        \App\Models\PndObjetivo::class,
-        \App\Models\PndEstrategia::class,
-        \App\Models\PedEje::class,
-        \App\Models\PedTema::class,
-        \App\Models\PedObjetivoEstrategico::class,
-        \App\Models\PedEstrategia::class,
-        \App\Models\PedLineaAccion::class,
-        \App\Models\ProgramaDerivadoObjetivo::class,
+        OdsObjetivo::class,
+        OdsMeta::class,
+        PndEje::class,
+        PndObjetivo::class,
+        PndEstrategia::class,
+        PedEje::class,
+        PedTema::class,
+        PedObjetivoEstrategico::class,
+        PedEstrategia::class,
+        PedLineaAccion::class,
+        ProgramaDerivadoObjetivo::class,
     ];
 
     public function __construct(EmbeddingServiceInterface $embeddingService)
@@ -44,10 +58,10 @@ class SemanticSearchService
     /**
      * Busca registros similares al texto proporcionado.
      *
-     * @param string $text Texto de búsqueda
-     * @param string $modelClass Clase del modelo donde buscar
-     * @param int|null $limit Número máximo de resultados
-     * @param float|null $threshold Umbral mínimo de similitud (0-1)
+     * @param  string  $text  Texto de búsqueda
+     * @param  string  $modelClass  Clase del modelo donde buscar
+     * @param  int|null  $limit  Número máximo de resultados
+     * @param  float|null  $threshold  Umbral mínimo de similitud (0-1)
      * @return Collection<SimilarityResult>
      */
     public function findSimilar(
@@ -65,10 +79,10 @@ class SemanticSearchService
         try {
             // Generar embedding del texto de búsqueda
             $embedding = $this->embeddingService->generate($text);
-            $embeddingString = '[' . implode(',', $embedding) . ']';
+            $embeddingString = '['.implode(',', $embedding).']';
 
             /** @var Model $modelInstance */
-            $modelInstance = new $modelClass();
+            $modelInstance = new $modelClass;
             $tableName = $modelInstance->getTable();
 
             // Configurar ef_search para esta sesión (optimización HNSW)
@@ -90,7 +104,7 @@ class SemanticSearchService
             ", [$embeddingString, $embeddingString, $embeddingString, $threshold, $embeddingString, $limit]);
 
             return collect($results)->map(
-                fn($result) => SimilarityResult::fromQuery($result, $modelClass)
+                fn ($result) => SimilarityResult::fromQuery($result, $modelClass)
             );
 
         } catch (\Exception $e) {
@@ -128,7 +142,7 @@ class SemanticSearchService
      */
     public function findSimilarLineaAccion(string $text, int $limit = 5, float $threshold = 0.7): Collection
     {
-        return $this->findSimilar($text, \App\Models\PedLineaAccion::class, $limit, $threshold);
+        return $this->findSimilar($text, PedLineaAccion::class, $limit, $threshold);
     }
 
     /**
@@ -136,8 +150,8 @@ class SemanticSearchService
      */
     public function findSimilarOds(string $text, int $limit = 5, float $threshold = 0.7): Collection
     {
-        $metas = $this->findSimilar($text, \App\Models\OdsMeta::class, $limit, $threshold);
-        $objetivos = $this->findSimilar($text, \App\Models\OdsObjetivo::class, $limit, $threshold);
+        $metas = $this->findSimilar($text, OdsMeta::class, $limit, $threshold);
+        $objetivos = $this->findSimilar($text, OdsObjetivo::class, $limit, $threshold);
 
         return $metas->merge($objetivos)->sortByDesc('score')->take($limit)->values();
     }
@@ -176,7 +190,7 @@ class SemanticSearchService
      */
     protected function validateModel(string $modelClass): void
     {
-        if (!in_array($modelClass, $this->searchableModels)) {
+        if (! in_array($modelClass, $this->searchableModels)) {
             throw new \InvalidArgumentException("Model {$modelClass} is not searchable");
         }
     }

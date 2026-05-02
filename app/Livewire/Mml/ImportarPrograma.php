@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Mml;
 
-use App\DTOs\ImportedMirData;
 use App\Models\Mml\ImportacionReporte;
 use App\Services\Mml\MirDiagnosticoService;
 use App\Services\Mml\MirParserService;
+use Illuminate\Http\RedirectResponse;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -20,9 +20,13 @@ class ImportarPrograma extends Component
     public $archivo;
 
     public ?array $preview = null;
+
     public ?array $diagnostico = null;
+
     public ?array $conteo = null;
+
     public ?int $importacionId = null;
+
     public ?string $errorMensaje = null;
 
     public function rules(): array
@@ -42,29 +46,32 @@ class ImportarPrograma extends Component
         $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
 
         $allowedExtensions = ['md', 'csv', 'xlsx'];
-        if (!in_array($extension, $allowedExtensions)) {
+        if (! in_array($extension, $allowedExtensions)) {
             $this->errorMensaje = 'Formato no soportado. Use archivos .md, .csv o .xlsx.';
+
             return;
         }
 
         try {
-            $parser = new MirParserService();
+            $parser = new MirParserService;
             $data = match ($extension) {
                 'md' => $parser->fromMarkdown($this->archivo->get()),
                 'csv' => $parser->fromCsv($this->archivo->getRealPath()),
                 'xlsx' => $parser->fromExcel($this->archivo->getRealPath()),
             };
         } catch (\Throwable $e) {
-            $this->errorMensaje = 'Error al procesar el archivo: ' . $e->getMessage();
+            $this->errorMensaje = 'Error al procesar el archivo: '.$e->getMessage();
+
             return;
         }
 
         if (empty($data->niveles)) {
             $this->errorMensaje = 'El archivo no contiene datos válidos de MIR.';
+
             return;
         }
 
-        $diagnosticoService = new MirDiagnosticoService();
+        $diagnosticoService = new MirDiagnosticoService;
         $this->diagnostico = $diagnosticoService->diagnosticar($data);
         $this->conteo = $diagnosticoService->conteo($this->diagnostico);
 
@@ -94,7 +101,7 @@ class ImportarPrograma extends Component
         ];
     }
 
-    public function continuar(): \Illuminate\Http\RedirectResponse
+    public function continuar(): RedirectResponse
     {
         // Redirect to the completar route (to be defined in S5-T2)
         return redirect()->route('mml.importar.completar', ['importacion' => $this->importacionId]);

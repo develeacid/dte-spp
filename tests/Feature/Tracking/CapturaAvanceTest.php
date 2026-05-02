@@ -23,8 +23,11 @@ class CapturaAvanceTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Avance $avance;
+
     private IndicadorVariable $varA;
+
     private IndicadorVariable $varB;
 
     protected function setUp(): void

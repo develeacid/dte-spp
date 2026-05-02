@@ -3,12 +3,11 @@
 namespace Database\Seeders;
 
 use App\Enums\EstadoAvance;
-use App\Enums\SentidoIndicador;
 use App\Enums\SystemRole;
 use App\Enums\TipoNivelMir;
 use App\Models\Mml\Indicador;
-use App\Models\Mml\MirNivel;
 use App\Models\Mml\MetaPeriodo;
+use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
 use App\Models\Tracking\Avance;
@@ -25,14 +24,15 @@ class QaTestingSeeder extends Seeder
     {
         if (app()->environment('production')) {
             $this->command->error('No se puede ejecutar QaTestingSeeder en producción.');
+
             return;
         }
 
         $this->command->info('Iniciando carga de datos QA Testing...');
 
-        $se     = Team::where('clave_ur', 'SE-001')->firstOrFail();
-        $ss     = Team::where('clave_ur', 'SS-002')->firstOrFail();
-        $seg    = Team::where('clave_ur', 'SEG-003')->firstOrFail();
+        $se = Team::where('clave_ur', 'SE-001')->firstOrFail();
+        $ss = Team::where('clave_ur', 'SS-002')->firstOrFail();
+        $seg = Team::where('clave_ur', 'SEG-003')->firstOrFail();
         $sectur = Team::where('clave_ur', 'SECTUR-004')->firstOrFail();
 
         $this->crearUsuarios($se, $ss, $seg, $sectur);
@@ -51,58 +51,58 @@ class QaTestingSeeder extends Seeder
 
         $usuarios = [
             [
-                'name'  => 'QA Admin',
+                'name' => 'QA Admin',
                 'email' => 'ele.admin@gmail.com',
-                'role'  => SystemRole::ADMIN,
+                'role' => SystemRole::ADMIN,
                 'teams' => [$se, $ss],
                 'team_role' => 'planeador',
             ],
             [
-                'name'  => 'QA Planeador',
+                'name' => 'QA Planeador',
                 'email' => 'ele.planeador@gmail.com',
-                'role'  => SystemRole::PLANEADOR,
+                'role' => SystemRole::PLANEADOR,
                 'teams' => [$se],
                 'team_role' => 'planeador',
             ],
             [
-                'name'  => 'QA Operador',
+                'name' => 'QA Operador',
                 'email' => 'ele.operador@gmail.com',
-                'role'  => SystemRole::OPERADOR,
+                'role' => SystemRole::OPERADOR,
                 'teams' => [$se],
                 'team_role' => 'operador',
             ],
             [
-                'name'  => 'QA Planeador 2',
+                'name' => 'QA Planeador 2',
                 'email' => 'ele.planeador2@gmail.com',
-                'role'  => SystemRole::PLANEADOR,
+                'role' => SystemRole::PLANEADOR,
                 'teams' => [$se],
                 'team_role' => 'planeador',
             ],
             [
-                'name'  => 'QA Revisor',
+                'name' => 'QA Revisor',
                 'email' => 'ele.revisor@gmail.com',
-                'role'  => SystemRole::PLANEADOR,
+                'role' => SystemRole::PLANEADOR,
                 'teams' => [$ss],
                 'team_role' => 'planeador',
             ],
             [
-                'name'  => 'QA Operador 2',
+                'name' => 'QA Operador 2',
                 'email' => 'ele.operador2@gmail.com',
-                'role'  => SystemRole::OPERADOR,
+                'role' => SystemRole::OPERADOR,
                 'teams' => [$ss],
                 'team_role' => 'operador',
             ],
             [
-                'name'  => 'QA Planeador SECTUR',
+                'name' => 'QA Planeador SECTUR',
                 'email' => 'ele.planeador.sectur@gmail.com',
-                'role'  => SystemRole::PLANEADOR,
+                'role' => SystemRole::PLANEADOR,
                 'teams' => [$sectur],
                 'team_role' => 'planeador',
             ],
             [
-                'name'  => 'QA Operador SECTUR',
+                'name' => 'QA Operador SECTUR',
                 'email' => 'ele.operador.sectur@gmail.com',
-                'role'  => SystemRole::OPERADOR,
+                'role' => SystemRole::OPERADOR,
                 'teams' => [$sectur],
                 'team_role' => 'operador',
             ],
@@ -122,11 +122,11 @@ class QaTestingSeeder extends Seeder
             $user = User::firstOrCreate(
                 ['email' => $data['email']],
                 [
-                    'name'              => $data['name'],
-                    'password'          => $password,
+                    'name' => $data['name'],
+                    'password' => $password,
                     'email_verified_at' => now(),
-                    'activated_at'      => now(),
-                    'active'            => true,
+                    'activated_at' => now(),
+                    'active' => true,
                 ]
             );
 
@@ -662,16 +662,18 @@ class QaTestingSeeder extends Seeder
             $periodos[] = [
                 'periodo' => $m,
                 'meta_periodo' => $metaPorPeriodo,
-                'fecha_apertura' => "{$year}-" . str_pad($m, 2, '0', STR_PAD_LEFT) . "-01",
-                'fecha_cierre' => "{$year}-" . str_pad($m, 2, '0', STR_PAD_LEFT) . "-{$lastDay}",
+                'fecha_apertura' => "{$year}-".str_pad($m, 2, '0', STR_PAD_LEFT).'-01',
+                'fecha_cierre' => "{$year}-".str_pad($m, 2, '0', STR_PAD_LEFT)."-{$lastDay}",
             ];
         }
+
         return $periodos;
     }
 
     private function generarPeriodosTrimestral(float $meta, int $year): array
     {
         $metaPorPeriodo = $meta / 4;
+
         return [
             ['periodo' => 1, 'meta_periodo' => $metaPorPeriodo, 'fecha_apertura' => "{$year}-01-01", 'fecha_cierre' => "{$year}-03-31"],
             ['periodo' => 2, 'meta_periodo' => $metaPorPeriodo, 'fecha_apertura' => "{$year}-04-01", 'fecha_cierre' => "{$year}-06-30"],
@@ -683,6 +685,7 @@ class QaTestingSeeder extends Seeder
     private function generarPeriodosSemestral(float $meta, int $year): array
     {
         $metaPorPeriodo = $meta / 2;
+
         return [
             ['periodo' => 1, 'meta_periodo' => $metaPorPeriodo, 'fecha_apertura' => "{$year}-01-01", 'fecha_cierre' => "{$year}-06-30"],
             ['periodo' => 2, 'meta_periodo' => $metaPorPeriodo, 'fecha_apertura' => "{$year}-07-01", 'fecha_cierre' => "{$year}-12-31"],
@@ -701,6 +704,7 @@ class QaTestingSeeder extends Seeder
         if ($year % 2 !== 0) {
             return [];
         }
+
         return [
             ['periodo' => 1, 'meta_periodo' => $meta, 'fecha_apertura' => "{$year}-01-01", 'fecha_cierre' => "{$year}-12-31"],
         ];
@@ -858,13 +862,13 @@ class QaTestingSeeder extends Seeder
 
     private function generarResultadosEsperados(): void
     {
-        $se     = Team::where('clave_ur', 'SE-001')->first();
-        $ss     = Team::where('clave_ur', 'SS-002')->first();
-        $seg    = Team::where('clave_ur', 'SEG-003')->first();
+        $se = Team::where('clave_ur', 'SE-001')->first();
+        $ss = Team::where('clave_ur', 'SS-002')->first();
+        $seg = Team::where('clave_ur', 'SEG-003')->first();
         $sectur = Team::where('clave_ur', 'SECTUR-004')->first();
 
         $content = "# Resultados Esperados — QA Testing\n\n";
-        $content .= "> Generado automáticamente por QaTestingSeeder el " . now()->format('Y-m-d H:i') . "\n\n";
+        $content .= '> Generado automáticamente por QaTestingSeeder el '.now()->format('Y-m-d H:i')."\n\n";
 
         // Semáforos por avance
         $content .= "## Semáforos Esperados por Avance\n\n";
@@ -917,9 +921,9 @@ class QaTestingSeeder extends Seeder
                 ->groupBy('semaforo_calculado')
                 ->map->count();
 
-            $content .= "- Verde: " . ($sems['verde'] ?? 0) . "\n";
-            $content .= "- Amarillo: " . ($sems['amarillo'] ?? 0) . "\n";
-            $content .= "- Rojo: " . ($sems['rojo'] ?? 0) . "\n";
+            $content .= '- Verde: '.($sems['verde'] ?? 0)."\n";
+            $content .= '- Amarillo: '.($sems['amarillo'] ?? 0)."\n";
+            $content .= '- Rojo: '.($sems['rojo'] ?? 0)."\n";
         }
 
         // Write file

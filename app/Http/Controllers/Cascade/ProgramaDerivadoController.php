@@ -19,7 +19,7 @@ class ProgramaDerivadoController extends Controller
         $planActivo = PedPlan::where('activo', true)->first();
 
         $programas = ProgramaDerivado::with(['objetivos'])
-            ->when($planActivo, fn($q) => $q->where('ped_plan_id', $planActivo->id))
+            ->when($planActivo, fn ($q) => $q->where('ped_plan_id', $planActivo->id))
             ->orderBy('tipo')
             ->orderBy('nombre')
             ->get();
@@ -34,7 +34,7 @@ class ProgramaDerivadoController extends Controller
     {
         $planActivo = PedPlan::where('activo', true)->first();
 
-        if (!$planActivo) {
+        if (! $planActivo) {
             return back()
                 ->with('flash.banner', 'No existe un Plan Estatal de Desarrollo activo. Active uno antes de crear programas.')
                 ->with('flash.bannerStyle', 'danger');

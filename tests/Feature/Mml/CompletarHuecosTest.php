@@ -8,6 +8,7 @@ use App\Models\Mml\ImportacionReporte;
 use App\Models\Mml\Indicador;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -75,7 +76,7 @@ class CompletarHuecosTest extends TestCase
     public function test_finalizar_changes_estado(): void
     {
         // Register the vincular route (will be implemented in a future task)
-        \Illuminate\Support\Facades\Route::get('/mml/importar/{importacion}/vincular', fn () => '')
+        Route::get('/mml/importar/{importacion}/vincular', fn () => '')
             ->name('mml.importar.vincular')
             ->middleware(['web']);
 

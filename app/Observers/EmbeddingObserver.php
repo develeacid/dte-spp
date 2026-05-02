@@ -63,6 +63,7 @@ class EmbeddingObserver
     public function setDescriptionField(string $field): self
     {
         $this->descriptionField = $field;
+
         return $this;
     }
 
@@ -72,6 +73,7 @@ class EmbeddingObserver
     public function setEmbeddingField(string $field): self
     {
         $this->embeddingField = $field;
+
         return $this;
     }
 }

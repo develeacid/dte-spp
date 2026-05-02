@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\EstadoAvance;
+use App\Models\Mml\Indicador;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Tracking\Avance;
@@ -19,7 +20,7 @@ class DashboardService
         return Cache::remember("dashboard:admin-stats:{$teamId}", self::TTL, function () use ($teamId) {
             $programas = ProgramaPresupuestario::paraTeam($teamId)->count();
 
-            $indicadores = \App\Models\Mml\Indicador::whereHas('mirNivel.programa', fn ($q) => $q->paraTeam($teamId))
+            $indicadores = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->paraTeam($teamId))
                 ->where('activo_seguimiento', true)
                 ->count();
 
@@ -202,6 +203,7 @@ class DashboardService
 
         $percentages = $avances->map(function ($avance) {
             $meta = $avance->metaPeriodo?->meta_periodo ?? 0;
+
             return $meta > 0 ? min(($avance->resultado / $meta) * 100, 200) : 0;
         });
 

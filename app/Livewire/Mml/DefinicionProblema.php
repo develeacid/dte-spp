@@ -17,9 +17,13 @@ use Livewire\Component;
 class DefinicionProblema extends Component
 {
     public ProgramaPresupuestario $programa;
+
     public string $descripcion = '';
+
     public string $sugerenciaIa = '';
+
     public bool $validandoConIa = false;
+
     public ?array $resultadoValidacion = null;
 
     public function mount(ProgramaPresupuestario $programa): void
@@ -60,7 +64,7 @@ class DefinicionProblema extends Component
 
     public function aceptarSugerencia(): void
     {
-        if (!empty($this->sugerenciaIa)) {
+        if (! empty($this->sugerenciaIa)) {
             $this->descripcion = $this->sugerenciaIa;
             $this->sugerenciaIa = '';
             $this->resultadoValidacion = null;

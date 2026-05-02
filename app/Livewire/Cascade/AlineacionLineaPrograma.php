@@ -9,15 +9,19 @@ use Livewire\Component;
 class AlineacionLineaPrograma extends Component
 {
     public bool $showForm = false;
+
     public string $searchLinea = '';
+
     public string $searchPrograma = '';
+
     public ?int $selectedLineaId = null;
+
     public ?int $selectedProgramaId = null;
 
     public function toggleForm(): void
     {
-        $this->showForm = !$this->showForm;
-        if (!$this->showForm) {
+        $this->showForm = ! $this->showForm;
+        if (! $this->showForm) {
             $this->reset(['searchLinea', 'searchPrograma', 'selectedLineaId', 'selectedProgramaId']);
         }
     }
@@ -86,7 +90,7 @@ class AlineacionLineaPrograma extends Component
     {
         return PedLineaAccion::with([
             'programasDerivadosObjetivos.programa',
-            'estrategia.objetivoEstrategico.tema.eje.plan'
+            'estrategia.objetivoEstrategico.tema.eje.plan',
         ])
             ->whereHas('programasDerivadosObjetivos')
             ->get();

@@ -25,8 +25,11 @@ class AlineacionMirTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
+
     private MirNivel $fin;
+
     private MirNivel $componente;
 
     protected function setUp(): void

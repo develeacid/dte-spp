@@ -4,18 +4,20 @@ namespace Tests\Feature\Padron;
 
 use App\Enums\TipoNivelMir;
 use App\Events\GeoBase\EnrollmentStatusChanged;
-use App\Events\GeoBase\SnapshotGenerated;
 use App\Events\GeoBase\SyncProcessed;
+use App\Http\Controllers\GeoBase\WebhookController;
+use App\Models\GeoBase\WebhookDelivery;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Tracking\Avance;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class M5WebhookContractTest extends TestCase
@@ -34,10 +36,10 @@ class M5WebhookContractTest extends TestCase
         Queue::fake();
     }
 
-    private function postWebhook(string $event, array $payload, ?string $signatureOverride = null): \Illuminate\Testing\TestResponse
+    private function postWebhook(string $event, array $payload, ?string $signatureOverride = null): TestResponse
     {
         $body = json_encode($payload);
-        $signature = $signatureOverride ?? 'sha256=' . hash_hmac('sha256', $body, self::SECRET);
+        $signature = $signatureOverride ?? 'sha256='.hash_hmac('sha256', $body, self::SECRET);
 
         return $this->call(
             method: 'POST',
@@ -194,7 +196,7 @@ class M5WebhookContractTest extends TestCase
             'status_code' => 200,
         ]);
 
-        $delivery = \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->first();
+        $delivery = WebhookDelivery::where('delivery_id', '42')->first();
         $this->assertNotNull($delivery->processed_at);
         $this->assertSame(99, $delivery->payload['entry_id']);
     }
@@ -230,7 +232,7 @@ class M5WebhookContractTest extends TestCase
             'status_code' => 422,
         ]);
 
-        $delivery = \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->first();
+        $delivery = WebhookDelivery::where('delivery_id', '42')->first();
         $this->assertNotNull($delivery->error_message);
         $this->assertNotNull($delivery->processed_at);
     }
@@ -246,7 +248,7 @@ class M5WebhookContractTest extends TestCase
         ];
 
         $body = json_encode($payload);
-        $signature = 'sha256=' . hash_hmac('sha256', $body, self::SECRET);
+        $signature = 'sha256='.hash_hmac('sha256', $body, self::SECRET);
 
         $this->call(
             method: 'POST',
@@ -260,7 +262,7 @@ class M5WebhookContractTest extends TestCase
             content: $body,
         )->assertStatus(400);
 
-        $this->assertSame(0, \App\Models\GeoBase\WebhookDelivery::count());
+        $this->assertSame(0, WebhookDelivery::count());
     }
 
     public function test_payload_truncado_si_excede_16kb(): void
@@ -278,7 +280,7 @@ class M5WebhookContractTest extends TestCase
 
         $this->postWebhook('sync.processed', $payload)->assertOk();
 
-        $delivery = \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->first();
+        $delivery = WebhookDelivery::where('delivery_id', '42')->first();
 
         $this->assertTrue($delivery->payload['_truncated']);
         $this->assertLessThanOrEqual(16100, strlen($delivery->payload['preview']));
@@ -288,7 +290,7 @@ class M5WebhookContractTest extends TestCase
     {
         Event::fake([SyncProcessed::class]);
 
-        \App\Models\GeoBase\WebhookDelivery::create([
+        WebhookDelivery::create([
             'delivery_id' => '42',
             'event_type' => 'sync.processed',
             'signature_valid' => true,
@@ -341,14 +343,14 @@ class M5WebhookContractTest extends TestCase
 
         $this->assertSame(
             1,
-            \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->count()
+            WebhookDelivery::where('delivery_id', '42')->count()
         );
     }
 
     public function test_is_unique_violation_detecta_sqlstate_23505(): void
     {
         // Use reflection to invoke the private isUniqueViolation method.
-        $controller = new \App\Http\Controllers\GeoBase\WebhookController();
+        $controller = new WebhookController;
         $reflection = new \ReflectionClass($controller);
         $method = $reflection->getMethod('isUniqueViolation');
         $method->setAccessible(true);
@@ -356,7 +358,7 @@ class M5WebhookContractTest extends TestCase
         // Real Postgres unique violation: message contains 'SQLSTATE[23505]: duplicate key'.
         // PDOException always casts the code arg to int, so the str_contains fallback
         // on $e->getMessage() is the path that actually fires in production.
-        $eRealPg = new \Illuminate\Database\QueryException(
+        $eRealPg = new QueryException(
             'pgsql',
             'INSERT INTO ...',
             [],
@@ -365,7 +367,7 @@ class M5WebhookContractTest extends TestCase
         $this->assertTrue($method->invoke($controller, $eRealPg));
 
         // Substring fallback: message contains 'duplicate key' without full SQLSTATE prefix.
-        $eByMsg = new \Illuminate\Database\QueryException(
+        $eByMsg = new QueryException(
             'pgsql',
             'INSERT INTO ...',
             [],
@@ -374,7 +376,7 @@ class M5WebhookContractTest extends TestCase
         $this->assertTrue($method->invoke($controller, $eByMsg));
 
         // Negative: a different SQLSTATE with no unique-violation keywords.
-        $eOther = new \Illuminate\Database\QueryException(
+        $eOther = new QueryException(
             'pgsql',
             'INSERT INTO ...',
             [],
@@ -385,7 +387,7 @@ class M5WebhookContractTest extends TestCase
         // Code-based detection: PDOException casts the second arg to int, so
         // the controller's `(string) $e->getCode() === '23505'` check covers
         // both string and integer code variants.
-        $eByIntCode = new \Illuminate\Database\QueryException(
+        $eByIntCode = new QueryException(
             'pgsql',
             'INSERT INTO ...',
             [],

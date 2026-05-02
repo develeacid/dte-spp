@@ -135,7 +135,7 @@ class Dashboard extends Component
         $ejercicio = config('presupuesto.ejercicio_default');
         $service = app(PresupuestoResumenService::class);
 
-        $programas = \App\Models\ProgramaPresupuestario::paraTeam($teamId)
+        $programas = ProgramaPresupuestario::paraTeam($teamId)
             ->ejercicio($ejercicio)
             ->with(['partidasPresupuestales' => fn ($q) => $q->with('avancesFinancieros')])
             ->get();
@@ -163,7 +163,7 @@ class Dashboard extends Component
     #[Computed]
     public function geobaseStats(): ?array
     {
-        return Cache::remember('dashboard:geobase:' . auth()->id(), 300, function () {
+        return Cache::remember('dashboard:geobase:'.auth()->id(), 300, function () {
             $connected = false;
             $programas = [];
             $totalBeneficiarios = 0;

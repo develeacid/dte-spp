@@ -3,7 +3,6 @@
 namespace Tests\Feature\Embeddings;
 
 use App\Contracts\EmbeddingServiceInterface;
-use App\Models\OdsMeta;
 use App\Models\OdsObjetivo;
 use App\Models\PedEje;
 use App\Models\PedPlan;
@@ -21,7 +20,7 @@ class EmbeddingsGenerateTest extends TestCase
         return array_fill(0, $dimension, 0.01);
     }
 
-    protected function mockEmbeddingService(array $embedding = null): EmbeddingServiceInterface
+    protected function mockEmbeddingService(?array $embedding = null): EmbeddingServiceInterface
     {
         $embedding = $embedding ?? $this->fakeEmbedding();
 

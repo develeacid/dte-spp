@@ -5,7 +5,6 @@ namespace Tests\Feature\Mml;
 use App\DTOs\ImportedMirData;
 use App\Enums\DimensionIndicador;
 use App\Enums\EstadoPrograma;
-use App\Enums\FrecuenciaMedicion;
 use App\Enums\OrigenPrograma;
 use App\Enums\TipoIndicador;
 use App\Enums\TipoNivelMir;
@@ -21,13 +20,14 @@ class MirPersistenciaTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private MirPersistenciaService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->user = User::factory()->withPersonalTeam()->create();
-        $this->service = new MirPersistenciaService();
+        $this->service = new MirPersistenciaService;
     }
 
     public function test_creates_programa_importado(): void

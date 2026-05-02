@@ -55,11 +55,11 @@ class LogicaVerticalService
         $niveles = $programa->mirNiveles()
             ->with(['indicadores' => function ($q) use ($ejercicio) {
                 $q->where('activo_seguimiento', true)
-                  ->with(['avances' => function ($q2) use ($ejercicio) {
-                      $q2->whereHas('metaPeriodo', fn ($q3) => $q3->where('ejercicio_fiscal', $ejercicio))
-                         ->where('estado', EstadoAvance::APROBADO)
-                         ->latest();
-                  }]);
+                    ->with(['avances' => function ($q2) use ($ejercicio) {
+                        $q2->whereHas('metaPeriodo', fn ($q3) => $q3->where('ejercicio_fiscal', $ejercicio))
+                            ->where('estado', EstadoAvance::APROBADO)
+                            ->latest();
+                    }]);
             }])
             ->orderBy('orden')
             ->get();

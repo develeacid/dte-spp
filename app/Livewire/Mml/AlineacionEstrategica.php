@@ -3,13 +3,13 @@
 namespace App\Livewire\Mml;
 
 use App\Models\Evaluation\AnexoTransversal;
-use App\Models\Mml\MirNivel;
 use App\Models\OdsObjetivo;
 use App\Models\PedEje;
 use App\Models\PedObjetivoEstrategico;
 use App\Models\PedTema;
 use App\Models\ProgramaPresupuestario;
 use App\Services\Embeddings\SemanticSearchService;
+use App\Services\Mml\MirPrellenadoService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -22,7 +22,9 @@ class AlineacionEstrategica extends Component
 
     // PED selects dependientes
     public ?int $ejeId = null;
+
     public ?int $temaId = null;
+
     public ?int $objetivoEstrategicoId = null;
 
     // ODS
@@ -33,6 +35,7 @@ class AlineacionEstrategica extends Component
 
     // IA suggestions
     public array $sugerenciasIa = [];
+
     public bool $buscandoConIa = false;
 
     public function mount(ProgramaPresupuestario $programa): void
@@ -75,6 +78,7 @@ class AlineacionEstrategica extends Component
 
             if (! $problema?->descripcion) {
                 session()->flash('error', 'No se encontró el problema central para buscar alineación.');
+
                 return;
             }
 
@@ -98,7 +102,7 @@ class AlineacionEstrategica extends Component
                 ];
             })->toArray();
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al buscar alineación con IA: ' . $e->getMessage());
+            session()->flash('error', 'Error al buscar alineación con IA: '.$e->getMessage());
         } finally {
             $this->buscandoConIa = false;
         }
@@ -119,6 +123,7 @@ class AlineacionEstrategica extends Component
     {
         if (! $this->objetivoEstrategicoId) {
             $this->addError('objetivoEstrategicoId', 'Selecciona al menos un Objetivo Estratégico del PED.');
+
             return;
         }
 
@@ -144,24 +149,28 @@ class AlineacionEstrategica extends Component
         // Verificar que todos los pasos estén completos
         if (! $this->objetivoEstrategicoId) {
             session()->flash('error', 'Completa la alineación estratégica antes de finalizar.');
+
             return;
         }
 
         // Validate all prerequisites
         $arbolObjetivos = $this->programa->arboles()->where('tipo', 'objetivos')->first();
-        if (!$arbolObjetivos || $arbolObjetivos->nodos()->count() === 0) {
+        if (! $arbolObjetivos || $arbolObjetivos->nodos()->count() === 0) {
             $this->addError('finalizacion', 'El árbol de objetivos debe estar completo antes de finalizar.');
+
             return;
         }
 
         $alternativa = $this->programa->alternativas()->where('seleccionada', true)->first();
-        if (!$alternativa) {
+        if (! $alternativa) {
             $this->addError('finalizacion', 'Debe seleccionar una alternativa antes de finalizar.');
+
             return;
         }
 
-        if (!$this->programa->poblacion) {
+        if (! $this->programa->poblacion) {
             $this->addError('finalizacion', 'Debe completar el embudo de poblaciones antes de finalizar.');
+
             return;
         }
 
@@ -169,7 +178,7 @@ class AlineacionEstrategica extends Component
         $this->programa->update(['planeacion_completada_at' => now()]);
 
         // Pre-llenar MIR desde el EAP
-        app(\App\Services\Mml\MirPrellenadoService::class)
+        app(MirPrellenadoService::class)
             ->prellenar($this->programa);
 
         // Redirigir a la MIR

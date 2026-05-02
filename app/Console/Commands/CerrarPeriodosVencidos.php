@@ -11,6 +11,7 @@ use Illuminate\Console\Command;
 class CerrarPeriodosVencidos extends Command
 {
     protected $signature = 'mir:cerrar-vencidos';
+
     protected $description = 'Marca como VENCIDO los avances cuyo periodo de captura ya cerro y no fueron aprobados';
 
     public function handle(AvanceEstadoService $service): int
@@ -40,6 +41,7 @@ class CerrarPeriodosVencidos extends Command
         }
 
         $this->info("Avances vencidos: {$count}");
+
         return self::SUCCESS;
     }
 }

@@ -7,7 +7,6 @@ use App\Livewire\Mml\MirEditor;
 use App\Livewire\Tracking\PanelSeguimiento;
 use App\Models\Evaluation\AnexoTransversal;
 use App\Models\Mml\Indicador;
-use App\Models\Mml\MetaPeriodo;
 use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
@@ -21,8 +20,11 @@ class EtiquetadoAnexosTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
+
     private MirNivel $nivel;
+
     private Indicador $indicador;
 
     protected function setUp(): void

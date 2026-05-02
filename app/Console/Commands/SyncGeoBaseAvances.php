@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Mml\IndicadorVariable;
 use App\Models\Tracking\Avance;
 use App\Models\Tracking\AvanceVariable;
 use App\Services\GeoBase\GeoBaseClient;
@@ -47,6 +46,7 @@ class SyncGeoBaseAvances extends Command
                 if ($dryRun) {
                     $this->line("  Would sync: {$variable->nombre} (avance #{$avance->id})");
                     $skipped++;
+
                     continue;
                 }
 
@@ -59,6 +59,7 @@ class SyncGeoBaseAvances extends Command
 
                     if ($response === null) {
                         $skipped++;
+
                         continue;
                     }
 
@@ -67,6 +68,7 @@ class SyncGeoBaseAvances extends Command
 
                     if ($value === null) {
                         $skipped++;
+
                         continue;
                     }
 

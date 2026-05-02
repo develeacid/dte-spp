@@ -40,6 +40,7 @@ class GenerateTrimestralSnapshots extends Command
             if (! $owner) {
                 $this->warn("[{$programa->clave}] sin team owner — omitido");
                 $skipped++;
+
                 continue;
             }
 
@@ -49,12 +50,14 @@ class GenerateTrimestralSnapshots extends Command
             if ($componentes->isEmpty()) {
                 $this->warn("[{$programa->clave}] sin Componentes — omitido");
                 $skipped++;
+
                 continue;
             }
 
             foreach ($componentes as $componente) {
                 if ($dryRun) {
                     $this->line("[DRY] {$programa->clave} → C{$componente->orden}");
+
                     continue;
                 }
 

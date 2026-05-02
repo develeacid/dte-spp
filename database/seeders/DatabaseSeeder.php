@@ -8,6 +8,7 @@ use Database\Seeders\Cascade\ProgramasDerivadosSeeder;
 use Database\Seeders\Mml\OdsSeeder;
 use Database\Seeders\Mml\PndSeeder;
 use Database\Seeders\Mml\UnidadesMedidaSeeder;
+use Database\Seeders\Transparencia\DatasetsCatalogoSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -29,7 +30,7 @@ class DatabaseSeeder extends Seeder
             AnexosTransversalesSeeder::class,
             CatalogoOrdenamientosSeeder::class,
             PoliticaClasificacionSeeder::class,
-            \Database\Seeders\Transparencia\DatasetsCatalogoSeeder::class,
+            DatasetsCatalogoSeeder::class,
             Fase1PlaneacionMmlSeeder::class,
             Fase2PresupuestoSeeder::class,
             Fase3JuridicoSeeder::class,

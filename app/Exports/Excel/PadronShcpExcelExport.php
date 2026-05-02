@@ -15,9 +15,7 @@ class PadronShcpExcelExport implements FromCollection, WithHeadings, WithMapping
     /**
      * @param  Collection<int, array<string, mixed>>  $rows
      */
-    public function __construct(private readonly Collection $rows)
-    {
-    }
+    public function __construct(private readonly Collection $rows) {}
 
     public function collection(): Collection
     {

@@ -1,8 +1,20 @@
 <?php
 
+use App\Enums\SystemPermission;
 use App\Livewire\Mml\AlineacionEstrategica;
+use App\Livewire\Mml\ArbolObjetivosBuilder;
+use App\Livewire\Mml\ArbolProblemaBuilder;
+use App\Livewire\Mml\CalendarizarMetas;
+use App\Livewire\Mml\CompletarHuecos;
+use App\Livewire\Mml\DashboardImportaciones;
+use App\Livewire\Mml\DefinicionProblema;
 use App\Livewire\Mml\EmbudoPoblaciones;
+use App\Livewire\Mml\ImportarPrograma;
+use App\Livewire\Mml\ListaProgramas;
+use App\Livewire\Mml\MirEditor;
 use App\Livewire\Mml\PadronPrograma;
+use App\Livewire\Mml\SeleccionAlternativas;
+use App\Livewire\Mml\VincularAlineacion;
 use Illuminate\Support\Facades\Route;
 
 // Padrón vive bajo /mml/programas/{programa}/padron pero está fuera del
@@ -25,48 +37,48 @@ Route::prefix('mml')
         'auth:sanctum',
         config('jetstream.auth_session'),
         'verified',
-        'permission:'.\App\Enums\SystemPermission::EDITAR_MIR->value,
+        'permission:'.SystemPermission::EDITAR_MIR->value,
     ])
     ->group(function () {
 
         // Lista de programas
-        Route::get('/programas', \App\Livewire\Mml\ListaProgramas::class)
+        Route::get('/programas', ListaProgramas::class)
             ->name('mml.programas');
 
         // Flujo de importación MIR
         Route::prefix('importar')->group(function () {
-            Route::get('/', \App\Livewire\Mml\DashboardImportaciones::class)
+            Route::get('/', DashboardImportaciones::class)
                 ->name('mml.importaciones');
 
-            Route::get('/nuevo', \App\Livewire\Mml\ImportarPrograma::class)
+            Route::get('/nuevo', ImportarPrograma::class)
                 ->name('mml.importar.nuevo');
 
-            Route::get('/{importacion}/completar', \App\Livewire\Mml\CompletarHuecos::class)
+            Route::get('/{importacion}/completar', CompletarHuecos::class)
                 ->name('mml.importar.completar');
 
-            Route::get('/{importacion}/vincular', \App\Livewire\Mml\VincularAlineacion::class)
+            Route::get('/{importacion}/vincular', VincularAlineacion::class)
                 ->name('mml.importar.vincular');
 
-            Route::get('/{importacion}/calendarizar', \App\Livewire\Mml\CalendarizarMetas::class)
+            Route::get('/{importacion}/calendarizar', CalendarizarMetas::class)
                 ->name('mml.importar.calendarizar');
         });
 
         // Etapas del MML para un programa
         Route::prefix('{programa}')
             ->group(function () {
-                Route::get('/etapa/1', \App\Livewire\Mml\DefinicionProblema::class)
+                Route::get('/etapa/1', DefinicionProblema::class)
                     ->name('mml.etapa1');
-                Route::get('/etapa/2', \App\Livewire\Mml\ArbolProblemaBuilder::class)
+                Route::get('/etapa/2', ArbolProblemaBuilder::class)
                     ->name('mml.etapa2');
-                Route::get('/etapa/3', \App\Livewire\Mml\ArbolObjetivosBuilder::class)
+                Route::get('/etapa/3', ArbolObjetivosBuilder::class)
                     ->name('mml.etapa3');
-                Route::get('/etapa/4', \App\Livewire\Mml\SeleccionAlternativas::class)
+                Route::get('/etapa/4', SeleccionAlternativas::class)
                     ->name('mml.etapa4');
                 Route::get('/etapa/5', EmbudoPoblaciones::class)
                     ->name('mml.etapa5');
                 Route::get('/etapa/6', AlineacionEstrategica::class)
                     ->name('mml.etapa6');
-                Route::get('/etapa/7/mir', \App\Livewire\Mml\MirEditor::class)
+                Route::get('/etapa/7/mir', MirEditor::class)
                     ->name('mml.mir');
             });
     });

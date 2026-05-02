@@ -11,7 +11,6 @@ use App\Models\Juridico\DocumentoNormativo;
 use App\Models\Juridico\SustentoLegalPrograma;
 use App\Models\Juridico\ValidacionJuridicaPrograma;
 use App\Models\ProgramaPresupuestario;
-use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Storage;
@@ -22,30 +21,33 @@ class Fase3JuridicoSeeder extends Seeder
      * Mapeo de claves de programa → UR slug para resolver el usuario jurídico.
      */
     private array $claveToSlug = [
-        'ISM-001'  => 'se',
-        'EDU-002'  => 'se',
-        'EDU-003'  => 'se',
-        'EDU-004'  => 'se',
-        'PEC-001'  => 'ss',
-        'SAL-002'  => 'ss',
-        'SAL-003'  => 'ss',
-        'SAL-004'  => 'ss',
-        'FSP-001'  => 'seg',
-        'SEG-002'  => 'seg',
+        'ISM-001' => 'se',
+        'EDU-002' => 'se',
+        'EDU-003' => 'se',
+        'EDU-004' => 'se',
+        'PEC-001' => 'ss',
+        'SAL-002' => 'ss',
+        'SAL-003' => 'ss',
+        'SAL-004' => 'ss',
+        'FSP-001' => 'seg',
+        'SEG-002' => 'seg',
         'SEG-003P' => 'seg',
-        'SEG-004'  => 'seg',
-        'DDT-001'  => 'sectur',
-        'TUR-002'  => 'sectur',
-        'TUR-003'  => 'sectur',
-        'TUR-004'  => 'sectur',
+        'SEG-004' => 'seg',
+        'DDT-001' => 'sectur',
+        'TUR-002' => 'sectur',
+        'TUR-003' => 'sectur',
+        'TUR-004' => 'sectur',
     ];
 
     /**
      * Distribución de estados de validación por clave de programa.
      */
     private array $validados = ['ISM-001', 'EDU-002', 'PEC-001', 'SAL-002', 'FSP-001', 'SEG-002', 'DDT-001', 'TUR-002'];
+
     private array $pendientes = ['EDU-003', 'SAL-003', 'SEG-003P', 'TUR-003'];
+
     private array $sinRegistro = ['EDU-004', 'SEG-004'];
+
     private array $rechazados = ['SAL-004', 'TUR-004'];
 
     public function run(): void

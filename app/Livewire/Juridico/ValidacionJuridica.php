@@ -4,6 +4,7 @@ namespace App\Livewire\Juridico;
 
 use App\Models\ProgramaPresupuestario;
 use App\Services\Juridico\ValidacionJuridicaService;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -11,6 +12,7 @@ use Livewire\Component;
 class ValidacionJuridica extends Component
 {
     public ProgramaPresupuestario $programa;
+
     public string $observaciones = '';
 
     public function mount(ProgramaPresupuestario $programa): void
@@ -68,7 +70,7 @@ class ValidacionJuridica extends Component
         session()->flash('message', 'Programa marcado en revisión.');
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         // Recalculate checklist before rendering
         $validacion = app(ValidacionJuridicaService::class)->recalcularChecklist(

@@ -8,6 +8,7 @@ use App\Models\Mml\Arbol;
 use App\Models\Mml\ArbolNodo;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -53,7 +54,7 @@ class ArbolTest extends TestCase
     {
         [$programa, $arbol] = $this->crearProgramaConArbol();
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         Arbol::create([
             'programa_presupuestario_id' => $programa->id,

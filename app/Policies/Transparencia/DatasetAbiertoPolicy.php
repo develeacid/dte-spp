@@ -43,6 +43,7 @@ class DatasetAbiertoPolicy
         if ($user->hasPermissionTo('aprobar_datos_abiertos')) {
             return true;
         }
+
         return $user->can('gestionar_dataset_abierto') && $user->id === $ds->creado_por;
     }
 
@@ -69,6 +70,7 @@ class DatasetAbiertoPolicy
         if ($user->hasPermissionTo('aprobar_datos_abiertos')) {
             return true;
         }
+
         return $user->can('gestionar_dataset_abierto') && $user->id === $ds->creado_por;
     }
 

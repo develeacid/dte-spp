@@ -7,6 +7,7 @@ use App\Enums\TipoNivelMir;
 use App\Models\Evaluation\EvaluacionPrograma;
 use App\Models\Mml\Indicador;
 use App\Models\ProgramaPresupuestario;
+use App\Models\Tracking\Avance;
 
 class IndiceEficaciaService
 {
@@ -42,6 +43,7 @@ class IndiceEficaciaService
                     'indicadores_evaluados' => 0,
                     'indicadores_no_evaluados' => 0,
                 ];
+
                 continue;
             }
 
@@ -55,6 +57,7 @@ class IndiceEficaciaService
                     $nivelNoEvaluados++;
                     $totalNoEvaluados++;
                     $conteoSemaforos['sin_dato']++;
+
                     continue;
                 }
 
@@ -64,6 +67,7 @@ class IndiceEficaciaService
                     $nivelNoEvaluados++;
                     $totalNoEvaluados++;
                     $conteoSemaforos['sin_dato']++;
+
                     continue;
                 }
 
@@ -117,7 +121,7 @@ class IndiceEficaciaService
     /**
      * Obtiene el último avance aprobado para un indicador en un ejercicio fiscal.
      */
-    private function obtenerUltimoAvanceAprobado(Indicador $indicador, int $ejercicio): ?\App\Models\Tracking\Avance
+    private function obtenerUltimoAvanceAprobado(Indicador $indicador, int $ejercicio): ?Avance
     {
         return $indicador->avances()
             ->whereHas('metaPeriodo', fn ($q) => $q->where('ejercicio_fiscal', $ejercicio))

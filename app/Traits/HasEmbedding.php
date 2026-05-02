@@ -14,15 +14,15 @@ trait HasEmbedding
     {
         $parts = [];
 
-        if (isset($this->nombre) && !empty($this->nombre)) {
+        if (isset($this->nombre) && ! empty($this->nombre)) {
             $parts[] = $this->nombre;
         }
 
-        if (isset($this->descripcion) && !empty($this->descripcion)) {
+        if (isset($this->descripcion) && ! empty($this->descripcion)) {
             $parts[] = $this->descripcion;
         }
 
-        if (isset($this->clave) && !empty($this->clave)) {
+        if (isset($this->clave) && ! empty($this->clave)) {
             array_unshift($parts, $this->clave);
         }
 

@@ -192,7 +192,7 @@ class MirSnapshotService
                 ]);
             }
 
-            if (!empty($indData['cremaa'])) {
+            if (! empty($indData['cremaa'])) {
                 CremaaValidacion::create(array_merge(
                     ['indicador_id' => $indicador->id],
                     $indData['cremaa']

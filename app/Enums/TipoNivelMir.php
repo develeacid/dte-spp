@@ -11,7 +11,7 @@ enum TipoNivelMir: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::FIN => 'Fin',
             self::PROPOSITO => 'Propósito',
             self::COMPONENTE => 'Componente',
@@ -21,7 +21,7 @@ enum TipoNivelMir: string
 
     public function orden(): int
     {
-        return match($this) {
+        return match ($this) {
             self::FIN => 1,
             self::PROPOSITO => 2,
             self::COMPONENTE => 3,
@@ -31,7 +31,7 @@ enum TipoNivelMir: string
 
     public function colorClass(): string
     {
-        return match($this) {
+        return match ($this) {
             self::FIN => 'bg-blue-100 text-blue-800 border-blue-300',
             self::PROPOSITO => 'bg-emerald-100 text-emerald-800 border-emerald-300',
             self::COMPONENTE => 'bg-amber-100 text-amber-800 border-amber-300',

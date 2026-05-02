@@ -18,7 +18,7 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $viteOrigin = app()->environment('local') ? ' http://localhost:5173 http://127.0.0.1:5173' : '';
-        $wsOrigin   = app()->environment('local') ? ' ws://localhost:5173 ws://127.0.0.1:5173' : '';
+        $wsOrigin = app()->environment('local') ? ' ws://localhost:5173 ws://127.0.0.1:5173' : '';
 
         $response->headers->set(
             'Content-Security-Policy',

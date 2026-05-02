@@ -19,9 +19,7 @@ class Anexo11DiscapacidadSheet implements FromArray, WithHeadings, WithTitle
         'ninguna' => 'Ninguna',
     ];
 
-    public function __construct(private readonly Anexo11ReportData $data)
-    {
-    }
+    public function __construct(private readonly Anexo11ReportData $data) {}
 
     public function title(): string
     {
@@ -39,6 +37,7 @@ class Anexo11DiscapacidadSheet implements FromArray, WithHeadings, WithTitle
         foreach (self::LABELS as $key => $label) {
             $rows[] = [$label, $this->data->porTipoDiscapacidad[$key] ?? '<5'];
         }
+
         return $rows;
     }
 }

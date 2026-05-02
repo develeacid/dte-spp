@@ -2,9 +2,16 @@
 
 namespace Tests\Feature\Transparencia;
 
+use App\Enums\EstadoDatasetAbierto;
+use App\Models\Transparencia\DatasetAbierto;
+use App\Models\User;
+use Database\Seeders\PoliticaClasificacionSeeder;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 class DatasetAbiertoTest extends TestCase
@@ -25,7 +32,7 @@ class DatasetAbiertoTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->expectException(\Illuminate\Database\UniqueConstraintViolationException::class);
+        $this->expectException(UniqueConstraintViolationException::class);
 
         DB::table('datasets_abiertos')->insert([
             'dataset_clave' => 'DS-00',
@@ -50,31 +57,31 @@ class DatasetAbiertoTest extends TestCase
                 'updated_at' => now(),
             ]);
             $this->fail('Expected status CHECK constraint violation');
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             $this->assertStringContainsString('datasets_abiertos_status_check', $e->getMessage());
         }
     }
 
     public function test_castea_status_a_enum(): void
     {
-        $dataset = \App\Models\Transparencia\DatasetAbierto::factory()->create();
+        $dataset = DatasetAbierto::factory()->create();
 
         $this->assertInstanceOf(
-            \App\Enums\EstadoDatasetAbierto::class,
+            EstadoDatasetAbierto::class,
             $dataset->status
         );
     }
 
     public function test_logea_actividad_via_logs_activity(): void
     {
-        $dataset = \App\Models\Transparencia\DatasetAbierto::factory()->create([
+        $dataset = DatasetAbierto::factory()->create([
             'nombre' => 'Original',
         ]);
 
         $dataset->update(['nombre' => 'Modificado']);
 
-        $log = \Spatie\Activitylog\Models\Activity::query()
-            ->where('subject_type', \App\Models\Transparencia\DatasetAbierto::class)
+        $log = Activity::query()
+            ->where('subject_type', DatasetAbierto::class)
             ->where('subject_id', $dataset->id)
             ->where('event', 'updated')
             ->latest('id')
@@ -88,20 +95,20 @@ class DatasetAbiertoTest extends TestCase
 
     public function test_no_logea_cuando_solo_cambian_campos_fuera_del_whitelist(): void
     {
-        $dataset = \App\Models\Transparencia\DatasetAbierto::factory()->create([
+        $dataset = DatasetAbierto::factory()->create([
             'descripcion' => 'desc original',
         ]);
 
-        $logsAntes = \Spatie\Activitylog\Models\Activity::query()
-            ->where('subject_type', \App\Models\Transparencia\DatasetAbierto::class)
+        $logsAntes = Activity::query()
+            ->where('subject_type', DatasetAbierto::class)
             ->where('subject_id', $dataset->id)
             ->where('event', 'updated')
             ->count();
 
         $dataset->update(['descripcion' => 'desc nueva']);
 
-        $logsDespues = \Spatie\Activitylog\Models\Activity::query()
-            ->where('subject_type', \App\Models\Transparencia\DatasetAbierto::class)
+        $logsDespues = Activity::query()
+            ->where('subject_type', DatasetAbierto::class)
             ->where('subject_id', $dataset->id)
             ->where('event', 'updated')
             ->count();
@@ -111,8 +118,8 @@ class DatasetAbiertoTest extends TestCase
 
     public function test_relacion_aprobado_por_devuelve_user(): void
     {
-        $user = \App\Models\User::factory()->create();
-        $dataset = \App\Models\Transparencia\DatasetAbierto::factory()->create([
+        $user = User::factory()->create();
+        $dataset = DatasetAbierto::factory()->create([
             'aprobado_por' => $user->id,
         ]);
 
@@ -121,12 +128,12 @@ class DatasetAbiertoTest extends TestCase
 
     public function test_crea_registro_ds00_via_seeder(): void
     {
-        $this->seed(\Database\Seeders\PoliticaClasificacionSeeder::class);
+        $this->seed(PoliticaClasificacionSeeder::class);
 
-        $dataset = \App\Models\Transparencia\DatasetAbierto::where('dataset_clave', 'DS-00')->first();
+        $dataset = DatasetAbierto::where('dataset_clave', 'DS-00')->first();
 
         $this->assertNotNull($dataset);
-        $this->assertEquals(\App\Enums\EstadoDatasetAbierto::BORRADOR, $dataset->status);
+        $this->assertEquals(EstadoDatasetAbierto::BORRADOR, $dataset->status);
         $this->assertNotEmpty($dataset->hash_sha256);
         $this->assertEquals(64, strlen($dataset->hash_sha256));
         $this->assertEquals('docs/legal/clasificacion-informacion.md', $dataset->ruta_archivo);
@@ -137,12 +144,12 @@ class DatasetAbiertoTest extends TestCase
 
     public function test_seeder_es_idempotente(): void
     {
-        $this->seed(\Database\Seeders\PoliticaClasificacionSeeder::class);
-        $this->seed(\Database\Seeders\PoliticaClasificacionSeeder::class);
+        $this->seed(PoliticaClasificacionSeeder::class);
+        $this->seed(PoliticaClasificacionSeeder::class);
 
         $this->assertEquals(
             1,
-            \App\Models\Transparencia\DatasetAbierto::where('dataset_clave', 'DS-00')->count()
+            DatasetAbierto::where('dataset_clave', 'DS-00')->count()
         );
     }
 }

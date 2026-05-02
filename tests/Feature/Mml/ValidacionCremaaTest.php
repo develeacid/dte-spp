@@ -23,8 +23,11 @@ class ValidacionCremaaTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
+
     private MirNivel $nivel;
+
     private Indicador $indicador;
 
     protected function setUp(): void

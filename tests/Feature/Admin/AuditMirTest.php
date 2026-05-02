@@ -24,7 +24,7 @@ class AuditMirTest extends TestCase
     {
         return ProgramaPresupuestario::create([
             'nombre' => 'Programa de prueba',
-            'clave' => 'PP-TEST-' . uniqid(),
+            'clave' => 'PP-TEST-'.uniqid(),
             'ejercicio_fiscal' => 2026,
             'origen' => 'nuevo',
             'estado' => 'borrador',

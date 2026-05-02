@@ -14,13 +14,13 @@ class MirDiagnosticoTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->diagnostico = new MirDiagnosticoService();
+        $this->diagnostico = new MirDiagnosticoService;
     }
 
     public function test_complete_mir_has_no_critical_gaps(): void
     {
         $content = file_get_contents(base_path('tests/fixtures/mir-sample.md'));
-        $data = (new MirParserService())->fromMarkdown($content);
+        $data = (new MirParserService)->fromMarkdown($content);
 
         $gaps = $this->diagnostico->diagnosticar($data);
         $criticos = array_filter($gaps, fn ($g) => $g['severidad'] === 'critico');

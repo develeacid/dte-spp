@@ -4,6 +4,7 @@ namespace App\Exports\Pdf;
 
 use App\Models\Evaluation\AnexoTransversal;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Collection;
 
 class TransversalPdfExport
 {
@@ -34,7 +35,7 @@ class TransversalPdfExport
         return $pdf->output();
     }
 
-    private function datosAnexo(): \Illuminate\Support\Collection
+    private function datosAnexo(): Collection
     {
         return AnexoTransversal::activos()
             ->with([

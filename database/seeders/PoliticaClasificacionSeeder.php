@@ -18,7 +18,7 @@ class PoliticaClasificacionSeeder extends Seeder
         if (! is_file($rutaAbsoluta)) {
             throw new RuntimeException(
                 "El archivo del acuerdo no existe: {$rutaAbsoluta}\n".
-                'Cree primero la plantilla en ' . self::RUTA_MARKDOWN
+                'Cree primero la plantilla en '.self::RUTA_MARKDOWN
             );
         }
 

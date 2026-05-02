@@ -71,7 +71,7 @@ class SabanaCapturaExcelExport implements FromCollection, WithHeadings, WithTitl
             $rows->push([
                 'programa' => $meta->indicador->mirNivel->programa->clave ?? "\u{2014}",
                 'indicador' => $meta->indicador->nombre,
-                'trimestre' => 'T' . $meta->periodo,
+                'trimestre' => 'T'.$meta->periodo,
                 'meta' => $meta->meta_periodo,
                 'estado' => $estadoLabel,
                 'operador' => $avance?->capturador?->name ?? "\u{2014}",

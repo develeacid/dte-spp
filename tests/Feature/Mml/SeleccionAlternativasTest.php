@@ -19,10 +19,15 @@ class SeleccionAlternativasTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
+
     private Arbol $arbolObjetivos;
+
     private ArbolNodo $objetivoCentral;
+
     private ArbolNodo $medio1;
+
     private ArbolNodo $medio2;
 
     protected function setUp(): void

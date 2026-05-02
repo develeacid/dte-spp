@@ -5,6 +5,9 @@ namespace Tests\Feature\Mml;
 use App\Enums\SystemRole;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
+use Database\Seeders\JuridicoPermissionsSeeder;
+use Database\Seeders\PresupuestoPermissionsSeeder;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -18,9 +21,9 @@ class MmlRoutesPermissionTest extends TestCase
         parent::setUp();
 
         $this->app->make(PermissionRegistrar::class)->forgetCachedPermissions();
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-        $this->seed(\Database\Seeders\PresupuestoPermissionsSeeder::class);
-        $this->seed(\Database\Seeders\JuridicoPermissionsSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $this->seed(PresupuestoPermissionsSeeder::class);
+        $this->seed(JuridicoPermissionsSeeder::class);
     }
 
     public function test_operador_recibe_403_al_abrir_lista_programas(): void

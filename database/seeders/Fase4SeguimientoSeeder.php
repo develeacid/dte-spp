@@ -5,11 +5,11 @@ namespace Database\Seeders;
 use App\Enums\EstadoAvance;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MetaPeriodo;
+use App\Models\Team;
 use App\Models\Tracking\Avance;
 use App\Models\Tracking\AvanceEvidencia;
 use App\Models\Tracking\AvanceVariable;
 use App\Models\Tracking\Desbloqueo;
-use App\Models\Team;
 use App\Models\User;
 use App\Services\Tracking\AvanceEstadoService;
 use App\Services\Tracking\FormulaEvaluatorService;
@@ -134,11 +134,11 @@ class Fase4SeguimientoSeeder extends Seeder
         // Create 1 desbloqueo
         $this->crearDesbloqueo();
 
-        $this->command->info("Fase 4 completada.");
-        $this->command->info("  Avances: " . Avance::count());
-        $this->command->info("  Variables: " . AvanceVariable::count());
-        $this->command->info("  Evidencias: " . AvanceEvidencia::count());
-        $this->command->info("  Desbloqueos: " . Desbloqueo::count());
+        $this->command->info('Fase 4 completada.');
+        $this->command->info('  Avances: '.Avance::count());
+        $this->command->info('  Variables: '.AvanceVariable::count());
+        $this->command->info('  Evidencias: '.AvanceEvidencia::count());
+        $this->command->info('  Desbloqueos: '.Desbloqueo::count());
     }
 
     // ─── Avance creation methods ────────────────────────────────────────
@@ -403,11 +403,17 @@ class Fase4SeguimientoSeeder extends Seeder
     private function escenarioParaPrograma(string $clave, int $periodo, int $ejercicio): string
     {
         return match ($clave) {
-            'ISM-001' => match ($periodo) { 3 => 'rojo', 4 => 'amarillo', default => 'verde' },
+            'ISM-001' => match ($periodo) {
+                3 => 'rojo', 4 => 'amarillo', default => 'verde'
+            },
             'EDU-002' => 'verde',
             'PEC-001' => $periodo <= 2 ? 'amarillo' : 'verde',
-            'FSP-001' => match ($periodo) { 1 => 'rojo', 2 => 'rojo', 3 => 'amarillo', default => 'verde' },
-            'DDT-001' => match ($periodo) { 3 => 'rojo', default => 'verde' },
+            'FSP-001' => match ($periodo) {
+                1 => 'rojo', 2 => 'rojo', 3 => 'amarillo', default => 'verde'
+            },
+            'DDT-001' => match ($periodo) {
+                3 => 'rojo', default => 'verde'
+            },
             default => 'verde',
         };
     }
@@ -435,11 +441,11 @@ class Fase4SeguimientoSeeder extends Seeder
 
         if ($semaforo === 'rojo') {
             return "El indicador \"{$nombre}\" presenta un avance significativamente menor al esperado. "
-                . 'Se implementarán acciones correctivas en el siguiente periodo para recuperar la meta programada.';
+                .'Se implementarán acciones correctivas en el siguiente periodo para recuperar la meta programada.';
         }
 
         return "El indicador \"{$nombre}\" muestra un avance ligeramente inferior a la meta del periodo. "
-            . 'Se están realizando ajustes operativos para alcanzar la meta anual.';
+            .'Se están realizando ajustes operativos para alcanzar la meta anual.';
     }
 
     // ─── User resolution helpers ────────────────────────────────────────

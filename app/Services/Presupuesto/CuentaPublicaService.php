@@ -2,7 +2,6 @@
 
 namespace App\Services\Presupuesto;
 
-use App\Models\Juridico\ValidacionJuridicaPrograma;
 use App\Models\ProgramaPresupuestario;
 use Illuminate\Support\Collection;
 

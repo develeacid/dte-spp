@@ -16,6 +16,7 @@ class GestionUsuarios extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $filterEstado = '';
 
     // Formulario de invitación
@@ -65,7 +66,7 @@ class GestionUsuarios extends Component
     {
         $this->validate();
 
-        $service = new InvitacionUsuarioService();
+        $service = new InvitacionUsuarioService;
         $service->invitar($this->inviteEmail, $this->inviteName, $this->inviteRole, (int) $this->inviteTeamId);
 
         $this->showInviteForm = false;
@@ -80,10 +81,10 @@ class GestionUsuarios extends Component
 
         abort_unless($user->isPendingActivation() || $user->isInvitationExpired(), 403);
 
-        $service = new InvitacionUsuarioService();
+        $service = new InvitacionUsuarioService;
         $service->reenviarInvitacion($user);
 
-        session()->flash('message', 'Invitación reenviada a ' . $user->email);
+        session()->flash('message', 'Invitación reenviada a '.$user->email);
     }
 
     public function toggleActive(int $userId): void
@@ -110,7 +111,7 @@ class GestionUsuarios extends Component
             ->when($this->search, function ($q) {
                 $q->where(function ($q2) {
                     $q2->where('name', 'ilike', "%{$this->search}%")
-                       ->orWhere('email', 'ilike', "%{$this->search}%");
+                        ->orWhere('email', 'ilike', "%{$this->search}%");
                 });
             })
             ->when($this->filterEstado, function ($q) {

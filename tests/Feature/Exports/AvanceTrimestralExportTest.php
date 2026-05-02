@@ -4,6 +4,7 @@ namespace Tests\Feature\Exports;
 
 use App\Exports\Excel\AvanceTrimestralExcelExport;
 use App\Exports\Excel\Sheets\EvidenciaPadronSheet;
+use App\Exports\Pdf\AvanceTrimestralPdfExport;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
 use App\Models\Tracking\Avance;
@@ -49,7 +50,7 @@ class AvanceTrimestralExportTest extends TestCase
     public function test_avance_trimestral_pdf_generates_with_vobo(): void
     {
         $programa = ProgramaPresupuestario::where('clave', 'ISM-001')->firstOrFail();
-        $export = new \App\Exports\Pdf\AvanceTrimestralPdfExport($programa, 2025, 1);
+        $export = new AvanceTrimestralPdfExport($programa, 2025, 1);
         $pdfContent = $export->generate();
 
         $this->assertNotEmpty($pdfContent);
@@ -129,7 +130,7 @@ class AvanceTrimestralExportTest extends TestCase
             'subido_por' => $avance->capturado_por ?? User::factory()->create()->id,
         ]);
 
-        $html = (new \App\Exports\Pdf\AvanceTrimestralPdfExport($programa, 2025, 1))->generateHtml();
+        $html = (new AvanceTrimestralPdfExport($programa, 2025, 1))->generateHtml();
 
         $this->assertStringContainsString('Evidencia de Padrón', $html);
         $this->assertStringContainsString('88', $html);
@@ -141,7 +142,7 @@ class AvanceTrimestralExportTest extends TestCase
         $programa = ProgramaPresupuestario::where('clave', 'ISM-001')->firstOrFail();
         $programa->update(['padron_geobase_activo' => false]);
 
-        $html = (new \App\Exports\Pdf\AvanceTrimestralPdfExport($programa, 2025, 1))->generateHtml();
+        $html = (new AvanceTrimestralPdfExport($programa, 2025, 1))->generateHtml();
 
         $this->assertStringNotContainsString('Evidencia de Padrón', $html);
     }

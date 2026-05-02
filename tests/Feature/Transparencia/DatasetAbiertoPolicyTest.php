@@ -5,7 +5,10 @@ namespace Tests\Feature\Transparencia;
 use App\Enums\EstadoDatasetAbierto;
 use App\Models\Transparencia\DatasetAbierto;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Database\Seeders\TransparenciaPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class DatasetAbiertoPolicyTest extends TestCase
@@ -15,15 +18,16 @@ class DatasetAbiertoPolicyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-        $this->seed(\Database\Seeders\TransparenciaPermissionsSeeder::class);
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $this->seed(TransparenciaPermissionsSeeder::class);
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 
     private function makeUserWithRole(string $role): User
     {
         $u = User::factory()->withPersonalTeam()->create();
         $u->assignRole($role);
+
         return $u;
     }
 

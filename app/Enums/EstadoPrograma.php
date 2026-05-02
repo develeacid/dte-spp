@@ -10,7 +10,7 @@ enum EstadoPrograma: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::BORRADOR => 'Borrador',
             self::ACTIVO => 'Activo',
             self::CERRADO => 'Cerrado',
@@ -19,7 +19,7 @@ enum EstadoPrograma: string
 
     public function colorClass(): string
     {
-        return match($this) {
+        return match ($this) {
             self::BORRADOR => 'bg-yellow-100 text-yellow-800',
             self::ACTIVO => 'bg-green-100 text-green-800',
             self::CERRADO => 'bg-gray-100 text-gray-800',

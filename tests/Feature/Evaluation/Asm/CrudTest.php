@@ -22,7 +22,9 @@ class CrudTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private ProgramaPresupuestario $programa;
+
     private User $responsable;
 
     protected function setUp(): void

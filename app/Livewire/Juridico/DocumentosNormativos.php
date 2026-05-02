@@ -7,6 +7,7 @@ use App\Models\Juridico\DocumentoNormativo;
 use App\Models\ProgramaPresupuestario;
 use App\Services\Juridico\DocumentoNormativoService;
 use App\Services\Juridico\ValidacionJuridicaService;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -19,9 +20,13 @@ class DocumentosNormativos extends Component
     public ProgramaPresupuestario $programa;
 
     public $archivo;
+
     public string $tipo_documento = '';
+
     public string $nombre = '';
+
     public string $fecha_publicacion = '';
+
     public string $fecha_vigencia = '';
 
     public function mount(ProgramaPresupuestario $programa): void
@@ -90,7 +95,7 @@ class DocumentosNormativos extends Component
         session()->flash('message', 'Documento eliminado.');
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         $teamId = auth()->user()->currentTeam->id;
 
