@@ -143,7 +143,7 @@ class WebhookController extends Controller
 
     private function isUniqueViolation(QueryException $e): bool
     {
-        return $e->getCode() === '23505'
+        return (string) $e->getCode() === '23505'
             || str_contains($e->getMessage(), 'duplicate key')
             || str_contains($e->getMessage(), 'UNIQUE constraint');
     }

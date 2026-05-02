@@ -381,5 +381,16 @@ class M5WebhookContractTest extends TestCase
             new \PDOException('SQLSTATE[42P01]: undefined table')
         );
         $this->assertFalse($method->invoke($controller, $eOther));
+
+        // Code-based detection: PDOException casts the second arg to int, so
+        // the controller's `(string) $e->getCode() === '23505'` check covers
+        // both string and integer code variants.
+        $eByIntCode = new \Illuminate\Database\QueryException(
+            'pgsql',
+            'INSERT INTO ...',
+            [],
+            new \PDOException('some opaque message', 23505)
+        );
+        $this->assertTrue($method->invoke($controller, $eByIntCode));
     }
 }
