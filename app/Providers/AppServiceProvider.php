@@ -72,16 +72,17 @@ class AppServiceProvider extends ServiceProvider
                 return null;
             }
 
-            // Segregación de funciones: las abilities listadas en
-            // DatasetAbiertoPolicy::SEGREGATED_ABILITIES NO admiten bypass de admin
-            // cuando el sujeto es un DatasetAbierto (instancia o FQCN).
+            // Para DatasetAbierto, admin NUNCA bypasea: la Policy es la fuente
+            // de verdad. Esto evita que la UI muestre botones state-gated que
+            // luego revientan en DomainException o abort_if al click. La Policy
+            // ya autoriza al admin via permisos directos (ver/gestionar) cuando
+            // corresponde y niega lo que requiere aprobar_datos_abiertos.
             $arg = $arguments[0] ?? null;
             $sujetoEsDataset = $arg instanceof DatasetAbierto
                 || (is_string($arg) && is_a($arg, DatasetAbierto::class, true));
 
-            if ($sujetoEsDataset
-                && in_array($ability, DatasetAbiertoPolicy::SEGREGATED_ABILITIES, true)) {
-                return null; // No bypass; deferir al Policy → niega por permission
+            if ($sujetoEsDataset) {
+                return null;
             }
 
             return true;
