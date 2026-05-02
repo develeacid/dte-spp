@@ -32,6 +32,10 @@ jobs:
       DB_DATABASE: testing
       DB_USERNAME: testing
       DB_PASSWORD: password
+      # CI no levanta Redis: cache/queue/session en memoria.
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
 
     steps:
       - uses: actions/checkout@v4
