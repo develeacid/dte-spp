@@ -17,11 +17,11 @@ class Edit extends Component
 
     public function mount(DatasetAbierto $dataset): void
     {
-        if ($dataset->status !== EstadoDatasetAbierto::BORRADOR) {
-            session()->flash('error', 'Solo los datasets en estado borrador se pueden editar.');
-            $this->redirect(route('transparencia.datos-abiertos.show', $dataset), navigate: true);
-            return;
-        }
+        // Solo borradores son editables. Bloqueamos en mount via abort para
+        // evitar inicializar la prop tipada en estados no soportados (un
+        // redirect aquí dejaría $this->dataset sin asignar y reventaría render).
+        abort_if($dataset->status !== EstadoDatasetAbierto::BORRADOR, 403, 'Solo los datasets en estado borrador se pueden editar.');
+        $this->authorize('update', $dataset);
 
         $this->dataset = $dataset;
         $this->nombre = $dataset->nombre;

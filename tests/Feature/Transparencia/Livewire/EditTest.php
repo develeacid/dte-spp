@@ -55,9 +55,10 @@ class EditTest extends TestCase
             'creado_por' => $autor->id,
         ]);
 
+        // mount() autoriza con la ability `update`, así que el planeador no autor
+        // recibe 403 antes de inicializar el componente.
         Livewire::actingAs($otro)
             ->test(Edit::class, ['dataset' => $ds])
-            ->call('save')
             ->assertForbidden();
     }
 
@@ -76,5 +77,20 @@ class EditTest extends TestCase
             ->set('dcat_metadata_json', '{ broken json')
             ->call('save')
             ->assertHasErrors(['dcat_metadata_json']);
+    }
+
+    public function test_dataset_no_borrador_aborta_403(): void
+    {
+        $autor = User::factory()->withPersonalTeam()->create();
+        $autor->assignRole('planeador');
+        $ds = DatasetAbierto::factory()->create([
+            'periodo' => '2026-Q1',
+            'status' => EstadoDatasetAbierto::REVISION,
+            'creado_por' => $autor->id,
+        ]);
+
+        Livewire::actingAs($autor)
+            ->test(Edit::class, ['dataset' => $ds])
+            ->assertForbidden();
     }
 }
