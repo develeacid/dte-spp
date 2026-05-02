@@ -118,4 +118,31 @@ class DatasetAbiertoTest extends TestCase
 
         $this->assertTrue($dataset->aprobadoPor->is($user));
     }
+
+    public function test_crea_registro_ds00_via_seeder(): void
+    {
+        $this->seed(\Database\Seeders\PoliticaClasificacionSeeder::class);
+
+        $dataset = \App\Models\Transparencia\DatasetAbierto::where('dataset_clave', 'DS-00')->first();
+
+        $this->assertNotNull($dataset);
+        $this->assertEquals(\App\Enums\EstadoDatasetAbierto::BORRADOR, $dataset->status);
+        $this->assertNotEmpty($dataset->hash_sha256);
+        $this->assertEquals(64, strlen($dataset->hash_sha256));
+        $this->assertEquals('docs/legal/clasificacion-informacion.md', $dataset->ruta_archivo);
+        $this->assertEquals('spp', $dataset->sistema_origen);
+        $this->assertNull($dataset->periodo);
+        $this->assertNull($dataset->aprobado_por);
+    }
+
+    public function test_seeder_es_idempotente(): void
+    {
+        $this->seed(\Database\Seeders\PoliticaClasificacionSeeder::class);
+        $this->seed(\Database\Seeders\PoliticaClasificacionSeeder::class);
+
+        $this->assertEquals(
+            1,
+            \App\Models\Transparencia\DatasetAbierto::where('dataset_clave', 'DS-00')->count()
+        );
+    }
 }
