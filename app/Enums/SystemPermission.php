@@ -39,4 +39,6 @@ enum SystemPermission: string
 
     // Transparencia
     case APROBAR_DATOS_ABIERTOS = 'aprobar_datos_abiertos';
+    case VER_DATASETS_ABIERTOS = 'ver_datasets_abiertos';
+    case GESTIONAR_DATASET_ABIERTO = 'gestionar_dataset_abierto';
 }

@@ -62,4 +62,40 @@ class PermisosTransparenciaTest extends TestCase
             Role::where('name', SystemRole::RESPONSABLE_DATOS_ABIERTOS->value)->count()
         );
     }
+
+    public function test_admin_tiene_ver_y_gestionar_pero_no_aprobar(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(TransparenciaPermissionsSeeder::class);
+
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $admin = Role::where('name', SystemRole::ADMIN->value)->first();
+        $this->assertTrue($admin->hasPermissionTo(SystemPermission::VER_DATASETS_ABIERTOS->value));
+        $this->assertTrue($admin->hasPermissionTo(SystemPermission::GESTIONAR_DATASET_ABIERTO->value));
+        $this->assertFalse($admin->hasPermissionTo(SystemPermission::APROBAR_DATOS_ABIERTOS->value));
+    }
+
+    public function test_rda_tiene_los_tres_permisos(): void
+    {
+        $this->seed(TransparenciaPermissionsSeeder::class);
+
+        $rda = Role::where('name', SystemRole::RESPONSABLE_DATOS_ABIERTOS->value)->first();
+        $this->assertTrue($rda->hasPermissionTo(SystemPermission::APROBAR_DATOS_ABIERTOS->value));
+        $this->assertTrue($rda->hasPermissionTo(SystemPermission::VER_DATASETS_ABIERTOS->value));
+        $this->assertTrue($rda->hasPermissionTo(SystemPermission::GESTIONAR_DATASET_ABIERTO->value));
+    }
+
+    public function test_planeador_tiene_ver_y_gestionar(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(TransparenciaPermissionsSeeder::class);
+
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $planeador = Role::where('name', SystemRole::PLANEADOR->value)->first();
+        $this->assertTrue($planeador->hasPermissionTo(SystemPermission::VER_DATASETS_ABIERTOS->value));
+        $this->assertTrue($planeador->hasPermissionTo(SystemPermission::GESTIONAR_DATASET_ABIERTO->value));
+        $this->assertFalse($planeador->hasPermissionTo(SystemPermission::APROBAR_DATOS_ABIERTOS->value));
+    }
 }
