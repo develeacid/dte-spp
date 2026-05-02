@@ -209,6 +209,32 @@ class M5WebhookContractTest extends TestCase
         $this->assertDatabaseMissing('geobase_webhook_deliveries', ['delivery_id' => '42']);
     }
 
+    public function test_payload_malformado_retorna_422_y_persiste_status_422(): void
+    {
+        Event::fake([EnrollmentStatusChanged::class]);
+
+        $payload = [
+            'old_status' => 'solicitado',
+            'new_status' => 'aprobado',
+            'spp_program_id' => 7,
+            'timestamp' => '2026-04-26T12:00:00+00:00',
+        ];
+
+        $this->postWebhook('enrollment.status_changed', $payload)
+            ->assertStatus(422);
+
+        Event::assertNotDispatched(EnrollmentStatusChanged::class);
+
+        $this->assertDatabaseHas('geobase_webhook_deliveries', [
+            'delivery_id' => '42',
+            'status_code' => 422,
+        ]);
+
+        $delivery = \App\Models\GeoBase\WebhookDelivery::where('delivery_id', '42')->first();
+        $this->assertNotNull($delivery->error_message);
+        $this->assertNotNull($delivery->processed_at);
+    }
+
     public function test_falta_header_delivery_retorna_400_sin_row(): void
     {
         $payload = [
