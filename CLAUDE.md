@@ -34,3 +34,27 @@ sail artisan migrate --path=database/migrations/public --database=pgsql_public
 ```
 
 Idempotentes: re-ejecuciones safe. Las tablas `pub_*` viven en una BD separada (`spp_public`) con un rol `spp_portal` que solo tiene SELECT — el portal público (N2-04) consume desde ahí; el pipeline de sync (N2-03) escribe usando la conexión `pgsql_public`.
+
+## Pipeline N2-03 — Sync al portal público
+
+`DatasetAbierto::publicar()` y `retirar()` disparan eventos que gatillan el job `SyncPublicDatasetJob`. El job invoca un Publisher concreto por `dataset_clave`:
+
+- DS-01 → `pub_programas`
+- DS-02 → `pub_mir_indicadores`
+- DS-03 → `pub_avances_trimestrales`
+- DS-04 → `pub_evaluaciones_anuales`
+- DS-05 → `pub_alineacion_estrategica`
+- DS-G04 → `pub_evolucion_temporal`
+- (siempre, post-otro-publish/retire) → `pub_datasets_catalogo`
+- DS-G01..G03 → pendiente sub-sprint **N2-03b** (depende de M1/M2/M3 GeoBase)
+- DS-00 (políticas) y otras claves no mapeadas → loggea warning, termina sin error
+
+Cada Publisher: DELETE+INSERT en transacción `pgsql_public` + cálculo de hash sha256 (excluye `id`/`created_at`/`updated_at` para idempotencia entre corridas).
+
+Auditoría histórica en tabla `transparencia_publicaciones` (en `pgsql` privada): hash, count, success/error_message, user_id, action.
+
+Recovery manual:
+
+```bash
+sail artisan transparencia:sync-public DS-01
+```
