@@ -23,3 +23,14 @@
 - Wizard de planeación MML para construir MIR paso a paso
 - Reportes: Sábana de Captura, Concentrado, MIR Aprobada
 - Alineación: PND → PED → ODS → Programas Derivados
+
+## BD Pública (Transparencia)
+
+Tras `sail up` por primera vez (o tras `sail down -v`), aprovisionar la BD pública `spp_public` y migrar las tablas `pub_*`:
+
+```bash
+sail artisan transparencia:provision-public-db
+sail artisan migrate --path=database/migrations/public --database=pgsql_public
+```
+
+Idempotentes: re-ejecuciones safe. Las tablas `pub_*` viven en una BD separada (`spp_public`) con un rol `spp_portal` que solo tiene SELECT — el portal público (N2-04) consume desde ahí; el pipeline de sync (N2-03) escribe usando la conexión `pgsql_public`.
