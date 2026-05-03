@@ -32,6 +32,10 @@ jobs:
       DB_DATABASE: testing
       DB_USERNAME: testing
       DB_PASSWORD: password
+      # BD pública (Transparencia): Postgres separado en la misma instancia.
+      DB_PUBLIC_DATABASE: testing_spp_public
+      DB_PUBLIC_PORTAL_USER: spp_portal
+      DB_PUBLIC_PORTAL_PASSWORD: portal_secret_ci
       # CI no levanta Redis: cache/queue/session en memoria.
       CACHE_STORE: array
       QUEUE_CONNECTION: sync
@@ -71,6 +75,12 @@ jobs:
 
       - name: Run migrations
         run: php artisan migrate --force
+
+      - name: Provision public DB for tests
+        run: |
+          PGPASSWORD=password psql -h 127.0.0.1 -U testing -d testing -c "CREATE DATABASE testing_spp_public" || true
+          php artisan transparencia:provision-public-db
+          php artisan migrate --path=database/migrations/public --database=pgsql_public --force
 
       - name: Run tests
         run: php artisan test
