@@ -297,3 +297,28 @@ QaTestingSeeder::class,
 | `composer.json` | `fakerphp/faker` movido a `require` (no `require-dev`) |
 | `database/seeders/DatabaseSeeder.php` | `AdminUserSeeder` comentado |
 | `database/seeders/QaTestingSeeder.php` | `ele.leader@gmail.com` comentado |
+
+---
+
+## 12. BD Pública (Transparencia)
+
+`.env` prod debe tener `DB_PUBLIC_PORTAL_PASSWORD` con un secret distinto a `DB_PASSWORD`. Estructura mínima:
+
+```env
+DB_PUBLIC_DATABASE=spp_public
+DB_PUBLIC_PORTAL_USER=spp_portal
+DB_PUBLIC_PORTAL_PASSWORD=<secret_distinto_a_DB_PASSWORD>
+```
+
+Post-deploy (idempotente, re-ejecutable):
+
+```bash
+docker compose -f docker-compose.prod.yml exec laravel.test \
+    php artisan transparencia:provision-public-db
+docker compose -f docker-compose.prod.yml exec laravel.test \
+    php artisan migrate --path=database/migrations/public --database=pgsql_public --force
+```
+
+El comando crea la BD `spp_public` y el rol `spp_portal` (LOGIN, NOSUPERUSER, NOINHERIT, NOCREATEDB, NOCREATEROLE) con `GRANT CONNECT` + `GRANT USAGE ON SCHEMA public`. Las migrations en `database/migrations/public/` agregan `GRANT SELECT` por tabla.
+
+**Garantía técnica:** la conexión `pgsql_public_read` usa el usuario `spp_portal` con SELECT only — el test `PortalReadOnlyTest` (4 tests) bloquea cualquier merge futuro que afloje los grants.
