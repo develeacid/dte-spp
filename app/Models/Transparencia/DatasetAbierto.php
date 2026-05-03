@@ -115,6 +115,8 @@ class DatasetAbierto extends Model
         $this->status = EstadoDatasetAbierto::PUBLICADO;
         $this->publicado_en = now();
         $this->save();
+
+        \App\Events\Transparencia\DatasetAbiertoPublicado::dispatch($this, auth()->user());
     }
 
     public function retirar(string $motivo): void
@@ -125,6 +127,8 @@ class DatasetAbierto extends Model
         $this->status = EstadoDatasetAbierto::RETIRADO;
         $this->motivo_cambio_estado = $motivo;
         $this->save();
+
+        \App\Events\Transparencia\DatasetAbiertoRetirado::dispatch($this, auth()->user());
     }
 
     public function rechazar(string $motivo): void

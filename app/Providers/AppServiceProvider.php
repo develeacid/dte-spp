@@ -104,6 +104,17 @@ class AppServiceProvider extends ServiceProvider
             StoreSnapshotHash::class,
         );
 
+        // Registrar listener pipeline N2-03: publish/retire DatasetAbierto → SyncPublicDatasetJob
+        Event::listen(
+            \App\Events\Transparencia\DatasetAbiertoPublicado::class,
+            \App\Listeners\Transparencia\DispatchSyncPublicTable::class,
+        );
+
+        Event::listen(
+            \App\Events\Transparencia\DatasetAbiertoRetirado::class,
+            \App\Listeners\Transparencia\DispatchSyncPublicTable::class,
+        );
+
         // Registrar Observers Jurídico (siempre activos)
         SustentoLegalPrograma::observe(SustentoLegalObserver::class);
         DocumentoNormativo::observe(DocumentoNormativoObserver::class);

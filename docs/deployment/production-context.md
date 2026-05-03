@@ -322,3 +322,34 @@ docker compose -f docker-compose.prod.yml exec laravel.test \
 El comando crea la BD `spp_public` y el rol `spp_portal` (LOGIN, NOSUPERUSER, NOINHERIT, NOCREATEDB, NOCREATEROLE) con `GRANT CONNECT` + `GRANT USAGE ON SCHEMA public`. Las migrations en `database/migrations/public/` agregan `GRANT SELECT` por tabla.
 
 **Garantía técnica:** la conexión `pgsql_public_read` usa el usuario `spp_portal` con SELECT only — el test `PortalReadOnlyTest` (4 tests) bloquea cualquier merge futuro que afloje los grants.
+
+## 13. Pipeline N2-03 — Sync al portal público
+
+`DatasetAbierto::publicar()` y `retirar()` disparan el job `SyncPublicDatasetJob` que sincroniza la tabla `pub_*` correspondiente. No requiere comandos adicionales tras deploy — el flujo se gatilla automáticamente desde N2-01.
+
+### Recovery manual
+
+Si necesitas re-sincronizar (e.g., tras restore de BD privada o tras corregir un bug en un Publisher):
+
+```bash
+docker compose -f docker-compose.prod.yml exec laravel.test \
+    php artisan transparencia:sync-public DS-01
+```
+
+Códigos soportados: `DS-01`, `DS-02`, `DS-03`, `DS-04`, `DS-05`, `DS-G04`. Las claves `DS-00` (políticas) y `DS-G01..G03` (cobertura GeoBase) NO se sincronizan en este sprint y devuelven exit code 1 con mensaje claro.
+
+### Auditoría histórica
+
+```sql
+SELECT dataset_clave, action, success, payload_hash, registros_count, publicado_at
+FROM transparencia_publicaciones
+ORDER BY publicado_at DESC LIMIT 20;
+```
+
+`success=false` indica que un job falló — la `pub_*` NO cambió (rollback transaccional). Re-correr con `transparencia:sync-public {clave}` cuando se arregle la causa.
+
+### Garantía de coherencia
+
+Cada `publicar()` o `retirar()` exitoso re-sincroniza `pub_datasets_catalogo` automáticamente. Si el Publisher principal falla, el catálogo NO se re-sincroniza (semántica todo-o-nada).
+
+El hash sha256 excluye `id`/`created_at`/`updated_at` para que re-ejecutar el sync con los mismos datos source produzca exactamente el mismo hash (idempotencia verificable).
