@@ -144,6 +144,41 @@ class GeoBaseClient
         return $this->get('/territorial-report', $filters);
     }
 
+    // --- Bulk endpoints (N2-03b transparencia pipeline) ---
+
+    /**
+     * @param  int[]  $sppProgramIds
+     * @param  array<int, array{ejercicio_fiscal: int, fechas_corte: array<int, string>}>  $ejercicios
+     */
+    public function getCoberturaMunicipalBulk(array $sppProgramIds, array $ejercicios): array
+    {
+        return $this->get('/reportes/cobertura-municipal-bulk', [
+            'spp_program_ids' => $sppProgramIds,
+            'ejercicios' => $ejercicios,
+        ]);
+    }
+
+    /**
+     * @param  int[]  $sppProgramIds
+     */
+    public function getDesagregacionBulk(array $sppProgramIds, int $ejercicioFiscal): array
+    {
+        return $this->get('/reportes/desagregacion-bulk', [
+            'spp_program_ids' => $sppProgramIds,
+            'ejercicio_fiscal' => $ejercicioFiscal,
+        ]);
+    }
+
+    /**
+     * @param  int[]  $sppProgramIds
+     */
+    public function getCoberturaGeograficaBulk(array $sppProgramIds): array
+    {
+        return $this->get('/reportes/cobertura-geografica-bulk', [
+            'spp_program_ids' => $sppProgramIds,
+        ]);
+    }
+
     // --- Imagen de polígonos ---
 
     public function getPolygonImage(string $tipo, int $id, string $format = 'png'): string
