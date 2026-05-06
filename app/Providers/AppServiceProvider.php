@@ -104,16 +104,10 @@ class AppServiceProvider extends ServiceProvider
             StoreSnapshotHash::class,
         );
 
-        // Registrar listener pipeline N2-03: publish/retire DatasetAbierto → SyncPublicDatasetJob
-        Event::listen(
-            \App\Events\Transparencia\DatasetAbiertoPublicado::class,
-            \App\Listeners\Transparencia\DispatchSyncPublicTable::class,
-        );
-
-        Event::listen(
-            \App\Events\Transparencia\DatasetAbiertoRetirado::class,
-            \App\Listeners\Transparencia\DispatchSyncPublicTable::class,
-        );
+        // Pipeline N2-03 (publish/retire DatasetAbierto → SyncPublicDatasetJob):
+        // el listener `DispatchSyncPublicTable` se registra automáticamente por
+        // auto-discovery vía typehint del método `handle()`. Registro explícito
+        // aquí causaba doble dispatch (cada evento gatilla 2 ejecuciones del job).
 
         // Registrar Observers Jurídico (siempre activos)
         SustentoLegalPrograma::observe(SustentoLegalObserver::class);
