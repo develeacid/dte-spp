@@ -6,7 +6,7 @@ class PublisherResolver
 {
     /**
      * Mapeo dataset_clave → FQCN del publisher.
-     * DS-G02..DS-G03 deliberadamente NO mapeados (sub-sprint N2-03b D2/D3, depende de M2/M3 GeoBase).
+     * DS-G03 deliberadamente NO mapeado (sub-sprint N2-03b D3, depende de M3 GeoBase).
      * DS-00 (políticas) deliberadamente NO mapeados (no son data, son texto).
      */
     private const MAP = [
@@ -16,6 +16,7 @@ class PublisherResolver
         'DS-04' => EvaluacionesAnualesPublisher::class,
         'DS-05' => AlineacionEstrategicaPublisher::class,
         'DS-G01' => CoberturaMunicipalPublisher::class,
+        'DS-G02' => DesagregacionDemograficaPublisher::class,
         'DS-G04' => EvolucionTemporalPublisher::class,
     ];
 
