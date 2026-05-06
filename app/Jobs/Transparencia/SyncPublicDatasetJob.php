@@ -4,6 +4,7 @@ namespace App\Jobs\Transparencia;
 
 use App\Models\Transparencia\DatasetAbierto;
 use App\Models\Transparencia\TransparenciaPublicacion;
+use App\Services\GeoBase\GeoBaseException;
 use App\Services\Transparencia\Publishing\DatasetsCatalogoPublisher;
 use App\Services\Transparencia\Publishing\PublisherResolver;
 use Illuminate\Bus\Queueable;
@@ -55,6 +56,16 @@ class SyncPublicDatasetJob implements ShouldQueue
             }
 
             $catalogo->publish($dataset);
+        } catch (GeoBaseException $e) {
+            $this->record($dataset, false, null, null, "GeoBase {$e->statusCode}: {$e->getMessage()}");
+            Log::error("SyncPublicDatasetJob falló (GeoBase {$e->statusCode}) para {$dataset->dataset_clave}: {$e->getMessage()}");
+
+            // Permanentes: no retry. Transitorios: re-throw para que la queue reintente.
+            $permanente = in_array($e->statusCode, [400, 401, 403, 404, 422], true);
+            if ($permanente) {
+                return;
+            }
+            throw $e;
         } catch (Throwable $e) {
             $this->record($dataset, false, null, null, $e->getMessage());
             Log::error("SyncPublicDatasetJob falló para dataset {$dataset->dataset_clave}: {$e->getMessage()}");
