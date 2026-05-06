@@ -34,29 +34,23 @@ class CoberturaMunicipalPublisher extends BasePublisher
 
         $sppIds = $programas->pluck('id')->all();
 
-        // Para cada (programa, ejercicio): trimestres con meta publicada.
-        $metas = MetaPeriodo::query()
+        // Descubrir ejercicios fiscales con metas publicadas. Generamos siempre
+        // los 4 cortes trimestrales del año (independiente de la frecuencia
+        // de los indicadores: mensual/trimestral/semestral/anual). El portal
+        // muestra cobertura acumulada al cierre de cada Q.
+        $ejerciciosConMetas = MetaPeriodo::query()
             ->join('indicadores', 'indicadores.id', '=', 'metas_periodo.indicador_id')
             ->join('mir_niveles', 'mir_niveles.id', '=', 'indicadores.mir_nivel_id')
             ->whereIn('mir_niveles.programa_presupuestario_id', $sppIds)
-            ->select('metas_periodo.ejercicio_fiscal', 'metas_periodo.periodo as trimestre')
             ->distinct()
-            ->get()
-            ->groupBy('ejercicio_fiscal');
+            ->pluck('metas_periodo.ejercicio_fiscal');
 
-        $ejercicios = [];
-        foreach ($metas as $ejercicio => $rows) {
-            $trimestres = $rows->pluck('trimestre')->unique()->sort()->values();
-            $fechasCorte = $trimestres->map(function ($q) use ($ejercicio) {
-                $month = $q * 3;
-
-                return Carbon::create((int) $ejercicio, $month, 1)->endOfMonth()->toDateString();
-            })->all();
-            $ejercicios[] = [
-                'ejercicio_fiscal' => (int) $ejercicio,
-                'fechas_corte' => $fechasCorte,
-            ];
-        }
+        $ejercicios = $ejerciciosConMetas->map(fn ($anio) => [
+            'ejercicio_fiscal' => (int) $anio,
+            'fechas_corte' => collect([1, 2, 3, 4])->map(
+                fn ($q) => Carbon::create((int) $anio, $q * 3, 1)->endOfMonth()->toDateString()
+            )->all(),
+        ])->values()->all();
 
         if (empty($ejercicios)) {
             return [];
