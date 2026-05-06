@@ -44,12 +44,16 @@ Idempotentes: re-ejecuciones safe. Las tablas `pub_*` viven en una BD separada (
 - DS-03 → `pub_avances_trimestrales`
 - DS-04 → `pub_evaluaciones_anuales`
 - DS-05 → `pub_alineacion_estrategica`
+- DS-G01 → `pub_cobertura_municipal` (vía bulk endpoint geobase, acumulado al cierre trimestre)
+- DS-G02 → `pub_desagregacion_demografica` (vía bulk endpoint geobase, buckets PP mexicana NNA/juventud/adulto/adulto_mayor)
+- DS-G03 → `pub_cobertura_geografica` (vía bulk endpoint geobase, polígono unión PostGIS)
 - DS-G04 → `pub_evolucion_temporal`
 - (siempre, post-otro-publish/retire) → `pub_datasets_catalogo`
-- DS-G01..G03 → pendiente sub-sprint **N2-03b** (depende de M1/M2/M3 GeoBase)
 - DS-00 (políticas) y otras claves no mapeadas → loggea warning, termina sin error
 
 Cada Publisher: DELETE+INSERT en transacción `pgsql_public` + cálculo de hash sha256 (excluye `id`/`created_at`/`updated_at` para idempotencia entre corridas).
+
+Los publishers DS-G01/G02/G03 hacen una llamada HTTP al endpoint bulk correspondiente en geobase (`/api/v1/geobase/reportes/{cobertura-municipal,desagregacion,cobertura-geografica}-bulk`) usando el token M2M con ability `padron:read`. Acoplamiento: si geobase está caído al momento del publish, el job reintenta 3× con backoff 30s. Errores permanentes (4xx auth/validación) NO se reintentan; transitorios (5xx) sí.
 
 Auditoría histórica en tabla `transparencia_publicaciones` (en `pgsql` privada): hash, count, success/error_message, user_id, action.
 
@@ -58,3 +62,5 @@ Recovery manual:
 ```bash
 sail artisan transparencia:sync-public DS-01
 ```
+
+Comandos post-deploy obligatorios para N2-03b: en geobase aplicar migration de la mvw trimestral y refrescar (`php artisan migrate --force && php artisan geobase:refresh-territorial`). En dte-spp solo `migrate`. Geobase debe deployarse ANTES que dte-spp (si no, los publishers G0X reciben 404 al primer publish).
