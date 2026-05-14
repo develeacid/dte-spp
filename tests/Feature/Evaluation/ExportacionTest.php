@@ -19,6 +19,8 @@ class ExportacionTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected bool $fakeBusInSetUp = false;
+
     private User $planeador;
 
     private ProgramaPresupuestario $programa;

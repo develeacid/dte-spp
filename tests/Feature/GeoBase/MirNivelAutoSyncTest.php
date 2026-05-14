@@ -17,6 +17,8 @@ class MirNivelAutoSyncTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected bool $fakeBusInSetUp = false;
+
     public function test_observer_dispatches_job_when_componente_saved_on_active_programa(): void
     {
         Queue::fake();
