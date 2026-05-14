@@ -21,7 +21,8 @@
                     <h2 class="font-semibold mb-2">{{ $ds->titulo }}</h2>
                     <p class="text-sm text-portal-muted mb-4 line-clamp-3">{{ $ds->descripcion }}</p>
                     @if($ds->codigo === 'DS-01')
-                        <span class="text-xs text-portal-accent italic">Disponible</span>
+                        <a href="{{ route('portal.dataset.show', $ds->codigo) }}"
+                           class="text-sm font-medium text-portal-accent hover:underline">Ver datos →</a>
                     @else
                         <span class="text-xs text-portal-muted italic">Próximamente</span>
                     @endif
