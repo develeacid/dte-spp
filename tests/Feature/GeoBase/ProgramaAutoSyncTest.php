@@ -17,6 +17,8 @@ class ProgramaAutoSyncTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected bool $fakeBusInSetUp = false;
+
     public function test_observer_dispatches_when_replicated_field_changes_on_active_programa(): void
     {
         Queue::fake();

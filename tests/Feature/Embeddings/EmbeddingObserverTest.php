@@ -18,6 +18,8 @@ class EmbeddingObserverTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected bool $fakeBusInSetUp = false;
+
     protected function registerObservers(): void
     {
         OdsObjetivo::observe(OdsObjetivoObserver::class);

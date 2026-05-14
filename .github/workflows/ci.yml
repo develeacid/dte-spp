@@ -51,6 +51,18 @@ jobs:
           extensions: pdo_pgsql, pgsql, mbstring, xml, bcmath, gd, zip
           coverage: none
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build Vite assets
+        run: npm run build
+
       - name: Cache Composer packages
         uses: actions/cache@v4
         with:

@@ -3,6 +3,10 @@
 namespace Tests\Feature\Transparencia\Public;
 
 use App\Enums\EstadoDatasetAbierto;
+use App\Jobs\GeoBase\DeactivateProgramOnGeoBase;
+use App\Jobs\GeoBase\RegisterProgramOnGeoBase;
+use App\Jobs\GeoBase\SyncMirNivelToGeoBase;
+use App\Jobs\GeoBase\SyncProgramaToGeoBase;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\Mml\MirNivel;
@@ -24,6 +28,8 @@ class SyncPipelineErrorHandlingDsgTest extends TestCase
 {
     use RefreshDatabase, RefreshDatabasePublic;
 
+    protected bool $fakeBusInSetUp = false;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -31,10 +37,10 @@ class SyncPipelineErrorHandlingDsgTest extends TestCase
         config(['queue.default' => 'sync']);
         // Silenciar jobs upstream a GeoBase (mismo patrón de E1)
         Queue::fake([
-            \App\Jobs\GeoBase\RegisterProgramOnGeoBase::class,
-            \App\Jobs\GeoBase\DeactivateProgramOnGeoBase::class,
-            \App\Jobs\GeoBase\SyncProgramaToGeoBase::class,
-            \App\Jobs\GeoBase\SyncMirNivelToGeoBase::class,
+            RegisterProgramOnGeoBase::class,
+            DeactivateProgramOnGeoBase::class,
+            SyncProgramaToGeoBase::class,
+            SyncMirNivelToGeoBase::class,
         ]);
     }
 

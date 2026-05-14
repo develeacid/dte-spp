@@ -15,6 +15,8 @@ class SyncPublicDatasetCommandTest extends TestCase
 {
     use RefreshDatabase, RefreshDatabasePublic;
 
+    protected bool $fakeBusInSetUp = false;
+
     protected function setUp(): void
     {
         parent::setUp();

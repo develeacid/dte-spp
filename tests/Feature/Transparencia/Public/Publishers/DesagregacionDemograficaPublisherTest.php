@@ -101,11 +101,11 @@ class DesagregacionDemograficaPublisherTest extends TestCase
         Http::fake(['*desagregacion-bulk*' => Http::response([
             'data' => [
                 ['spp_program_id' => $programa->id, 'ejercicio_fiscal' => 2026, 'municipio_clave' => '20001',
-                 'por_genero' => ['masculino' => 10, 'femenino' => 20, 'otro' => 0],
-                 'por_grupo_edad' => [], 'por_tipo_discapacidad' => [], 'por_etnia' => []],
+                    'por_genero' => ['masculino' => 10, 'femenino' => 20, 'otro' => 0],
+                    'por_grupo_edad' => [], 'por_tipo_discapacidad' => [], 'por_etnia' => []],
                 ['spp_program_id' => $programa->id, 'ejercicio_fiscal' => 2026, 'municipio_clave' => '20002',
-                 'por_genero' => ['masculino' => 30, 'femenino' => 40, 'otro' => 0],
-                 'por_grupo_edad' => [], 'por_tipo_discapacidad' => [], 'por_etnia' => []],
+                    'por_genero' => ['masculino' => 30, 'femenino' => 40, 'otro' => 0],
+                    'por_grupo_edad' => [], 'por_tipo_discapacidad' => [], 'por_etnia' => []],
             ],
         ], 200)]);
 

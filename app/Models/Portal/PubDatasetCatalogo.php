@@ -11,8 +11,11 @@ class PubDatasetCatalogo extends Model
     use HasFactory;
 
     protected $connection = 'pgsql_public_read';
+
     protected $table = 'pub_datasets_catalogo';
+
     protected $guarded = [];
+
     protected $casts = ['fecha_publicacion' => 'date'];
 
     protected static function newFactory()

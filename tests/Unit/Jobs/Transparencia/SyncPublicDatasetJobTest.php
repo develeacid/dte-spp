@@ -16,6 +16,8 @@ class SyncPublicDatasetJobTest extends TestCase
 {
     use RefreshDatabase, RefreshDatabasePublic;
 
+    protected bool $fakeBusInSetUp = false;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -38,7 +40,7 @@ class SyncPublicDatasetJobTest extends TestCase
     {
         $this->app->instance(ProgramasPublisher::class, new class extends ProgramasPublisher
         {
-            public function publish(\App\Models\Transparencia\DatasetAbierto $dataset): array
+            public function publish(DatasetAbierto $dataset): array
             {
                 throw new \RuntimeException('boom forzado');
             }
