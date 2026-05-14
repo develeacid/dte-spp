@@ -55,6 +55,30 @@ class DatasetsCatalogoSeederTest extends TestCase
         );
     }
 
+    public function test_nombres_alinean_con_tablas_pub_reales(): void
+    {
+        $this->seed(DatasetsCatalogoSeeder::class);
+
+        // Bloquea regresión del desfase histórico DS-01..DS-04 donde el seeder
+        // anunciaba el dataset "siguiente". El contenido real lo definen los
+        // publishers + tablas pub_*, no este seeder.
+        $esperados = [
+            'DS-01' => 'Programas Presupuestales',
+            'DS-02' => 'Matriz de Indicadores para Resultados (MIR)',
+            'DS-03' => 'Avances Trimestrales de Indicadores',
+            'DS-04' => 'Evaluación Anual de Programas',
+            'DS-05' => 'Alineación Estratégica',
+        ];
+
+        foreach ($esperados as $clave => $nombre) {
+            $this->assertSame(
+                $nombre,
+                DatasetAbierto::where('dataset_clave', $clave)->whereNull('periodo')->value('nombre'),
+                "Nombre de plantilla {$clave} no coincide con el contenido de su tabla pub_*"
+            );
+        }
+    }
+
     public function test_re_seed_preserva_ediciones_del_rda(): void
     {
         $this->seed(DatasetsCatalogoSeeder::class);
