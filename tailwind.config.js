@@ -22,6 +22,12 @@ export default {
                 },
                 surface: 'rgb(var(--color-surface) / <alpha-value>)',
                 background: 'rgb(var(--color-background) / <alpha-value>)',
+                'portal-bg':      'rgb(var(--color-portal-bg)      / <alpha-value>)',
+                'portal-surface': 'rgb(var(--color-portal-surface) / <alpha-value>)',
+                'portal-border':  'rgb(var(--color-portal-border)  / <alpha-value>)',
+                'portal-text':    'rgb(var(--color-portal-text)    / <alpha-value>)',
+                'portal-muted':   'rgb(var(--color-portal-muted)   / <alpha-value>)',
+                'portal-accent':  'rgb(var(--color-portal-accent)  / <alpha-value>)',
             },
             fontFamily: {
                 sans: ['var(--font-sans)', ...defaultTheme.fontFamily.sans],
