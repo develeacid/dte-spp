@@ -11,4 +11,9 @@ class ModelsConnectionTest extends TestCase
     {
         $this->assertSame('pgsql_public_read', (new PubDatasetCatalogo)->getConnectionName());
     }
+
+    public function test_pub_programa_usa_pgsql_public_read(): void
+    {
+        $this->assertSame('pgsql_public_read', (new \App\Models\Portal\PubPrograma)->getConnectionName());
+    }
 }
