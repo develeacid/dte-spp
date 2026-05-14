@@ -3,6 +3,8 @@
 namespace App\Models\Transparencia;
 
 use App\Enums\EstadoDatasetAbierto;
+use App\Events\Transparencia\DatasetAbiertoPublicado;
+use App\Events\Transparencia\DatasetAbiertoRetirado;
 use App\Models\User;
 use Database\Factories\Transparencia\DatasetAbiertoFactory;
 use DomainException;
@@ -116,7 +118,7 @@ class DatasetAbierto extends Model
         $this->publicado_en = now();
         $this->save();
 
-        \App\Events\Transparencia\DatasetAbiertoPublicado::dispatch($this, auth()->user());
+        DatasetAbiertoPublicado::dispatch($this, auth()->user());
     }
 
     public function retirar(string $motivo): void
@@ -128,7 +130,7 @@ class DatasetAbierto extends Model
         $this->motivo_cambio_estado = $motivo;
         $this->save();
 
-        \App\Events\Transparencia\DatasetAbiertoRetirado::dispatch($this, auth()->user());
+        DatasetAbiertoRetirado::dispatch($this, auth()->user());
     }
 
     public function rechazar(string $motivo): void

@@ -69,11 +69,11 @@ class CoberturaGeograficaPublisherTest extends TestCase
         app(CoberturaGeograficaPublisher::class)->publish(DatasetAbierto::factory()->create());
 
         // Validar que Postgres lo guardó como text[] (no como string serializada)
-        $r = DB::connection('pgsql_public')->selectOne("
+        $r = DB::connection('pgsql_public')->selectOne('
             SELECT array_length(municipios_incluidos, 1) as len,
                    municipios_incluidos[1] as primero
               FROM pub_cobertura_geografica
-        ");
+        ');
         $this->assertSame(3, (int) $r->len);
         $this->assertSame('20001', $r->primero);
     }

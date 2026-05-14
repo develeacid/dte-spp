@@ -11,8 +11,11 @@ class PubPrograma extends Model
     use HasFactory;
 
     protected $connection = 'pgsql_public_read';
+
     protected $table = 'pub_programas';
+
     protected $guarded = [];
+
     protected $casts = ['ejercicio_fiscal' => 'integer', 'activo' => 'boolean'];
 
     protected static function newFactory()
