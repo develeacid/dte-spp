@@ -119,4 +119,19 @@ class CoberturaProgramaTest extends TestCase
             ->assertSet('estado', 'vacio')
             ->assertSee('Aún no hay beneficiarios inscritos');
     }
+
+    public function test_estado_no_registrado_si_geobase_devuelve_404(): void
+    {
+        Http::fake([
+            '*/programs/*/coverage' => Http::response(['message' => 'Not Found'], 404),
+        ]);
+
+        $programa = $this->programaConComponente();
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSet('estado', 'no_registrado')
+            ->assertSee('El programa no está registrado en GeoBase')
+            ->assertSee('geobase:register-program');
+    }
 }

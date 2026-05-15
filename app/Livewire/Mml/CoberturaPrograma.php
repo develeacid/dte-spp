@@ -36,6 +36,11 @@ class CoberturaPrograma extends Component
                 ? 'vacio'
                 : 'ok';
         } catch (GeoBaseException $e) {
+            if ($e->statusCode === 404) {
+                $this->estado = 'no_registrado';
+
+                return;
+            }
             $this->estado = 'error';
             $this->errorMessage = 'GeoBase no está disponible en este momento. Reintentar.';
         }

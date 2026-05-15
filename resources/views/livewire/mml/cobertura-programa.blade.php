@@ -20,6 +20,16 @@
             </div>
         @endif
 
+        @if ($estado === 'no_registrado')
+            <div class="rounded-md bg-amber-50 border border-amber-200 p-4">
+                <p class="text-sm text-amber-800">
+                    El programa no está registrado en GeoBase. Ejecutar
+                    <code class="text-xs bg-amber-100 px-1 rounded">php artisan geobase:register-program {{ $programa->clave }}</code>
+                    para sincronizar.
+                </p>
+            </div>
+        @endif
+
         @if ($estado === 'ok')
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="bg-white shadow rounded p-4">
