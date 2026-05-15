@@ -30,6 +30,12 @@
             </div>
         @endif
 
+        @if ($estado === 'error')
+            <div class="rounded-md bg-red-50 border border-red-200 p-4">
+                <p class="text-sm text-red-800">{{ $errorMessage }}</p>
+            </div>
+        @endif
+
         @if ($estado === 'ok')
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="bg-white shadow rounded p-4">

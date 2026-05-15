@@ -134,4 +134,20 @@ class CoberturaProgramaTest extends TestCase
             ->assertSee('El programa no está registrado en GeoBase')
             ->assertSee('geobase:register-program');
     }
+
+    public function test_estado_error_si_geobase_devuelve_5xx_con_mensaje_sanitizado(): void
+    {
+        Http::fake([
+            '*/programs/*/coverage' => Http::response('<html>fatal stack trace</html>', 500),
+        ]);
+
+        $programa = $this->programaConComponente();
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSet('estado', 'error')
+            ->assertSee('GeoBase no está disponible en este momento')
+            ->assertDontSee('fatal stack trace')
+            ->assertDontSee('<html>');
+    }
 }
