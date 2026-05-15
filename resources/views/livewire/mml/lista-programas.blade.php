@@ -109,6 +109,10 @@
                                                class="text-amber-600 hover:text-amber-800 font-medium text-sm">
                                                 Padrón
                                             </a>
+                                            <a href="{{ route('mml.cobertura', $programa) }}"
+                                               class="text-purple-600 hover:text-purple-800 font-medium text-sm">
+                                                Cobertura
+                                            </a>
                                         @endcan
                                     @endif
                                 </div>
