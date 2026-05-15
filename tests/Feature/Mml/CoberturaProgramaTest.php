@@ -29,6 +29,9 @@ class CoberturaProgramaTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
         $this->seed(PadronPermissionsSeeder::class);
 
+        // The MirNivelGeoBaseObserver dispatches a sync job whenever a
+        // Componente is created on a programa with padron_geobase_activo=true;
+        // these tests don't care about that side effect, so we capture them.
         Queue::fake();
     }
 
@@ -91,12 +94,13 @@ class CoberturaProgramaTest extends TestCase
         Livewire::actingAs($this->userPlaneador())
             ->test(CoberturaPrograma::class, ['programa' => $programa])
             ->assertSet('estado', 'ok')
-            ->assertSee('200')
-            ->assertSee('250')
-            ->assertSee('aprobado')
-            ->assertSee('180')
-            ->assertSee('Oaxaca de Juárez')
-            ->assertSee('120');
+            ->assertSeeHtml('text-emerald-700">200</p>')   // KPI total_beneficiaries
+            ->assertSeeHtml('text-blue-700">250</p>')      // KPI total_enrollments
+            ->assertSee('aprobado')                         // chip label, no collision
+            ->assertSeeHtml('<strong class="ml-1">180</strong>')  // status count
+            ->assertSee('Oaxaca de Juárez')                 // municipality name, no collision
+            ->assertSeeHtml('<td class="px-4 py-2 text-sm text-gray-900 text-right">120</td>') // municipality count
+            ->assertDontSee('Aún no hay beneficiarios');
     }
 
     public function test_estado_vacio_si_total_beneficiaries_es_cero(): void
@@ -117,7 +121,8 @@ class CoberturaProgramaTest extends TestCase
         Livewire::actingAs($this->userPlaneador())
             ->test(CoberturaPrograma::class, ['programa' => $programa])
             ->assertSet('estado', 'vacio')
-            ->assertSee('Aún no hay beneficiarios inscritos');
+            ->assertSee('Aún no hay beneficiarios inscritos')
+            ->assertDontSee('Total beneficiarios');
     }
 
     public function test_estado_no_registrado_si_geobase_devuelve_404(): void
