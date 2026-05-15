@@ -98,4 +98,25 @@ class CoberturaProgramaTest extends TestCase
             ->assertSee('Oaxaca de Juárez')
             ->assertSee('120');
     }
+
+    public function test_estado_vacio_si_total_beneficiaries_es_cero(): void
+    {
+        Http::fake([
+            '*/programs/*/coverage' => Http::response([
+                'spp_program_id' => 1,
+                'program_name' => 'Programa Demo',
+                'total_enrollments' => 0,
+                'total_beneficiaries' => 0,
+                'by_status' => [],
+                'by_municipality' => [],
+            ], 200),
+        ]);
+
+        $programa = $this->programaConComponente();
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSet('estado', 'vacio')
+            ->assertSee('Aún no hay beneficiarios inscritos');
+    }
 }

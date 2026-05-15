@@ -32,7 +32,9 @@ class CoberturaPrograma extends Component
 
         try {
             $this->coverage = app(GeoBaseClient::class)->getProgramCoverage($programa->id);
-            $this->estado = 'ok';
+            $this->estado = ((int) ($this->coverage['total_beneficiaries'] ?? 0)) === 0
+                ? 'vacio'
+                : 'ok';
         } catch (GeoBaseException $e) {
             $this->estado = 'error';
             $this->errorMessage = 'GeoBase no está disponible en este momento. Reintentar.';

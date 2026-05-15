@@ -14,6 +14,12 @@
             </div>
         @endif
 
+        @if ($estado === 'vacio')
+            <div class="rounded-md bg-blue-50 border border-blue-200 p-4">
+                <p class="text-sm text-blue-800">Aún no hay beneficiarios inscritos en este programa.</p>
+            </div>
+        @endif
+
         @if ($estado === 'ok')
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="bg-white shadow rounded p-4">
