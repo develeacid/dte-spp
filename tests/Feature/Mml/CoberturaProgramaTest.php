@@ -69,4 +69,33 @@ class CoberturaProgramaTest extends TestCase
             ->assertSet('estado', 'inactivo')
             ->assertSee('El padrón de este programa no está activo en GeoBase');
     }
+
+    public function test_estado_ok_renderiza_kpis_y_tabla_municipios(): void
+    {
+        Http::fake([
+            '*/programs/*/coverage' => Http::response([
+                'spp_program_id' => 1,
+                'program_name' => 'Programa Demo',
+                'total_enrollments' => 250,
+                'total_beneficiaries' => 200,
+                'by_status' => ['aprobado' => 180, 'solicitado' => 70],
+                'by_municipality' => [
+                    ['municipality' => 'Oaxaca de Juárez', 'count' => 120],
+                    ['municipality' => 'San Pablo', 'count' => 80],
+                ],
+            ], 200),
+        ]);
+
+        $programa = $this->programaConComponente();
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSet('estado', 'ok')
+            ->assertSee('200')
+            ->assertSee('250')
+            ->assertSee('aprobado')
+            ->assertSee('180')
+            ->assertSee('Oaxaca de Juárez')
+            ->assertSee('120');
+    }
 }

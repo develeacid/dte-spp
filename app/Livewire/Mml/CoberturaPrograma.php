@@ -3,6 +3,8 @@
 namespace App\Livewire\Mml;
 
 use App\Models\ProgramaPresupuestario;
+use App\Services\GeoBase\GeoBaseClient;
+use App\Services\GeoBase\GeoBaseException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -26,6 +28,14 @@ class CoberturaPrograma extends Component
             $this->estado = 'inactivo';
 
             return;
+        }
+
+        try {
+            $this->coverage = app(GeoBaseClient::class)->getProgramCoverage($programa->id);
+            $this->estado = 'ok';
+        } catch (GeoBaseException $e) {
+            $this->estado = 'error';
+            $this->errorMessage = 'GeoBase no está disponible en este momento. Reintentar.';
         }
     }
 
