@@ -5,6 +5,7 @@ use App\Livewire\Mml\AlineacionEstrategica;
 use App\Livewire\Mml\ArbolObjetivosBuilder;
 use App\Livewire\Mml\ArbolProblemaBuilder;
 use App\Livewire\Mml\CalendarizarMetas;
+use App\Livewire\Mml\CoberturaPrograma;
 use App\Livewire\Mml\CompletarHuecos;
 use App\Livewire\Mml\DashboardImportaciones;
 use App\Livewire\Mml\DefinicionProblema;
@@ -30,6 +31,10 @@ Route::prefix('mml/programas')
         Route::get('/{programa}/padron', PadronPrograma::class)
             ->middleware('can:ver_padron')
             ->name('mml.padron');
+
+        Route::get('/{programa}/cobertura', CoberturaPrograma::class)
+            ->middleware('can:ver_padron')
+            ->name('mml.cobertura');
     });
 
 Route::prefix('mml')
