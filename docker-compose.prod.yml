@@ -20,6 +20,27 @@ services:
             - pgsql
             - redis
 
+    # Worker permanente para queue:work. Procesa geobase-sync (RegisterProgramOnGeoBase,
+    # DeactivateProgramOnGeoBase, SyncProgramaToGeoBase, SyncMirNivelToGeoBase) y default
+    # (SyncPublicDatasetJob de N2-03, otros sin onQueue explicito). Sin este worker, los
+    # jobs async quedan pendientes en redis y se manifiesta como 404 en dashboard card
+    # "Padron de Beneficiarios" tras seeders. --max-time=3600 recicla el proceso cada hora.
+    laravel.worker:
+        image: 'dte-spp-app'
+        environment:
+            WWWUSER: '${WWWUSER:-1000}'
+            SUPERVISOR_PHP_COMMAND: '/usr/bin/php /var/www/html/artisan queue:work redis --queue=geobase-sync,default --sleep=3 --tries=3 --max-time=3600'
+            SUPERVISOR_PHP_USER: '${SUPERVISOR_PHP_USER:-sail}'
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - dte-spp
+        depends_on:
+            - pgsql
+            - redis
+            - laravel.test
+        restart: unless-stopped
+
     pgsql:
         image: 'pgvector/pgvector:pg16'
         environment:
