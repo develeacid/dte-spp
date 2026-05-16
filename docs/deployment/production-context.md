@@ -237,7 +237,9 @@ Después de `migrate:fresh` re-verificar permisos (ver Paso 6).
 
 ## 8. Usuarios QA disponibles
 
-Contraseña para todos: `LseRdlP0P`
+> **ACTUALIZACIÓN 2026-05-15 (post-reset 2026-05-14):** los usuarios `ele.*@gmail.com` con contraseña `LseRdlP0P` listados abajo son **históricos** del `QaTestingSeeder` y **ya no existen en el VPS** tras el reset. El VPS actual tiene los mismos usuarios del dev seeder: patrón `<rol>.<secretaria>@sistema.test` con contraseña `password` (mismo patrón que dev local). Para login en VPS usar p.ej. `planeador.se@sistema.test` / `password`. La tabla histórica se conserva por si se vuelve a aplicar `QaTestingSeeder`.
+
+Contraseña histórica: `LseRdlP0P`
 
 | Nombre | Email | Rol | UR(s) |
 |---|---|---|---|
