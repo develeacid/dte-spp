@@ -52,12 +52,19 @@ class ActivarPadronTest extends TestCase
         return $programa;
     }
 
+    private function geoBaseFakes(array $overrides = []): array
+    {
+        return array_merge([
+            '*/snapshots*' => Http::response(['data' => []], 200),
+            '*/programs*' => Http::response(['data' => ['spp_program_id' => 1]], 201),
+            '*/components*' => Http::response(['data' => ['spp_mir_nivel_id' => 1]], 201),
+        ], $overrides);
+    }
+
     private function fakeProvisioningOk(): void
     {
-        Http::fake([
-            '*/programs' => Http::response(['data' => ['spp_program_id' => 1]], 201),
-            '*/components' => Http::response(['data' => ['spp_mir_nivel_id' => 1]], 201),
-        ]);
+        Http::fake($this->geoBaseFakes());
+        Http::preventStrayRequests();
     }
 
     public function test_service_registra_programa_y_componentes_y_marca_activo(): void
@@ -120,7 +127,10 @@ class ActivarPadronTest extends TestCase
 
     public function test_geobase_falla_no_marca_activo_y_muestra_error(): void
     {
-        Http::fake(['*/programs' => Http::response(['error' => 'down'], 500)]);
+        Http::fake($this->geoBaseFakes([
+            '*/programs*' => Http::response(['error' => 'down'], 500),
+        ]));
+        Http::preventStrayRequests();
 
         $programa = $this->programaSinPadronConComponente();
         $user = User::factory()->withPersonalTeam()->create();
