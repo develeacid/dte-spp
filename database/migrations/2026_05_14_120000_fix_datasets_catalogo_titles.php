@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -148,7 +149,7 @@ return new class extends Migration
                 'titulo' => $d->nombre,
                 'descripcion' => $d->descripcion ?? '',
                 'fecha_publicacion' => $d->publicado_en
-                    ? \Illuminate\Support\Carbon::parse($d->publicado_en)->toDateString()
+                    ? Carbon::parse($d->publicado_en)->toDateString()
                     : null,
                 'frecuencia_actualizacion' => null,
                 'url_csv' => null,
