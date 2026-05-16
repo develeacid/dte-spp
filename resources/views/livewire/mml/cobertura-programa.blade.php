@@ -5,6 +5,25 @@
     />
 
     <div class="space-y-6">
+        <div class="bg-white shadow rounded p-4">
+            <h3 class="text-sm font-medium text-gray-700 mb-3">Supuestos del MIR</h3>
+            @if (count($supuestos) === 0 || collect($supuestos)->every(fn ($n) => empty($n['supuestos'])))
+                <p class="text-sm text-gray-500 italic">Sin Supuestos definidos en la MIR del programa.</p>
+            @else
+                <dl class="space-y-3">
+                    @foreach ($supuestos as $nivel)
+                        @continue (empty($nivel['supuestos']))
+                        <div>
+                            <dt class="text-xs font-semibold uppercase text-gray-500">
+                                {{ ucfirst($nivel['tipo']) }} — {{ \Illuminate\Support\Str::limit($nivel['narrativa'], 80) }}
+                            </dt>
+                            <dd class="mt-1 text-sm text-gray-800">{{ $nivel['supuestos'] }}</dd>
+                        </div>
+                    @endforeach
+                </dl>
+            @endif
+        </div>
+
         @if ($estado === 'inactivo')
             <div class="rounded-md bg-amber-50 border border-amber-200 p-4">
                 <p class="text-sm text-amber-800">
@@ -34,6 +53,12 @@
             <div class="rounded-md bg-red-50 border border-red-200 p-4">
                 <p class="text-sm text-red-800">{{ $errorMessage }}</p>
             </div>
+        @endif
+
+        @if ($estado === 'ok' || $estado === 'vacio')
+            @if ($consultadoAt)
+                <p class="text-xs text-gray-500">Consultado: {{ $consultadoAt }} (datos en vivo desde GeoBase)</p>
+            @endif
         @endif
 
         @if ($estado === 'ok')

@@ -155,4 +155,72 @@ class CoberturaProgramaTest extends TestCase
             ->assertDontSee('fatal stack trace')
             ->assertDontSee('<html>');
     }
+
+    public function test_muestra_supuestos_del_proposito_y_componentes(): void
+    {
+        Http::fake([
+            '*/programs/*/coverage' => Http::response([
+                'total_enrollments' => 1, 'total_beneficiaries' => 1,
+                'by_status' => [], 'by_municipality' => [],
+            ], 200),
+        ]);
+
+        $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
+        MirNivel::create([
+            'programa_presupuestario_id' => $programa->id,
+            'tipo_nivel' => TipoNivelMir::PROPOSITO,
+            'resumen_narrativo' => 'Propósito del programa',
+            'supuestos' => 'Las condiciones climáticas se mantienen estables',
+            'orden' => 1,
+        ]);
+        MirNivel::create([
+            'programa_presupuestario_id' => $programa->id,
+            'tipo_nivel' => TipoNivelMir::COMPONENTE,
+            'resumen_narrativo' => 'Componente C1',
+            'supuestos' => 'Los productores asisten a capacitaciones',
+            'orden' => 1,
+        ]);
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSee('Supuestos del MIR')
+            ->assertSee('Propósito')
+            ->assertSee('Las condiciones climáticas se mantienen estables')
+            ->assertSee('Componente C1')
+            ->assertSee('Los productores asisten a capacitaciones');
+    }
+
+    public function test_muestra_mensaje_si_sin_supuestos_definidos(): void
+    {
+        Http::fake([
+            '*/programs/*/coverage' => Http::response([
+                'total_enrollments' => 1, 'total_beneficiaries' => 1,
+                'by_status' => [], 'by_municipality' => [],
+            ], 200),
+        ]);
+
+        $programa = $this->programaConComponente(); // crea componente sin supuestos
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSee('Supuestos del MIR')
+            ->assertSee('Sin Supuestos definidos');
+    }
+
+    public function test_muestra_timestamp_de_ultima_consulta_en_estado_ok(): void
+    {
+        Http::fake([
+            '*/programs/*/coverage' => Http::response([
+                'total_enrollments' => 1, 'total_beneficiaries' => 1,
+                'by_status' => [], 'by_municipality' => [],
+            ], 200),
+        ]);
+
+        $programa = $this->programaConComponente();
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSee('Consultado:')
+            ->assertSet('consultadoAt', fn ($value) => is_string($value) && $value !== '');
+    }
 }
