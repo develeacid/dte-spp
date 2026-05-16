@@ -85,7 +85,7 @@ class EvaluacionProgramaViewTest extends TestCase
             ->assertSee('PEV-001')
             ->assertSee('Programa Evaluacion Test')
             ->assertSee('Resumen Ejecutivo')
-            ->assertSee('Tablero de Semaforos')
+            ->assertSee('Tablero de Semáforos')
             ->assertSee('72.50%');
     }
 
