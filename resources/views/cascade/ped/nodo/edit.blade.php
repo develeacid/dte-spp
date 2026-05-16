@@ -1,8 +1,4 @@
 <x-app-layout>
-    <x-slot name="header">
-        <x-page.header :title="'Editar ' . ucfirst($tipo)" />
-    </x-slot>
-
     <x-page.container
         :breadcrumbs="[
             ['label' => 'Inicio', 'url' => route('dashboard')],

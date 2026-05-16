@@ -1,7 +1,3 @@
-<x-slot name="header">
-    <x-page.header title="Calendarizar Metas" />
-</x-slot>
-
 <x-page.container>
     @include('livewire.mml.partials.stepper-importacion', ['pasoActual' => 4])
 

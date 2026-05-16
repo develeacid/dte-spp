@@ -1,11 +1,4 @@
 <div>
-    <x-slot name="header">
-        <x-page.header
-            title="Etapa 5 — Embudo de Poblaciones"
-            :subtitle="$programa->nombre"
-        />
-    </x-slot>
-
     <x-page.container :breadcrumbs="[
         ['label' => 'Inicio', 'url' => route('dashboard')],
         ['label' => $programa->nombre, 'url' => route('dashboard')],

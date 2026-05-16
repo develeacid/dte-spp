@@ -1,11 +1,4 @@
 <div>
-    <x-slot name="header">
-        <x-page.header
-            title="Etapa 1 — Definición del Problema"
-            :subtitle="$programa->nombre"
-        />
-    </x-slot>
-
     <x-slot:mobileActions>
         <button wire:click="guardar" class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-xs font-semibold text-gray-700">
             Guardar

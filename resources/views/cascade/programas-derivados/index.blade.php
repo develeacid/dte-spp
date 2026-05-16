@@ -1,10 +1,4 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Programas Derivados
-        </h2>
-    </x-slot>
-
     <x-page.container
         :breadcrumbs="[
             ['label' => 'Inicio', 'url' => route('dashboard')],

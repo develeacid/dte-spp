@@ -1,11 +1,4 @@
 <div>
-    <x-slot name="header">
-        <x-page.header
-            title="Dashboard de Indicadores"
-            :subtitle="$programa->nombre"
-        />
-    </x-slot>
-
     <x-page.container :breadcrumbs="[
         ['label' => 'Inicio', 'url' => route('dashboard')],
         ['label' => 'Seguimiento', 'url' => route('tracking.panel')],
