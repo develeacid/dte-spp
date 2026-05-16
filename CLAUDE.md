@@ -35,6 +35,19 @@ sail artisan migrate --path=database/migrations/public --database=pgsql_public
 
 Idempotentes: re-ejecuciones safe. Las tablas `pub_*` viven en una BD separada (`spp_public`) con un rol `spp_portal` que solo tiene SELECT — el portal público (N2-04) consume desde ahí; el pipeline de sync (N2-03) escribe usando la conexión `pgsql_public`.
 
+## Padrón GeoBase post-deploy / post-reset
+
+Tras `migrate:fresh --seed` (o reset VPS), los seeders setean `padron_geobase_activo=true` en N programas y dispatchan `RegisterProgramOnGeoBase` a queue async. Sin worker corriendo, el job queda pendiente y GeoBase queda sin los `components` registrados → 404 en "Ver en vivo", tab Cobertura, dashboard card Padrón, etc.
+
+Comando idempotente para re-hidratar todo:
+
+```bash
+sail artisan geobase:hydrate-padron            # ejecuta
+sail artisan geobase:hydrate-padron --dry-run  # solo lista
+```
+
+Itera `ProgramaPresupuestario::where('padron_geobase_activo', true)` y llama síncronamente `PadronProvisioningService::register()` para cada uno. Re-ejecuciones safe (geobase upserts por `spp_program_id`/`spp_mir_nivel_id`). Errores parciales no rompen el loop, exit code 1 si algún programa falló.
+
 ## Pipeline N2-03 — Sync al portal público
 
 `DatasetAbierto::publicar()` y `retirar()` disparan eventos que gatillan el job `SyncPublicDatasetJob`. El job invoca un Publisher concreto por `dataset_clave`:
