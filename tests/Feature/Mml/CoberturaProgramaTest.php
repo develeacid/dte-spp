@@ -6,6 +6,7 @@ use App\Enums\SystemRole;
 use App\Enums\TipoNivelMir;
 use App\Livewire\Mml\CoberturaPrograma;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\PoblacionPrograma;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
 use Database\Seeders\PadronPermissionsSeeder;
@@ -222,5 +223,203 @@ class CoberturaProgramaTest extends TestCase
             ->test(CoberturaPrograma::class, ['programa' => $programa])
             ->assertSee('Consultado:')
             ->assertSet('consultadoAt', fn ($value) => is_string($value) && $value !== '');
+    }
+
+    /**
+     * Helper: fakes 3 GET /programs/{id}/coverage responses by querystring.
+     * - all-time (sin period): $allTime
+     * - period=Q actual: $qActual
+     * - period=Q anterior: $qAnterior
+     * Cada uno acepta arrays con campos {total_beneficiaries, total_enrollments, by_municipality}.
+     */
+    private function fakeCoverageWithHistory(array $allTime, array $qActual, array $qAnterior): void
+    {
+        $now = now();
+        $qActualStr = sprintf('%d-Q%d', $now->year, (int) ceil($now->month / 3));
+        $prev = $now->copy()->subMonthsNoOverflow(3);
+        $qAnteriorStr = sprintf('%d-Q%d', $prev->year, (int) ceil($prev->month / 3));
+
+        Http::fake(function ($request) use ($allTime, $qActual, $qAnterior, $qActualStr, $qAnteriorStr) {
+            $url = $request->url();
+            $base = ['by_status' => [], 'by_municipality' => []];
+            if (str_contains($url, 'period='.$qAnteriorStr)) {
+                return Http::response(array_merge($base, $qAnterior), 200);
+            }
+            if (str_contains($url, 'period='.$qActualStr)) {
+                return Http::response(array_merge($base, $qActual), 200);
+            }
+
+            return Http::response(array_merge($base, $allTime), 200);
+        });
+    }
+
+    public function test_alerta_baja_trimestre_amarillo_si_drop_entre_10_y_25(): void
+    {
+        // Q actual = 85, Q anterior = 100. Drop 15%.
+        $this->fakeCoverageWithHistory(
+            allTime: ['total_beneficiaries' => 200, 'total_enrollments' => 250],
+            qActual: ['total_beneficiaries' => 85, 'total_enrollments' => 85],
+            qAnterior: ['total_beneficiaries' => 100, 'total_enrollments' => 100],
+        );
+
+        $programa = $this->programaConComponente();
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSet('estado', 'ok')
+            ->assertSee('Alertas de cobertura')
+            ->assertSee('cayó 15% vs trimestre anterior')
+            ->assertSeeHtml('bg-amber-50'); // tailwind amarillo
+    }
+
+    public function test_alerta_baja_trimestre_rojo_si_drop_mayor_25(): void
+    {
+        $this->fakeCoverageWithHistory(
+            allTime: ['total_beneficiaries' => 200, 'total_enrollments' => 250],
+            qActual: ['total_beneficiaries' => 60, 'total_enrollments' => 60],
+            qAnterior: ['total_beneficiaries' => 100, 'total_enrollments' => 100],
+        );
+
+        $programa = $this->programaConComponente();
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSee('cayó 40% vs trimestre anterior')
+            ->assertSeeHtml('bg-red-50'); // tailwind rojo
+    }
+
+    public function test_alerta_meta_amarillo_si_cobertura_entre_25_y_50(): void
+    {
+        $this->fakeCoverageWithHistory(
+            allTime: ['total_beneficiaries' => 400, 'total_enrollments' => 400],
+            qActual: ['total_beneficiaries' => 100, 'total_enrollments' => 100],
+            qAnterior: ['total_beneficiaries' => 100, 'total_enrollments' => 100],
+        );
+
+        $programa = $this->programaConComponente();
+        PoblacionPrograma::create([
+            'programa_id' => $programa->id,
+            'unidad_medida' => 'Personas',
+            'referencia_cantidad' => 5000,
+            'potencial_cantidad' => 2000,
+            'objetivo_cantidad' => 1000,
+            'anio_ejercicio' => 2026,
+        ]);
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSee('40% de la meta')
+            ->assertSeeHtml('bg-amber-50');
+    }
+
+    public function test_alerta_meta_rojo_si_cobertura_menor_25(): void
+    {
+        $this->fakeCoverageWithHistory(
+            allTime: ['total_beneficiaries' => 100, 'total_enrollments' => 100],
+            qActual: ['total_beneficiaries' => 100, 'total_enrollments' => 100],
+            qAnterior: ['total_beneficiaries' => 100, 'total_enrollments' => 100],
+        );
+
+        $programa = $this->programaConComponente();
+        PoblacionPrograma::create([
+            'programa_id' => $programa->id,
+            'unidad_medida' => 'Personas',
+            'referencia_cantidad' => 5000,
+            'potencial_cantidad' => 2000,
+            'objetivo_cantidad' => 1000,
+            'anio_ejercicio' => 2026,
+        ]);
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSee('10% de la meta')
+            ->assertSeeHtml('bg-red-50');
+    }
+
+    public function test_alerta_municipios_con_drop_listados(): void
+    {
+        $this->fakeCoverageWithHistory(
+            allTime: ['total_beneficiaries' => 200, 'total_enrollments' => 250],
+            qActual: ['total_beneficiaries' => 80, 'total_enrollments' => 80, 'by_municipality' => [
+                ['municipality' => 'Oaxaca de Juárez', 'count' => 50],
+                ['municipality' => 'San Pablo', 'count' => 10],
+            ]],
+            qAnterior: ['total_beneficiaries' => 100, 'total_enrollments' => 100, 'by_municipality' => [
+                ['municipality' => 'Oaxaca de Juárez', 'count' => 50],
+                ['municipality' => 'San Pablo', 'count' => 40],
+            ]],
+        );
+
+        $programa = $this->programaConComponente();
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSee('Municipios con caída')
+            ->assertSee('San Pablo')    // cayó 40 → 10 (-75%)
+            ->assertDontSeeHtml('Oaxaca de Juárez</li>'); // sin caída, no debe listarse
+    }
+
+    public function test_sin_alertas_si_todo_estable(): void
+    {
+        $this->fakeCoverageWithHistory(
+            allTime: ['total_beneficiaries' => 800, 'total_enrollments' => 800],
+            qActual: ['total_beneficiaries' => 100, 'total_enrollments' => 100],
+            qAnterior: ['total_beneficiaries' => 95, 'total_enrollments' => 95],
+        );
+
+        $programa = $this->programaConComponente();
+        PoblacionPrograma::create([
+            'programa_id' => $programa->id,
+            'unidad_medida' => 'Personas',
+            'referencia_cantidad' => 5000,
+            'potencial_cantidad' => 2000,
+            'objetivo_cantidad' => 1000,
+            'anio_ejercicio' => 2026,
+        ]);
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSee('Sin alertas activas');
+    }
+
+    public function test_no_explota_si_q_anterior_devuelve_404(): void
+    {
+        Http::fake(function ($request) {
+            $url = $request->url();
+            if (str_contains($url, 'period=')) {
+                $prev = now()->copy()->subMonthsNoOverflow(3);
+                $qAnteriorStr = sprintf('%d-Q%d', $prev->year, (int) ceil($prev->month / 3));
+                if (str_contains($url, 'period='.$qAnteriorStr)) {
+                    return Http::response(['message' => 'Not Found'], 404);
+                }
+
+                return Http::response(['total_beneficiaries' => 50, 'total_enrollments' => 50, 'by_status' => [], 'by_municipality' => []], 200);
+            }
+
+            return Http::response(['total_beneficiaries' => 100, 'total_enrollments' => 100, 'by_status' => [], 'by_municipality' => []], 200);
+        });
+
+        $programa = $this->programaConComponente();
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSet('estado', 'ok')
+            ->assertDontSee('cayó'); // sin Q-1 no se puede calcular drop
+    }
+
+    public function test_no_alerta_meta_si_sin_poblacion_objetivo(): void
+    {
+        $this->fakeCoverageWithHistory(
+            allTime: ['total_beneficiaries' => 10, 'total_enrollments' => 10],
+            qActual: ['total_beneficiaries' => 5, 'total_enrollments' => 5],
+            qAnterior: ['total_beneficiaries' => 5, 'total_enrollments' => 5],
+        );
+
+        $programa = $this->programaConComponente();
+        // Sin PoblacionPrograma asociada
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertDontSee('de la meta');
     }
 }

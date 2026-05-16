@@ -67,9 +67,12 @@ class GeoBaseClient
     // (== programa.spp_program_id from geobase's perspective). Geobase
     // resolves the local row internally.
 
-    public function getProgramCoverage(int $sppProgramId): array
+    public function getProgramCoverage(int $sppProgramId, ?string $period = null): array
     {
-        return $this->get("/programs/{$sppProgramId}/coverage");
+        return $this->get(
+            "/programs/{$sppProgramId}/coverage",
+            $period !== null ? ['period' => $period] : []
+        );
     }
 
     /**

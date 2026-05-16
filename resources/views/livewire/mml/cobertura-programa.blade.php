@@ -59,6 +59,41 @@
             @if ($consultadoAt)
                 <p class="text-xs text-gray-500">Consultado: {{ $consultadoAt }} (datos en vivo desde GeoBase)</p>
             @endif
+
+            @php
+                $hasAlertas = $alertaTrimestre !== null || $alertaMeta !== null || count($municipiosConDrop) > 0;
+            @endphp
+            <div class="bg-white shadow rounded p-4">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Alertas de cobertura</h3>
+                @if (! $hasAlertas)
+                    <p class="text-sm text-emerald-700">Sin alertas activas en este periodo.</p>
+                @else
+                    <div class="space-y-2">
+                        @if ($alertaTrimestre)
+                            @php $cls = $alertaTrimestre['nivel'] === 'rojo' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-800'; @endphp
+                            <div class="rounded border {{ $cls }} px-3 py-2 text-sm">
+                                Inscripciones cayó {{ $alertaTrimestre['drop_pct'] }}% vs trimestre anterior.
+                            </div>
+                        @endif
+                        @if ($alertaMeta)
+                            @php $cls = $alertaMeta['nivel'] === 'rojo' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-800'; @endphp
+                            <div class="rounded border {{ $cls }} px-3 py-2 text-sm">
+                                Cobertura actual: {{ $alertaMeta['pct'] }}% de la meta de población objetivo.
+                            </div>
+                        @endif
+                        @if (count($municipiosConDrop) > 0)
+                            <div class="rounded border bg-amber-50 border-amber-200 text-amber-800 px-3 py-2 text-sm">
+                                <p class="font-medium mb-1">Municipios con caída &gt;30% vs trimestre anterior:</p>
+                                <ul class="list-disc list-inside">
+                                    @foreach ($municipiosConDrop as $mun)
+                                        <li>{{ $mun['municipality'] }}: −{{ $mun['drop_pct'] }}%</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+            </div>
         @endif
 
         @if ($estado === 'ok')
