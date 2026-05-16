@@ -85,12 +85,19 @@ jobs:
       - name: Composer audit (security)
         run: composer audit
 
+      # La BD pública debe existir (aunque sea vacía) antes de migrate, porque
+      # 2026_05_14_120000_fix_datasets_catalogo_titles llama Schema::connection('pgsql_public')
+      # ->hasTable() — defensivo si la tabla pub_* no existe, pero revienta si la
+      # BD entera no existe. La provisión real del rol + migrations/public sigue
+      # despues de migrate (provision-public-db loguea a activity_log).
+      - name: Create public DB (empty, for migrate safety)
+        run: PGPASSWORD=password psql -h 127.0.0.1 -U testing -d testing -c "CREATE DATABASE testing_spp_public" || true
+
       - name: Run migrations
         run: php artisan migrate --force
 
-      - name: Provision public DB for tests
+      - name: Provision public DB role + run public migrations
         run: |
-          PGPASSWORD=password psql -h 127.0.0.1 -U testing -d testing -c "CREATE DATABASE testing_spp_public" || true
           php artisan transparencia:provision-public-db
           php artisan migrate --path=database/migrations/public --database=pgsql_public --force
 
