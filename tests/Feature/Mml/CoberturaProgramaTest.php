@@ -77,7 +77,7 @@ class CoberturaProgramaTest extends TestCase
     public function test_estado_ok_renderiza_kpis_y_tabla_municipios(): void
     {
         Http::fake([
-            '*/programs/*/coverage' => Http::response([
+            '*/programs/*/coverage*' => Http::response([
                 'spp_program_id' => 1,
                 'program_name' => 'Programa Demo',
                 'total_enrollments' => 250,
@@ -107,7 +107,7 @@ class CoberturaProgramaTest extends TestCase
     public function test_estado_vacio_si_total_beneficiaries_es_cero(): void
     {
         Http::fake([
-            '*/programs/*/coverage' => Http::response([
+            '*/programs/*/coverage*' => Http::response([
                 'spp_program_id' => 1,
                 'program_name' => 'Programa Demo',
                 'total_enrollments' => 0,
@@ -129,7 +129,7 @@ class CoberturaProgramaTest extends TestCase
     public function test_estado_no_registrado_si_geobase_devuelve_404(): void
     {
         Http::fake([
-            '*/programs/*/coverage' => Http::response(['message' => 'Not Found'], 404),
+            '*/programs/*/coverage*' => Http::response(['message' => 'Not Found'], 404),
         ]);
 
         $programa = $this->programaConComponente();
@@ -144,7 +144,7 @@ class CoberturaProgramaTest extends TestCase
     public function test_estado_error_si_geobase_devuelve_5xx_con_mensaje_sanitizado(): void
     {
         Http::fake([
-            '*/programs/*/coverage' => Http::response('<html>fatal stack trace</html>', 500),
+            '*/programs/*/coverage*' => Http::response('<html>fatal stack trace</html>', 500),
         ]);
 
         $programa = $this->programaConComponente();
@@ -160,7 +160,7 @@ class CoberturaProgramaTest extends TestCase
     public function test_muestra_supuestos_del_proposito_y_componentes(): void
     {
         Http::fake([
-            '*/programs/*/coverage' => Http::response([
+            '*/programs/*/coverage*' => Http::response([
                 'total_enrollments' => 1, 'total_beneficiaries' => 1,
                 'by_status' => [], 'by_municipality' => [],
             ], 200),
@@ -194,7 +194,7 @@ class CoberturaProgramaTest extends TestCase
     public function test_muestra_mensaje_si_sin_supuestos_definidos(): void
     {
         Http::fake([
-            '*/programs/*/coverage' => Http::response([
+            '*/programs/*/coverage*' => Http::response([
                 'total_enrollments' => 1, 'total_beneficiaries' => 1,
                 'by_status' => [], 'by_municipality' => [],
             ], 200),
@@ -211,7 +211,7 @@ class CoberturaProgramaTest extends TestCase
     public function test_muestra_timestamp_de_ultima_consulta_en_estado_ok(): void
     {
         Http::fake([
-            '*/programs/*/coverage' => Http::response([
+            '*/programs/*/coverage*' => Http::response([
                 'total_enrollments' => 1, 'total_beneficiaries' => 1,
                 'by_status' => [], 'by_municipality' => [],
             ], 200),
