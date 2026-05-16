@@ -37,9 +37,9 @@ Idempotentes: re-ejecuciones safe. Las tablas `pub_*` viven en una BD separada (
 
 ## Padrón GeoBase post-deploy / post-reset
 
-Tras `migrate:fresh --seed` (o reset VPS), los seeders setean `padron_geobase_activo=true` en N programas y dispatchan `RegisterProgramOnGeoBase` a queue async. Sin worker corriendo, el job queda pendiente y GeoBase queda sin los `components` registrados → 404 en "Ver en vivo", tab Cobertura, dashboard card Padrón, etc.
+Tras `migrate:fresh --seed`, los seeders setean `padron_geobase_activo=true` en N programas y dispatchan `RegisterProgramOnGeoBase` a queue async via `ProgramaPresupuestarioGeoBaseObserver`. **En prod (VPS) el servicio `laravel.worker` del `docker-compose.prod.yml` procesa los jobs automáticamente.** En dev local sin worker corriendo, los jobs quedan pendientes en redis y se manifiesta como 404 en dashboard card Padrón, tab Cobertura "Ver en vivo", etc.
 
-Comando idempotente para re-hidratar todo:
+Comando idempotente para re-hidratar todo (dev local o emergency en prod):
 
 ```bash
 sail artisan geobase:hydrate-padron            # ejecuta
@@ -47,6 +47,19 @@ sail artisan geobase:hydrate-padron --dry-run  # solo lista
 ```
 
 Itera `ProgramaPresupuestario::where('padron_geobase_activo', true)` y llama síncronamente `PadronProvisioningService::register()` para cada uno. Re-ejecuciones safe (geobase upserts por `spp_program_id`/`spp_mir_nivel_id`). Errores parciales no rompen el loop, exit code 1 si algún programa falló.
+
+## Worker permanente (VPS)
+
+`docker-compose.prod.yml` incluye servicio `laravel.worker` que corre `queue:work redis --queue=geobase-sync,default --sleep=3 --tries=3 --max-time=3600` con `restart: unless-stopped`. Procesa los 4 jobs GeoBase + `SyncPublicDatasetJob` (N2-03) + cualquier otro sin onQueue explícito. Reuses la imagen `dte-spp-app` sin rebuild adicional.
+
+Deploy command tras pull:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d laravel.worker
+docker compose -f docker-compose.prod.yml logs --tail=20 laravel.worker  # validar
+```
+
+Sin worker permanente, el síntoma operacional es `geobase:hydrate-padron` requerido como paso manual post-deploy + jobs huérfanos en redis.
 
 ## Pipeline N2-03 — Sync al portal público
 
