@@ -39,6 +39,7 @@ class GeoBaseClientTest extends TestCase
                 ],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->client->getBeneficiary(42);
 
@@ -59,6 +60,7 @@ class GeoBaseClientTest extends TestCase
                 'created' => true,
             ], 201),
         ]);
+        Http::preventStrayRequests();
 
         $data = [
             'curp_rfc' => 'GARC850101HOCRRL09',
@@ -93,6 +95,7 @@ class GeoBaseClientTest extends TestCase
                 ],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->client->getProgramCoverage(3);
 
@@ -110,6 +113,7 @@ class GeoBaseClientTest extends TestCase
                 'total_beneficiaries' => 80,
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->client->getComponentCoverage(42);
 
@@ -131,6 +135,7 @@ class GeoBaseClientTest extends TestCase
                 ],
             ], 201),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->client->requestSnapshot([
             'spp_mir_nivel_id' => 45,
@@ -151,6 +156,7 @@ class GeoBaseClientTest extends TestCase
                 'active' => true,
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->client->validateCurp('GARC850101HOCRRL09');
 
@@ -163,6 +169,7 @@ class GeoBaseClientTest extends TestCase
         Http::fake([
             '*/beneficiaries/999' => Http::response(['error' => 'Not found'], 404),
         ]);
+        Http::preventStrayRequests();
 
         $this->expectException(GeoBaseException::class);
 
@@ -174,6 +181,7 @@ class GeoBaseClientTest extends TestCase
         Http::fake([
             '*/beneficiaries/1' => Http::response(null, 500),
         ]);
+        Http::preventStrayRequests();
 
         $this->expectException(GeoBaseException::class);
 
@@ -185,6 +193,7 @@ class GeoBaseClientTest extends TestCase
         Http::fake([
             '*/beneficiaries/1' => Http::response(['data' => ['id' => 1]], 200),
         ]);
+        Http::preventStrayRequests();
 
         $this->client->getBeneficiary(1);
 

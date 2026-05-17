@@ -64,6 +64,7 @@ class PadronShcpExportTest extends TestCase
                 'meta' => ['total' => $rows, 'spp_program_id' => 1, 'periodo' => '2026-Q2'],
             ], 200),
         ]);
+        Http::preventStrayRequests();
     }
 
     public function test_planeador_puede_descargar_xlsx(): void

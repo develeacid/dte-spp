@@ -72,6 +72,7 @@ class SyncPipelineDsg01IntegrationTest extends TestCase
                 ]],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $dataset = DatasetAbierto::factory()->create([
             'dataset_clave' => 'DS-G01',

@@ -44,6 +44,7 @@ class CoberturaMunicipalPublisherTest extends TestCase
         Http::fake([
             '*cobertura-municipal-bulk*' => Http::response(['data' => []], 200),
         ]);
+        Http::preventStrayRequests();
 
         app(CoberturaMunicipalPublisher::class)->publish(DatasetAbierto::factory()->create());
 
@@ -90,6 +91,7 @@ class CoberturaMunicipalPublisherTest extends TestCase
                 ],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         app(CoberturaMunicipalPublisher::class)->publish(DatasetAbierto::factory()->create());
 
@@ -117,6 +119,7 @@ class CoberturaMunicipalPublisherTest extends TestCase
                 ]],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $r1 = app(CoberturaMunicipalPublisher::class)->publish(DatasetAbierto::factory()->create());
         $r2 = app(CoberturaMunicipalPublisher::class)->publish(DatasetAbierto::factory()->create());
@@ -132,6 +135,7 @@ class CoberturaMunicipalPublisherTest extends TestCase
         Http::fake([
             '*cobertura-municipal-bulk*' => Http::response(['data' => []], 200),
         ]);
+        Http::preventStrayRequests();
 
         $r = app(CoberturaMunicipalPublisher::class)->publish(DatasetAbierto::factory()->create());
 

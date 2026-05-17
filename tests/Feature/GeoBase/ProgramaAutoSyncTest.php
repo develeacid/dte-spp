@@ -122,6 +122,7 @@ class ProgramaAutoSyncTest extends TestCase
         Http::fake([
             '*/programs' => Http::response(['data' => []], 200),
         ]);
+        Http::preventStrayRequests();
 
         $job = new SyncProgramaToGeoBase(
             sppProgramId: 7,

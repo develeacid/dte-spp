@@ -101,6 +101,7 @@ class MirNivelAutoSyncTest extends TestCase
         Http::fake([
             '*/components' => Http::response(['data' => []], 201),
         ]);
+        Http::preventStrayRequests();
 
         $job = new SyncMirNivelToGeoBase(
             mirNivelId: 42,
@@ -125,6 +126,7 @@ class MirNivelAutoSyncTest extends TestCase
     public function test_job_propagates_geobase_failure_for_retry(): void
     {
         Http::fake(['*/components' => Http::response(['error' => 'down'], 500)]);
+        Http::preventStrayRequests();
 
         $job = new SyncMirNivelToGeoBase(
             mirNivelId: 1,

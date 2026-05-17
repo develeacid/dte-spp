@@ -100,6 +100,7 @@ class GenerarSnapshotTest extends TestCase
 
             return Http::response([], 404);
         });
+        Http::preventStrayRequests();
 
         $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $componente = MirNivel::create([

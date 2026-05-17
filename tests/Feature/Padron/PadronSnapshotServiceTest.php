@@ -45,6 +45,7 @@ class PadronSnapshotServiceTest extends TestCase
                 ],
             ], 201),
         ]);
+        Http::preventStrayRequests();
 
         $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $user = User::factory()->withPersonalTeam()->create();
@@ -73,6 +74,7 @@ class PadronSnapshotServiceTest extends TestCase
                 'data' => ['id' => 1, 'snapshot_hash' => 'h', 'row_count' => 0, 'cutoff_date' => '2026-03-31'],
             ], 201),
         ]);
+        Http::preventStrayRequests();
 
         $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $user = User::factory()->withPersonalTeam()->create();
@@ -87,6 +89,7 @@ class PadronSnapshotServiceTest extends TestCase
     public function test_generar_lanza_excepcion_si_geobase_falla(): void
     {
         Http::fake(['*' => Http::response(['error' => 'down'], 500)]);
+        Http::preventStrayRequests();
 
         $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $user = User::factory()->withPersonalTeam()->create();
@@ -98,6 +101,7 @@ class PadronSnapshotServiceTest extends TestCase
     public function test_generar_no_persiste_si_geobase_falla(): void
     {
         Http::fake(['*' => Http::response(['error' => 'down'], 500)]);
+        Http::preventStrayRequests();
 
         $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $user = User::factory()->withPersonalTeam()->create();
@@ -121,6 +125,7 @@ class PadronSnapshotServiceTest extends TestCase
                 'data' => ['id' => 100, 'snapshot_hash' => 'h', 'row_count' => 0, 'cutoff_date' => '2026-06-30'],
             ], 201),
         ]);
+        Http::preventStrayRequests();
 
         $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $componente = MirNivel::create([
@@ -165,6 +170,7 @@ class PadronSnapshotServiceTest extends TestCase
                 'data' => ['id' => 100, 'snapshot_hash' => 'h', 'row_count' => 0, 'cutoff_date' => '2026-06-30'],
             ], 201),
         ]);
+        Http::preventStrayRequests();
 
         $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $user = User::factory()->withPersonalTeam()->create();
@@ -185,6 +191,7 @@ class PadronSnapshotServiceTest extends TestCase
                 'data' => ['id' => 100, 'snapshot_hash' => 'h', 'row_count' => 0, 'cutoff_date' => '2026-06-30'],
             ], 201),
         ]);
+        Http::preventStrayRequests();
 
         $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
         $componente = MirNivel::create([

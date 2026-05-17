@@ -257,6 +257,7 @@ class MonitoreoIaTest extends TestCase
                 'model' => 'text-embedding-ada-002',
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $component = Livewire::actingAs($this->admin)
             ->test(MonitoreoIa::class)
@@ -277,6 +278,7 @@ class MonitoreoIaTest extends TestCase
                 'error' => ['message' => 'Incorrect API key provided', 'type' => 'invalid_request_error'],
             ], 401),
         ]);
+        Http::preventStrayRequests();
 
         $component = Livewire::actingAs($this->admin)
             ->test(MonitoreoIa::class)

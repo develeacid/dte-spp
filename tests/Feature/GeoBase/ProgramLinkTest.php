@@ -74,6 +74,7 @@ class ProgramLinkTest extends TestCase
                 ],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $coverage = $programa->getGeoBaseCoverage();
 

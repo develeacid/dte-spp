@@ -31,6 +31,7 @@ class EmbeddingServiceTest extends TestCase
                 ],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $service = new EmbeddingService;
         $embedding = $service->generate('Texto de prueba');
@@ -65,6 +66,7 @@ class EmbeddingServiceTest extends TestCase
                 'error' => ['message' => 'Invalid API key'],
             ], 401),
         ]);
+        Http::preventStrayRequests();
 
         $service = new EmbeddingService;
 
@@ -83,6 +85,7 @@ class EmbeddingServiceTest extends TestCase
                 ],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $service = new EmbeddingService;
 
@@ -101,6 +104,7 @@ class EmbeddingServiceTest extends TestCase
                 ],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $service = new EmbeddingService;
 
@@ -119,6 +123,7 @@ class EmbeddingServiceTest extends TestCase
                 ],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $service = new EmbeddingService;
         $textoLargo = str_repeat('a', 50000);
@@ -154,6 +159,7 @@ class EmbeddingServiceTest extends TestCase
         Http::fake([
             'api.test.com/*' => Http::failedConnection(),
         ]);
+        Http::preventStrayRequests();
 
         $service = new EmbeddingService;
 

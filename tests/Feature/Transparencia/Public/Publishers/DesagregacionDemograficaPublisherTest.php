@@ -44,6 +44,7 @@ class DesagregacionDemograficaPublisherTest extends TestCase
                 ],
             ],
         ], 200)]);
+        Http::preventStrayRequests();
 
         app(DesagregacionDemograficaPublisher::class)->publish(DatasetAbierto::factory()->create());
 
@@ -81,6 +82,7 @@ class DesagregacionDemograficaPublisherTest extends TestCase
                 ],
             ],
         ], 200)]);
+        Http::preventStrayRequests();
 
         app(DesagregacionDemograficaPublisher::class)->publish(DatasetAbierto::factory()->create());
 
@@ -108,6 +110,7 @@ class DesagregacionDemograficaPublisherTest extends TestCase
                     'por_grupo_edad' => [], 'por_tipo_discapacidad' => [], 'por_etnia' => []],
             ],
         ], 200)]);
+        Http::preventStrayRequests();
 
         app(DesagregacionDemograficaPublisher::class)->publish(DatasetAbierto::factory()->create());
 
@@ -138,6 +141,7 @@ class DesagregacionDemograficaPublisherTest extends TestCase
                 'por_tipo_discapacidad' => [], 'por_etnia' => [],
             ]],
         ], 200)]);
+        Http::preventStrayRequests();
 
         app(DesagregacionDemograficaPublisher::class)->publish(DatasetAbierto::factory()->create());
 

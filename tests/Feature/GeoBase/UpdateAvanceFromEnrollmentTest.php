@@ -30,6 +30,7 @@ class UpdateAvanceFromEnrollmentTest extends TestCase
                 ],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         EnrollmentStatusChanged::dispatch(
             enrollmentId: 42,

@@ -60,6 +60,7 @@ class LlmServiceRefactorTest extends TestCase
         Http::fake([
             'api.openai.com/*' => Http::response(['error' => ['message' => 'Service down']], 500),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->service->suggest('Test prompt');
 
@@ -74,6 +75,7 @@ class LlmServiceRefactorTest extends TestCase
                 'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 5, 'total_tokens' => 15],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         // First call — cache miss, should hit API
         $result1 = $this->service->suggest('Unique test prompt');
@@ -99,6 +101,7 @@ class LlmServiceRefactorTest extends TestCase
                 'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 5, 'total_tokens' => 15],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->service->suggest('Cache miss prompt');
 
@@ -122,6 +125,7 @@ class LlmServiceRefactorTest extends TestCase
                 'usage' => ['prompt_tokens' => 20, 'completion_tokens' => 10, 'total_tokens' => 30],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->service->validateCremaa([
             'nombre' => 'Test indicator',
@@ -149,6 +153,7 @@ class LlmServiceRefactorTest extends TestCase
                 'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 5, 'total_tokens' => 15],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $this->service->validateCremaa([
             'nombre' => 'Test',
@@ -197,6 +202,7 @@ class LlmServiceRefactorTest extends TestCase
                 'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 5, 'total_tokens' => 15],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         // First call populates cache
         $this->service->suggest('Log test prompt');
@@ -225,6 +231,7 @@ class LlmServiceRefactorTest extends TestCase
                     'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 5, 'total_tokens' => 15],
                 ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result1 = $this->service->transform('Text', 'Rewrite');
         $result2 = $this->service->transform('Text', 'Rewrite');

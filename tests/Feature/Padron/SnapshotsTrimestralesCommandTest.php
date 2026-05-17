@@ -30,6 +30,7 @@ class SnapshotsTrimestralesCommandTest extends TestCase
                 ->push(['data' => ['id' => 102, 'snapshot_hash' => 'h3', 'row_count' => 0, 'cutoff_date' => '2026-06-30']], 201)
                 ->push(['data' => ['id' => 103, 'snapshot_hash' => 'h4', 'row_count' => 0, 'cutoff_date' => '2026-06-30']], 201),
         ]);
+        Http::preventStrayRequests();
     }
 
     protected function tearDown(): void

@@ -42,6 +42,7 @@ class CoberturaGeograficaPublisherTest extends TestCase
                 ],
             ],
         ], 200)]);
+        Http::preventStrayRequests();
 
         app(CoberturaGeograficaPublisher::class)->publish(DatasetAbierto::factory()->create());
 
@@ -65,6 +66,7 @@ class CoberturaGeograficaPublisherTest extends TestCase
                 'municipios_incluidos' => ['20001', '20067', '20100'],
             ]],
         ], 200)]);
+        Http::preventStrayRequests();
 
         app(CoberturaGeograficaPublisher::class)->publish(DatasetAbierto::factory()->create());
 
@@ -92,6 +94,7 @@ class CoberturaGeograficaPublisherTest extends TestCase
                 'municipios_incluidos' => [],
             ]],
         ], 200)]);
+        Http::preventStrayRequests();
 
         app(CoberturaGeograficaPublisher::class)->publish(DatasetAbierto::factory()->create());
 

@@ -34,6 +34,7 @@ class LlmServiceTest extends TestCase
                 'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 5, 'total_tokens' => 15],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->service->suggest('Mejora esta redacción', ['text' => 'texto original']);
 
@@ -48,6 +49,7 @@ class LlmServiceTest extends TestCase
                 'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 5, 'total_tokens' => 15],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $this->service->suggest('Test prompt');
 
@@ -69,6 +71,7 @@ class LlmServiceTest extends TestCase
                 'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 15, 'total_tokens' => 25],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->service->validate('Implementar sistema', ['no_verbos_solucion']);
 
@@ -85,6 +88,7 @@ class LlmServiceTest extends TestCase
                 'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 8, 'total_tokens' => 18],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->service->transform('Alta deserción escolar', 'Convertir a positivo');
 
@@ -99,6 +103,7 @@ class LlmServiceTest extends TestCase
         Http::fake([
             'api.openai.com/*' => Http::response(['error' => ['message' => 'Rate limited']], 429),
         ]);
+        Http::preventStrayRequests();
 
         $this->expectException(LlmException::class);
 
@@ -113,6 +118,7 @@ class LlmServiceTest extends TestCase
         Http::fake([
             'api.openai.com/*' => Http::response(['error' => ['message' => 'Rate limited']], 429),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->service->suggest('Test prompt');
 
@@ -124,6 +130,7 @@ class LlmServiceTest extends TestCase
         Http::fake([
             'api.openai.com/*' => Http::response(['error' => ['message' => 'Server error']], 500),
         ]);
+        Http::preventStrayRequests();
 
         try {
             $this->service->suggest('Test prompt');

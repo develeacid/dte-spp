@@ -14,6 +14,7 @@ class GeoBaseClientBulkTest extends TestCase
         Http::fake([
             '*reportes/cobertura-municipal-bulk*' => Http::response(['data' => []], 200),
         ]);
+        Http::preventStrayRequests();
 
         app(GeoBaseClient::class)->getCoberturaMunicipalBulk(
             sppProgramIds: [1, 2],
@@ -32,6 +33,7 @@ class GeoBaseClientBulkTest extends TestCase
     public function test_get_desagregacion_bulk_envia_ejercicio_fiscal(): void
     {
         Http::fake(['*desagregacion-bulk*' => Http::response(['data' => []], 200)]);
+        Http::preventStrayRequests();
 
         app(GeoBaseClient::class)->getDesagregacionBulk([5, 7], 2026);
 
@@ -41,6 +43,7 @@ class GeoBaseClientBulkTest extends TestCase
     public function test_get_cobertura_geografica_bulk_envia_solo_program_ids(): void
     {
         Http::fake(['*cobertura-geografica-bulk*' => Http::response(['data' => []], 200)]);
+        Http::preventStrayRequests();
 
         app(GeoBaseClient::class)->getCoberturaGeograficaBulk([10]);
 
@@ -52,6 +55,7 @@ class GeoBaseClientBulkTest extends TestCase
         config(['services.geobase.retry_times' => 1]);
 
         Http::fake(['*cobertura-municipal-bulk*' => Http::response(['errors' => ['x']], 422)]);
+        Http::preventStrayRequests();
 
         $this->expectException(GeoBaseException::class);
         app(GeoBaseClient::class)->getCoberturaMunicipalBulk([1], []);

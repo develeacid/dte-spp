@@ -38,6 +38,7 @@ class GeoBaseClientPadronTest extends TestCase
                 'meta' => ['total' => 2, 'per_page' => 15, 'current_page' => 1],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->client->getSnapshots(sppProgramId: 12, sppMirNivelId: 3);
 
@@ -55,6 +56,7 @@ class GeoBaseClientPadronTest extends TestCase
         Http::fake([
             '*/snapshots*' => Http::response(['data' => [], 'meta' => []], 200),
         ]);
+        Http::preventStrayRequests();
 
         $this->client->getSnapshots(sppProgramId: 12);
 
@@ -88,6 +90,7 @@ class GeoBaseClientPadronTest extends TestCase
                 ],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->client->getSnapshotKpis(892);
 
@@ -101,6 +104,7 @@ class GeoBaseClientPadronTest extends TestCase
         Http::fake([
             '*/snapshots/999' => Http::response(['message' => 'Not found'], 404),
         ]);
+        Http::preventStrayRequests();
 
         $this->expectException(GeoBaseException::class);
         $this->client->getSnapshotKpis(999);
@@ -130,6 +134,7 @@ class GeoBaseClientPadronTest extends TestCase
                 ],
             ], 201),
         ]);
+        Http::preventStrayRequests();
 
         $result = $this->client->requestSnapshot([
             'spp_program_id' => 12,

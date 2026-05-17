@@ -48,6 +48,7 @@ class SyncPipelineErrorHandlingDsgTest extends TestCase
     {
         [$user, $dataset] = $this->setupBasicoDsg01();
         Http::fake(['*cobertura-municipal-bulk*' => Http::response(['message' => 'not found'], 404)]);
+        Http::preventStrayRequests();
 
         $this->actingAs($user);
         $dataset->publicar();
@@ -67,6 +68,7 @@ class SyncPipelineErrorHandlingDsgTest extends TestCase
     {
         [$user, $dataset] = $this->setupBasicoDsg01();
         Http::fake(['*cobertura-municipal-bulk*' => Http::response(['errors' => ['x']], 422)]);
+        Http::preventStrayRequests();
 
         $this->actingAs($user);
         // El job NO debe re-lanzar la excepción para 422 (permanente).
@@ -85,6 +87,7 @@ class SyncPipelineErrorHandlingDsgTest extends TestCase
     {
         [$user, $dataset] = $this->setupBasicoDsg01();
         Http::fake(['*cobertura-municipal-bulk*' => Http::response(['error' => 'down'], 500)]);
+        Http::preventStrayRequests();
 
         $this->actingAs($user);
 

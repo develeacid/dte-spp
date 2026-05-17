@@ -24,6 +24,7 @@ class GeoBaseClientTerritorialReportTest extends TestCase
                 'meta' => ['total_rows' => 1, 'refreshed_at' => '2026-04-24T12:00:00Z'],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $result = app(GeoBaseClient::class)->getTerritorialReport(sppProgramId: 42);
 
@@ -51,6 +52,7 @@ class GeoBaseClientTerritorialReportTest extends TestCase
         Http::fake([
             '*' => Http::response(['data' => [], 'meta' => []], 200),
         ]);
+        Http::preventStrayRequests();
 
         app(GeoBaseClient::class)->getTerritorialReport(sppProgramId: 42, sppMirNivelId: 7);
 
@@ -66,6 +68,7 @@ class GeoBaseClientTerritorialReportTest extends TestCase
         config(['services.geobase.retry_times' => 1]);  // keep the test fast
 
         Http::fake(['*' => Http::response(['error' => 'boom'], 500)]);
+        Http::preventStrayRequests();
 
         $this->expectException(GeoBaseException::class);
 
@@ -75,6 +78,7 @@ class GeoBaseClientTerritorialReportTest extends TestCase
     public function test_get_territorial_report_rejects_non_positive_program_id(): void
     {
         Http::fake(['*' => Http::response(['data' => []], 200)]);
+        Http::preventStrayRequests();
 
         $this->expectException(\InvalidArgumentException::class);
 

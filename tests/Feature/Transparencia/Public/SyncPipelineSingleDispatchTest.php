@@ -70,6 +70,7 @@ class SyncPipelineSingleDispatchTest extends TestCase
         Http::fake([
             '*cobertura-geografica-bulk*' => Http::response(['data' => []], 200),
         ]);
+        Http::preventStrayRequests();
 
         $dataset = DatasetAbierto::factory()->create([
             'dataset_clave' => 'DS-G03',
@@ -93,6 +94,7 @@ class SyncPipelineSingleDispatchTest extends TestCase
         Http::fake([
             '*cobertura-geografica-bulk*' => Http::response(['data' => []], 200),
         ]);
+        Http::preventStrayRequests();
 
         $dataset = DatasetAbierto::factory()->create([
             'dataset_clave' => 'DS-G03',

@@ -44,6 +44,7 @@ class PadronProgramaViewTest extends TestCase
         Http::fake([
             '*/snapshots*' => Http::response(['data' => [], 'meta' => []], 200),
         ]);
+        Http::preventStrayRequests();
     }
 
     private function programaConComponente(bool $padronActivo = true): ProgramaPresupuestario
@@ -121,6 +122,7 @@ class PadronProgramaViewTest extends TestCase
             ], 200),
             '*/snapshots*' => Http::response(['data' => [], 'meta' => []], 200),
         ]);
+        Http::preventStrayRequests();
 
         $programa = $this->programaConComponente();
         $user = User::factory()->withPersonalTeam()->create();

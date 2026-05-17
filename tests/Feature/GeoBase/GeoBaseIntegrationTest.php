@@ -59,6 +59,7 @@ class GeoBaseIntegrationTest extends TestCase
                 'data' => ['total_enrollments' => 501, 'aprobados' => 451],
             ], 200),
         ]);
+        Http::preventStrayRequests();
 
         $payload = [
             'enrollment_id' => 42,
@@ -115,6 +116,7 @@ class GeoBaseIntegrationTest extends TestCase
             '*/programs/3/coverage' => Http::response(['data' => ['total_enrollments' => 100]], 200),
             '*/snapshots/generate' => Http::response(['data' => ['id' => 1, 'snapshot_hash' => 'abc']], 201),
         ]);
+        Http::preventStrayRequests();
 
         $client = app(GeoBaseClient::class);
 
