@@ -185,4 +185,37 @@ class MapaCoberturaProgramaControllerTest extends TestCase
 
         Http::assertSentCount(3);
     }
+
+    #[Test]
+    public function cache_keys_son_por_programa_no_globales(): void
+    {
+        Http::fake(['*/imagen/consulta' => Http::response($this->pngFixture, 200)]);
+        Http::preventStrayRequests();
+
+        $programaA = $this->programaActivo();
+        $programaB = $this->programaActivo();
+        $this->actingAs($this->userPlaneador());
+
+        $this->get("/mml/programas/{$programaA->id}/cobertura/mapa.png?period=2026-Q2");
+        $this->get("/mml/programas/{$programaB->id}/cobertura/mapa.png?period=2026-Q2");
+
+        Http::assertSentCount(2);
+    }
+
+    #[Test]
+    public function periodos_invalidos_distintos_colapsan_al_mismo_cache_all_time(): void
+    {
+        Http::fake(['*/imagen/consulta' => Http::response($this->pngFixture, 200)]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaActivo();
+        $this->actingAs($this->userPlaneador());
+
+        $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png?period=xxx");
+        $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png?period=foo");
+        $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png?period=bar");
+
+        // Todos colapsan a la key all-time, así que solo 1 HTTP.
+        Http::assertSentCount(1);
+    }
 }

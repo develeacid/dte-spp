@@ -13,6 +13,8 @@ use InvalidArgumentException;
 
 class MapaCoberturaProgramaController extends Controller
 {
+    private const CACHE_TTL_SECONDS = 60;
+
     public function __invoke(Request $request, ProgramaPresupuestario $programa, GeoBaseClient $client): Response
     {
         $period = $request->query('period');
@@ -34,11 +36,14 @@ class MapaCoberturaProgramaController extends Controller
             ),
         ];
 
-        $cacheKey = "geobase:map:program:{$programa->id}:".($period ?: 'all');
-        $png = Cache::remember($cacheKey, 60, fn () => $client->getConsultaImage($queryConfig));
+        $cacheFragment = empty($dateFilters)
+            ? 'all'
+            : "{$dateFilters['date_from']}_{$dateFilters['date_to']}";
+        $cacheKey = "geobase:map:program:{$programa->id}:{$cacheFragment}";
+        $png = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, fn () => $client->getConsultaImage($queryConfig));
 
         return response($png, 200)
             ->header('Content-Type', 'image/png')
-            ->header('Cache-Control', 'private, max-age=60');
+            ->header('Cache-Control', 'private, max-age='.self::CACHE_TTL_SECONDS);
     }
 }
