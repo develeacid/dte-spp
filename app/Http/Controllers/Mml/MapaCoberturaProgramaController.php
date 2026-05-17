@@ -11,7 +11,6 @@ class MapaCoberturaProgramaController extends Controller
 {
     public function __invoke(Request $request, ProgramaPresupuestario $programa): Response
     {
-        // Happy path implementation comes in Task 3.
-        return response('', 503);
+        abort(501);
     }
 }
