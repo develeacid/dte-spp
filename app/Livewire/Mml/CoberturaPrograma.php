@@ -251,6 +251,14 @@ class CoberturaPrograma extends Component
         return $drops;
     }
 
+    public function mapaUrl(): string
+    {
+        return route('mml.cobertura.mapa', [
+            'programa' => $this->programa->id,
+            'period' => $this->periodoSeleccionado,
+        ]);
+    }
+
     public function render()
     {
         return view('livewire.mml.cobertura-programa');

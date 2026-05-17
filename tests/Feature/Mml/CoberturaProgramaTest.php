@@ -522,4 +522,51 @@ class CoberturaProgramaTest extends TestCase
             ->test(CoberturaPrograma::class, ['programa' => $programa])
             ->assertDontSee('de la meta');
     }
+
+    public function test_vista_incluye_img_del_mapa_cuando_estado_es_ok(): void
+    {
+        Http::fake([
+            '*/programs/*/coverage*' => Http::response([
+                'total_beneficiaries' => 1, 'total_enrollments' => 1,
+                'by_status' => [], 'by_municipality' => [],
+            ], 200),
+        ]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaConComponente();
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSet('estado', 'ok')
+            ->assertSeeHtml('cobertura/mapa.png');
+    }
+
+    public function test_vista_omite_img_del_mapa_si_estado_es_inactivo(): void
+    {
+        Http::preventStrayRequests();
+
+        $programa = ProgramaPresupuestario::factory()->create([
+            'padron_geobase_activo' => false,
+        ]);
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSet('estado', 'inactivo')
+            ->assertDontSeeHtml('cobertura/mapa.png');
+    }
+
+    public function test_vista_omite_img_del_mapa_si_estado_es_no_registrado(): void
+    {
+        Http::fake([
+            '*/programs/*/coverage*' => Http::response(['message' => 'Not Found'], 404),
+        ]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaConComponente();
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSet('estado', 'no_registrado')
+            ->assertDontSeeHtml('cobertura/mapa.png');
+    }
 }

@@ -125,6 +125,36 @@
                     </div>
                 @endif
             </div>
+
+            <div class="bg-white shadow rounded p-4" x-data="{ failed: false, retryToken: '' }" wire:key="mapa-{{ $periodoSeleccionado ?? 'all' }}">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Cobertura territorial</h3>
+                <div class="relative" style="min-height: 300px;">
+                    <img
+                        :src="'{{ $this->mapaUrl() }}' + retryToken"
+                        alt="Mapa choropleth de cobertura por municipio"
+                        class="w-full h-auto rounded"
+                        loading="lazy"
+                        decoding="async"
+                        x-show="!failed"
+                        x-on:error="failed = true"
+                        x-on:load="failed = false"
+                    >
+                    <div
+                        x-show="failed"
+                        x-cloak
+                        class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 border border-gray-200 rounded text-sm text-gray-600"
+                    >
+                        <p class="mb-2">Mapa no disponible (GeoBase no respondió).</p>
+                        <button
+                            type="button"
+                            @click="failed = false; retryToken = '{{ str_contains($this->mapaUrl(), '?') ? '&' : '?' }}retry=' + Date.now()"
+                            class="px-3 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700"
+                        >
+                            Reintentar
+                        </button>
+                    </div>
+                </div>
+            </div>
         @endif
 
         @if ($estado === 'ok')
