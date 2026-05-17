@@ -11,6 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -225,12 +226,15 @@ class MapaCoberturaProgramaControllerTest extends TestCase
     {
         Http::fake(['*/imagen/consulta' => Http::response(['error' => 'down'], 500)]);
         Http::preventStrayRequests();
+        Log::spy();
 
         $programa = $this->programaActivo();
 
         $this->actingAs($this->userPlaneador())
             ->get("/mml/programas/{$programa->id}/cobertura/mapa.png")
             ->assertStatus(503);
+
+        Log::shouldHaveReceived('warning')->once();
     }
 
     #[Test]
@@ -260,7 +264,8 @@ class MapaCoberturaProgramaControllerTest extends TestCase
         $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png")->assertStatus(503);
         $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png")->assertStatus(503);
 
-        // Cada call: 3 retries por geobase client = al menos 2 HTTP totales (≥2 = NO se cacheó).
-        $this->assertGreaterThanOrEqual(2, count(Http::recorded()));
+        // GeoBaseClient retries 3x (services.geobase.retry_times). 2 logical calls × 3 retries
+        // = 6 HTTP intentos. Si retry queda en 0 (regresión), count caería a 2 y el test fallaría.
+        $this->assertGreaterThanOrEqual(4, count(Http::recorded()));
     }
 }

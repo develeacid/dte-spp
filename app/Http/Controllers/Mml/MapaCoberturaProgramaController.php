@@ -11,6 +11,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 class MapaCoberturaProgramaController extends Controller
@@ -44,7 +45,14 @@ class MapaCoberturaProgramaController extends Controller
         $cacheKey = "geobase:map:program:{$programa->id}:{$cacheFragment}";
         try {
             $png = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, fn () => $client->getConsultaImage($queryConfig));
-        } catch (GeoBaseException|ConnectionException) {
+        } catch (GeoBaseException|ConnectionException $e) {
+            Log::warning('mapa cobertura: fetch a geobase falló', [
+                'program_id' => $programa->id,
+                'period' => $period,
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
+
             return response('', 503);
         }
 
