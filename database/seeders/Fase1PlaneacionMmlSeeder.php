@@ -452,7 +452,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
         }
 
         // GeoBase linking for component-level and proposito-level variables
-        if ($programa->geobase_program_id) {
+        if ($programa->padron_geobase_activo) {
             if ($mirNivel->tipo_nivel === TipoNivelMir::COMPONENTE) {
                 $firstVar = $indicador->variables()->where('orden', 1)->first();
                 if ($firstVar) {
