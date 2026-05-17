@@ -55,9 +55,40 @@
             </div>
         @endif
 
+        @if ($estado === 'ok' || $estado === 'vacio' || $estado === 'no_registrado' || $estado === 'error')
+            <div class="bg-white shadow rounded p-4">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-medium text-gray-600 mr-2">Periodo:</span>
+                    <button
+                        type="button"
+                        wire:click="seleccionarPeriodo(null)"
+                        class="px-3 py-1 text-xs rounded-full border {{ $periodoSeleccionado === null ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' }}"
+                    >Todo el periodo</button>
+                    @foreach ($periodosDisponibles as $p)
+                        @php
+                            [$year, $q] = explode('-Q', $p);
+                            $label = 'Q'.$q.' '.$year;
+                        @endphp
+                        <button
+                            type="button"
+                            wire:click="seleccionarPeriodo('{{ $p }}')"
+                            class="px-3 py-1 text-xs rounded-full border {{ $periodoSeleccionado === $p ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' }}"
+                        >{{ $label }}</button>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         @if ($estado === 'ok' || $estado === 'vacio')
             @if ($consultadoAt)
-                <p class="text-xs text-gray-500">Consultado: {{ $consultadoAt }} (datos en vivo desde GeoBase)</p>
+                <p class="text-xs text-gray-500">
+                    Consultado: {{ $consultadoAt }}
+                    @if ($periodoSeleccionado !== null)
+                        @php [$y, $q] = explode('-Q', $periodoSeleccionado); @endphp
+                        — filtrado por Q{{ $q }} {{ $y }}
+                    @endif
+                    (datos en vivo desde GeoBase)
+                </p>
             @endif
 
             @php

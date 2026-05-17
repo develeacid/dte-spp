@@ -407,6 +407,104 @@ class CoberturaProgramaTest extends TestCase
             ->assertDontSee('cayó'); // sin Q-1 no se puede calcular drop
     }
 
+    public function test_default_es_todo_el_periodo_y_periodos_disponibles_incluye_q_actual_y_3_previos(): void
+    {
+        Http::fake([
+            '*/programs/*/coverage*' => Http::response([
+                'total_beneficiaries' => 200, 'total_enrollments' => 250,
+                'by_status' => [], 'by_municipality' => [],
+            ], 200),
+        ]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaConComponente();
+
+        $component = Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSet('periodoSeleccionado', null)
+            ->assertSee('Todo el periodo');
+
+        $disponibles = $component->get('periodosDisponibles');
+        $this->assertCount(4, $disponibles, 'Q actual + 3 previos = 4');
+
+        $now = now();
+        $qActualStr = sprintf('%d-Q%d', $now->year, (int) ceil($now->month / 3));
+        $this->assertSame($qActualStr, $disponibles[0], 'Primer item debe ser Q actual');
+    }
+
+    public function test_seleccionar_periodo_refetcha_coverage_con_filter_y_recalcula_alertas_para_ese_q(): void
+    {
+        // Q-actual = 200, Q-anterior = 100 → all-time NO debería disparar alerta (sin drop hoy);
+        // pero cuando seleccionamos Q-anterior (que tiene 100 vs su Q-1 con 1000) → debe disparar alerta roja del Q anterior.
+        $now = now();
+        $qActualStr = sprintf('%d-Q%d', $now->year, (int) ceil($now->month / 3));
+        $prev = $now->copy()->subMonthsNoOverflow(3);
+        $qAnteriorStr = sprintf('%d-Q%d', $prev->year, (int) ceil($prev->month / 3));
+        $prev2 = $now->copy()->subMonthsNoOverflow(6);
+        $qDosAtrasStr = sprintf('%d-Q%d', $prev2->year, (int) ceil($prev2->month / 3));
+
+        Http::fake(function ($request) use ($qActualStr, $qAnteriorStr, $qDosAtrasStr) {
+            $url = $request->url();
+            $base = ['by_status' => [], 'by_municipality' => []];
+            // Más específico primero (el match es por substring, evitar colisiones).
+            if (str_contains($url, 'period='.$qDosAtrasStr)) {
+                return Http::response(array_merge($base, ['total_beneficiaries' => 1000, 'total_enrollments' => 1000]), 200);
+            }
+            if (str_contains($url, 'period='.$qAnteriorStr)) {
+                return Http::response(array_merge($base, ['total_beneficiaries' => 100, 'total_enrollments' => 100]), 200);
+            }
+            if (str_contains($url, 'period='.$qActualStr)) {
+                return Http::response(array_merge($base, ['total_beneficiaries' => 200, 'total_enrollments' => 200]), 200);
+            }
+
+            // all-time (sin period)
+            return Http::response(array_merge($base, ['total_beneficiaries' => 300, 'total_enrollments' => 300]), 200);
+        });
+        Http::preventStrayRequests();
+
+        $programa = $this->programaConComponente();
+
+        $component = Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSet('estado', 'ok')
+            ->assertSet('periodoSeleccionado', null)
+            ->assertSet('coverage.total_beneficiaries', 300) // all-time
+            ->assertDontSee('cayó'); // Q-actual=200 vs Q-1=100 sube, sin alerta
+
+        // Selecciono Q-anterior. Ahora "actual" para alertas es qAnteriorStr (=100) y "anterior" es qDosAtrasStr (=1000).
+        // Drop = (1000-100)/1000 = 90% → alerta roja.
+        $component->call('seleccionarPeriodo', $qAnteriorStr)
+            ->assertSet('periodoSeleccionado', $qAnteriorStr)
+            ->assertSet('coverage.total_beneficiaries', 100)
+            ->assertSee('cayó 90% vs trimestre anterior')
+            ->assertSeeHtml('bg-red-50');
+
+        // Vuelvo a all-time: coverage regresa a 300, alerta desaparece.
+        $component->call('seleccionarPeriodo', null)
+            ->assertSet('periodoSeleccionado', null)
+            ->assertSet('coverage.total_beneficiaries', 300)
+            ->assertDontSee('cayó');
+    }
+
+    public function test_seleccionar_periodo_con_valor_invalido_es_noop(): void
+    {
+        Http::fake([
+            '*/programs/*/coverage*' => Http::response([
+                'total_beneficiaries' => 10, 'total_enrollments' => 10,
+                'by_status' => [], 'by_municipality' => [],
+            ], 200),
+        ]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaConComponente();
+
+        Livewire::actingAs($this->userPlaneador())
+            ->test(CoberturaPrograma::class, ['programa' => $programa])
+            ->assertSet('periodoSeleccionado', null)
+            ->call('seleccionarPeriodo', '2099-Q9')
+            ->assertSet('periodoSeleccionado', null);
+    }
+
     public function test_no_alerta_meta_si_sin_poblacion_objetivo(): void
     {
         $this->fakeCoverageWithHistory(

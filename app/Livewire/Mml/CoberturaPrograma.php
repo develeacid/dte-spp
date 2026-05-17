@@ -35,14 +35,54 @@ class CoberturaPrograma extends Component
     /** @var array<int, array{municipality: string, drop_pct: int}> Municipios con drop >30% vs Q anterior. */
     public array $municipiosConDrop = [];
 
+    /** null = todo el periodo. Formato cuando set: 'YYYY-QN' (ej. '2026-Q2'). */
+    public ?string $periodoSeleccionado = null;
+
+    /** @var array<int, string> Q actual + 3 previos, formato 'YYYY-QN', del más reciente al más viejo. */
+    public array $periodosDisponibles = [];
+
     public function mount(ProgramaPresupuestario $programa): void
     {
         $this->authorize('ver_padron');
         $this->programa = $programa;
 
+        $this->periodosDisponibles = $this->calcularPeriodosDisponibles();
         $this->cargarSupuestos();
+        $this->cargarCoverage();
+    }
 
-        if (! $programa->padron_geobase_activo) {
+    public function seleccionarPeriodo(?string $periodo): void
+    {
+        if ($periodo !== null && ! in_array($periodo, $this->periodosDisponibles, true)) {
+            return;
+        }
+        $this->periodoSeleccionado = $periodo;
+        $this->cargarCoverage();
+    }
+
+    /** @return array<int, string> */
+    private function calcularPeriodosDisponibles(): array
+    {
+        $now = Carbon::now();
+        $periodos = [];
+        for ($i = 0; $i < 4; $i++) {
+            $ref = $now->copy()->subMonthsNoOverflow($i * 3);
+            $periodos[] = sprintf('%d-Q%d', $ref->year, (int) ceil($ref->month / 3));
+        }
+
+        return $periodos;
+    }
+
+    private function cargarCoverage(): void
+    {
+        // Reset alertas (en caso de re-fetch tras seleccionarPeriodo)
+        $this->errorMessage = null;
+        $this->alertaTrimestre = null;
+        $this->alertaMeta = null;
+        $this->municipiosConDrop = [];
+        $this->coverage = [];
+
+        if (! $this->programa->padron_geobase_activo) {
             $this->estado = 'inactivo';
 
             return;
@@ -50,7 +90,7 @@ class CoberturaPrograma extends Component
 
         try {
             $client = app(GeoBaseClient::class);
-            $this->coverage = $client->getProgramCoverage($programa->id);
+            $this->coverage = $client->getProgramCoverage($this->programa->id, $this->periodoSeleccionado);
             $this->consultadoAt = now()->format('Y-m-d H:i');
             $this->estado = ((int) ($this->coverage['total_beneficiaries'] ?? 0)) === 0
                 ? 'vacio'
@@ -85,11 +125,17 @@ class CoberturaPrograma extends Component
 
     private function calcularAlertas(GeoBaseClient $client): void
     {
-        // Calcula periodos Q actual / Q anterior basado en ahora.
-        $now = Carbon::now();
-        $qActual = sprintf('%d-Q%d', $now->year, (int) ceil($now->month / 3));
-        $prev = $now->copy()->subMonthsNoOverflow(3);
-        $qAnterior = sprintf('%d-Q%d', $prev->year, (int) ceil($prev->month / 3));
+        // Si hay periodo seleccionado, las alertas comparan ese Q vs el Q anterior a ese.
+        // Si no, comparan Q actual (now) vs Q anterior — comportamiento legacy.
+        if ($this->periodoSeleccionado !== null) {
+            $qActual = $this->periodoSeleccionado;
+            $qAnterior = $this->periodoAnteriorA($this->periodoSeleccionado);
+        } else {
+            $now = Carbon::now();
+            $qActual = sprintf('%d-Q%d', $now->year, (int) ceil($now->month / 3));
+            $prev = $now->copy()->subMonthsNoOverflow(3);
+            $qAnterior = sprintf('%d-Q%d', $prev->year, (int) ceil($prev->month / 3));
+        }
 
         $coverageActual = $this->fetchCoverageSafe($client, $qActual);
         $coverageAnterior = $this->fetchCoverageSafe($client, $qAnterior);
@@ -97,6 +143,21 @@ class CoberturaPrograma extends Component
         $this->alertaTrimestre = $this->calcularAlertaTrimestre($coverageActual, $coverageAnterior);
         $this->alertaMeta = $this->calcularAlertaMeta();
         $this->municipiosConDrop = $this->calcularMunicipiosConDrop($coverageActual, $coverageAnterior);
+    }
+
+    private function periodoAnteriorA(string $periodo): string
+    {
+        // Parse 'YYYY-QN' (N en 1..4) y resta un trimestre.
+        if (! preg_match('/^(\d{4})-Q([1-4])$/', $periodo, $m)) {
+            return $periodo;
+        }
+        $year = (int) $m[1];
+        $q = (int) $m[2];
+        if ($q === 1) {
+            return sprintf('%d-Q4', $year - 1);
+        }
+
+        return sprintf('%d-Q%d', $year, $q - 1);
     }
 
     /** @return array|null null si geobase responde 404 (sin datos para ese periodo). */
