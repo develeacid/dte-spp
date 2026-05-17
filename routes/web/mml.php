@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\SystemPermission;
+use App\Http\Controllers\Mml\MapaCoberturaProgramaController;
 use App\Livewire\Mml\AlineacionEstrategica;
 use App\Livewire\Mml\ArbolObjetivosBuilder;
 use App\Livewire\Mml\ArbolProblemaBuilder;
@@ -35,6 +36,10 @@ Route::prefix('mml/programas')
         Route::get('/{programa}/cobertura', CoberturaPrograma::class)
             ->middleware('can:ver_padron')
             ->name('mml.cobertura');
+
+        Route::get('/{programa}/cobertura/mapa.png', MapaCoberturaProgramaController::class)
+            ->middleware('can:ver_padron')
+            ->name('mml.cobertura.mapa');
     });
 
 Route::prefix('mml')
