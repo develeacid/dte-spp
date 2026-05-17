@@ -42,11 +42,15 @@ Tras `migrate:fresh --seed`, los seeders setean `padron_geobase_activo=true` en 
 Comando idempotente para re-hidratar todo (dev local o emergency en prod):
 
 ```bash
-sail artisan geobase:hydrate-padron            # ejecuta
-sail artisan geobase:hydrate-padron --dry-run  # solo lista
+sail artisan geobase:hydrate-padron                       # registrar programas+componentes en geobase
+sail artisan geobase:hydrate-padron --dry-run             # solo lista
+sail artisan geobase:hydrate-indicador-variables          # vincular primera variable de cada componente al endpoint
+sail artisan geobase:hydrate-indicador-variables --dry-run
 ```
 
-Itera `ProgramaPresupuestario::where('padron_geobase_activo', true)` y llama síncronamente `PadronProvisioningService::register()` para cada uno. Re-ejecuciones safe (geobase upserts por `spp_program_id`/`spp_mir_nivel_id`). Errores parciales no rompen el loop, exit code 1 si algún programa falló.
+`hydrate-padron` itera `ProgramaPresupuestario::where('padron_geobase_activo', true)` y llama síncronamente `PadronProvisioningService::register()`. Re-ejecuciones safe (geobase upserts por `spp_program_id`/`spp_mir_nivel_id`). Errores parciales no rompen el loop, exit code 1 si algún programa falló.
+
+`hydrate-indicador-variables` vincula la primera variable (orden=1) de cada indicador de niveles COMPONENTE (+ PROPOSITO para ISM-001) a su endpoint geobase correspondiente. Idempotente: no sobreescribe vinculaciones existentes. Necesario tras `migrate:fresh` o si el dashboard card "Variables vinculadas" muestra 0/N.
 
 ## Worker permanente (VPS)
 
