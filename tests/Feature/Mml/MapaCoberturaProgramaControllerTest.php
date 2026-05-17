@@ -69,4 +69,86 @@ class MapaCoberturaProgramaControllerTest extends TestCase
             ->get("/mml/programas/{$programa->id}/cobertura/mapa.png")
             ->assertForbidden();
     }
+
+    #[Test]
+    public function devuelve_png_con_status_200_y_content_type_correcto(): void
+    {
+        Http::fake(['*/imagen/consulta' => Http::response($this->pngFixture, 200)]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaActivo();
+        $planeador = $this->userPlaneador();
+
+        $response = $this->actingAs($planeador)
+            ->get("/mml/programas/{$programa->id}/cobertura/mapa.png");
+
+        $response->assertOk()
+            ->assertHeader('Content-Type', 'image/png');
+        $this->assertSame($this->pngFixture, $response->getContent());
+    }
+
+    #[Test]
+    public function envia_filtros_correctos_a_geobase_cuando_period_no_se_pasa(): void
+    {
+        Http::fake(['*/imagen/consulta' => Http::response($this->pngFixture, 200)]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaActivo();
+
+        $this->actingAs($this->userPlaneador())
+            ->get("/mml/programas/{$programa->id}/cobertura/mapa.png");
+
+        Http::assertSent(function ($request) use ($programa) {
+            if (! str_contains($request->url(), '/imagen/consulta')) {
+                return false;
+            }
+            $body = $request->data();
+
+            return $body['group_by'] === ['municipio']
+                && $body['aggregates'] === ['total_beneficiarios']
+                && $body['filters']['program_id'] === $programa->id
+                && ! isset($body['filters']['date_from']);
+        });
+    }
+
+    #[Test]
+    public function envia_date_range_cuando_period_se_pasa(): void
+    {
+        Http::fake(['*/imagen/consulta' => Http::response($this->pngFixture, 200)]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaActivo();
+
+        $this->actingAs($this->userPlaneador())
+            ->get("/mml/programas/{$programa->id}/cobertura/mapa.png?period=2026-Q2");
+
+        Http::assertSent(function ($request) {
+            if (! str_contains($request->url(), '/imagen/consulta')) {
+                return false;
+            }
+            $body = $request->data();
+
+            return ($body['filters']['date_from'] ?? null) === '2026-04-01'
+                && ($body['filters']['date_to'] ?? null) === '2026-06-30';
+        });
+    }
+
+    #[Test]
+    public function ignora_period_invalido_y_devuelve_all_time(): void
+    {
+        Http::fake(['*/imagen/consulta' => Http::response($this->pngFixture, 200)]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaActivo();
+
+        $this->actingAs($this->userPlaneador())
+            ->get("/mml/programas/{$programa->id}/cobertura/mapa.png?period=invalid-format")
+            ->assertOk();
+
+        Http::assertSent(function ($request) {
+            $body = $request->data();
+
+            return ! isset($body['filters']['date_from']);
+        });
+    }
 }
