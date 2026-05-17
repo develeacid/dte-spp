@@ -538,7 +538,8 @@ class CoberturaProgramaTest extends TestCase
         Livewire::actingAs($this->userPlaneador())
             ->test(CoberturaPrograma::class, ['programa' => $programa])
             ->assertSet('estado', 'ok')
-            ->assertSeeHtml('cobertura/mapa.png');
+            ->assertSeeHtml('cobertura/mapa.png')
+            ->assertSeeHtml('wire:key="mapa-');
     }
 
     public function test_vista_omite_img_del_mapa_si_estado_es_inactivo(): void
