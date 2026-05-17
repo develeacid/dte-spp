@@ -138,7 +138,7 @@ class GeoBaseClientTest extends TestCase
         Http::assertSentCount(3);
     }
 
-    public function test_get_program_coverage_useCache_false_bypassea_cache(): void
+    public function test_get_program_coverage_use_cache_false_bypassea_cache(): void
     {
         Http::fake([
             '*/programs/5/coverage*' => Http::response(['data' => ['total_enrollments' => 12]], 200),
