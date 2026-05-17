@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class GlosarioConfigTest extends TestCase
@@ -14,7 +15,7 @@ class GlosarioConfigTest extends TestCase
         $this->glosario = require __DIR__.'/../../config/glosario.php';
     }
 
-    /** @test */
+    #[Test]
     public function glosario_has_all_mir_level_keys(): void
     {
         $requiredKeys = ['fin', 'proposito', 'componente', 'actividad'];
@@ -25,7 +26,7 @@ class GlosarioConfigTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function glosario_has_all_mir_column_keys(): void
     {
         $requiredKeys = ['resumen_narrativo', 'supuestos', 'indicador', 'medios_verificacion'];
@@ -35,7 +36,7 @@ class GlosarioConfigTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function glosario_has_all_cremaa_keys(): void
     {
         $cremaaKeys = [
@@ -48,14 +49,14 @@ class GlosarioConfigTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function glosario_has_logic_keys(): void
     {
         $this->assertArrayHasKey('logica_vertical', $this->glosario);
         $this->assertArrayHasKey('logica_horizontal', $this->glosario);
     }
 
-    /** @test */
+    #[Test]
     public function glosario_has_sentido_keys(): void
     {
         $keys = ['sentido_ascendente', 'sentido_descendente', 'sentido_regular'];
@@ -65,7 +66,7 @@ class GlosarioConfigTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function glosario_has_tree_keys(): void
     {
         $keys = ['problema_central', 'causa_directa', 'causa_indirecta', 'efecto_directo', 'efecto_indirecto'];
@@ -75,7 +76,7 @@ class GlosarioConfigTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function all_values_are_non_empty_strings(): void
     {
         foreach ($this->glosario as $key => $value) {

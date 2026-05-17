@@ -2,11 +2,12 @@
 
 namespace Tests\Feature\Components;
 
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class HelpLabelComponentTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function help_label_renders_with_glossary_key(): void
     {
         $view = $this->blade(
@@ -17,7 +18,7 @@ class HelpLabelComponentTest extends TestCase
         $view->assertSee(config('glosario.fin'));
     }
 
-    /** @test */
+    #[Test]
     public function help_label_renders_with_custom_help_text(): void
     {
         $view = $this->blade(
@@ -27,7 +28,7 @@ class HelpLabelComponentTest extends TestCase
         $view->assertSee('Custom help');
     }
 
-    /** @test */
+    #[Test]
     public function help_label_renders_without_tooltip_when_no_help(): void
     {
         $view = $this->blade(
@@ -38,7 +39,7 @@ class HelpLabelComponentTest extends TestCase
         $view->assertDontSee('cursor-help');
     }
 
-    /** @test */
+    #[Test]
     public function help_label_renders_for_attribute(): void
     {
         $view = $this->blade(

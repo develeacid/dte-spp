@@ -11,6 +11,7 @@ use Database\Seeders\PadronPermissionsSeeder;
 use Database\Seeders\PresupuestoPermissionsSeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -37,7 +38,7 @@ class PermisosPadronTest extends TestCase
         ]);
     }
 
-    /** @dataProvider rolesQueVenPadron */
+    #[DataProvider('rolesQueVenPadron')]
     public function test_rol_puede_ver_tab_padron(SystemRole $rol): void
     {
         $user = User::factory()->withPersonalTeam()->create();

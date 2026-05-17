@@ -2,11 +2,12 @@
 
 namespace Tests\Feature\Components;
 
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class TooltipComponentTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function tooltip_renders_with_text(): void
     {
         $view = $this->blade(
@@ -17,7 +18,7 @@ class TooltipComponentTest extends TestCase
         $view->assertSee('Trigger');
     }
 
-    /** @test */
+    #[Test]
     public function tooltip_renders_with_top_position(): void
     {
         $view = $this->blade(
@@ -27,7 +28,7 @@ class TooltipComponentTest extends TestCase
         $view->assertSee('bottom-full');
     }
 
-    /** @test */
+    #[Test]
     public function tooltip_renders_with_right_position(): void
     {
         $view = $this->blade(
@@ -37,7 +38,7 @@ class TooltipComponentTest extends TestCase
         $view->assertSee('left-full');
     }
 
-    /** @test */
+    #[Test]
     public function tooltip_renders_with_custom_max_width(): void
     {
         $view = $this->blade(

@@ -7,6 +7,7 @@ use App\Models\Transparencia\DatasetAbierto;
 use App\Models\User;
 use DomainException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class DatasetAbiertoModelTest extends TestCase
@@ -145,7 +146,7 @@ class DatasetAbiertoModelTest extends TestCase
         $plantilla->clonarParaPeriodo('2026-Q1', $autor);
     }
 
-    /** @dataProvider periodosInvalidosProvider */
+    #[DataProvider('periodosInvalidosProvider')]
     public function test_clonar_plantilla_falla_con_periodo_invalido(string $periodoInvalido): void
     {
         $autor = User::factory()->create();
