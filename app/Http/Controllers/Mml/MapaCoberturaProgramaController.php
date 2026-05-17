@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Mml;
 use App\Http\Controllers\Controller;
 use App\Models\ProgramaPresupuestario;
 use App\Services\GeoBase\GeoBaseClient;
+use App\Services\GeoBase\GeoBaseException;
 use App\Support\PeriodRange;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
@@ -40,7 +42,11 @@ class MapaCoberturaProgramaController extends Controller
             ? 'all'
             : "{$dateFilters['date_from']}_{$dateFilters['date_to']}";
         $cacheKey = "geobase:map:program:{$programa->id}:{$cacheFragment}";
-        $png = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, fn () => $client->getConsultaImage($queryConfig));
+        try {
+            $png = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, fn () => $client->getConsultaImage($queryConfig));
+        } catch (GeoBaseException|ConnectionException) {
+            return response('', 503);
+        }
 
         return response($png, 200)
             ->header('Content-Type', 'image/png')

@@ -8,6 +8,7 @@ use App\Models\User;
 use Database\Seeders\PadronPermissionsSeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -217,5 +218,49 @@ class MapaCoberturaProgramaControllerTest extends TestCase
 
         // Todos colapsan a la key all-time, así que solo 1 HTTP.
         Http::assertSentCount(1);
+    }
+
+    #[Test]
+    public function devuelve_503_si_geobase_5xx(): void
+    {
+        Http::fake(['*/imagen/consulta' => Http::response(['error' => 'down'], 500)]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaActivo();
+
+        $this->actingAs($this->userPlaneador())
+            ->get("/mml/programas/{$programa->id}/cobertura/mapa.png")
+            ->assertStatus(503);
+    }
+
+    #[Test]
+    public function devuelve_503_si_geobase_timeout(): void
+    {
+        Http::fake(function () {
+            throw new ConnectionException('Connection refused');
+        });
+        Http::preventStrayRequests();
+
+        $programa = $this->programaActivo();
+
+        $this->actingAs($this->userPlaneador())
+            ->get("/mml/programas/{$programa->id}/cobertura/mapa.png")
+            ->assertStatus(503);
+    }
+
+    #[Test]
+    public function no_cachea_respuestas_503(): void
+    {
+        Http::fake(['*/imagen/consulta' => Http::response(['error' => 'down'], 500)]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaActivo();
+        $this->actingAs($this->userPlaneador());
+
+        $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png")->assertStatus(503);
+        $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png")->assertStatus(503);
+
+        // Cada call: 3 retries por geobase client = al menos 2 HTTP totales (≥2 = NO se cacheó).
+        $this->assertGreaterThanOrEqual(2, count(Http::recorded()));
     }
 }
