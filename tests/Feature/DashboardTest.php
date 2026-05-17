@@ -15,6 +15,9 @@ use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -163,6 +166,34 @@ class DashboardTest extends TestCase
     {
         $response = $this->get('/dashboard');
         $response->assertRedirect('/login');
+    }
+
+    public function test_geobase_stats_emite_log_warning_si_geobase_falla_5xx(): void
+    {
+        Queue::fake();
+        Http::fake(['*/programs/*/coverage*' => Http::response(['error' => 'down'], 500)]);
+        Http::preventStrayRequests();
+        Log::spy();
+
+        ProgramaPresupuestario::create([
+            'nombre' => 'Programa con padrón activo',
+            'clave' => 'PA-001',
+            'team_id' => $this->teamId,
+            'padron_geobase_activo' => true,
+        ]);
+
+        $this->actingAs($this->admin);
+        Livewire::test(Dashboard::class);
+
+        Log::shouldHaveReceived('warning')
+            ->withArgs(function (string $msg, array $ctx) {
+                return $msg === 'dashboard: geobaseStats falló'
+                    && array_key_exists('exception', $ctx)
+                    && array_key_exists('message', $ctx)
+                    && array_key_exists('programas_intentados', $ctx)
+                    && array_key_exists('user_id', $ctx);
+            })
+            ->once();
     }
 
     public function test_vencidos_widget_shown_when_overdue(): void

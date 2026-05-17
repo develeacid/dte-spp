@@ -10,6 +10,7 @@ use App\Services\GeoBase\GeoBaseClient;
 use App\Services\GeoBase\GeoBaseException;
 use App\Services\Presupuesto\PresupuestoResumenService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -190,8 +191,21 @@ class Dashboard extends Component
                 $connected = true;
             } catch (GeoBaseException $e) {
                 $lastError = $e->getMessage();
+                Log::warning('dashboard: geobaseStats falló', [
+                    'user_id' => auth()->id(),
+                    'exception' => $e::class,
+                    'status_code' => $e->statusCode ?? null,
+                    'message' => $e->getMessage(),
+                    'programas_intentados' => $programasConLink->pluck('id')->all(),
+                ]);
             } catch (\Exception $e) {
                 $lastError = 'Error de conexion';
+                Log::warning('dashboard: geobaseStats falló', [
+                    'user_id' => auth()->id(),
+                    'exception' => $e::class,
+                    'message' => $e->getMessage(),
+                    'programas_intentados' => $programasConLink->pluck('id')->all(),
+                ]);
             }
 
             return [
