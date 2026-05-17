@@ -8,6 +8,7 @@ use App\Services\GeoBase\GeoBaseClient;
 use App\Support\PeriodRange;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use InvalidArgumentException;
 
 class MapaCoberturaProgramaController extends Controller
@@ -33,7 +34,8 @@ class MapaCoberturaProgramaController extends Controller
             ),
         ];
 
-        $png = $client->getConsultaImage($queryConfig);
+        $cacheKey = "geobase:map:program:{$programa->id}:".($period ?: 'all');
+        $png = Cache::remember($cacheKey, 60, fn () => $client->getConsultaImage($queryConfig));
 
         return response($png, 200)
             ->header('Content-Type', 'image/png')

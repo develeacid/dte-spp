@@ -151,4 +151,38 @@ class MapaCoberturaProgramaControllerTest extends TestCase
             return ! isset($body['filters']['date_from']);
         });
     }
+
+    #[Test]
+    public function cachea_60s_dentro_de_misma_clave_programa_period(): void
+    {
+        Http::fake(['*/imagen/consulta' => Http::response($this->pngFixture, 200)]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaActivo();
+        $this->actingAs($this->userPlaneador());
+
+        $r1 = $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png?period=2026-Q2");
+        $r2 = $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png?period=2026-Q2");
+
+        $r1->assertOk();
+        $r2->assertOk();
+        Http::assertSentCount(1);
+    }
+
+    #[Test]
+    public function periodos_distintos_no_colisionan_en_cache(): void
+    {
+        Http::fake(['*/imagen/consulta' => Http::response($this->pngFixture, 200)]);
+        Http::preventStrayRequests();
+
+        $programa = $this->programaActivo();
+        $this->actingAs($this->userPlaneador());
+
+        $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png");                  // all
+        $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png?period=2026-Q1");   // Q1
+        $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png?period=2026-Q2");   // Q2
+        $this->get("/mml/programas/{$programa->id}/cobertura/mapa.png?period=2026-Q1");   // hit
+
+        Http::assertSentCount(3);
+    }
 }
