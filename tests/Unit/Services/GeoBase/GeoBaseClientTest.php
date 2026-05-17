@@ -4,6 +4,7 @@ namespace Tests\Unit\Services\GeoBase;
 
 use App\Services\GeoBase\GeoBaseClient;
 use App\Services\GeoBase\GeoBaseException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -23,6 +24,7 @@ class GeoBaseClientTest extends TestCase
             'services.geobase.retry_sleep' => 100,
         ]);
 
+        Cache::flush();
         $this->client = app(GeoBaseClient::class);
     }
 
@@ -101,6 +103,80 @@ class GeoBaseClientTest extends TestCase
 
         $this->assertEquals(500, $result['data']['total_enrollments']);
         $this->assertEquals(450, $result['data']['aprobados']);
+    }
+
+    public function test_get_program_coverage_cachea_60s_por_program_y_period(): void
+    {
+        Http::fake([
+            '*/programs/5/coverage*' => Http::response(['data' => ['total_enrollments' => 99]], 200),
+        ]);
+        Http::preventStrayRequests();
+
+        // Dos llamadas idénticas: solo 1 HTTP gracias al cache.
+        $a = $this->client->getProgramCoverage(5);
+        $b = $this->client->getProgramCoverage(5);
+
+        $this->assertSame(99, $a['data']['total_enrollments']);
+        $this->assertSame(99, $b['data']['total_enrollments']);
+        Http::assertSentCount(1);
+    }
+
+    public function test_get_program_coverage_no_colisiona_entre_periodos_distintos(): void
+    {
+        Http::fake([
+            '*/programs/5/coverage*' => Http::response(['data' => ['total_enrollments' => 50]], 200),
+        ]);
+        Http::preventStrayRequests();
+
+        // Cada (program, period) tiene su propio slot de cache.
+        $this->client->getProgramCoverage(5);                // all-time
+        $this->client->getProgramCoverage(5, '2026-Q1');     // Q1
+        $this->client->getProgramCoverage(5, '2026-Q2');     // Q2
+        $this->client->getProgramCoverage(5, '2026-Q1');     // hit (Q1 cached)
+
+        // 3 misses + 1 hit = 3 HTTP.
+        Http::assertSentCount(3);
+    }
+
+    public function test_get_program_coverage_useCache_false_bypassea_cache(): void
+    {
+        Http::fake([
+            '*/programs/5/coverage*' => Http::response(['data' => ['total_enrollments' => 12]], 200),
+        ]);
+        Http::preventStrayRequests();
+
+        // Sin cache: cada llamada hace HTTP, aunque sean idénticas.
+        $this->client->getProgramCoverage(5, null, useCache: false);
+        $this->client->getProgramCoverage(5, null, useCache: false);
+        $this->client->getProgramCoverage(5, null, useCache: false);
+
+        Http::assertSentCount(3);
+    }
+
+    public function test_get_program_coverage_no_cachea_respuestas_de_error(): void
+    {
+        // Si geobase responde 5xx, el throw NO debe cachear: el siguiente intento
+        // debe volver a pegarle a geobase (Cache::remember no almacena excepciones).
+        Http::fake([
+            '*/programs/5/coverage*' => Http::response(['error' => 'down'], 500),
+        ]);
+        Http::preventStrayRequests();
+
+        $threwFirst = false;
+        $threwSecond = false;
+        try {
+            $this->client->getProgramCoverage(5);
+        } catch (GeoBaseException) {
+            $threwFirst = true;
+        }
+        try {
+            $this->client->getProgramCoverage(5);
+        } catch (GeoBaseException) {
+            $threwSecond = true;
+        }
+
+        $this->assertTrue($threwFirst, 'Primer intento debe lanzar exception');
+        $this->assertTrue($threwSecond, 'Segundo intento NO debe estar cacheado — debe re-lanzar');
     }
 
     public function test_get_component_coverage_hits_components_endpoint(): void

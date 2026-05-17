@@ -4,6 +4,7 @@ namespace App\Services\GeoBase;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class GeoBaseClient
@@ -67,12 +68,25 @@ class GeoBaseClient
     // (== programa.spp_program_id from geobase's perspective). Geobase
     // resolves the local row internally.
 
-    public function getProgramCoverage(int $sppProgramId, ?string $period = null): array
+    /**
+     * Coverage del programa. Cacheado 60s por (program, period) para reducir
+     * carga en el tab Cobertura (que dispara 3 calls — all-time + Q actual + Q-1).
+     * Pasar useCache=false en jobs que requieren fresh (geobase:sync-avances).
+     */
+    public function getProgramCoverage(int $sppProgramId, ?string $period = null, bool $useCache = true): array
     {
-        return $this->get(
+        $fetch = fn (): array => $this->get(
             "/programs/{$sppProgramId}/coverage",
             $period !== null ? ['period' => $period] : []
         );
+
+        if (! $useCache) {
+            return $fetch();
+        }
+
+        $key = "geobase:coverage:program:{$sppProgramId}:".($period ?? 'all');
+
+        return Cache::remember($key, 60, $fetch);
     }
 
     /**

@@ -12,6 +12,7 @@ use App\Models\User;
 use Database\Seeders\PadronPermissionsSeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
@@ -34,6 +35,7 @@ class CoberturaProgramaTest extends TestCase
         // Componente is created on a programa with padron_geobase_activo=true;
         // these tests don't care about that side effect, so we capture them.
         Queue::fake();
+        Cache::flush();
     }
 
     private function programaConComponente(bool $padronActivo = true): ProgramaPresupuestario
