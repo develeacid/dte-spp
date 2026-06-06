@@ -548,6 +548,8 @@ class MirEditor extends Component
         $teams = Team::orderBy('name')->get();
         $anexosTransversales = AnexoTransversal::activos()->get();
 
+        $nivelesSinEficacia = IndicadorReglasService::nivelesSinEficacia($this->programa);
+
         return view('livewire.mml.mir-editor', [
             'fin' => $fin,
             'proposito' => $proposito,
@@ -557,6 +559,7 @@ class MirEditor extends Component
             'versiones' => $versiones,
             'teams' => $teams,
             'anexosTransversales' => $anexosTransversales,
+            'nivelesSinEficacia' => $nivelesSinEficacia,
         ]);
     }
 }
