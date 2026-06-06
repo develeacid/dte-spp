@@ -70,14 +70,16 @@
                 @endphp
                 <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 lg:col-span-1">
                     <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Distribución de Estados</h4>
-                    <x-charts.donut
-                        :labels="$estadoLabels"
-                        :series="$estadoSeries"
-                        :colors="$estadoColors"
-                        :height="220"
-                        centerText="{{ array_sum($estadoSeries) }}"
-                        centerSubtext="registros"
-                    />
+                    <div wire:key="sabana-donut-estado-{{ md5(json_encode($estadoSeries)) }}">
+                        <x-charts.donut
+                            :labels="$estadoLabels"
+                            :series="$estadoSeries"
+                            :colors="$estadoColors"
+                            :height="220"
+                            centerText="{{ array_sum($estadoSeries) }}"
+                            centerSubtext="registros"
+                        />
+                    </div>
                 </div>
                 <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 lg:col-span-2">
                     @php
@@ -91,15 +93,17 @@
                         })->values();
                     @endphp
                     <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Estado por Programa</h4>
-                    <x-charts.bar-horizontal
-                        :categories="$porProgramaEstado->pluck('clave')->toArray()"
-                        :series="[
-                            ['name' => 'Aprobados', 'data' => $porProgramaEstado->pluck('aprobados')->toArray()],
-                            ['name' => 'En proceso', 'data' => $porProgramaEstado->pluck('pendientes')->toArray()],
-                            ['name' => 'Observado/Vencido', 'data' => $porProgramaEstado->pluck('problemas')->toArray()],
-                        ]"
-                        :height="max(200, $porProgramaEstado->count() * 40)"
-                    />
+                    <div wire:key="sabana-bar-programa-{{ md5(json_encode($porProgramaEstado)) }}">
+                        <x-charts.bar-horizontal
+                            :categories="$porProgramaEstado->pluck('clave')->toArray()"
+                            :series="[
+                                ['name' => 'Aprobados', 'data' => $porProgramaEstado->pluck('aprobados')->toArray()],
+                                ['name' => 'En proceso', 'data' => $porProgramaEstado->pluck('pendientes')->toArray()],
+                                ['name' => 'Observado/Vencido', 'data' => $porProgramaEstado->pluck('problemas')->toArray()],
+                            ]"
+                            :height="max(200, $porProgramaEstado->count() * 40)"
+                        />
+                    </div>
                 </div>
             </div>
 
