@@ -10,7 +10,7 @@
         </div>
     </x-page.header>
 
-    <x-page.container>
+    <x-page.container fluid>
         {{-- Filtros --}}
         <div class="mb-6 flex items-center gap-4">
             <div>
@@ -140,5 +140,9 @@
                 </table>
             </div>
         @endif
+
+        <div class="h-28"></div>
     </x-page.container>
+
+    <x-tracking.kpi-bar :stats="$kpis" />
 </div>
