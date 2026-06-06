@@ -25,8 +25,19 @@ class IndicadoresVencidos extends Component
             ->orderBy('created_at', 'desc')
             ->get();
 
+        $total = $avances->count();
+        $programasUnicos = $avances->pluck('indicador.programa.id')->filter()->unique()->count();
+        $sinAsignar = $avances->filter(fn ($a) => $a->capturador === null)->count();
+
+        $kpis = [
+            ['label' => 'Vencidos', 'value' => $total, 'color' => 'red'],
+            ['label' => 'Programas afectados', 'value' => $programasUnicos, 'color' => 'slate'],
+            ['label' => 'Sin asignar', 'value' => $sinAsignar, 'color' => 'orange'],
+        ];
+
         return view('livewire.tracking.indicadores-vencidos', [
             'avances' => $avances,
+            'kpis' => $kpis,
         ]);
     }
 }

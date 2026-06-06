@@ -5,7 +5,7 @@
         </x-ui.button.primary>
     </x-page.header>
 
-    <x-page.container>
+    <x-page.container fluid>
         {{-- Filtros --}}
         <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
@@ -84,5 +84,9 @@
         <div class="mt-4">
             {{ $partidas->links() }}
         </div>
+
+        <div class="h-28"></div>
     </x-page.container>
+
+    <x-tracking.kpi-bar :stats="$kpis" />
 </div>

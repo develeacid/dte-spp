@@ -17,8 +17,20 @@ class DashboardImportaciones extends Component
             ->orderByDesc('created_at')
             ->get();
 
+        $procesados = $reportes->where('estado', 'procesado')->count();
+        $pendientes = $reportes->where('estado', 'pendiente')->count();
+        $descartados = $reportes->where('estado', 'descartado')->count();
+
+        $kpis = [
+            ['label' => 'Importaciones', 'value' => $reportes->count()],
+            ['label' => 'Procesadas', 'value' => $procesados, 'color' => 'green'],
+            ['label' => 'Pendientes', 'value' => $pendientes, 'color' => 'amber'],
+            ['label' => 'Descartadas', 'value' => $descartados],
+        ];
+
         return view('livewire.mml.dashboard-importaciones', [
             'reportes' => $reportes,
+            'kpis' => $kpis,
         ]);
     }
 

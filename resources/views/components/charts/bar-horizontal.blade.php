@@ -53,14 +53,25 @@
             };
 
             this.chart = new ApexCharts(this.$refs.chart, options);
-            this.chart.render();
+            this.chart.render().then(() => {
+                requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 250);
+            });
+
+            if (window.ResizeObserver) {
+                this.resizeObserver = new ResizeObserver(() => {
+                    window.dispatchEvent(new Event('resize'));
+                });
+                this.resizeObserver.observe(this.$el);
+            }
         },
         destroy() {
             if (this.chart) { this.chart.destroy(); this.chart = null; }
+            if (this.resizeObserver) { this.resizeObserver.disconnect(); this.resizeObserver = null; }
         }
      }"
      x-init="init()"
      x-on:remove="destroy()"
-     {{ $attributes->merge(['class' => '']) }}>
-    <div x-ref="chart"></div>
+     {{ $attributes->merge(['class' => 'w-full overflow-hidden']) }}>
+    <div x-ref="chart" class="w-full"></div>
 </div>

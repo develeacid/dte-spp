@@ -72,8 +72,21 @@ class Index extends Component
             $query->whereNotNull('periodo');
         }
 
+        $total = DatasetAbierto::count();
+        $publicados = DatasetAbierto::where('status', 'publicado')->count();
+        $revision = DatasetAbierto::where('status', 'revision')->count();
+        $borradores = DatasetAbierto::where('status', 'borrador')->count();
+
+        $kpis = [
+            ['label' => 'Total datasets', 'value' => $total],
+            ['label' => 'Publicados', 'value' => $publicados, 'color' => 'green'],
+            ['label' => 'En revisión', 'value' => $revision, 'color' => 'amber'],
+            ['label' => 'Borradores', 'value' => $borradores],
+        ];
+
         return view('livewire.transparencia.datasets.index', [
             'datasets' => $query->orderByDesc('updated_at')->paginate(20),
+            'kpis' => $kpis,
         ]);
     }
 }

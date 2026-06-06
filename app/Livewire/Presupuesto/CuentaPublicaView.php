@@ -34,9 +34,29 @@ class CuentaPublicaView extends Component
             ? $service->resumenPorEjePed($this->filtroEjercicio)
             : collect();
 
+        $totalAprobado = 0.0;
+        $totalEjercido = 0.0;
+        $verdes = 0;
+        foreach ($datos as $item) {
+            $totalAprobado += (float) $item['financiero']->efectivo;
+            $totalEjercido += (float) $item['financiero']->pagado;
+            if (($item['semaforo']['combinado'] ?? null) === 'verde') {
+                $verdes++;
+            }
+        }
+        $pctEjercido = $totalAprobado > 0 ? round(($totalEjercido / $totalAprobado) * 100, 1) : 0;
+
+        $kpis = [
+            ['label' => 'Programas', 'value' => count($datos)],
+            ['label' => 'Aprobado', 'value' => '$'.number_format($totalAprobado, 0), 'color' => 'blue'],
+            ['label' => 'Ejercido', 'value' => '$'.number_format($totalEjercido, 0), 'color' => 'amber'],
+            ['label' => 'Semáforo verde', 'value' => $verdes, 'color' => 'green'],
+        ];
+
         return view('livewire.presupuesto.cuenta-publica-view', [
             'datos' => $datos,
             'resumenEjes' => $resumenEjes,
+            'kpis' => $kpis,
         ]);
     }
 }

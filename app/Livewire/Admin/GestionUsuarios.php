@@ -124,8 +124,21 @@ class GestionUsuarios extends Component
             })
             ->orderBy('name');
 
+        $total = User::count();
+        $activos = User::whereNotNull('activated_at')->where('active', true)->count();
+        $pendientes = User::whereNull('activated_at')->whereNotNull('invitation_token')->count();
+        $inactivos = User::where('active', false)->count();
+
+        $kpis = [
+            ['label' => 'Total usuarios', 'value' => $total],
+            ['label' => 'Activos', 'value' => $activos, 'color' => 'green'],
+            ['label' => 'Pendientes', 'value' => $pendientes, 'color' => 'amber'],
+            ['label' => 'Inactivos', 'value' => $inactivos, 'color' => 'red'],
+        ];
+
         return view('livewire.admin.gestion-usuarios', [
             'usuarios' => $query->paginate(15),
+            'kpis' => $kpis,
         ]);
     }
 }

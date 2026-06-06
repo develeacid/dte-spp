@@ -82,11 +82,27 @@ class GestionarDesbloqueos extends Component
     {
         abort_unless(auth()->user()->can('administrar_usuarios'), 403);
 
+        $desbloqueos = Desbloqueo::where('estado', 'pendiente')
+            ->with(['avance.indicador', 'solicitante'])
+            ->latest()
+            ->get();
+
+        $aprobadosHoy = Desbloqueo::where('estado', 'aprobado')
+            ->whereDate('resuelto_at', today())
+            ->count();
+        $rechazadosHoy = Desbloqueo::where('estado', 'rechazado')
+            ->whereDate('resuelto_at', today())
+            ->count();
+
+        $kpis = [
+            ['label' => 'Pendientes', 'value' => $desbloqueos->count(), 'color' => 'yellow'],
+            ['label' => 'Aprobados hoy', 'value' => $aprobadosHoy, 'color' => 'green'],
+            ['label' => 'Rechazados hoy', 'value' => $rechazadosHoy, 'color' => 'red'],
+        ];
+
         return view('livewire.tracking.gestionar-desbloqueos', [
-            'desbloqueos' => Desbloqueo::where('estado', 'pendiente')
-                ->with(['avance.indicador', 'solicitante'])
-                ->latest()
-                ->get(),
+            'desbloqueos' => $desbloqueos,
+            'kpis' => $kpis,
         ]);
     }
 }

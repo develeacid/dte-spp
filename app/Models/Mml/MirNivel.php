@@ -7,6 +7,7 @@ use App\Models\PedLineaAccion;
 use App\Models\PedObjetivoEstrategico;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
+use App\Support\Mml\Trazabilidad;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -90,5 +91,10 @@ class MirNivel extends Model
     public function pedLineaAccion(): BelongsTo
     {
         return $this->belongsTo(PedLineaAccion::class);
+    }
+
+    public function trazabilidad(): Trazabilidad
+    {
+        return Trazabilidad::deNivel($this);
     }
 }

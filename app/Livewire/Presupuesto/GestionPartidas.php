@@ -67,9 +67,22 @@ class GestionPartidas extends Component
             ->orderBy('clave')
             ->get();
 
+        $totales = PartidaPresupuestal::paraTeam($teamId)
+            ->paraEjercicio($this->filtroEjercicio)
+            ->selectRaw('COUNT(*) as total_partidas, COALESCE(SUM(monto_aprobado), 0) as total_aprobado, COALESCE(SUM(COALESCE(monto_modificado, monto_aprobado)), 0) as total_modificado')
+            ->first();
+
+        $kpis = [
+            ['label' => 'Partidas', 'value' => (int) $totales->total_partidas],
+            ['label' => 'Aprobado', 'value' => '$'.number_format((float) $totales->total_aprobado, 0), 'color' => 'blue'],
+            ['label' => 'Modificado', 'value' => '$'.number_format((float) $totales->total_modificado, 0), 'color' => 'amber'],
+            ['label' => 'Ejercicio', 'value' => $this->filtroEjercicio],
+        ];
+
         return view('livewire.presupuesto.gestion-partidas', [
             'partidas' => $partidas,
             'programas' => $programas,
+            'kpis' => $kpis,
         ]);
     }
 }

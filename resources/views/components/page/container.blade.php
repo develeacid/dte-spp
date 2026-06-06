@@ -2,9 +2,16 @@
     'title' => null,
     'subtitle' => null,
     'breadcrumbs' => [],
+    'fluid' => false,
 ])
 
-<div {{ $attributes->merge(['class' => 'max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 space-y-6']) }}>
+@php
+    $widthClasses = $fluid
+        ? 'w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6'
+        : 'max-w-7xl mx-auto sm:px-6 lg:px-8 py-6 space-y-6';
+@endphp
+
+<div {{ $attributes->merge(['class' => $widthClasses]) }}>
 
     {{-- 1. Breadcrumb --}}
     @if(!empty($breadcrumbs))

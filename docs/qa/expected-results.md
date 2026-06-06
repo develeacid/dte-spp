@@ -1,6 +1,6 @@
 # Resultados Esperados — QA Testing
 
-> Generado automáticamente por QaTestingSeeder el 2026-05-16 14:50
+> Generado automáticamente por QaTestingSeeder el 2026-06-06 21:07
 
 ## Semáforos Esperados por Avance
 
@@ -8,6 +8,7 @@
 |----------|-----------|---------|-----------|-----------|-------------|---------|----------|--------|
 | ISM-001 | Porcentaje de subsidios otorgados respecto a solicitudes aprobadas | 1 | 2025 | 20.0000 | 21.2500 | ascendente | verde | aprobado |
 | ISM-001 | Porcentaje de subsidios otorgados respecto a solicitudes aprobadas | 2 | 2025 | 19.5000 | 21.2500 | ascendente | verde | aprobado |
+| ISM-001 | Porcentaje de subsidios otorgados respecto a solicitudes aprobadas | 3 | 2025 | 11.7000 | 21.2500 | ascendente | rojo | observado |
 | ISM-001 | Porcentaje de subsidios otorgados respecto a solicitudes aprobadas | 4 | 2025 | 16.6000 | 21.2500 | ascendente | amarillo | en_revision |
 | ISM-001 | Porcentaje de subsidios otorgados respecto a solicitudes aprobadas | 1 | 2026 | 19.8000 | 21.2500 | ascendente | verde | aprobado |
 | ISM-001 | Porcentaje de solicitudes evaluadas en plazo | 1 | 2025 | 21.3800 | 22.5000 | ascendente | verde | aprobado |
@@ -40,6 +41,8 @@
 | PEC-002 | Número de docentes capacitados en nutrición preventiva | 3 | 2025 | 118.7500 | 125.0000 | ascendente | verde | aprobado |
 | PEC-002 | Número de docentes capacitados en nutrición preventiva | 4 | 2025 | 118.7500 | 125.0000 | ascendente | verde | aprobado |
 | PEC-002 | Número de docentes capacitados en nutrición preventiva | 1 | 2026 | 118.7500 | 125.0000 | ascendente | verde | aprobado |
+| FSP-003 | Porcentaje de equipamiento entregado respecto al programado | 1 | 2025 | 10.0000 | 25.0000 | ascendente | rojo | observado |
+| FSP-003 | Porcentaje de equipamiento entregado respecto al programado | 2 | 2025 | 13.7500 | 25.0000 | ascendente | rojo | observado |
 | FSP-003 | Porcentaje de equipamiento entregado respecto al programado | 3 | 2025 | 18.0000 | 25.0000 | ascendente | amarillo | en_revision |
 | FSP-003 | Porcentaje de equipamiento entregado respecto al programado | 4 | 2025 | 22.0000 | 25.0000 | ascendente | amarillo | aprobado |
 | FSP-003 | Porcentaje de equipamiento entregado respecto al programado | 1 | 2026 | 23.7500 | 25.0000 | ascendente | verde | aprobado |
@@ -58,6 +61,7 @@
 | FSP-003 | Porcentaje de elementos capacitados del total asignado | 3 | 2025 | 20.1900 | 21.2500 | ascendente | verde | aprobado |
 | FSP-003 | Porcentaje de elementos capacitados del total asignado | 4 | 2025 | 20.1900 | 21.2500 | ascendente | verde | aprobado |
 | FSP-003 | Porcentaje de elementos capacitados del total asignado | 1 | 2026 | 20.1900 | 21.2500 | ascendente | verde | aprobado |
+| DDT-004 | Porcentaje de proyectos de rehabilitación completados | 1 | 2025 | 7.5000 | 25.0000 | ascendente | rojo | observado |
 | DDT-004 | Porcentaje de proyectos de rehabilitación completados | 2 | 2025 | 27.5000 | 25.0000 | ascendente | verde | aprobado |
 | DDT-004 | Porcentaje de proyectos de rehabilitación completados | 4 | 2025 | 21.2500 | 25.0000 | ascendente | amarillo | en_revision |
 | DDT-004 | Porcentaje de proyectos de rehabilitación completados | 1 | 2026 | N/A | 25.0000 | ascendente | N/A | en_captura |
@@ -71,12 +75,8 @@
 | DDT-004 | Razón de proyectos aprobados vs presentados | 3 | 2025 | 0.1900 | 0.2000 | ascendente | verde | aprobado |
 | DDT-004 | Razón de proyectos aprobados vs presentados | 4 | 2025 | 0.1900 | 0.2000 | ascendente | verde | aprobado |
 | DDT-004 | Razón de proyectos aprobados vs presentados | 1 | 2026 | 0.1900 | 0.2000 | ascendente | verde | aprobado |
-| ISM-001 | Porcentaje de subsidios otorgados respecto a solicitudes aprobadas | 3 | 2025 | 11.7000 | 21.2500 | ascendente | rojo | observado |
-| FSP-003 | Porcentaje de equipamiento entregado respecto al programado | 1 | 2025 | 10.0000 | 25.0000 | ascendente | rojo | observado |
-| FSP-003 | Porcentaje de equipamiento entregado respecto al programado | 2 | 2025 | 13.7500 | 25.0000 | ascendente | rojo | observado |
-| DDT-004 | Porcentaje de proyectos de rehabilitación completados | 1 | 2025 | 7.5000 | 25.0000 | ascendente | rojo | observado |
 
-## Dashboard Admin — SE-001 (team_id=745)
+## Dashboard Admin — SE-001 (team_id=53)
 
 - **Programas:** 1
 - **Indicadores con seguimiento:** 8
@@ -88,7 +88,7 @@
 - Amarillo: 1
 - Rojo: 6
 
-## Dashboard Admin — SS-002 (team_id=746)
+## Dashboard Admin — SS-002 (team_id=54)
 
 - **Programas:** 1
 - **Indicadores con seguimiento:** 7
@@ -100,7 +100,7 @@
 - Amarillo: 0
 - Rojo: 0
 
-## Dashboard Admin — SEG-003 (team_id=747)
+## Dashboard Admin — SEG-003 (team_id=55)
 
 - **Programas:** 1
 - **Indicadores con seguimiento:** 7
@@ -112,7 +112,7 @@
 - Amarillo: 2
 - Rojo: 2
 
-## Dashboard Admin — SECTUR-004 (team_id=748)
+## Dashboard Admin — SECTUR-004 (team_id=56)
 
 - **Programas:** 1
 - **Indicadores con seguimiento:** 6

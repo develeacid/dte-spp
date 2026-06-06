@@ -5,7 +5,7 @@
         </a>
     </x-page.header>
 
-    <x-page.container>
+    <x-page.container fluid>
         {{-- Tabs --}}
         <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
             <nav class="-mb-px flex space-x-8">
@@ -211,5 +211,9 @@
                 </div>
             @endif
         @endif
+
+        <div class="h-28"></div>
     </x-page.container>
+
+    <x-tracking.kpi-bar :stats="$kpis" />
 </div>

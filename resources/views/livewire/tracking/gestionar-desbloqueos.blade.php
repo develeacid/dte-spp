@@ -3,7 +3,7 @@
         <x-slot name="title">Gestionar desbloqueos</x-slot>
     </x-page.header>
 
-    <x-page.container>
+    <x-page.container fluid>
         @if (session()->has('message'))
             <div class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
                 {{ session('message') }}
@@ -91,5 +91,10 @@
                 </table>
             </div>
         @endif
+
+        {{-- Spacer para que el contenido final no quede tras el KPI bar fijo --}}
+        <div class="h-28"></div>
     </x-page.container>
+
+    <x-tracking.kpi-bar :stats="$kpis" />
 </div>

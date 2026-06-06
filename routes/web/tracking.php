@@ -4,6 +4,7 @@ use App\Http\Controllers\Tracking\EvidenciaController;
 use App\Livewire\Tracking\CapturaAvance;
 use App\Livewire\Tracking\ConcentradoCaptura;
 use App\Livewire\Tracking\DashboardIndicadores;
+use App\Livewire\Tracking\DetalleIndicador;
 use App\Livewire\Tracking\EvidenciaAvance;
 use App\Livewire\Tracking\FlujosAvance;
 use App\Livewire\Tracking\GestionarDesbloqueos;
@@ -19,6 +20,8 @@ Route::prefix('seguimiento')
     ->group(function () {
         Route::get('/', PanelSeguimiento::class)
             ->name('tracking.panel');
+        Route::get('/indicador/{indicador}', DetalleIndicador::class)
+            ->name('tracking.indicador.detalle');
         Route::get('/pendientes', MisIndicadoresPendientes::class)
             ->name('tracking.pendientes');
         Route::get('/vencidos', IndicadoresVencidos::class)

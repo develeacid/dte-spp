@@ -1,4 +1,5 @@
-<x-page.container title="Gestión de Usuarios" subtitle="Administra las cuentas del sistema">
+<div>
+<x-page.container title="Gestión de Usuarios" subtitle="Administra las cuentas del sistema" fluid>
     <x-slot:actions>
         <button wire:click="openInviteForm" class="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition">
             + Invitar Usuario
@@ -146,4 +147,9 @@
             </div>
         @endif
     </div>
+
+    <div class="h-28"></div>
 </x-page.container>
+
+<x-tracking.kpi-bar :stats="$kpis" />
+</div>

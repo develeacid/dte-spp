@@ -12,7 +12,7 @@
         @endcan
     </x-page.header>
 
-    <x-page.container :breadcrumbs="[
+    <x-page.container fluid :breadcrumbs="[
         ['label' => 'Inicio', 'url' => route('dashboard')],
         ['label' => 'Evaluación', 'url' => '#'],
         ['label' => 'ASM'],
@@ -84,5 +84,10 @@
             </table>
         </div>
         <div class="mt-3">{{ $asms->links() }}</div>
+
+        {{-- Spacer para que el contenido final no quede tras el KPI bar fijo --}}
+        <div class="h-28"></div>
     </x-page.container>
+
+    <x-tracking.kpi-bar :stats="$kpis" />
 </div>

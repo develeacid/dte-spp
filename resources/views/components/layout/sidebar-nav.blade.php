@@ -159,12 +159,28 @@
     </x-slot:icon>
     <x-slot:tooltip>
         <a href="{{ route('evaluation.transversal') }}" class="block py-1 hover:text-brand-light">Transversal</a>
+        <a href="{{ route('evaluation.desviaciones') }}" class="block py-1 hover:text-brand-light">Desviaciones</a>
+        <a href="{{ route('evaluation.acumulado-anual') }}" class="block py-1 hover:text-brand-light">Acumulado Anual</a>
+        @can('ver_asm')
+        <a href="{{ route('evaluation.asms.index') }}" class="block py-1 hover:text-brand-light">ASMs</a>
+        @endcan
         <a href="{{ route('evaluation.datos-abiertos.diccionario') }}" class="block py-1 hover:text-brand-light">Datos Abiertos</a>
     </x-slot:tooltip>
 
     <x-ui.sidebar-item href="{{ route('evaluation.transversal') }}" :active="request()->routeIs('evaluation.transversal')">
         Transversal
     </x-ui.sidebar-item>
+    <x-ui.sidebar-item href="{{ route('evaluation.desviaciones') }}" :active="request()->routeIs('evaluation.desviaciones')">
+        Desviaciones
+    </x-ui.sidebar-item>
+    <x-ui.sidebar-item href="{{ route('evaluation.acumulado-anual') }}" :active="request()->routeIs('evaluation.acumulado-anual')">
+        Acumulado Anual
+    </x-ui.sidebar-item>
+    @can('ver_asm')
+    <x-ui.sidebar-item href="{{ route('evaluation.asms.index') }}" :active="request()->routeIs('evaluation.asms.*')">
+        ASMs
+    </x-ui.sidebar-item>
+    @endcan
     <x-ui.sidebar-item href="{{ route('evaluation.datos-abiertos.diccionario') }}" :active="request()->routeIs('evaluation.datos-abiertos.*')">
         Datos Abiertos
     </x-ui.sidebar-item>
@@ -196,6 +212,7 @@
     <x-slot:tooltip>
         @can('invitar_usuarios')<a href="{{ route('admin.users') }}" class="block py-1 hover:text-brand-light">Usuarios</a>@endcan
         @can('administrar_usuarios')<a href="{{ route('admin.monitoreo-ia') }}" class="block py-1 hover:text-brand-light">Monitor IA</a>@endcan
+        @can('administrar_usuarios')<a href="{{ route('admin.auditoria') }}" class="block py-1 hover:text-brand-light">Auditoría</a>@endcan
     </x-slot:tooltip>
 
     @can('invitar_usuarios')
@@ -206,6 +223,9 @@
     @can('administrar_usuarios')
         <x-ui.sidebar-item href="{{ route('admin.monitoreo-ia') }}" :active="request()->routeIs('admin.monitoreo-ia')">
             Monitor IA
+        </x-ui.sidebar-item>
+        <x-ui.sidebar-item href="{{ route('admin.auditoria') }}" :active="request()->routeIs('admin.auditoria')">
+            Auditoría
         </x-ui.sidebar-item>
     @endcan
 </x-ui.sidebar-group>

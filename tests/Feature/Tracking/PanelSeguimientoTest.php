@@ -15,6 +15,7 @@ use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class PanelSeguimientoTest extends TestCase
@@ -115,13 +116,13 @@ class PanelSeguimientoTest extends TestCase
         $this->actingAs($this->planeador);
 
         Livewire::test(PanelSeguimiento::class)
+            ->set('activeTab', 'tabla')
             ->assertSee('Indicador de prueba')
             ->assertDontSee('Indicador ajeno');
     }
 
     public function test_filtro_por_programa(): void
     {
-        // Create a second programa in the same team
         $programa2 = ProgramaPresupuestario::create([
             'nombre' => 'Programa Dos',
             'clave' => 'PD-002',
@@ -151,6 +152,7 @@ class PanelSeguimientoTest extends TestCase
         $this->actingAs($this->planeador);
 
         Livewire::test(PanelSeguimiento::class)
+            ->set('activeTab', 'tabla')
             ->set('filtroPrograma', $this->programa->id)
             ->assertSee('Indicador de prueba')
             ->assertDontSee('Indicador segundo programa');
@@ -161,10 +163,12 @@ class PanelSeguimientoTest extends TestCase
         $this->actingAs($this->planeador);
 
         Livewire::test(PanelSeguimiento::class)
+            ->set('activeTab', 'tabla')
             ->set('filtroEstado', EstadoAvance::EN_REVISION->value)
             ->assertSee('Indicador de prueba');
 
         Livewire::test(PanelSeguimiento::class)
+            ->set('activeTab', 'tabla')
             ->set('filtroEstado', EstadoAvance::APROBADO->value)
             ->assertDontSee('Indicador de prueba');
     }
@@ -182,13 +186,57 @@ class PanelSeguimientoTest extends TestCase
 
     public function test_estado_vacio(): void
     {
-        // Create a planeador with team but no data
         $planeador2 = User::factory()->withPersonalTeam()->create();
         $planeador2->assignRole('planeador');
 
         $this->actingAs($planeador2);
 
         Livewire::test(PanelSeguimiento::class)
+            ->set('activeTab', 'tabla')
             ->assertSee('No se encontraron indicadores');
+    }
+
+    #[Test]
+    public function filtro_programa_reduce_filas_del_query(): void
+    {
+        // Segundo programa con indicador propio en el mismo team del planeador.
+        $programa2 = ProgramaPresupuestario::create([
+            'nombre' => 'Programa Filtro',
+            'clave' => 'PF-003',
+            'team_id' => $this->planeador->currentTeam->id,
+        ]);
+
+        $nivel2 = MirNivel::create([
+            'programa_presupuestario_id' => $programa2->id,
+            'tipo_nivel' => TipoNivelMir::FIN->value,
+            'resumen_narrativo' => 'Nivel filtro',
+            'orden' => 1,
+            'team_id' => $this->planeador->currentTeam->id,
+        ]);
+
+        Indicador::create([
+            'mir_nivel_id' => $nivel2->id,
+            'nombre' => 'Indicador filtrable',
+            'tipo' => 'estrategico',
+            'dimension' => 'eficacia',
+            'frecuencia' => 'trimestral',
+            'sentido' => SentidoIndicador::ASCENDENTE->value,
+            'meta' => 60,
+            'activo_seguimiento' => true,
+            'orden' => 1,
+        ]);
+
+        $this->actingAs($this->planeador);
+
+        $componente = Livewire::test(PanelSeguimiento::class);
+
+        $sinFiltro = $componente->viewData('rows')->total();
+        $this->assertGreaterThanOrEqual(2, $sinFiltro, 'Esperado >=2 indicadores en baseline.');
+
+        $componente->set('filtroPrograma', $this->programa->id);
+        $conFiltro = $componente->viewData('rows')->total();
+
+        $this->assertLessThan($sinFiltro, $conFiltro);
+        $this->assertGreaterThan(0, $conFiltro);
     }
 }

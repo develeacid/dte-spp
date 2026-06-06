@@ -55,8 +55,21 @@ class ListaProgramas extends Component
             ->orderByDesc('updated_at')
             ->get();
 
+        $total = $programas->count();
+        $conMir = $programas->filter(fn ($p) => $p->mirNiveles()->exists())->count();
+        $activos = $programas->where('estado', EstadoPrograma::ACTIVO)->count();
+        $padron = $programas->where('padron_geobase_activo', true)->count();
+
+        $kpis = [
+            ['label' => 'Total programas', 'value' => $total],
+            ['label' => 'Activos', 'value' => $activos, 'color' => 'green'],
+            ['label' => 'Con MIR', 'value' => $conMir, 'color' => 'blue'],
+            ['label' => 'Padrón GeoBase', 'value' => $padron, 'color' => 'amber'],
+        ];
+
         return view('livewire.mml.lista-programas', [
             'programas' => $programas,
+            'kpis' => $kpis,
         ]);
     }
 }

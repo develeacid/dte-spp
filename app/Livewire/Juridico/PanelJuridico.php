@@ -68,6 +68,13 @@ class PanelJuridico extends Component
             ->where('fecha_vigencia', '>', now())
             ->count();
 
+        $kpis = [
+            ['label' => 'Validados', 'value' => $validados, 'color' => 'green'],
+            ['label' => 'Pendientes', 'value' => $pendientes, 'color' => 'amber'],
+            ['label' => 'Rechazados', 'value' => $rechazados, 'color' => 'red'],
+            ['label' => 'Sin registro', 'value' => $sinRegistro],
+        ];
+
         return view('livewire.juridico.panel-juridico', [
             'programas' => $programas,
             'validados' => $validados,
@@ -75,6 +82,7 @@ class PanelJuridico extends Component
             'rechazados' => $rechazados,
             'sinRegistro' => $sinRegistro,
             'documentosProximosVencer' => $documentosProximosVencer,
+            'kpis' => $kpis,
         ]);
     }
 }

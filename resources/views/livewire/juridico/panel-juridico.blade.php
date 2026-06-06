@@ -1,7 +1,7 @@
 <div>
     <x-page.header title="Panel Jurídico" />
 
-    <x-page.container>
+    <x-page.container fluid>
         {{-- Filtro de ejercicio --}}
         <div class="mb-6 flex items-center gap-4">
             <div>
@@ -124,5 +124,9 @@
                 </tbody>
             </table>
         </div>
+
+        <div class="h-28"></div>
     </x-page.container>
+
+    <x-tracking.kpi-bar :stats="$kpis" />
 </div>

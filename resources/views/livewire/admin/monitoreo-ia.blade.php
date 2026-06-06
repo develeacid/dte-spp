@@ -20,7 +20,7 @@
         </button>
     </x-page.header>
 
-    <x-page.container>
+    <x-page.container fluid>
         @if($resultadoConexion !== null)
             <div class="mb-6 rounded-lg border {{ $resultadoConexion['estado'] === 'ok' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50' }} p-4">
                 <div class="flex items-start gap-3">
@@ -297,5 +297,9 @@
                 <p class="text-sm text-gray-500">No hay presupuestos configurados para este mes.</p>
             @endif
         </div>
+
+        <div class="h-28"></div>
     </x-page.container>
+
+    <x-tracking.kpi-bar :stats="$kpis" />
 </div>
