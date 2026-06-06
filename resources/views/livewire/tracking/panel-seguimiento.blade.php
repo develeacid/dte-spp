@@ -39,7 +39,7 @@
         />
 
         @if ($activeTab === 'dashboard')
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2" wire:ignore>
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 @php
                     $semaforoCounts = collect($filas)->countBy('semaforo');
                     $semaforoLabels = ['verde', 'amarillo', 'rojo', 'gris'];
@@ -48,14 +48,16 @@
                 @endphp
                 <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
                     <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Semáforo de Indicadores</h4>
-                    <x-charts.donut
-                        :labels="$semaforoLabels"
-                        :series="$semaforoSeries"
-                        :colors="$semaforoColors"
-                        :height="220"
-                        centerText="{{ array_sum($semaforoSeries) }}"
-                        centerSubtext="indicadores"
-                    />
+                    <div wire:key="panel-donut-semaforo-{{ md5(json_encode($semaforoSeries)) }}">
+                        <x-charts.donut
+                            :labels="$semaforoLabels"
+                            :series="$semaforoSeries"
+                            :colors="$semaforoColors"
+                            :height="220"
+                            centerText="{{ array_sum($semaforoSeries) }}"
+                            centerSubtext="indicadores"
+                        />
+                    </div>
                 </div>
 
                 @php
@@ -71,13 +73,15 @@
                 @endphp
                 <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
                     <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Avance Promedio por Programa</h4>
-                    <x-charts.bar-horizontal
-                        :categories="$porPrograma->pluck('clave')->toArray()"
-                        :series="[['name' => 'Avance %', 'data' => $porPrograma->pluck('avance')->toArray()]]"
-                        :height="max(200, $porPrograma->count() * 35)"
-                        :referenceLine="100"
-                        referenceLabel="Meta"
-                    />
+                    <div wire:key="panel-bar-programa-{{ md5(json_encode($porPrograma)) }}">
+                        <x-charts.bar-horizontal
+                            :categories="$porPrograma->pluck('clave')->toArray()"
+                            :series="[['name' => 'Avance %', 'data' => $porPrograma->pluck('avance')->toArray()]]"
+                            :height="max(200, $porPrograma->count() * 35)"
+                            :referenceLine="100"
+                            referenceLabel="Meta"
+                        />
+                    </div>
                 </div>
             </div>
 
