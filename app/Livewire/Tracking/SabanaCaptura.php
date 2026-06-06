@@ -5,12 +5,13 @@ namespace App\Livewire\Tracking;
 use App\Exports\Excel\SabanaCapturaExcelExport;
 use App\Exports\Pdf\SabanaCapturaPdfExport;
 use App\Livewire\Concerns\HasTraceableTable;
+use App\Livewire\Concerns\HasTrackingFilters;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\ProgramaPresupuestario;
+use App\Support\Tracking\TrackingOptions;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -20,33 +21,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class SabanaCaptura extends Component
 {
     use HasTraceableTable;
-
-    #[Url(as: 'programa')]
-    public ?int $filtroPrograma = null;
-
-    #[Url(as: 'nivel')]
-    public ?int $filtroMirNivel = null;
-
-    #[Url(as: 'trimestre')]
-    public ?int $filtroTrimestre = null;
-
-    #[Url(as: 'estado')]
-    public ?string $filtroEstado = null;
-
-    #[Url(as: 'alcance')]
-    public string $alcanceTemporal = 'todo';
-
-    #[Url(as: 'ejercicio')]
-    public ?int $filtroEjercicio = null;
-
-    #[Url(as: 'desde')]
-    public ?string $filtroFechaDesde = null;
-
-    #[Url(as: 'hasta')]
-    public ?string $filtroFechaHasta = null;
-
-    #[Url(as: 'tab')]
-    public string $activeTab = 'dashboard';
+    use HasTrackingFilters;
 
     public function mount(): void
     {
@@ -55,60 +30,6 @@ class SabanaCaptura extends Component
         if ($this->sortBy === '') {
             $this->sortBy = 'indicador';
         }
-    }
-
-    public function updatingFiltroPrograma(): void
-    {
-        // Si cambia el programa, el nivel seleccionado puede no pertenecer al nuevo programa.
-        $this->filtroMirNivel = null;
-        $this->resetPage();
-    }
-
-    public function updatingFiltroMirNivel(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFiltroTrimestre(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFiltroEstado(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedAlcanceTemporal(string $value): void
-    {
-        if ($value === 'todo') {
-            $this->filtroEjercicio = null;
-            $this->filtroFechaDesde = null;
-            $this->filtroFechaHasta = null;
-            $this->filtroTrimestre = null;
-        } elseif ($value === 'anio') {
-            $this->filtroFechaDesde = null;
-            $this->filtroFechaHasta = null;
-        } else {
-            $this->filtroEjercicio = null;
-            $this->filtroTrimestre = null;
-        }
-        $this->resetPage();
-    }
-
-    public function updatingFiltroEjercicio(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFiltroFechaDesde(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFiltroFechaHasta(): void
-    {
-        $this->resetPage();
     }
 
     public function render()
@@ -207,7 +128,7 @@ class SabanaCaptura extends Component
             default => '',
         };
 
-        $programasOpciones = $programas->mapWithKeys(fn ($p) => [$p->id => $p->clave.' - '.$p->nombre])->toArray();
+        $programasOpciones = TrackingOptions::programas($programas);
 
         $nivelesRaw = \App\Models\Mml\MirNivel::query()
             ->whereHas('indicadores.metasPeriodo')
@@ -216,17 +137,20 @@ class SabanaCaptura extends Component
             ->with('programa', 'componente')
             ->get();
 
-        $nivelesOpciones = $this->ordenarJerarquicamente($nivelesRaw)
-            ->mapWithKeys(fn ($n) => [$n->id => $n->trazabilidad()->clave().' · '.$n->trazabilidad()->nivel()])
-            ->toArray();
+        $nivelesOpciones = TrackingOptions::niveles($this->ordenarJerarquicamente($nivelesRaw));
 
-        $estadosOpciones = [
-            'pendiente' => 'Pendiente',
-            'en_captura' => 'En captura',
-            'en_revision' => 'En revisión',
-            'aprobado' => 'Aprobado',
-            'observado' => 'Observado',
-            'vencido' => 'Vencido',
+        $estadosOpciones = TrackingOptions::estados();
+
+        $total = $filas->count();
+        $aprobados = $filas->where('estado', 'aprobado')->count();
+        $vencidos = $filas->where('estado', 'vencido')->count();
+        $enProceso = $filas->whereIn('estado', ['pendiente', 'en_captura', 'en_revision'])->count();
+
+        $kpis = [
+            ['label' => 'Total', 'value' => $total, 'color' => 'slate'],
+            ['label' => 'Aprobados', 'value' => $aprobados, 'color' => 'green'],
+            ['label' => 'En proceso', 'value' => $enProceso, 'color' => 'blue'],
+            ['label' => 'Vencidos', 'value' => $vencidos, 'color' => 'red'],
         ];
 
         return view('livewire.tracking.sabana-captura', [
@@ -238,43 +162,8 @@ class SabanaCaptura extends Component
             'rows' => $rows,
             'columns' => $columns,
             'rowClass' => $rowClass,
+            'kpis' => $kpis,
         ]);
-    }
-
-    /**
-     * Ordena niveles MIR en el orden de la ficha:
-     * Por programa → Fin → Propósito → C1, C1.A1, C1.A2... → C2, C2.A1... → C3...
-     */
-    protected function ordenarJerarquicamente(Collection $niveles): Collection
-    {
-        $resultado = collect();
-
-        foreach ($niveles->groupBy('programa_presupuestario_id') as $delPrograma) {
-            $fin = $delPrograma->firstWhere('tipo_nivel', \App\Enums\TipoNivelMir::FIN);
-            $proposito = $delPrograma->firstWhere('tipo_nivel', \App\Enums\TipoNivelMir::PROPOSITO);
-            $componentes = $delPrograma->where('tipo_nivel', \App\Enums\TipoNivelMir::COMPONENTE)->sortBy('orden');
-
-            if ($fin) {
-                $resultado->push($fin);
-            }
-            if ($proposito) {
-                $resultado->push($proposito);
-            }
-
-            foreach ($componentes as $componente) {
-                $resultado->push($componente);
-                $actividades = $delPrograma
-                    ->where('tipo_nivel', \App\Enums\TipoNivelMir::ACTIVIDAD)
-                    ->where('componente_id', $componente->id)
-                    ->sortBy('orden');
-
-                foreach ($actividades as $actividad) {
-                    $resultado->push($actividad);
-                }
-            }
-        }
-
-        return $resultado;
     }
 
     protected function ordenarFilas(Collection $filas): Collection

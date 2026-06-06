@@ -20,199 +20,86 @@
     </x-page.header>
 
     <x-page.container fluid>
-        <x-page.toolbar>
-            {{-- Búsqueda standalone --}}
-            <div class="w-full">
-                <input
-                    type="search"
-                    wire:model.live.debounce.300ms="search"
-                    placeholder="Buscar indicador..."
-                    class="w-full max-w-md rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800"
-                />
-            </div>
-
-            {{-- Familia 1: Ámbito --}}
-            <div class="w-full flex flex-wrap items-center gap-2">
-                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide min-w-[60px] dark:text-slate-400">Ámbito</span>
-                <x-filters.programa model="filtroPrograma" :options="$programasOpciones" />
-                <x-filters.mir-nivel model="filtroMirNivel" :options="$nivelesOpciones" />
-                <x-filters.estado model="filtroEstado" :options="$estadosOpciones" />
-            </div>
-
-            {{-- Familia 2: Tiempo --}}
-            <div class="w-full flex flex-wrap items-center gap-2">
-                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide min-w-[60px] dark:text-slate-400">Tiempo</span>
-                <div class="inline-flex rounded-md border border-slate-200 overflow-hidden dark:border-slate-700">
-                <button type="button"
-                        wire:click="$set('alcanceTemporal', 'todo')"
-                        @class([
-                            'px-3 py-1.5 text-sm',
-                            'bg-indigo-600 text-white' => $alcanceTemporal === 'todo',
-                            'bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300' => $alcanceTemporal !== 'todo',
-                        ])>
-                    Todo
-                </button>
-                <button type="button"
-                        wire:click="$set('alcanceTemporal', 'anio')"
-                        @class([
-                            'px-3 py-1.5 text-sm border-l border-slate-200 dark:border-slate-700',
-                            'bg-indigo-600 text-white' => $alcanceTemporal === 'anio',
-                            'bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300' => $alcanceTemporal !== 'anio',
-                        ])>
-                    Año
-                </button>
-                <button type="button"
-                        wire:click="$set('alcanceTemporal', 'rango')"
-                        @class([
-                            'px-3 py-1.5 text-sm border-l border-slate-200 dark:border-slate-700',
-                            'bg-indigo-600 text-white' => $alcanceTemporal === 'rango',
-                            'bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300' => $alcanceTemporal !== 'rango',
-                        ])>
-                    Rango
-                </button>
-                </div>
-
-                @if ($alcanceTemporal === 'anio')
-                    <x-filters.ejercicio model="filtroEjercicio" />
-                @elseif ($alcanceTemporal === 'rango')
-                    <div class="flex items-center gap-2">
-                        <input type="date"
-                               wire:model.live="filtroFechaDesde"
-                               title="Desde"
-                               class="rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800" />
-                        <span class="text-sm text-slate-500">—</span>
-                        <input type="date"
-                               wire:model.live="filtroFechaHasta"
-                               title="Hasta"
-                               class="rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800" />
-                    </div>
-                @endif
-
-                {{-- Trimestre solo tiene sentido cuando hay un año específico --}}
-                @if ($alcanceTemporal === 'anio')
-                    <x-filters.trimestre model="filtroTrimestre" />
-                @endif
-            </div>
-
-            {{-- Familia 3: Vista --}}
-            <div class="w-full flex flex-wrap items-center gap-2">
-                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide min-w-[60px] dark:text-slate-400">Vista</span>
-
-                <label class="flex items-center gap-2 text-sm">
-                    <input type="checkbox" wire:model.live="groupByPrograma" class="rounded border-slate-300" />
-                    Agrupar
-                </label>
-
-                <select wire:model.live="sortBy"
-                        class="rounded-md border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-800">
-                    <option value="indicador">Orden: Indicador</option>
-                    <option value="fecha">Orden: Fecha</option>
-                </select>
-
-                <select wire:model.live="perPage"
-                        class="rounded-md border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-800">
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="">Todas</option>
-                </select>
-            </div>
-        </x-page.toolbar>
-
-        <x-page.tabs
-            :tabs="['dashboard' => 'Dashboard', 'tabla' => 'Tabla']"
-            :active="$activeTab"
-            model="activeTab"
+        <x-tracking.toolbar
+            :search="$search"
+            search-placeholder="Buscar indicador..."
+            :programas-opciones="$programasOpciones"
+            :niveles-opciones="$nivelesOpciones"
+            :estados-opciones="$estadosOpciones"
+            :alcance-temporal="$alcanceTemporal"
+            :filtro-fecha-desde="$filtroFechaDesde"
+            :filtro-fecha-hasta="$filtroFechaHasta"
+            :group-by-programa="$groupByPrograma"
+            :per-page="$perPage"
+            :sort-by="$sortBy"
+            :show-orden="true"
         />
 
-        @if ($activeTab === 'dashboard')
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                @php
-                    $estadoCounts = collect($filas)->countBy('estado');
-                    $estadoLabels = ['aprobado', 'en_revision', 'en_captura', 'observado', 'pendiente', 'vencido'];
-                    $estadoSeries = collect($estadoLabels)->map(fn ($e) => $estadoCounts->get($e, 0))->toArray();
-                    $estadoColors = ['#22c55e', '#3b82f6', '#eab308', '#f97316', '#9ca3af', '#ef4444'];
-                @endphp
-                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 lg:col-span-1">
-                    <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Distribución de Estados</h4>
-                    <div wire:key="sabana-donut-estado-{{ md5(json_encode($estadoSeries)) }}">
-                        <x-charts.donut
-                            :labels="$estadoLabels"
-                            :series="$estadoSeries"
-                            :colors="$estadoColors"
-                            :height="220"
-                            centerText="{{ array_sum($estadoSeries) }}"
-                            centerSubtext="registros"
-                        />
-                    </div>
-                </div>
-                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 lg:col-span-2">
+        <x-tracking.tabs-shell :active="$activeTab">
+            <x-slot:dashboard>
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     @php
-                        $porProgramaEstado = collect($filas)->groupBy('programa_clave')->map(function ($items, $clave) {
-                            return [
-                                'clave' => $clave,
-                                'aprobados' => $items->where('estado', 'aprobado')->count(),
-                                'pendientes' => $items->whereIn('estado', ['pendiente', 'en_captura', 'en_revision'])->count(),
-                                'problemas' => $items->whereIn('estado', ['observado', 'vencido'])->count(),
-                            ];
-                        })->values();
+                        $estadoCounts = collect($filas)->countBy('estado');
+                        $estadoLabels = ['aprobado', 'en_revision', 'en_captura', 'observado', 'pendiente', 'vencido'];
+                        $estadoSeries = collect($estadoLabels)->map(fn ($e) => $estadoCounts->get($e, 0))->toArray();
+                        $estadoColors = ['#22c55e', '#3b82f6', '#eab308', '#f97316', '#9ca3af', '#ef4444'];
                     @endphp
-                    <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Estado por Programa</h4>
-                    <div wire:key="sabana-bar-programa-{{ md5(json_encode($porProgramaEstado)) }}">
-                        <x-charts.bar-horizontal
-                            :categories="$porProgramaEstado->pluck('clave')->toArray()"
-                            :series="[
-                                ['name' => 'Aprobados', 'data' => $porProgramaEstado->pluck('aprobados')->toArray()],
-                                ['name' => 'En proceso', 'data' => $porProgramaEstado->pluck('pendientes')->toArray()],
-                                ['name' => 'Observado/Vencido', 'data' => $porProgramaEstado->pluck('problemas')->toArray()],
-                            ]"
-                            :height="max(200, $porProgramaEstado->count() * 40)"
-                        />
+                    <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 lg:col-span-1">
+                        <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Distribución de Estados</h4>
+                        <div wire:key="sabana-donut-estado-{{ md5(json_encode($estadoSeries)) }}">
+                            <x-charts.donut
+                                :labels="$estadoLabels"
+                                :series="$estadoSeries"
+                                :colors="$estadoColors"
+                                :height="220"
+                                centerText="{{ array_sum($estadoSeries) }}"
+                                centerSubtext="registros"
+                            />
+                        </div>
+                    </div>
+                    <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 lg:col-span-2">
+                        @php
+                            $porProgramaEstado = collect($filas)->groupBy('programa_clave')->map(function ($items, $clave) {
+                                return [
+                                    'clave' => $clave,
+                                    'aprobados' => $items->where('estado', 'aprobado')->count(),
+                                    'pendientes' => $items->whereIn('estado', ['pendiente', 'en_captura', 'en_revision'])->count(),
+                                    'problemas' => $items->whereIn('estado', ['observado', 'vencido'])->count(),
+                                ];
+                            })->values();
+                        @endphp
+                        <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Estado por Programa</h4>
+                        <div wire:key="sabana-bar-programa-{{ md5(json_encode($porProgramaEstado)) }}">
+                            <x-charts.bar-horizontal
+                                :categories="$porProgramaEstado->pluck('clave')->toArray()"
+                                :series="[
+                                    ['name' => 'Aprobados', 'data' => $porProgramaEstado->pluck('aprobados')->toArray()],
+                                    ['name' => 'En proceso', 'data' => $porProgramaEstado->pluck('pendientes')->toArray()],
+                                    ['name' => 'Observado/Vencido', 'data' => $porProgramaEstado->pluck('problemas')->toArray()],
+                                ]"
+                                :height="max(200, $porProgramaEstado->count() * 40)"
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
-        @else
-            <x-data.table
-                :rows="$rows"
-                :columns="$columns"
-                :group-by="$groupByPrograma ? 'programa' : null"
-                :per-page="$perPage"
-                :traceable="true"
-                :row-class="$rowClass"
-                empty-message="No se encontraron metas periodo con los filtros seleccionados."
-            />
-        @endif
+            </x-slot:dashboard>
+
+            <x-slot:tabla>
+                <x-data.table
+                    :rows="$rows"
+                    :columns="$columns"
+                    :group-by="$groupByPrograma ? 'programa' : null"
+                    :per-page="$perPage"
+                    :traceable="true"
+                    :row-class="$rowClass"
+                    empty-message="No se encontraron metas periodo con los filtros seleccionados."
+                />
+            </x-slot:tabla>
+        </x-tracking.tabs-shell>
 
         {{-- Spacer para que el contenido final no quede tras el KPI bar fijo --}}
         <div class="h-28"></div>
     </x-page.container>
 
-    {{-- KPI status bar fija al viewport (respeta sidebar) --}}
-    @php
-        $total = collect($filas)->count();
-        $aprobados = collect($filas)->where('estado', 'aprobado')->count();
-        $vencidos = collect($filas)->where('estado', 'vencido')->count();
-        $enProceso = collect($filas)->whereIn('estado', ['pendiente', 'en_captura', 'en_revision'])->count();
-    @endphp
-    <div class="fixed bottom-0 right-0 left-0 z-30 py-3 px-4 sm:px-6 lg:px-8 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-700"
-         :class="collapsed ? 'lg:!left-[var(--sidebar-collapsed-width)]' : 'lg:!left-[var(--sidebar-width)]'">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div class="rounded-md border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800">
-                <div class="text-xs text-slate-500">Total</div>
-                <div class="text-xl font-bold text-slate-900 dark:text-slate-100">{{ $total }}</div>
-            </div>
-            <div class="rounded-md border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800">
-                <div class="text-xs text-slate-500">Aprobados</div>
-                <div class="text-xl font-bold text-green-600">{{ $aprobados }}</div>
-            </div>
-            <div class="rounded-md border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800">
-                <div class="text-xs text-slate-500">En proceso</div>
-                <div class="text-xl font-bold text-blue-600">{{ $enProceso }}</div>
-            </div>
-            <div class="rounded-md border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800">
-                <div class="text-xs text-slate-500">Vencidos</div>
-                <div class="text-xl font-bold text-red-600">{{ $vencidos }}</div>
-            </div>
-        </div>
-    </div>
+    <x-tracking.kpi-bar :stats="$kpis" />
 </div>
