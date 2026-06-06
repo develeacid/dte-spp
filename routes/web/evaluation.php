@@ -13,6 +13,7 @@ use App\Livewire\Evaluation\AsmIndex;
 use App\Livewire\Evaluation\AsmShow;
 use App\Livewire\Evaluation\EvaluacionProgramaView;
 use App\Livewire\Evaluation\PanelTransversal;
+use App\Livewire\Evaluation\ReporteDesviaciones;
 use App\Models\ProgramaPresupuestario;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -27,6 +28,10 @@ Route::prefix('evaluacion')
         Route::get('/transversal', PanelTransversal::class)
             ->name('evaluation.transversal')
             ->middleware('can:exportar_reportes');
+
+        Route::middleware('can:exportar_reportes')
+            ->get('/desviaciones', ReporteDesviaciones::class)
+            ->name('evaluation.desviaciones');
 
         Route::get('/mir-publica/{id}', function (Request $request, int $id) {
             $programa = ProgramaPresupuestario::findOrFail($id);
