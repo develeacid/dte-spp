@@ -103,12 +103,14 @@ class Auditoria extends Component
 
     public function render()
     {
-        $query = Activity::query()
-            ->with('causer')
+        $baseQuery = Activity::query()
             ->whereBetween('created_at', [
                 Carbon::parse($this->fechaDesde)->startOfDay(),
                 Carbon::parse($this->fechaHasta)->endOfDay(),
-            ])
+            ]);
+
+        $query = (clone $baseQuery)
+            ->with('causer')
             ->latest();
 
         if ($this->subjectType !== '') {
@@ -123,10 +125,23 @@ class Auditoria extends Component
             $query->where('event', $this->evento);
         }
 
+        $totalRango = (clone $baseQuery)->count();
+        $creados = (clone $baseQuery)->where('event', 'created')->count();
+        $actualizados = (clone $baseQuery)->where('event', 'updated')->count();
+        $eliminados = (clone $baseQuery)->where('event', 'deleted')->count();
+
+        $kpis = [
+            ['label' => 'Eventos (rango)', 'value' => $totalRango],
+            ['label' => 'Creaciones', 'value' => $creados, 'color' => 'green'],
+            ['label' => 'Actualizaciones', 'value' => $actualizados, 'color' => 'amber'],
+            ['label' => 'Eliminaciones', 'value' => $eliminados, 'color' => 'red'],
+        ];
+
         return view('livewire.admin.auditoria', [
             'activities' => $query->paginate(25),
             'subjectTypes' => $this->getSubjectTypes(),
             'usuarios' => User::orderBy('name')->pluck('name', 'id'),
+            'kpis' => $kpis,
         ]);
     }
 }

@@ -1,9 +1,5 @@
 <div>
-    <x-page.header>
-        <x-slot name="title">Auditoría del sistema</x-slot>
-    </x-page.header>
-
-    <x-page.container>
+    <x-page.container title="Auditoría del sistema" fluid>
         {{-- Filtros --}}
         <div class="mb-6 grid grid-cols-1 gap-4 rounded-lg border bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-5">
             <div>
@@ -140,5 +136,9 @@
         <div class="mt-4">
             {{ $activities->links() }}
         </div>
+
+        <div class="h-28"></div>
     </x-page.container>
+
+    <x-tracking.kpi-bar :stats="$kpis" />
 </div>

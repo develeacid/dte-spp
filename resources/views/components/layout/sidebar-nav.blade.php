@@ -204,6 +204,7 @@
     <x-slot:tooltip>
         @can('invitar_usuarios')<a href="{{ route('admin.users') }}" class="block py-1 hover:text-brand-light">Usuarios</a>@endcan
         @can('administrar_usuarios')<a href="{{ route('admin.monitoreo-ia') }}" class="block py-1 hover:text-brand-light">Monitor IA</a>@endcan
+        @can('administrar_usuarios')<a href="{{ route('admin.auditoria') }}" class="block py-1 hover:text-brand-light">Auditoría</a>@endcan
     </x-slot:tooltip>
 
     @can('invitar_usuarios')
@@ -214,6 +215,9 @@
     @can('administrar_usuarios')
         <x-ui.sidebar-item href="{{ route('admin.monitoreo-ia') }}" :active="request()->routeIs('admin.monitoreo-ia')">
             Monitor IA
+        </x-ui.sidebar-item>
+        <x-ui.sidebar-item href="{{ route('admin.auditoria') }}" :active="request()->routeIs('admin.auditoria')">
+            Auditoría
         </x-ui.sidebar-item>
     @endcan
 </x-ui.sidebar-group>
