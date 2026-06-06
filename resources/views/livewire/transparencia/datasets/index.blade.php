@@ -1,4 +1,5 @@
-<x-page.container title="Datos Abiertos" subtitle="Gestión y aprobación de datasets para publicación">
+<div>
+<x-page.container title="Datos Abiertos" subtitle="Gestión y aprobación de datasets para publicación" fluid>
     <div class="bg-white shadow-sm rounded-lg p-4">
         <div class="mb-4 flex flex-wrap gap-2">
             <input type="text" wire:model.live.debounce.400ms="search" placeholder="Buscar clave o nombre..." class="rounded border-gray-300 px-3 py-2" />
@@ -76,4 +77,9 @@
 
         <div class="mt-4">{{ $datasets->links() }}</div>
     </div>
+
+    <div class="h-28"></div>
 </x-page.container>
+
+<x-tracking.kpi-bar :stats="$kpis" />
+</div>
