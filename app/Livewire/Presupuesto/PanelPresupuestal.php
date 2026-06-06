@@ -39,11 +39,19 @@ class PanelPresupuestal extends Component
 
         $pctEjercido = $totalAprobado > 0 ? round(($totalEjercido / $totalAprobado) * 100, 2) : 0;
 
+        $kpis = [
+            ['label' => 'Programas', 'value' => $programas->count()],
+            ['label' => 'Aprobado', 'value' => '$'.number_format($totalAprobado, 0), 'color' => 'blue'],
+            ['label' => 'Ejercido', 'value' => '$'.number_format($totalEjercido, 0), 'color' => 'amber'],
+            ['label' => '% Ejercido', 'value' => $pctEjercido.'%', 'color' => $pctEjercido >= 75 ? 'green' : ($pctEjercido >= 40 ? 'amber' : 'red')],
+        ];
+
         return view('livewire.presupuesto.panel-presupuestal', [
             'programas' => $programas,
             'totalAprobado' => $totalAprobado,
             'totalEjercido' => $totalEjercido,
             'pctEjercido' => $pctEjercido,
+            'kpis' => $kpis,
         ]);
     }
 }

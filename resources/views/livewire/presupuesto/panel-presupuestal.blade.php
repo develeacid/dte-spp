@@ -1,7 +1,7 @@
 <div>
     <x-page.header title="Panel Presupuestal" />
 
-    <x-page.container>
+    <x-page.container fluid>
         {{-- Filtro de ejercicio --}}
         <div class="mb-6">
             <x-label for="filtroEjercicio" value="Ejercicio Fiscal" />
@@ -151,5 +151,9 @@
                 </tbody>
             </table>
         </div>
+
+        <div class="h-28"></div>
     </x-page.container>
+
+    <x-tracking.kpi-bar :stats="$kpis" />
 </div>
