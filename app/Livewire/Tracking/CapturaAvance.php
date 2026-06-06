@@ -28,6 +28,14 @@ class CapturaAvance extends Component
 
     public ?string $justificacionIa = null;
 
+    /** @var array{dato: ?string, causa: ?string, accion: ?string, proyeccion: ?string} */
+    public array $analisis = [
+        'dato' => null,
+        'causa' => null,
+        'accion' => null,
+        'proyeccion' => null,
+    ];
+
     public function mount(Avance $avance): void
     {
         $avance->load(['indicador.variables', 'indicador.mirNivel', 'metaPeriodo', 'variables']);
@@ -41,6 +49,13 @@ class CapturaAvance extends Component
         $this->justificacionIa = $avance->justificacion_ia;
         $this->resultado = $avance->resultado ? (float) $avance->resultado : null;
         $this->semaforoCalculado = $avance->semaforo_calculado;
+
+        if (is_array($avance->analisis_desviacion)) {
+            $this->analisis = array_merge($this->analisis, array_intersect_key(
+                $avance->analisis_desviacion,
+                $this->analisis,
+            ));
+        }
 
         // Load existing variable values
         foreach ($avance->indicador->variables as $variable) {
@@ -112,6 +127,11 @@ class CapturaAvance extends Component
             if (empty($this->justificacion)) {
                 $this->justificacion = $draft;
             }
+
+            // Pre-fill the "causa" component of the structured analysis with the IA draft
+            if (empty($this->analisis['causa'])) {
+                $this->analisis['causa'] = $draft;
+            }
         }
     }
 
@@ -164,15 +184,26 @@ class CapturaAvance extends Component
             $rules["valores.{$variable->id}"] = 'required|numeric';
         }
 
-        if (in_array($this->semaforoCalculado, ['amarillo', 'rojo'])) {
-            $rules['justificacion'] = 'required|string|min:10';
+        $requiereAnalisis = in_array($this->semaforoCalculado, ['amarillo', 'rojo']);
+
+        if ($requiereAnalisis) {
+            $rules['analisis.dato'] = 'required|string|min:5';
+            $rules['analisis.causa'] = 'required|string|min:5';
+            $rules['analisis.accion'] = 'required|string|min:5';
+            $rules['analisis.proyeccion'] = 'required|string|min:5';
         }
 
         $this->validate($rules, [
             'valores.*.required' => 'Este campo es obligatorio.',
             'valores.*.numeric' => 'Debe ser un valor numerico.',
-            'justificacion.required' => 'La justificacion es obligatoria cuando el semaforo es amarillo o rojo.',
-            'justificacion.min' => 'La justificacion debe tener al menos 10 caracteres.',
+            'analisis.dato.required' => 'El dato (que ocurrio) es obligatorio cuando el semaforo es amarillo o rojo.',
+            'analisis.dato.min' => 'El dato debe tener al menos 5 caracteres.',
+            'analisis.causa.required' => 'La causa raiz es obligatoria cuando el semaforo es amarillo o rojo.',
+            'analisis.causa.min' => 'La causa debe tener al menos 5 caracteres.',
+            'analisis.accion.required' => 'La accion correctiva es obligatoria cuando el semaforo es amarillo o rojo.',
+            'analisis.accion.min' => 'La accion debe tener al menos 5 caracteres.',
+            'analisis.proyeccion.required' => 'La proyeccion es obligatoria cuando el semaforo es amarillo o rojo.',
+            'analisis.proyeccion.min' => 'La proyeccion debe tener al menos 5 caracteres.',
         ]);
 
         if ($this->avance->estaCongelado()) {
@@ -196,12 +227,35 @@ class CapturaAvance extends Component
             );
         }
 
+        $analisisDesviacion = null;
+        $justificacionFinal = $this->justificacion;
+
+        if ($requiereAnalisis) {
+            $analisisDesviacion = [
+                'dato' => $this->analisis['dato'],
+                'causa' => $this->analisis['causa'],
+                'accion' => $this->analisis['accion'],
+                'proyeccion' => $this->analisis['proyeccion'],
+            ];
+
+            // Keep justificacion_final populated for backwards compatibility with
+            // existing reports (e.g. I-08) that read the free-text field.
+            $justificacionFinal = sprintf(
+                'Dato: %s Causa: %s Accion: %s Proyeccion: %s',
+                $this->analisis['dato'],
+                $this->analisis['causa'],
+                $this->analisis['accion'],
+                $this->analisis['proyeccion'],
+            );
+        }
+
         // Update avance
         $this->avance->update([
             'resultado' => $this->resultado,
             'semaforo_calculado' => $this->semaforoCalculado,
             'justificacion_ia' => $this->justificacionIa,
-            'justificacion_final' => $this->justificacion,
+            'justificacion_final' => $justificacionFinal,
+            'analisis_desviacion' => $analisisDesviacion,
         ]);
 
         session()->flash('message', 'Avance guardado correctamente.');
