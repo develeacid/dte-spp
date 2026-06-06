@@ -1,4 +1,4 @@
-<div>
+<div wire:key="data-table-root">
     <x-page.header>
         <x-slot name="title">Seguimiento de indicadores</x-slot>
     </x-page.header>
