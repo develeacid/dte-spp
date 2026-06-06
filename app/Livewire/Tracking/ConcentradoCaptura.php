@@ -101,9 +101,18 @@ class ConcentradoCaptura extends Component
             ['indicador', 'asc'],
         ])->values();
 
+        $kpis = [
+            ['label' => 'Total', 'value' => $metricas['total'], 'color' => 'slate'],
+            ['label' => 'Aprobados', 'value' => $metricas['aprobados'], 'color' => 'green'],
+            ['label' => 'En revisión', 'value' => $metricas['en_revision'], 'color' => 'blue'],
+            ['label' => 'En captura', 'value' => $metricas['en_captura'], 'color' => 'yellow'],
+            ['label' => 'Observados', 'value' => $metricas['observados'], 'color' => 'orange'],
+        ];
+
         return view('livewire.tracking.concentrado-captura', [
             'metricas' => $metricas,
             'agrupado' => $agrupado,
+            'kpis' => $kpis,
         ]);
     }
 

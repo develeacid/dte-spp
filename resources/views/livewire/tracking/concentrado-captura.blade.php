@@ -19,7 +19,7 @@
         </x-slot>
     </x-page.header>
 
-    <x-page.container>
+    <x-page.container fluid>
         {{-- Date range filters --}}
         <div class="mb-6 grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:grid-cols-2">
             <div>
@@ -31,30 +31,6 @@
                 <label for="fechaHasta" class="block text-sm font-medium text-gray-700">Hasta</label>
                 <input type="date" wire:model.live="fechaHasta" id="fechaHasta"
                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-            </div>
-        </div>
-
-        {{-- Metrics cards --}}
-        <div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
-            <div class="rounded-lg border border-gray-200 bg-white p-4 text-center shadow-sm">
-                <p class="text-3xl font-bold text-gray-900">{{ $metricas['total'] }}</p>
-                <p class="mt-1 text-sm text-gray-500">Total</p>
-            </div>
-            <div class="rounded-lg border border-green-200 bg-green-50 p-4 text-center shadow-sm">
-                <p class="text-3xl font-bold text-green-700">{{ $metricas['aprobados'] }}</p>
-                <p class="mt-1 text-sm text-green-600">Aprobados</p>
-            </div>
-            <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 text-center shadow-sm">
-                <p class="text-3xl font-bold text-blue-700">{{ $metricas['en_revision'] }}</p>
-                <p class="mt-1 text-sm text-blue-600">En Revision</p>
-            </div>
-            <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-center shadow-sm">
-                <p class="text-3xl font-bold text-yellow-700">{{ $metricas['en_captura'] }}</p>
-                <p class="mt-1 text-sm text-yellow-600">En Captura</p>
-            </div>
-            <div class="rounded-lg border border-orange-200 bg-orange-50 p-4 text-center shadow-sm">
-                <p class="text-3xl font-bold text-orange-700">{{ $metricas['observados'] }}</p>
-                <p class="mt-1 text-sm text-orange-600">Observados</p>
             </div>
         </div>
 
@@ -145,5 +121,10 @@
                 </div>
             </div>
         @endif
+
+        {{-- Spacer para que el contenido final no quede tras el KPI bar fijo --}}
+        <div class="h-28"></div>
     </x-page.container>
+
+    <x-tracking.kpi-bar :stats="$kpis" />
 </div>
