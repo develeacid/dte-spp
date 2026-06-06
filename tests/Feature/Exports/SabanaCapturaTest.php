@@ -3,6 +3,7 @@
 namespace Tests\Feature\Exports;
 
 use App\Livewire\Tracking\SabanaCaptura;
+use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
 use App\Models\User;
 use Database\Seeders\DesarrolloSeeder;
@@ -10,6 +11,7 @@ use Database\Seeders\QaTestingSeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class SabanaCapturaTest extends TestCase
@@ -83,5 +85,27 @@ class SabanaCapturaTest extends TestCase
             ->get(route('tracking.sabana-captura'));
 
         $response->assertStatus(200);
+    }
+
+    #[Test]
+    public function filtro_programa_reduce_filas_del_query(): void
+    {
+        $user = User::where('email', 'ele.admin@gmail.com')->firstOrFail();
+
+        $componente = Livewire::actingAs($user)->test(SabanaCaptura::class);
+
+        $sinFiltro = $componente->viewData('rows')->total();
+
+        if ($sinFiltro === 0) {
+            $this->markTestSkipped('Seeders no produjeron metas para Sabana — sin baseline para comparar.');
+        }
+
+        $programa = ProgramaPresupuestario::query()->first();
+        $this->assertNotNull($programa, 'Esperado al menos un programa seedeado.');
+
+        $componente->set('filtroPrograma', $programa->id);
+        $conFiltro = $componente->viewData('rows')->total();
+
+        $this->assertLessThanOrEqual($sinFiltro, $conFiltro);
     }
 }

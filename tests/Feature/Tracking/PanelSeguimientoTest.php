@@ -15,6 +15,7 @@ use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class PanelSeguimientoTest extends TestCase
@@ -193,5 +194,49 @@ class PanelSeguimientoTest extends TestCase
         Livewire::test(PanelSeguimiento::class)
             ->set('activeTab', 'tabla')
             ->assertSee('No se encontraron indicadores');
+    }
+
+    #[Test]
+    public function filtro_programa_reduce_filas_del_query(): void
+    {
+        // Segundo programa con indicador propio en el mismo team del planeador.
+        $programa2 = ProgramaPresupuestario::create([
+            'nombre' => 'Programa Filtro',
+            'clave' => 'PF-003',
+            'team_id' => $this->planeador->currentTeam->id,
+        ]);
+
+        $nivel2 = MirNivel::create([
+            'programa_presupuestario_id' => $programa2->id,
+            'tipo_nivel' => TipoNivelMir::FIN->value,
+            'resumen_narrativo' => 'Nivel filtro',
+            'orden' => 1,
+            'team_id' => $this->planeador->currentTeam->id,
+        ]);
+
+        Indicador::create([
+            'mir_nivel_id' => $nivel2->id,
+            'nombre' => 'Indicador filtrable',
+            'tipo' => 'estrategico',
+            'dimension' => 'eficacia',
+            'frecuencia' => 'trimestral',
+            'sentido' => SentidoIndicador::ASCENDENTE->value,
+            'meta' => 60,
+            'activo_seguimiento' => true,
+            'orden' => 1,
+        ]);
+
+        $this->actingAs($this->planeador);
+
+        $componente = Livewire::test(PanelSeguimiento::class);
+
+        $sinFiltro = $componente->viewData('rows')->total();
+        $this->assertGreaterThanOrEqual(2, $sinFiltro, 'Esperado >=2 indicadores en baseline.');
+
+        $componente->set('filtroPrograma', $this->programa->id);
+        $conFiltro = $componente->viewData('rows')->total();
+
+        $this->assertLessThan($sinFiltro, $conFiltro);
+        $this->assertGreaterThan(0, $conFiltro);
     }
 }
