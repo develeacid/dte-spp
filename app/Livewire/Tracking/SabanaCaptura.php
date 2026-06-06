@@ -30,6 +30,15 @@ class SabanaCaptura extends Component
     #[Url(as: 'estado')]
     public ?string $filtroEstado = null;
 
+    #[Url(as: 'modoFecha')]
+    public string $modoFecha = 'anio';
+
+    #[Url(as: 'ejercicio')]
+    public ?int $filtroEjercicio = null;
+
+    #[Url(as: 'fecha')]
+    public ?string $filtroFecha = null;
+
     #[Url(as: 'tab')]
     public string $activeTab = 'dashboard';
 
@@ -53,6 +62,26 @@ class SabanaCaptura extends Component
     }
 
     public function updatingFiltroEstado(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedModoFecha(string $value): void
+    {
+        if ($value === 'anio') {
+            $this->filtroFecha = null;
+        } else {
+            $this->filtroEjercicio = null;
+        }
+        $this->resetPage();
+    }
+
+    public function updatingFiltroEjercicio(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroFecha(): void
     {
         $this->resetPage();
     }
@@ -83,6 +112,14 @@ class SabanaCaptura extends Component
 
         if ($this->filtroTrimestre) {
             $metasQuery->where('periodo', $this->filtroTrimestre);
+        }
+
+        if ($this->modoFecha === 'anio' && $this->filtroEjercicio) {
+            $metasQuery->whereYear('fecha_cierre', $this->filtroEjercicio);
+        }
+
+        if ($this->modoFecha === 'fecha' && $this->filtroFecha) {
+            $metasQuery->whereDate('fecha_cierre', $this->filtroFecha);
         }
 
         if ($this->search !== '') {

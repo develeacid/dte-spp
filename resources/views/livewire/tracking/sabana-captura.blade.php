@@ -34,6 +34,36 @@
             <x-filters.trimestre model="filtroTrimestre" />
             <x-filters.estado model="filtroEstado" :options="$estadosOpciones" />
 
+            {{-- Toggle modo fecha (mutuamente exclusivo) --}}
+            <div class="inline-flex rounded-md border border-slate-200 overflow-hidden dark:border-slate-700">
+                <button type="button"
+                        wire:click="$set('modoFecha', 'anio')"
+                        @class([
+                            'px-3 py-1.5 text-sm',
+                            'bg-indigo-600 text-white' => $modoFecha === 'anio',
+                            'bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300' => $modoFecha !== 'anio',
+                        ])>
+                    Año
+                </button>
+                <button type="button"
+                        wire:click="$set('modoFecha', 'fecha')"
+                        @class([
+                            'px-3 py-1.5 text-sm border-l border-slate-200 dark:border-slate-700',
+                            'bg-indigo-600 text-white' => $modoFecha === 'fecha',
+                            'bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300' => $modoFecha !== 'fecha',
+                        ])>
+                    Fecha
+                </button>
+            </div>
+
+            @if ($modoFecha === 'anio')
+                <x-filters.ejercicio model="filtroEjercicio" />
+            @else
+                <input type="date"
+                       wire:model.live="filtroFecha"
+                       class="rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800" />
+            @endif
+
             <label class="flex items-center gap-2 text-sm">
                 <input type="checkbox" wire:model.live="groupByPrograma" class="rounded border-slate-300" />
                 Agrupar
