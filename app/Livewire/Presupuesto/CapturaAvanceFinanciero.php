@@ -140,8 +140,31 @@ class CapturaAvanceFinanciero extends Component
             ->orderBy('clave_partida')
             ->get();
 
+        $totalEfectivo = (float) $partidas->sum('monto_efectivo');
+        $totalProgramado = 0.0;
+        $totalPagado = 0.0;
+        foreach ($this->metas as $trimestres) {
+            foreach ($trimestres as $monto) {
+                $totalProgramado += (float) $monto;
+            }
+        }
+        foreach ($this->avances as $trimestres) {
+            foreach ($trimestres as $datos) {
+                $totalPagado += (float) ($datos['pagado'] ?? 0);
+            }
+        }
+        $pctPagado = $totalEfectivo > 0 ? round(($totalPagado / $totalEfectivo) * 100, 1) : 0;
+
+        $kpis = [
+            ['label' => 'Partidas', 'value' => $partidas->count()],
+            ['label' => 'Efectivo', 'value' => '$'.number_format($totalEfectivo, 0), 'color' => 'blue'],
+            ['label' => 'Programado (T1-T4)', 'value' => '$'.number_format($totalProgramado, 0), 'color' => 'amber'],
+            ['label' => '% Pagado', 'value' => $pctPagado.'%', 'color' => $pctPagado >= 75 ? 'green' : ($pctPagado >= 40 ? 'amber' : 'red')],
+        ];
+
         return view('livewire.presupuesto.captura-avance-financiero', [
             'partidas' => $partidas,
+            'kpis' => $kpis,
         ]);
     }
 }
