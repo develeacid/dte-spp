@@ -140,6 +140,51 @@ class HardeningColumnsTest extends TestCase
         $this->assertSame('https://www.coneval.org.mx', $fresh->url);
     }
 
+    public function test_mir_editor_rechaza_linea_base_anio_fuera_de_rango(): void
+    {
+        $indicador = $this->indicadorEnPrograma();
+
+        Livewire::actingAs($this->planeador())
+            ->test(MirEditor::class, ['programa' => $indicador->mirNivel->programa])
+            ->call('guardarLineaBaseAnio', $indicador->id, '1899')
+            ->assertHasErrors(['linea_base_anio']);
+
+        Livewire::actingAs($this->planeador())
+            ->test(MirEditor::class, ['programa' => $indicador->mirNivel->programa])
+            ->call('guardarLineaBaseAnio', $indicador->id, '3000')
+            ->assertHasErrors(['linea_base_anio']);
+
+        $this->assertNull($indicador->fresh()->linea_base_anio);
+
+        Livewire::actingAs($this->planeador())
+            ->test(MirEditor::class, ['programa' => $indicador->mirNivel->programa])
+            ->call('guardarLineaBaseAnio', $indicador->id, '2026')
+            ->assertHasNoErrors(['linea_base_anio']);
+
+        $this->assertSame(2026, $indicador->fresh()->linea_base_anio);
+    }
+
+    public function test_mir_editor_acepta_url_de_mv_mayor_a_255_chars(): void
+    {
+        $indicador = $this->indicadorEnPrograma();
+        $medio = MedioVerificacion::create([
+            'indicador_id' => $indicador->id, 'nombre' => 'X', 'orden' => 1,
+        ]);
+
+        $urlLarga = 'https://www.inegi.org.mx/app/api/indicadores/desarrolladores/jsonxml/INDICATOR/'
+            .str_repeat('1234567890', 25).'/es/0700/false/BISE/2.0/token-xxxxxxxx?type=json';
+        $this->assertGreaterThan(255, strlen($urlLarga));
+
+        Livewire::actingAs($this->planeador())
+            ->test(MirEditor::class, ['programa' => $indicador->mirNivel->programa])
+            ->call('guardarMedioVerificacion', $medio->id, [
+                'nombre' => 'Registro', 'url' => $urlLarga,
+            ])
+            ->assertHasNoErrors(['url']);
+
+        $this->assertSame($urlLarga, $medio->fresh()->url);
+    }
+
     public function test_mir_editor_rechaza_url_invalida(): void
     {
         $indicador = $this->indicadorEnPrograma();

@@ -21,7 +21,7 @@ return new class extends Migration
         Schema::table('medios_verificacion', function (Blueprint $table) {
             // V2-A7: organismo responsable + URL del medio de verificación
             $table->string('organismo')->nullable()->after('fuente');
-            $table->string('url')->nullable()->after('organismo');
+            $table->text('url')->nullable()->after('organismo');
         });
 
         Schema::table('indicador_variables', function (Blueprint $table) {

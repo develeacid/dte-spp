@@ -160,7 +160,7 @@ class MirEditor extends Component
             'nombre' => 'required|string|max:255',
             'fuente' => 'nullable|string|max:255',
             'organismo' => 'nullable|string|max:255',
-            'url' => 'nullable|url|max:255',
+            'url' => 'nullable|url|max:2048',
         ])->validate();
 
         MedioVerificacion::findOrFail($medioId)->update($validated);
@@ -251,7 +251,7 @@ class MirEditor extends Component
     {
         $validated = validator(
             ['linea_base_anio' => $anio === '' ? null : $anio],
-            ['linea_base_anio' => 'nullable|integer|digits:4']
+            ['linea_base_anio' => 'nullable|integer|between:1900,2999']
         )->validate();
 
         Indicador::findOrFail($indicadorId)->update($validated);
