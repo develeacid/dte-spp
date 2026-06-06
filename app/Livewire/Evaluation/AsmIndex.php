@@ -49,10 +49,28 @@ class AsmIndex extends Component
             ->when($this->busqueda !== '', fn ($q) => $q->where('descripcion_aspecto', 'ilike', "%{$this->busqueda}%"))
             ->orderBy('fecha_compromiso');
 
+        $countQuery = Asm::query()
+            ->when($this->programaId, fn ($q, $id) => $q->where('programa_presupuestario_id', $id))
+            ->when($this->responsableId, fn ($q, $id) => $q->where('responsable_id', $id))
+            ->when($this->busqueda !== '', fn ($q) => $q->where('descripcion_aspecto', 'ilike', "%{$this->busqueda}%"));
+
+        $total = (clone $countQuery)->count();
+        $pendientes = (clone $countQuery)->where('status', StatusAsm::PENDIENTE->value)->count();
+        $enProceso = (clone $countQuery)->where('status', StatusAsm::EN_PROCESO->value)->count();
+        $cumplidos = (clone $countQuery)->where('status', StatusAsm::CUMPLIDO->value)->count();
+
+        $kpis = [
+            ['label' => 'Total ASM', 'value' => $total, 'color' => 'slate'],
+            ['label' => 'Pendientes', 'value' => $pendientes, 'color' => 'yellow'],
+            ['label' => 'En proceso', 'value' => $enProceso, 'color' => 'blue'],
+            ['label' => 'Cumplidos', 'value' => $cumplidos, 'color' => 'green'],
+        ];
+
         return view('livewire.evaluation.asm.index', [
             'asms' => $query->paginate(20),
             'programas' => ProgramaPresupuestario::orderBy('clave')->get(['id', 'clave', 'nombre']),
             'statuses' => StatusAsm::cases(),
+            'kpis' => $kpis,
         ]);
     }
 }
