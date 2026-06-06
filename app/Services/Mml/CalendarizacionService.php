@@ -6,6 +6,7 @@ use App\Enums\FrecuenciaMedicion;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\ProgramaPresupuestario;
+use App\Services\Tracking\CalendarioService;
 
 class CalendarizacionService
 {
@@ -49,13 +50,49 @@ class CalendarizacionService
 
     /**
      * Persist adjusted period goals for all indicators of a programa.
+     *
+     * Además de la meta por periodo, cada MetaPeriodo se persiste con la ventana
+     * normativa de captura (fecha_apertura/fecha_cierre) calculada por
+     * CalendarioService según la frecuencia del indicador. La fecha de cierre
+     * sigue la norma SHCP (cierre del periodo + config('tracking.dias_ventana_captura')).
+     *
+     * Comportamiento de re-confirmación: el updateOrCreate matchea por
+     * (indicador_id, periodo, ejercicio_fiscal). Re-confirmar SOBREESCRIBE las
+     * fechas de los MetaPeriodo existentes (incluidos los sembrados por seeders
+     * o producción) con las fechas recalculadas. Es intencional: re-confirmar el
+     * calendario alinea las ventanas a la norma vigente.
      */
     public function confirmar(ProgramaPresupuestario $programa, array $metasAjustadas, int $ejercicio): void
     {
+        $calendario = new CalendarioService;
+
+        // Cargar frecuencias de los indicadores en una sola consulta (evita N+1).
+        $indicadorIds = array_column($metasAjustadas, 'indicador_id');
+        $frecuencias = Indicador::whereIn('id', $indicadorIds)
+            ->pluck('frecuencia', 'id');
+
+        // Cachear fechas calculadas por frecuencia (mismas para todos los
+        // indicadores con la misma frecuencia y ejercicio).
+        $fechasPorFrecuencia = [];
+
         foreach ($metasAjustadas as $indicadorData) {
             $indicadorId = $indicadorData['indicador_id'];
 
+            $frecuencia = $frecuencias[$indicadorId] ?? null;
+            $fechasPorPeriodo = [];
+            if ($frecuencia instanceof FrecuenciaMedicion) {
+                $clave = $frecuencia->value;
+                if (! isset($fechasPorFrecuencia[$clave])) {
+                    $fechasPorFrecuencia[$clave] = collect(
+                        $calendario->calcularFechas($ejercicio, $frecuencia)
+                    )->keyBy('periodo');
+                }
+                $fechasPorPeriodo = $fechasPorFrecuencia[$clave];
+            }
+
             foreach ($indicadorData['periodos'] as $periodoData) {
+                $fechas = $fechasPorPeriodo[$periodoData['periodo']] ?? null;
+
                 MetaPeriodo::updateOrCreate(
                     [
                         'indicador_id' => $indicadorId,
@@ -65,6 +102,8 @@ class CalendarizacionService
                     [
                         'meta_periodo' => $periodoData['meta_periodo'],
                         'activo' => true,
+                        'fecha_apertura' => $fechas['fecha_apertura'] ?? null,
+                        'fecha_cierre' => $fechas['fecha_cierre'] ?? null,
                     ]
                 );
             }

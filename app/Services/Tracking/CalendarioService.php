@@ -21,7 +21,11 @@ class CalendarioService
                 $anio++;
             }
             $fechaApertura = Carbon::create($anio, $mesApertura, 1);
-            $fechaCierre = $fechaApertura->copy()->addDays(14);
+            // Norma SHCP: la ventana de captura cierra N días después del cierre
+            // del periodo. El cierre del periodo es el día previo a la apertura
+            // (último día del trimestre/mes/semestre/año reportado).
+            $dias = (int) config('tracking.dias_ventana_captura', 30);
+            $fechaCierre = $fechaApertura->copy()->subDay()->addDays($dias);
             $periodos[] = [
                 'periodo' => $i,
                 'fecha_apertura' => $fechaApertura->toDateString(),

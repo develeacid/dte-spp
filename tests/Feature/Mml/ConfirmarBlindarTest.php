@@ -252,7 +252,8 @@ class ConfirmarBlindarTest extends TestCase
         // mesApertura=13 → enero del ejercicio+1. La captura abre cuando el
         // año ya cerró, nunca en trimestres intermedios.
         $this->assertEquals('2027-01-01', $fechas[0]['fecha_apertura']);
-        $this->assertEquals('2027-01-15', $fechas[0]['fecha_cierre']);
+        // Norma SHCP: cierre del periodo (31-dic-2026) + 30 días = 30-ene-2027.
+        $this->assertEquals('2027-01-30', $fechas[0]['fecha_cierre']);
     }
 
     public function test_indicador_anual_calendarizado_no_tiene_metas_en_trimestres_intermedios(): void
