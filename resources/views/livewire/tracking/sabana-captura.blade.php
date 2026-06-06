@@ -59,9 +59,17 @@
             @if ($modoFecha === 'anio')
                 <x-filters.ejercicio model="filtroEjercicio" />
             @else
-                <input type="date"
-                       wire:model.live="filtroFecha"
-                       class="rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800" />
+                <div class="flex items-center gap-2">
+                    <input type="date"
+                           wire:model.live="filtroFechaDesde"
+                           title="Desde"
+                           class="rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800" />
+                    <span class="text-sm text-slate-500">—</span>
+                    <input type="date"
+                           wire:model.live="filtroFechaHasta"
+                           title="Hasta"
+                           class="rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800" />
+                </div>
             @endif
 
             <label class="flex items-center gap-2 text-sm">

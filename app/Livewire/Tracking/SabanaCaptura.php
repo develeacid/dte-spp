@@ -36,8 +36,11 @@ class SabanaCaptura extends Component
     #[Url(as: 'ejercicio')]
     public ?int $filtroEjercicio = null;
 
-    #[Url(as: 'fecha')]
-    public ?string $filtroFecha = null;
+    #[Url(as: 'desde')]
+    public ?string $filtroFechaDesde = null;
+
+    #[Url(as: 'hasta')]
+    public ?string $filtroFechaHasta = null;
 
     #[Url(as: 'tab')]
     public string $activeTab = 'dashboard';
@@ -69,7 +72,8 @@ class SabanaCaptura extends Component
     public function updatedModoFecha(string $value): void
     {
         if ($value === 'anio') {
-            $this->filtroFecha = null;
+            $this->filtroFechaDesde = null;
+            $this->filtroFechaHasta = null;
         } else {
             $this->filtroEjercicio = null;
         }
@@ -81,7 +85,12 @@ class SabanaCaptura extends Component
         $this->resetPage();
     }
 
-    public function updatingFiltroFecha(): void
+    public function updatingFiltroFechaDesde(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroFechaHasta(): void
     {
         $this->resetPage();
     }
@@ -118,8 +127,13 @@ class SabanaCaptura extends Component
             $metasQuery->whereYear('fecha_cierre', $this->filtroEjercicio);
         }
 
-        if ($this->modoFecha === 'fecha' && $this->filtroFecha) {
-            $metasQuery->whereDate('fecha_cierre', $this->filtroFecha);
+        if ($this->modoFecha === 'fecha') {
+            if ($this->filtroFechaDesde) {
+                $metasQuery->whereDate('fecha_cierre', '>=', $this->filtroFechaDesde);
+            }
+            if ($this->filtroFechaHasta) {
+                $metasQuery->whereDate('fecha_cierre', '<=', $this->filtroFechaHasta);
+            }
         }
 
         if ($this->search !== '') {
