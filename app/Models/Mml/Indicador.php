@@ -10,6 +10,8 @@ use App\Models\CatalogoUnidadMedida;
 use App\Models\Evaluation\AnexoTransversal;
 use App\Models\Tracking\Avance;
 use App\Support\Mml\Trazabilidad;
+use Database\Factories\Mml\IndicadorFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -20,6 +22,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Indicador extends Model
 {
+    /** @use HasFactory<IndicadorFactory> */
+    use HasFactory;
+
     use LogsActivity;
 
     protected $table = 'indicadores';

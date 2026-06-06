@@ -52,11 +52,10 @@ class Fase1PlaneacionMmlSeeder extends Seeder
         $this->pedObjetivoIds = PedObjetivoEstrategico::pluck('id')->toArray();
         $this->pedLineaIds = PedLineaAccion::pluck('id')->toArray();
 
-        // Build sentido pool: ~60% asc, ~25% desc, ~15% regular (128 indicators)
+        // Build sentido pool: ~75% asc, ~25% desc (128 indicators)
         $this->sentidoPool = array_merge(
-            array_fill(0, 77, SentidoIndicador::ASCENDENTE),
+            array_fill(0, 96, SentidoIndicador::ASCENDENTE),
             array_fill(0, 32, SentidoIndicador::DESCENDENTE),
-            array_fill(0, 19, SentidoIndicador::REGULAR),
         );
         shuffle($this->sentidoPool);
 

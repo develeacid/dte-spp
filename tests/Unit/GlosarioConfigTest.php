@@ -59,7 +59,7 @@ class GlosarioConfigTest extends TestCase
     #[Test]
     public function glosario_has_sentido_keys(): void
     {
-        $keys = ['sentido_ascendente', 'sentido_descendente', 'sentido_regular'];
+        $keys = ['sentido_ascendente', 'sentido_descendente'];
 
         foreach ($keys as $key) {
             $this->assertArrayHasKey($key, $this->glosario, "Missing key: {$key}");
