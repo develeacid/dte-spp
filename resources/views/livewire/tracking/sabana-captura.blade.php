@@ -35,6 +35,7 @@
             <div class="w-full flex flex-wrap items-center gap-2">
                 <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide min-w-[60px] dark:text-slate-400">Ámbito</span>
                 <x-filters.programa model="filtroPrograma" :options="$programasOpciones" />
+                <x-filters.mir-nivel model="filtroMirNivel" :options="$nivelesOpciones" />
                 <x-filters.estado model="filtroEstado" :options="$estadosOpciones" />
             </div>
 

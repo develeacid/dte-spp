@@ -24,6 +24,9 @@ class SabanaCaptura extends Component
     #[Url(as: 'programa')]
     public ?int $filtroPrograma = null;
 
+    #[Url(as: 'nivel')]
+    public ?int $filtroMirNivel = null;
+
     #[Url(as: 'trimestre')]
     public ?int $filtroTrimestre = null;
 
@@ -55,6 +58,13 @@ class SabanaCaptura extends Component
     }
 
     public function updatingFiltroPrograma(): void
+    {
+        // Si cambia el programa, el nivel seleccionado puede no pertenecer al nuevo programa.
+        $this->filtroMirNivel = null;
+        $this->resetPage();
+    }
+
+    public function updatingFiltroMirNivel(): void
     {
         $this->resetPage();
     }
@@ -122,6 +132,10 @@ class SabanaCaptura extends Component
 
         if ($this->filtroPrograma) {
             $metasQuery->whereHas('indicador.mirNivel', fn ($q) => $q->where('programa_presupuestario_id', $this->filtroPrograma));
+        }
+
+        if ($this->filtroMirNivel) {
+            $metasQuery->whereHas('indicador', fn ($q) => $q->where('mir_nivel_id', $this->filtroMirNivel));
         }
 
         if ($this->filtroTrimestre) {
@@ -194,6 +208,18 @@ class SabanaCaptura extends Component
 
         $programasOpciones = $programas->mapWithKeys(fn ($p) => [$p->id => $p->clave.' - '.$p->nombre])->toArray();
 
+        $nivelesOpciones = \App\Models\Mml\MirNivel::query()
+            ->whereHas('indicadores.metasPeriodo')
+            ->when($this->filtroPrograma, fn ($q) => $q->where('programa_presupuestario_id', $this->filtroPrograma))
+            ->whereIn('programa_presupuestario_id', $programas->pluck('id'))
+            ->with('programa', 'componente')
+            ->orderBy('programa_presupuestario_id')
+            ->orderBy('tipo_nivel')
+            ->orderBy('orden')
+            ->get()
+            ->mapWithKeys(fn ($n) => [$n->id => $n->trazabilidad()->clave().' · '.$n->trazabilidad()->nivel()])
+            ->toArray();
+
         $estadosOpciones = [
             'pendiente' => 'Pendiente',
             'en_captura' => 'En captura',
@@ -206,6 +232,7 @@ class SabanaCaptura extends Component
         return view('livewire.tracking.sabana-captura', [
             'programas' => $programas,
             'programasOpciones' => $programasOpciones,
+            'nivelesOpciones' => $nivelesOpciones,
             'estadosOpciones' => $estadosOpciones,
             'filas' => $filas,
             'rows' => $rows,
