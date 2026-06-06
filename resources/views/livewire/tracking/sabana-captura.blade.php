@@ -21,20 +21,27 @@
 
     <x-page.container fluid>
         <x-page.toolbar>
-            <div class="flex-1 min-w-[200px]">
+            {{-- Búsqueda standalone --}}
+            <div class="w-full">
                 <input
                     type="search"
                     wire:model.live.debounce.300ms="search"
                     placeholder="Buscar indicador..."
-                    class="w-full rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800"
+                    class="w-full max-w-md rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800"
                 />
             </div>
 
-            <x-filters.programa model="filtroPrograma" :options="$programasOpciones" />
-            <x-filters.estado model="filtroEstado" :options="$estadosOpciones" />
+            {{-- Familia 1: Ámbito --}}
+            <div class="w-full flex flex-wrap items-center gap-2">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide min-w-[60px] dark:text-slate-400">Ámbito</span>
+                <x-filters.programa model="filtroPrograma" :options="$programasOpciones" />
+                <x-filters.estado model="filtroEstado" :options="$estadosOpciones" />
+            </div>
 
-            {{-- Toggle alcance temporal (Todo / Año / Rango) --}}
-            <div class="inline-flex rounded-md border border-slate-200 overflow-hidden dark:border-slate-700">
+            {{-- Familia 2: Tiempo --}}
+            <div class="w-full flex flex-wrap items-center gap-2">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide min-w-[60px] dark:text-slate-400">Tiempo</span>
+                <div class="inline-flex rounded-md border border-slate-200 overflow-hidden dark:border-slate-700">
                 <button type="button"
                         wire:click="$set('alcanceTemporal', 'todo')"
                         @class([
@@ -62,47 +69,52 @@
                         ])>
                     Rango
                 </button>
+                </div>
+
+                @if ($alcanceTemporal === 'anio')
+                    <x-filters.ejercicio model="filtroEjercicio" />
+                @elseif ($alcanceTemporal === 'rango')
+                    <div class="flex items-center gap-2">
+                        <input type="date"
+                               wire:model.live="filtroFechaDesde"
+                               title="Desde"
+                               class="rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800" />
+                        <span class="text-sm text-slate-500">—</span>
+                        <input type="date"
+                               wire:model.live="filtroFechaHasta"
+                               title="Hasta"
+                               class="rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800" />
+                    </div>
+                @endif
+
+                @if ($alcanceTemporal !== 'rango')
+                    <x-filters.trimestre model="filtroTrimestre" />
+                @endif
             </div>
 
-            @if ($alcanceTemporal === 'anio')
-                <x-filters.ejercicio model="filtroEjercicio" />
-            @elseif ($alcanceTemporal === 'rango')
-                <div class="flex items-center gap-2">
-                    <input type="date"
-                           wire:model.live="filtroFechaDesde"
-                           title="Desde"
-                           class="rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800" />
-                    <span class="text-sm text-slate-500">—</span>
-                    <input type="date"
-                           wire:model.live="filtroFechaHasta"
-                           title="Hasta"
-                           class="rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800" />
-                </div>
-            @endif
+            {{-- Familia 3: Vista --}}
+            <div class="w-full flex flex-wrap items-center gap-2">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide min-w-[60px] dark:text-slate-400">Vista</span>
 
-            {{-- Trimestre solo aplica para Todo/Año, no para Rango --}}
-            @if ($alcanceTemporal !== 'rango')
-                <x-filters.trimestre model="filtroTrimestre" />
-            @endif
+                <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" wire:model.live="groupByPrograma" class="rounded border-slate-300" />
+                    Agrupar
+                </label>
 
-            <label class="flex items-center gap-2 text-sm">
-                <input type="checkbox" wire:model.live="groupByPrograma" class="rounded border-slate-300" />
-                Agrupar
-            </label>
+                <select wire:model.live="sortBy"
+                        class="rounded-md border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-800">
+                    <option value="indicador">Orden: Indicador</option>
+                    <option value="fecha">Orden: Fecha</option>
+                </select>
 
-            <select wire:model.live="sortBy"
-                    class="rounded-md border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-800">
-                <option value="indicador">Orden: Indicador</option>
-                <option value="fecha">Orden: Fecha</option>
-            </select>
-
-            <select wire:model.live="perPage"
-                    class="rounded-md border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-800">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="">Todas</option>
-            </select>
+                <select wire:model.live="perPage"
+                        class="rounded-md border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-800">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="">Todas</option>
+                </select>
+            </div>
         </x-page.toolbar>
 
         <x-page.tabs
