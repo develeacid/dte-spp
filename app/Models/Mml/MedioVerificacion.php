@@ -11,7 +11,7 @@ class MedioVerificacion extends Model
 
     protected $fillable = [
         'indicador_id', 'nombre', 'descripcion', 'fuente',
-        'frecuencia', 'orden',
+        'organismo', 'url', 'frecuencia', 'orden',
     ];
 
     protected function casts(): array

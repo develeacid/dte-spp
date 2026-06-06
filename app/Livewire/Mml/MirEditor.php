@@ -154,12 +154,16 @@ class MirEditor extends Component
         ]);
     }
 
-    public function guardarMedioVerificacion(int $medioId, string $nombre, ?string $fuente = null): void
+    public function guardarMedioVerificacion(int $medioId, array $data): void
     {
-        MedioVerificacion::findOrFail($medioId)->update([
-            'nombre' => $nombre,
-            'fuente' => $fuente,
-        ]);
+        $validated = validator($data, [
+            'nombre' => 'required|string|max:255',
+            'fuente' => 'nullable|string|max:255',
+            'organismo' => 'nullable|string|max:255',
+            'url' => 'nullable|url|max:255',
+        ])->validate();
+
+        MedioVerificacion::findOrFail($medioId)->update($validated);
     }
 
     public function eliminarMedioVerificacion(int $medioId): void
@@ -226,6 +230,7 @@ class MirEditor extends Component
             'simbolo' => 'required|string|max:5',
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:500',
+            'fuente' => 'nullable|string|max:255',
             'unidad_medida_id' => 'nullable|integer|exists:catalogo_unidades_medida,id',
         ])->validate();
 
@@ -240,6 +245,16 @@ class MirEditor extends Component
     public function guardarFormulaTexto(int $indicadorId, string $formula): void
     {
         Indicador::findOrFail($indicadorId)->update(['formula_texto' => $formula]);
+    }
+
+    public function guardarLineaBaseAnio(int $indicadorId, ?string $anio): void
+    {
+        $validated = validator(
+            ['linea_base_anio' => $anio === '' ? null : $anio],
+            ['linea_base_anio' => 'nullable|integer|digits:4']
+        )->validate();
+
+        Indicador::findOrFail($indicadorId)->update($validated);
     }
 
     public function sugerirFormula(int $indicadorId): void

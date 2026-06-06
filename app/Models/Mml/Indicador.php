@@ -31,7 +31,7 @@ class Indicador extends Model
 
     protected $fillable = [
         'mir_nivel_id', 'nombre', 'formula_texto', 'tipo', 'dimension',
-        'frecuencia', 'sentido', 'linea_base', 'meta',
+        'frecuencia', 'sentido', 'linea_base', 'linea_base_anio', 'meta',
         'rango_verde_min', 'rango_verde_max',
         'rango_amarillo_min', 'rango_amarillo_max',
         'rango_rojo_min', 'rango_rojo_max',
@@ -58,6 +58,7 @@ class Indicador extends Model
             'frecuencia' => FrecuenciaMedicion::class,
             'sentido' => SentidoIndicador::class,
             'linea_base' => 'decimal:4',
+            'linea_base_anio' => 'integer',
             'meta' => 'decimal:4',
             'orden' => 'integer',
             'activo_seguimiento' => 'boolean',
