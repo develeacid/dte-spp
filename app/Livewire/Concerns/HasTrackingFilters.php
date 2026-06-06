@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Enums\TipoNivelMir;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Url;
 
@@ -96,9 +97,9 @@ trait HasTrackingFilters
         $resultado = collect();
 
         foreach ($niveles->groupBy('programa_presupuestario_id') as $delPrograma) {
-            $fin = $delPrograma->firstWhere('tipo_nivel', \App\Enums\TipoNivelMir::FIN);
-            $proposito = $delPrograma->firstWhere('tipo_nivel', \App\Enums\TipoNivelMir::PROPOSITO);
-            $componentes = $delPrograma->where('tipo_nivel', \App\Enums\TipoNivelMir::COMPONENTE)->sortBy('orden');
+            $fin = $delPrograma->firstWhere('tipo_nivel', TipoNivelMir::FIN);
+            $proposito = $delPrograma->firstWhere('tipo_nivel', TipoNivelMir::PROPOSITO);
+            $componentes = $delPrograma->where('tipo_nivel', TipoNivelMir::COMPONENTE)->sortBy('orden');
 
             if ($fin) {
                 $resultado->push($fin);
@@ -110,7 +111,7 @@ trait HasTrackingFilters
             foreach ($componentes as $componente) {
                 $resultado->push($componente);
                 $actividades = $delPrograma
-                    ->where('tipo_nivel', \App\Enums\TipoNivelMir::ACTIVIDAD)
+                    ->where('tipo_nivel', TipoNivelMir::ACTIVIDAD)
                     ->where('componente_id', $componente->id)
                     ->sortBy('orden');
 

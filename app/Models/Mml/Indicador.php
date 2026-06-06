@@ -9,6 +9,7 @@ use App\Enums\TipoIndicador;
 use App\Models\CatalogoUnidadMedida;
 use App\Models\Evaluation\AnexoTransversal;
 use App\Models\Tracking\Avance;
+use App\Support\Mml\Trazabilidad;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -105,8 +106,8 @@ class Indicador extends Model
         );
     }
 
-    public function trazabilidad(): \App\Support\Mml\Trazabilidad
+    public function trazabilidad(): Trazabilidad
     {
-        return \App\Support\Mml\Trazabilidad::deNivel($this->mirNivel);
+        return Trazabilidad::deNivel($this->mirNivel);
     }
 }

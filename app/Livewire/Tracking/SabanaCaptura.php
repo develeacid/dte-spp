@@ -7,6 +7,7 @@ use App\Exports\Pdf\SabanaCapturaPdfExport;
 use App\Livewire\Concerns\HasTraceableTable;
 use App\Livewire\Concerns\HasTrackingFilters;
 use App\Models\Mml\MetaPeriodo;
+use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Support\Tracking\TrackingOptions;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -130,7 +131,7 @@ class SabanaCaptura extends Component
 
         $programasOpciones = TrackingOptions::programas($programas);
 
-        $nivelesRaw = \App\Models\Mml\MirNivel::query()
+        $nivelesRaw = MirNivel::query()
             ->whereHas('indicadores.metasPeriodo')
             ->when($this->filtroPrograma, fn ($q) => $q->where('programa_presupuestario_id', $this->filtroPrograma))
             ->whereIn('programa_presupuestario_id', $programas->pluck('id'))

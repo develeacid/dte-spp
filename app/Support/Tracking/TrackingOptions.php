@@ -2,6 +2,7 @@
 
 namespace App\Support\Tracking;
 
+use App\Models\Mml\MirNivel;
 use Illuminate\Support\Collection;
 
 final class TrackingOptions
@@ -34,7 +35,7 @@ final class TrackingOptions
     }
 
     /**
-     * @param  Collection<int, \App\Models\Mml\MirNivel>  $niveles  ya ordenados jerárquicamente por la vista
+     * @param  Collection<int, MirNivel>  $niveles  ya ordenados jerárquicamente por la vista
      */
     public static function niveles(Collection $niveles): array
     {
