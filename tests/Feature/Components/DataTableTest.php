@@ -38,34 +38,6 @@ class DataTableTest extends TestCase
     }
 
     #[Test]
-    public function renderiza_search_input_cuando_search_bound(): void
-    {
-        $rows = collect();
-        $html = Blade::render(
-            '<x-data.table :rows="$rows" :columns="[]" search="foo" search-placeholder="Buscar..." :traceable="false" />',
-            compact('rows')
-        );
-
-        $this->assertStringContainsString('Buscar...', $html);
-        $this->assertStringContainsString('foo', $html);
-    }
-
-    #[Test]
-    public function renderiza_selector_per_page_con_opciones(): void
-    {
-        $rows = collect();
-        $html = Blade::render(
-            '<x-data.table :rows="$rows" :columns="[]" :per-page="25" :traceable="false" />',
-            compact('rows')
-        );
-
-        $this->assertStringContainsString('10', $html);
-        $this->assertStringContainsString('25', $html);
-        $this->assertStringContainsString('50', $html);
-        $this->assertStringContainsString('Todas', $html);
-    }
-
-    #[Test]
     public function render_closure_recibe_row_y_emite_html_sin_escapar(): void
     {
         $rows = collect([['nombre' => 'Alfa', 'estado' => 'ok']]);

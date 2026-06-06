@@ -1,52 +1,14 @@
 @props([
     'rows',
     'columns' => [],
-    'search' => '',
-    'sortBy' => '',
-    'sortDir' => 'asc',
     'groupBy' => null,
     'perPage' => 25,
     'traceable' => false,
-    'searchPlaceholder' => 'Buscar…',
     'emptyMessage' => 'Sin registros',
     'rowClass' => null,
 ])
 
 <div class="space-y-3">
-    {{-- Controls bar --}}
-    <div class="flex flex-wrap items-center gap-3">
-        <div class="flex-1 min-w-[200px]">
-            <input
-                type="search"
-                wire:model.live.debounce.300ms="search"
-                placeholder="{{ $searchPlaceholder }}"
-                value="{{ $search }}"
-                class="w-full rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800"
-            />
-        </div>
-
-        @if ($traceable)
-            <label class="flex items-center gap-2 text-sm">
-                <input type="checkbox" wire:model.live="groupByPrograma" class="rounded border-slate-300" />
-                Agrupar por programa
-            </label>
-
-            <select wire:model.live="sortBy" class="rounded-md border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-800">
-                <option value="indicador">Orden: Indicador</option>
-                <option value="fecha">Orden: Fecha</option>
-            </select>
-        @endif
-
-        <select wire:model.live="perPage" class="rounded-md border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-800">
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="">Todas</option>
-        </select>
-
-        {{ $filters ?? '' }}
-    </div>
-
     {{-- Tabla --}}
     @if ($rows->isEmpty())
         <div class="rounded-md border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500 dark:border-slate-700">

@@ -30,6 +30,9 @@ class SabanaCaptura extends Component
     #[Url(as: 'estado')]
     public ?string $filtroEstado = null;
 
+    #[Url(as: 'tab')]
+    public string $activeTab = 'dashboard';
+
     public function mount(): void
     {
         abort_unless(auth()->user()->can('ver_sabana_captura'), 403);
@@ -133,8 +136,21 @@ class SabanaCaptura extends Component
             default => '',
         };
 
+        $programasOpciones = $programas->mapWithKeys(fn ($p) => [$p->id => $p->clave.' - '.$p->nombre])->toArray();
+
+        $estadosOpciones = [
+            'pendiente' => 'Pendiente',
+            'en_captura' => 'En captura',
+            'en_revision' => 'En revisión',
+            'aprobado' => 'Aprobado',
+            'observado' => 'Observado',
+            'vencido' => 'Vencido',
+        ];
+
         return view('livewire.tracking.sabana-captura', [
             'programas' => $programas,
+            'programasOpciones' => $programasOpciones,
+            'estadosOpciones' => $estadosOpciones,
             'filas' => $filas,
             'rows' => $rows,
             'columns' => $columns,
