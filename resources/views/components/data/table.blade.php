@@ -72,7 +72,7 @@
                     @foreach ($rows as $row)
                         @if ($traceable && $groupBy === 'programa')
                             @php
-                                $programaClave = (is_object($row) && isset($row->trazabilidad)) ? $row->trazabilidad->programa() : (data_get($row, 'programa_clave') ?? '—');
+                                $programaClave = (data_get($row, 'trazabilidad')?->programa()) ?? (data_get($row, 'programa_clave') ?? '—');
                             @endphp
                             @if ($programaClave !== $currentGroup)
                                 @php $currentGroup = $programaClave; @endphp
@@ -86,8 +86,9 @@
                         <tr>
                             @if ($traceable)
                                 <td class="px-3 py-2 text-sm">
-                                    @if (is_object($row) && isset($row->trazabilidad))
-                                        <x-data.indicador-badge :trazabilidad="$row->trazabilidad" />
+                                    @php $rowTrazabilidad = data_get($row, 'trazabilidad'); @endphp
+                                    @if ($rowTrazabilidad)
+                                        <x-data.indicador-badge :trazabilidad="$rowTrazabilidad" />
                                     @endif
                                 </td>
                             @endif
@@ -116,7 +117,7 @@
             @foreach ($rows as $row)
                 @if ($traceable && $groupBy === 'programa')
                     @php
-                        $programaClave = (is_object($row) && isset($row->trazabilidad)) ? $row->trazabilidad->programa() : (data_get($row, 'programa_clave') ?? '—');
+                        $programaClave = (data_get($row, 'trazabilidad')?->programa()) ?? (data_get($row, 'programa_clave') ?? '—');
                     @endphp
                     @if ($programaClave !== $currentGroup)
                         @php $currentGroup = $programaClave; @endphp
@@ -126,8 +127,9 @@
                     @endif
                 @endif
                 <div class="rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                    @if ($traceable && is_object($row) && isset($row->trazabilidad))
-                        <x-data.indicador-badge :trazabilidad="$row->trazabilidad" class="mb-2" />
+                    @php $rowTrazabilidad = $traceable ? data_get($row, 'trazabilidad') : null; @endphp
+                    @if ($rowTrazabilidad)
+                        <x-data.indicador-badge :trazabilidad="$rowTrazabilidad" class="mb-2" />
                     @endif
                     @foreach ($columns as $col)
                         <div class="flex justify-between py-0.5 text-sm">
