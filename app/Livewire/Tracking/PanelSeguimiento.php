@@ -2,10 +2,11 @@
 
 namespace App\Livewire\Tracking;
 
-use App\Enums\EstadoAvance;
 use App\Livewire\Concerns\HasTraceableTable;
+use App\Livewire\Concerns\HasTrackingFilters;
 use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
+use App\Support\Tracking\TrackingOptions;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
@@ -16,36 +17,10 @@ use Livewire\Component;
 class PanelSeguimiento extends Component
 {
     use HasTraceableTable;
-
-    #[Url(as: 'programa')]
-    public ?int $filtroPrograma = null;
-
-    #[Url(as: 'nivel')]
-    public ?int $filtroMirNivel = null;
-
-    #[Url(as: 'estado')]
-    public ?string $filtroEstado = null;
+    use HasTrackingFilters;
 
     #[Url(as: 'semaforo')]
     public ?string $filtroSemaforo = null;
-
-    #[Url(as: 'trimestre')]
-    public ?int $filtroTrimestre = null;
-
-    #[Url(as: 'alcance')]
-    public string $alcanceTemporal = 'todo';
-
-    #[Url(as: 'ejercicio')]
-    public ?int $filtroEjercicio = null;
-
-    #[Url(as: 'desde')]
-    public ?string $filtroFechaDesde = null;
-
-    #[Url(as: 'hasta')]
-    public ?string $filtroFechaHasta = null;
-
-    #[Url(as: 'tab')]
-    public string $activeTab = 'dashboard';
 
     public function mount(): void
     {
@@ -56,60 +31,7 @@ class PanelSeguimiento extends Component
         }
     }
 
-    public function updatingFiltroPrograma(): void
-    {
-        $this->filtroMirNivel = null;
-        $this->resetPage();
-    }
-
-    public function updatingFiltroMirNivel(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFiltroEstado(): void
-    {
-        $this->resetPage();
-    }
-
     public function updatingFiltroSemaforo(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFiltroTrimestre(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedAlcanceTemporal(string $value): void
-    {
-        if ($value === 'todo') {
-            $this->filtroEjercicio = null;
-            $this->filtroFechaDesde = null;
-            $this->filtroFechaHasta = null;
-            $this->filtroTrimestre = null;
-        } elseif ($value === 'anio') {
-            $this->filtroFechaDesde = null;
-            $this->filtroFechaHasta = null;
-        } else {
-            $this->filtroEjercicio = null;
-            $this->filtroTrimestre = null;
-        }
-        $this->resetPage();
-    }
-
-    public function updatingFiltroEjercicio(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFiltroFechaDesde(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFiltroFechaHasta(): void
     {
         $this->resetPage();
     }
@@ -221,7 +143,7 @@ class PanelSeguimiento extends Component
             default => '',
         };
 
-        $programasOpciones = $programas->mapWithKeys(fn ($p) => [$p->id => $p->clave.' - '.$p->nombre])->toArray();
+        $programasOpciones = TrackingOptions::programas($programas);
 
         $nivelesRaw = MirNivel::query()
             ->whereHas('indicadores', fn ($q) => $q->where('activo_seguimiento', true))
@@ -230,17 +152,21 @@ class PanelSeguimiento extends Component
             ->with('programa', 'componente')
             ->get();
 
-        $nivelesOpciones = $this->ordenarJerarquicamente($nivelesRaw)
-            ->mapWithKeys(fn ($n) => [$n->id => $n->trazabilidad()->clave().' · '.$n->trazabilidad()->nivel()])
-            ->toArray();
+        $nivelesOpciones = TrackingOptions::niveles($this->ordenarJerarquicamente($nivelesRaw));
 
-        $estadosOpciones = collect(EstadoAvance::cases())
-            ->mapWithKeys(fn ($e) => [$e->value => $e->label()])->toArray();
-        $semaforosOpciones = [
-            'verde' => 'Verde',
-            'amarillo' => 'Amarillo',
-            'rojo' => 'Rojo',
-            'gris' => 'Sin dato',
+        $estadosOpciones = TrackingOptions::estados();
+        $semaforosOpciones = TrackingOptions::semaforos();
+
+        $total = $filas->count();
+        $verdes = $filas->where('semaforo', 'verde')->count();
+        $amarillos = $filas->where('semaforo', 'amarillo')->count();
+        $rojos = $filas->where('semaforo', 'rojo')->count();
+
+        $kpis = [
+            ['label' => 'Total', 'value' => $total, 'color' => 'slate'],
+            ['label' => 'En verde', 'value' => $verdes, 'color' => 'green'],
+            ['label' => 'En amarillo', 'value' => $amarillos, 'color' => 'yellow'],
+            ['label' => 'En rojo', 'value' => $rojos, 'color' => 'red'],
         ];
 
         return view('livewire.tracking.panel-seguimiento', [
@@ -253,43 +179,8 @@ class PanelSeguimiento extends Component
             'rows' => $rows,
             'columns' => $columns,
             'rowClass' => $rowClass,
+            'kpis' => $kpis,
         ]);
-    }
-
-    /**
-     * Ordena niveles MIR en el orden de la ficha:
-     * Por programa → Fin → Propósito → C1, C1.A1, C1.A2... → C2, C2.A1... → C3...
-     */
-    protected function ordenarJerarquicamente(Collection $niveles): Collection
-    {
-        $resultado = collect();
-
-        foreach ($niveles->groupBy('programa_presupuestario_id') as $delPrograma) {
-            $fin = $delPrograma->firstWhere('tipo_nivel', \App\Enums\TipoNivelMir::FIN);
-            $proposito = $delPrograma->firstWhere('tipo_nivel', \App\Enums\TipoNivelMir::PROPOSITO);
-            $componentes = $delPrograma->where('tipo_nivel', \App\Enums\TipoNivelMir::COMPONENTE)->sortBy('orden');
-
-            if ($fin) {
-                $resultado->push($fin);
-            }
-            if ($proposito) {
-                $resultado->push($proposito);
-            }
-
-            foreach ($componentes as $componente) {
-                $resultado->push($componente);
-                $actividades = $delPrograma
-                    ->where('tipo_nivel', \App\Enums\TipoNivelMir::ACTIVIDAD)
-                    ->where('componente_id', $componente->id)
-                    ->sortBy('orden');
-
-                foreach ($actividades as $actividad) {
-                    $resultado->push($actividad);
-                }
-            }
-        }
-
-        return $resultado;
     }
 
     protected function ordenarFilas(Collection $filas): Collection
