@@ -2,6 +2,7 @@
 
 namespace App\Services\Mml;
 
+use App\Enums\SentidoIndicador;
 use App\Enums\TipoNivelMir;
 use App\Models\Mml\CremaaValidacion;
 use App\Models\Mml\Indicador;
@@ -114,7 +115,7 @@ class MirSnapshotService
                 $nivel = MirNivel::create([
                     'programa_presupuestario_id' => $programa->id,
                     'tipo_nivel' => $nivelData['tipo_nivel'],
-                    'resumen_narrativo' => $nivelData['resumen_narrativo'],
+                    'resumen_narrativo' => $nivelData['resumen_narrativo'] ?? '',
                     'supuestos' => $nivelData['supuestos'],
                     'orden' => $nivelData['orden'],
                     'arbol_nodo_id' => $nivelData['arbol_nodo_id'] ?? null,
@@ -141,7 +142,7 @@ class MirSnapshotService
             $nivel = MirNivel::create([
                 'programa_presupuestario_id' => $programa->id,
                 'tipo_nivel' => $nivelData['tipo_nivel'],
-                'resumen_narrativo' => $nivelData['resumen_narrativo'],
+                'resumen_narrativo' => $nivelData['resumen_narrativo'] ?? '',
                 'supuestos' => $nivelData['supuestos'],
                 'orden' => $nivelData['orden'],
                 'componente_id' => $componenteId,
@@ -161,13 +162,14 @@ class MirSnapshotService
             $indicador = Indicador::create([
                 'mir_nivel_id' => $nivel->id,
                 'nombre' => $indData['nombre'],
-                'formula_texto' => $indData['formula_texto'] ?? null,
+                'formula_texto' => $indData['formula_texto'] ?? '',
                 'tipo' => $indData['tipo'],
                 'dimension' => $indData['dimension'],
                 'frecuencia' => $indData['frecuencia'],
-                'sentido' => $indData['sentido'] ?? null,
+                'sentido' => $indData['sentido'] ?? SentidoIndicador::ASCENDENTE->value,
                 'linea_base' => $indData['linea_base'] ?? null,
                 'meta' => $indData['meta'] ?? null,
+                'unidad_medida_id' => $indData['unidad_medida_id'] ?? null,
                 'orden' => $indData['orden'],
             ]);
 

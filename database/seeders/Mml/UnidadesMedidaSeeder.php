@@ -18,6 +18,7 @@ class UnidadesMedidaSeeder extends Seeder
             ['id' => 6, 'clave' => 'RAZ', 'nombre' => 'Razón'],
             ['id' => 7, 'clave' => 'PROP', 'nombre' => 'Proporción'],
             ['id' => 8, 'clave' => 'MNT', 'nombre' => 'Monto'],
+            ['id' => 9, 'clave' => 'ND', 'nombre' => 'No definida'],
         ];
 
         DB::table('catalogo_unidades_medida')->upsert(

@@ -38,6 +38,18 @@ class Indicador extends Model
         'unidad_medida_id', 'orden', 'activo_seguimiento',
     ];
 
+    protected static function booted(): void
+    {
+        // unidad_medida_id es NOT NULL (V2-A13). Cualquier path que cree un
+        // Indicador sin definirla (wizard MML, restauración de snapshot, fixtures
+        // de tests, código futuro) cae al catálogo 'No definida' (clave 'ND').
+        static::creating(function (Indicador $indicador): void {
+            if ($indicador->unidad_medida_id === null) {
+                $indicador->unidad_medida_id = static::unidadNoDefinidaId();
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [
@@ -66,6 +78,19 @@ class Indicador extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "Indicador {$eventName}");
+    }
+
+    /**
+     * Resolve the catalog id of the "No definida" measurement unit (clave 'ND'),
+     * creating the row if absent. Used as fallback by every path that creates an
+     * Indicador without an explicit unidad_medida_id (NOT NULL since V2-A13).
+     */
+    public static function unidadNoDefinidaId(): int
+    {
+        return CatalogoUnidadMedida::firstOrCreate(
+            ['clave' => 'ND'],
+            ['nombre' => 'No definida'],
+        )->id;
     }
 
     public function mirNivel(): BelongsTo
