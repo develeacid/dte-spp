@@ -279,7 +279,7 @@ class SabanaCaptura extends Component
             ],
             [
                 'key' => 'dias',
-                'label' => 'Días',
+                'label' => 'Días para cierre',
                 'align' => 'center',
                 'render' => fn ($row) => $this->celdaDias($row['dias']),
             ],
@@ -320,7 +320,15 @@ class SabanaCaptura extends Component
             default => 'text-gray-700',
         };
 
-        return '<span class="'.$clase.'">'.e((string) $dias).'</span>';
+        $tooltip = match (true) {
+            $dias < 0 => 'Vencido hace '.abs($dias).' '.(abs($dias) === 1 ? 'día' : 'días'),
+            $dias === 0 => 'Cierra hoy',
+            $dias === 1 => 'Cierra mañana',
+            $dias <= 7 => 'Quedan '.$dias.' días para cierre (urgente)',
+            default => 'Quedan '.$dias.' días para cierre',
+        };
+
+        return '<span class="'.$clase.'" title="'.e($tooltip).'">'.e((string) $dias).'</span>';
     }
 
     public function exportarPdf(): StreamedResponse
