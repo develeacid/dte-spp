@@ -85,6 +85,7 @@ class SabanaCaptura extends Component
             $this->filtroEjercicio = null;
             $this->filtroFechaDesde = null;
             $this->filtroFechaHasta = null;
+            $this->filtroTrimestre = null;
         } elseif ($value === 'anio') {
             $this->filtroFechaDesde = null;
             $this->filtroFechaHasta = null;
@@ -208,15 +209,14 @@ class SabanaCaptura extends Component
 
         $programasOpciones = $programas->mapWithKeys(fn ($p) => [$p->id => $p->clave.' - '.$p->nombre])->toArray();
 
-        $nivelesOpciones = \App\Models\Mml\MirNivel::query()
+        $nivelesRaw = \App\Models\Mml\MirNivel::query()
             ->whereHas('indicadores.metasPeriodo')
             ->when($this->filtroPrograma, fn ($q) => $q->where('programa_presupuestario_id', $this->filtroPrograma))
             ->whereIn('programa_presupuestario_id', $programas->pluck('id'))
             ->with('programa', 'componente')
-            ->orderBy('programa_presupuestario_id')
-            ->orderBy('tipo_nivel')
-            ->orderBy('orden')
-            ->get()
+            ->get();
+
+        $nivelesOpciones = $this->ordenarJerarquicamente($nivelesRaw)
             ->mapWithKeys(fn ($n) => [$n->id => $n->trazabilidad()->clave().' · '.$n->trazabilidad()->nivel()])
             ->toArray();
 
@@ -239,6 +239,42 @@ class SabanaCaptura extends Component
             'columns' => $columns,
             'rowClass' => $rowClass,
         ]);
+    }
+
+    /**
+     * Ordena niveles MIR en el orden de la ficha:
+     * Por programa → Fin → Propósito → C1, C1.A1, C1.A2... → C2, C2.A1... → C3...
+     */
+    protected function ordenarJerarquicamente(Collection $niveles): Collection
+    {
+        $resultado = collect();
+
+        foreach ($niveles->groupBy('programa_presupuestario_id') as $delPrograma) {
+            $fin = $delPrograma->firstWhere('tipo_nivel', \App\Enums\TipoNivelMir::FIN);
+            $proposito = $delPrograma->firstWhere('tipo_nivel', \App\Enums\TipoNivelMir::PROPOSITO);
+            $componentes = $delPrograma->where('tipo_nivel', \App\Enums\TipoNivelMir::COMPONENTE)->sortBy('orden');
+
+            if ($fin) {
+                $resultado->push($fin);
+            }
+            if ($proposito) {
+                $resultado->push($proposito);
+            }
+
+            foreach ($componentes as $componente) {
+                $resultado->push($componente);
+                $actividades = $delPrograma
+                    ->where('tipo_nivel', \App\Enums\TipoNivelMir::ACTIVIDAD)
+                    ->where('componente_id', $componente->id)
+                    ->sortBy('orden');
+
+                foreach ($actividades as $actividad) {
+                    $resultado->push($actividad);
+                }
+            }
+        }
+
+        return $resultado;
     }
 
     protected function ordenarFilas(Collection $filas): Collection

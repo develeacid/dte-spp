@@ -88,7 +88,8 @@
                     </div>
                 @endif
 
-                @if ($alcanceTemporal !== 'rango')
+                {{-- Trimestre solo tiene sentido cuando hay un año específico --}}
+                @if ($alcanceTemporal === 'anio')
                     <x-filters.trimestre model="filtroTrimestre" />
                 @endif
             </div>
