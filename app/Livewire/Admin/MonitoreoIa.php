@@ -244,14 +244,24 @@ class MonitoreoIa extends Component
 
     public function render()
     {
+        $metricas = $this->getMetricas();
+
+        $kpis = [
+            ['label' => 'Llamadas', 'value' => number_format($metricas['total_calls'])],
+            ['label' => 'Tokens', 'value' => number_format($metricas['total_tokens']), 'color' => 'blue'],
+            ['label' => 'Costo USD', 'value' => '$'.number_format($metricas['total_cost'], 4), 'color' => 'amber'],
+            ['label' => 'Tasa de error', 'value' => $metricas['error_rate'].'%', 'color' => $metricas['error_rate'] > 0 ? 'red' : 'green'],
+        ];
+
         return view('livewire.admin.monitoreo-ia', [
-            'metricas' => $this->getMetricas(),
+            'metricas' => $metricas,
             'usoPorTipo' => $this->getUsoPorTipo(),
             'usoPorUsuario' => $this->getUsoPorUsuario(),
             'usoPorUr' => $this->getUsoPorUr(),
             'tendencia' => $this->getTendencia(),
             'presupuestos' => $this->getPresupuestos(),
             'alertas' => $this->getAlertas(),
+            'kpis' => $kpis,
         ]);
     }
 }
