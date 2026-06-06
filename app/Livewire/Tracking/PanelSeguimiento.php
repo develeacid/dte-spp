@@ -20,11 +20,29 @@ class PanelSeguimiento extends Component
     #[Url(as: 'programa')]
     public ?int $filtroPrograma = null;
 
+    #[Url(as: 'nivel')]
+    public ?int $filtroMirNivel = null;
+
     #[Url(as: 'estado')]
     public ?string $filtroEstado = null;
 
     #[Url(as: 'semaforo')]
     public ?string $filtroSemaforo = null;
+
+    #[Url(as: 'trimestre')]
+    public ?int $filtroTrimestre = null;
+
+    #[Url(as: 'alcance')]
+    public string $alcanceTemporal = 'todo';
+
+    #[Url(as: 'ejercicio')]
+    public ?int $filtroEjercicio = null;
+
+    #[Url(as: 'desde')]
+    public ?string $filtroFechaDesde = null;
+
+    #[Url(as: 'hasta')]
+    public ?string $filtroFechaHasta = null;
 
     #[Url(as: 'tab')]
     public string $activeTab = 'dashboard';
@@ -40,6 +58,12 @@ class PanelSeguimiento extends Component
 
     public function updatingFiltroPrograma(): void
     {
+        $this->filtroMirNivel = null;
+        $this->resetPage();
+    }
+
+    public function updatingFiltroMirNivel(): void
+    {
         $this->resetPage();
     }
 
@@ -53,6 +77,43 @@ class PanelSeguimiento extends Component
         $this->resetPage();
     }
 
+    public function updatingFiltroTrimestre(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedAlcanceTemporal(string $value): void
+    {
+        if ($value === 'todo') {
+            $this->filtroEjercicio = null;
+            $this->filtroFechaDesde = null;
+            $this->filtroFechaHasta = null;
+            $this->filtroTrimestre = null;
+        } elseif ($value === 'anio') {
+            $this->filtroFechaDesde = null;
+            $this->filtroFechaHasta = null;
+        } else {
+            $this->filtroEjercicio = null;
+            $this->filtroTrimestre = null;
+        }
+        $this->resetPage();
+    }
+
+    public function updatingFiltroEjercicio(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroFechaDesde(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroFechaHasta(): void
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $teamId = auth()->user()->currentTeam->id;
@@ -60,6 +121,25 @@ class PanelSeguimiento extends Component
         $programas = ProgramaPresupuestario::paraTeam($teamId)
             ->orderBy('nombre')
             ->get();
+
+        $metasPeriodoConstraint = function ($q) {
+            $q->orderByDesc('periodo');
+
+            if ($this->filtroTrimestre) {
+                $q->where('periodo', $this->filtroTrimestre);
+            }
+            if ($this->alcanceTemporal === 'anio' && $this->filtroEjercicio) {
+                $q->whereYear('fecha_cierre', $this->filtroEjercicio);
+            }
+            if ($this->alcanceTemporal === 'rango') {
+                if ($this->filtroFechaDesde) {
+                    $q->whereDate('fecha_cierre', '>=', $this->filtroFechaDesde);
+                }
+                if ($this->filtroFechaHasta) {
+                    $q->whereDate('fecha_cierre', '<=', $this->filtroFechaHasta);
+                }
+            }
+        };
 
         $nivelesQuery = MirNivel::query()
             ->where(function ($q) use ($teamId) {
@@ -70,7 +150,7 @@ class PanelSeguimiento extends Component
                 'programa:id,nombre,clave',
                 'componente:id,orden',
                 'indicadores' => fn ($q) => $q->where('activo_seguimiento', true),
-                'indicadores.metasPeriodo' => fn ($q) => $q->orderByDesc('periodo'),
+                'indicadores.metasPeriodo' => $metasPeriodoConstraint,
                 'indicadores.metasPeriodo.avance.variables.indicadorVariable',
                 'indicadores.metasPeriodo.avance.evidencias',
                 'indicadores.variables',
@@ -79,6 +159,10 @@ class PanelSeguimiento extends Component
 
         if ($this->filtroPrograma) {
             $nivelesQuery->where('programa_presupuestario_id', $this->filtroPrograma);
+        }
+
+        if ($this->filtroMirNivel) {
+            $nivelesQuery->where('id', $this->filtroMirNivel);
         }
 
         $niveles = $nivelesQuery->orderBy('tipo_nivel')->orderBy('orden')->get();
@@ -138,6 +222,18 @@ class PanelSeguimiento extends Component
         };
 
         $programasOpciones = $programas->mapWithKeys(fn ($p) => [$p->id => $p->clave.' - '.$p->nombre])->toArray();
+
+        $nivelesRaw = MirNivel::query()
+            ->whereHas('indicadores', fn ($q) => $q->where('activo_seguimiento', true))
+            ->when($this->filtroPrograma, fn ($q) => $q->where('programa_presupuestario_id', $this->filtroPrograma))
+            ->whereIn('programa_presupuestario_id', $programas->pluck('id'))
+            ->with('programa', 'componente')
+            ->get();
+
+        $nivelesOpciones = $this->ordenarJerarquicamente($nivelesRaw)
+            ->mapWithKeys(fn ($n) => [$n->id => $n->trazabilidad()->clave().' · '.$n->trazabilidad()->nivel()])
+            ->toArray();
+
         $estadosOpciones = collect(EstadoAvance::cases())
             ->mapWithKeys(fn ($e) => [$e->value => $e->label()])->toArray();
         $semaforosOpciones = [
@@ -150,6 +246,7 @@ class PanelSeguimiento extends Component
         return view('livewire.tracking.panel-seguimiento', [
             'programas' => $programas,
             'programasOpciones' => $programasOpciones,
+            'nivelesOpciones' => $nivelesOpciones,
             'estadosOpciones' => $estadosOpciones,
             'semaforosOpciones' => $semaforosOpciones,
             'filas' => $filas,
@@ -157,6 +254,42 @@ class PanelSeguimiento extends Component
             'columns' => $columns,
             'rowClass' => $rowClass,
         ]);
+    }
+
+    /**
+     * Ordena niveles MIR en el orden de la ficha:
+     * Por programa → Fin → Propósito → C1, C1.A1, C1.A2... → C2, C2.A1... → C3...
+     */
+    protected function ordenarJerarquicamente(Collection $niveles): Collection
+    {
+        $resultado = collect();
+
+        foreach ($niveles->groupBy('programa_presupuestario_id') as $delPrograma) {
+            $fin = $delPrograma->firstWhere('tipo_nivel', \App\Enums\TipoNivelMir::FIN);
+            $proposito = $delPrograma->firstWhere('tipo_nivel', \App\Enums\TipoNivelMir::PROPOSITO);
+            $componentes = $delPrograma->where('tipo_nivel', \App\Enums\TipoNivelMir::COMPONENTE)->sortBy('orden');
+
+            if ($fin) {
+                $resultado->push($fin);
+            }
+            if ($proposito) {
+                $resultado->push($proposito);
+            }
+
+            foreach ($componentes as $componente) {
+                $resultado->push($componente);
+                $actividades = $delPrograma
+                    ->where('tipo_nivel', \App\Enums\TipoNivelMir::ACTIVIDAD)
+                    ->where('componente_id', $componente->id)
+                    ->sortBy('orden');
+
+                foreach ($actividades as $actividad) {
+                    $resultado->push($actividad);
+                }
+            }
+        }
+
+        return $resultado;
     }
 
     protected function ordenarFilas(Collection $filas): Collection
