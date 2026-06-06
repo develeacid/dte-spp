@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\Mml\CalendarizacionService;
 use App\Services\Tracking\CalendarioService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
@@ -121,6 +122,62 @@ class CalendarioTest extends TestCase
             $this->assertNotNull($meta->fecha_apertura);
             $this->assertNotNull($meta->fecha_cierre);
         }
+    }
+
+    public function test_confirmar_loguea_warning_cuando_periodo_no_tiene_ventana(): void
+    {
+        // Vector: indicador real trimestral (sin FK issue) pero con un periodo
+        // fuera de rango (5) en metasAjustadas. calcularFechas devuelve solo
+        // periodos 1-4 → fechas null para el 5 → warning observable + persistencia
+        // del MetaPeriodo conservada (comportamiento actual).
+        $programa = ProgramaPresupuestario::create([
+            'nombre' => 'Test', 'clave' => 'PT-WARN',
+            'team_id' => $this->user->currentTeam->id,
+            'ejercicio_fiscal' => 2026,
+        ]);
+        $nivel = MirNivel::create([
+            'programa_presupuestario_id' => $programa->id,
+            'tipo_nivel' => TipoNivelMir::COMPONENTE->value,
+            'resumen_narrativo' => 'Componente', 'orden' => 1,
+            'team_id' => $this->user->currentTeam->id,
+        ]);
+        $indicador = Indicador::create([
+            'mir_nivel_id' => $nivel->id, 'nombre' => 'Tasa',
+            'tipo' => 'estrategico', 'dimension' => 'eficacia',
+            'frecuencia' => FrecuenciaMedicion::TRIMESTRAL->value, 'meta' => 100,
+            'activo_seguimiento' => true, 'orden' => 1,
+        ]);
+
+        Log::spy();
+
+        $calendarizacion = new CalendarizacionService;
+        $calendarizacion->confirmar($programa, [
+            [
+                'indicador_id' => $indicador->id,
+                'periodos' => [
+                    ['periodo' => 5, 'meta_periodo' => 25],
+                ],
+            ],
+        ], 2026);
+
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(function (string $message, array $context) use ($indicador) {
+                return $message === 'MetaPeriodo sin ventana de captura: no abrirá vía mir:abrir-periodos'
+                    && $context['indicador_id'] === $indicador->id
+                    && $context['periodo'] === 5
+                    && $context['ejercicio'] === 2026
+                    && $context['frecuencia'] === FrecuenciaMedicion::TRIMESTRAL->value;
+            });
+
+        // El MetaPeriodo igual se persiste (comportamiento actual conservado).
+        $this->assertDatabaseHas('metas_periodo', [
+            'indicador_id' => $indicador->id,
+            'periodo' => 5,
+            'ejercicio_fiscal' => 2026,
+            'fecha_apertura' => null,
+            'fecha_cierre' => null,
+        ]);
     }
 
     public function test_abrir_periodos_crea_avances(): void

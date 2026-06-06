@@ -7,6 +7,7 @@ use App\Models\Mml\Indicador;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\ProgramaPresupuestario;
 use App\Services\Tracking\CalendarioService;
+use Illuminate\Support\Facades\Log;
 
 class CalendarizacionService
 {
@@ -92,6 +93,20 @@ class CalendarizacionService
 
             foreach ($indicadorData['periodos'] as $periodoData) {
                 $fechas = $fechasPorPeriodo[$periodoData['periodo']] ?? null;
+
+                if ($fechas === null) {
+                    // Path defensivo near-unreachable hoy (frecuencia no mapeable o
+                    // periodo fuera de rango). El MetaPeriodo se persiste igual con
+                    // fechas null, pero sin ventana de captura NUNCA será abierto por
+                    // mir:abrir-periodos ni cerrado por mir:cerrar-vencidos. Lo dejamos
+                    // observable en logs en vez de fallar silenciosamente.
+                    Log::warning('MetaPeriodo sin ventana de captura: no abrirá vía mir:abrir-periodos', [
+                        'indicador_id' => $indicadorId,
+                        'periodo' => $periodoData['periodo'],
+                        'ejercicio' => $ejercicio,
+                        'frecuencia' => $frecuencia?->value,
+                    ]);
+                }
 
                 MetaPeriodo::updateOrCreate(
                     [
