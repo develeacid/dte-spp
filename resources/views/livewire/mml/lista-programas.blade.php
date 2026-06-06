@@ -1,3 +1,4 @@
+<div>
 <x-page.container title="Programas Presupuestarios" fluid>
     <x-slot name="actions">
         <button wire:click="toggleFormulario" type="button"
@@ -128,3 +129,4 @@
 </x-page.container>
 
 <x-tracking.kpi-bar :stats="$kpis" />
+</div>

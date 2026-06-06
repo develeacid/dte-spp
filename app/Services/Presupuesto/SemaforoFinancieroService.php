@@ -133,7 +133,7 @@ class SemaforoFinancieroService
         $programa = ProgramaPresupuestario::with([
             'mirNiveles.indicadores.metasPeriodo' => fn ($q) => $q->where('periodo', $trimestre)
                 ->where('ejercicio_fiscal', $ejercicio),
-            'mirNiveles.indicadores.avances' => fn ($q) => $q->where('periodo', $trimestre),
+            'mirNiveles.indicadores.avances' => fn ($q) => $q->whereHas('metaPeriodo', fn ($mp) => $mp->where('periodo', $trimestre)->where('ejercicio_fiscal', $ejercicio)),
         ])->find($programaId);
 
         if (! $programa) {
