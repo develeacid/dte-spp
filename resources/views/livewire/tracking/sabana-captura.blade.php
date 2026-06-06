@@ -31,34 +31,42 @@
             </div>
 
             <x-filters.programa model="filtroPrograma" :options="$programasOpciones" />
-            <x-filters.trimestre model="filtroTrimestre" />
             <x-filters.estado model="filtroEstado" :options="$estadosOpciones" />
 
-            {{-- Toggle modo fecha (mutuamente exclusivo) --}}
+            {{-- Toggle alcance temporal (Todo / Año / Rango) --}}
             <div class="inline-flex rounded-md border border-slate-200 overflow-hidden dark:border-slate-700">
                 <button type="button"
-                        wire:click="$set('modoFecha', 'anio')"
+                        wire:click="$set('alcanceTemporal', 'todo')"
                         @class([
                             'px-3 py-1.5 text-sm',
-                            'bg-indigo-600 text-white' => $modoFecha === 'anio',
-                            'bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300' => $modoFecha !== 'anio',
+                            'bg-indigo-600 text-white' => $alcanceTemporal === 'todo',
+                            'bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300' => $alcanceTemporal !== 'todo',
+                        ])>
+                    Todo
+                </button>
+                <button type="button"
+                        wire:click="$set('alcanceTemporal', 'anio')"
+                        @class([
+                            'px-3 py-1.5 text-sm border-l border-slate-200 dark:border-slate-700',
+                            'bg-indigo-600 text-white' => $alcanceTemporal === 'anio',
+                            'bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300' => $alcanceTemporal !== 'anio',
                         ])>
                     Año
                 </button>
                 <button type="button"
-                        wire:click="$set('modoFecha', 'fecha')"
+                        wire:click="$set('alcanceTemporal', 'rango')"
                         @class([
                             'px-3 py-1.5 text-sm border-l border-slate-200 dark:border-slate-700',
-                            'bg-indigo-600 text-white' => $modoFecha === 'fecha',
-                            'bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300' => $modoFecha !== 'fecha',
+                            'bg-indigo-600 text-white' => $alcanceTemporal === 'rango',
+                            'bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300' => $alcanceTemporal !== 'rango',
                         ])>
-                    Fecha
+                    Rango
                 </button>
             </div>
 
-            @if ($modoFecha === 'anio')
+            @if ($alcanceTemporal === 'anio')
                 <x-filters.ejercicio model="filtroEjercicio" />
-            @else
+            @elseif ($alcanceTemporal === 'rango')
                 <div class="flex items-center gap-2">
                     <input type="date"
                            wire:model.live="filtroFechaDesde"
@@ -70,6 +78,11 @@
                            title="Hasta"
                            class="rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800" />
                 </div>
+            @endif
+
+            {{-- Trimestre solo aplica para Todo/Año, no para Rango --}}
+            @if ($alcanceTemporal !== 'rango')
+                <x-filters.trimestre model="filtroTrimestre" />
             @endif
 
             <label class="flex items-center gap-2 text-sm">

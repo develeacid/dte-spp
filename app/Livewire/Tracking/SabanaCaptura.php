@@ -30,8 +30,8 @@ class SabanaCaptura extends Component
     #[Url(as: 'estado')]
     public ?string $filtroEstado = null;
 
-    #[Url(as: 'modoFecha')]
-    public string $modoFecha = 'anio';
+    #[Url(as: 'alcance')]
+    public string $alcanceTemporal = 'todo';
 
     #[Url(as: 'ejercicio')]
     public ?int $filtroEjercicio = null;
@@ -69,13 +69,18 @@ class SabanaCaptura extends Component
         $this->resetPage();
     }
 
-    public function updatedModoFecha(string $value): void
+    public function updatedAlcanceTemporal(string $value): void
     {
-        if ($value === 'anio') {
+        if ($value === 'todo') {
+            $this->filtroEjercicio = null;
+            $this->filtroFechaDesde = null;
+            $this->filtroFechaHasta = null;
+        } elseif ($value === 'anio') {
             $this->filtroFechaDesde = null;
             $this->filtroFechaHasta = null;
         } else {
             $this->filtroEjercicio = null;
+            $this->filtroTrimestre = null;
         }
         $this->resetPage();
     }
@@ -123,11 +128,11 @@ class SabanaCaptura extends Component
             $metasQuery->where('periodo', $this->filtroTrimestre);
         }
 
-        if ($this->modoFecha === 'anio' && $this->filtroEjercicio) {
+        if ($this->alcanceTemporal === 'anio' && $this->filtroEjercicio) {
             $metasQuery->whereYear('fecha_cierre', $this->filtroEjercicio);
         }
 
-        if ($this->modoFecha === 'fecha') {
+        if ($this->alcanceTemporal === 'rango') {
             if ($this->filtroFechaDesde) {
                 $metasQuery->whereDate('fecha_cierre', '>=', $this->filtroFechaDesde);
             }
