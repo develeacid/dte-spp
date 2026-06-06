@@ -93,6 +93,27 @@
                     </table>
                 </div>
 
+                @if ($this->tieneCalendarizacionPrevia)
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <label for="justificacion" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Justificación del ajuste de metas
+                        </label>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                            Este programa ya tiene metas calendarizadas. Si modificas algún valor, debes registrar el motivo (queda en bitácora de revisiones).
+                        </p>
+                        <textarea
+                            id="justificacion"
+                            wire:model="justificacion"
+                            rows="3"
+                            class="block w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Ej. Reasignación por recorte presupuestal autorizado en oficio..."
+                        ></textarea>
+                        @error('justificacion')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                @endif
+
                 <div class="flex justify-end">
                     <button
                         wire:click="confirmar"

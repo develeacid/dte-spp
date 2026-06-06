@@ -4,6 +4,7 @@ namespace App\Livewire\Mml;
 
 use App\Enums\EstadoPrograma;
 use App\Models\Mml\ImportacionReporte;
+use App\Models\Mml\MetaPeriodo;
 use App\Models\ProgramaPresupuestario;
 use App\Services\Mml\CalendarizacionService;
 use Livewire\Attributes\Layout;
@@ -20,6 +21,9 @@ class CalendarizarMetas extends Component
 
     /** @var array Proposed period goals from service */
     public array $propuesta = [];
+
+    /** Justificación obligatoria al ajustar metas ya calendarizadas (V2-E7). */
+    public ?string $justificacion = null;
 
     public function mount(ImportacionReporte $importacion): void
     {
@@ -60,15 +64,47 @@ class CalendarizarMetas extends Component
         }
 
         $service = app(CalendarizacionService::class);
-        $service->confirmar(
-            $this->programa,
-            $this->propuesta,
-            $this->programa->ejercicio_fiscal,
-        );
+
+        try {
+            $service->confirmar(
+                $this->programa,
+                $this->propuesta,
+                $this->programa->ejercicio_fiscal,
+                $this->justificacion,
+                auth()->id(),
+            );
+        } catch (\DomainException $e) {
+            $this->addError('justificacion', $e->getMessage());
+
+            return;
+        }
 
         $this->programa->update(['estado' => EstadoPrograma::ACTIVO]);
 
         $this->redirect(route('dashboard'));
+    }
+
+    /**
+     * True si el programa ya tiene metas calendarizadas para el ejercicio: en
+     * ese caso un ajuste exige justificación y mostramos el textarea.
+     */
+    public function getTieneCalendarizacionPreviaProperty(): bool
+    {
+        if (! $this->programa) {
+            return false;
+        }
+
+        return MetaPeriodo::whereIn('indicador_id', $this->indicadorIds())
+            ->where('ejercicio_fiscal', $this->programa->ejercicio_fiscal)
+            ->exists();
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function indicadorIds(): array
+    {
+        return array_column($this->propuesta, 'indicador_id');
     }
 
     public function render()
