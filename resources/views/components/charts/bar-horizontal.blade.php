@@ -53,10 +53,20 @@
             };
 
             this.chart = new ApexCharts(this.$refs.chart, options);
-            this.chart.render();
+            this.chart.render().then(() => {
+                requestAnimationFrame(() => { if (this.chart) this.chart.resize(); });
+            });
+
+            if (window.ResizeObserver) {
+                this.resizeObserver = new ResizeObserver(() => {
+                    if (this.chart) this.chart.resize();
+                });
+                this.resizeObserver.observe(this.$el);
+            }
         },
         destroy() {
             if (this.chart) { this.chart.destroy(); this.chart = null; }
+            if (this.resizeObserver) { this.resizeObserver.disconnect(); this.resizeObserver = null; }
         }
      }"
      x-init="init()"
