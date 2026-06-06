@@ -3,7 +3,7 @@
         <x-slot name="title">Seguimiento de indicadores</x-slot>
     </x-page.header>
 
-    <x-page.container>
+    <x-page.container fluid>
         <x-page.toolbar>
             <div class="flex-1 min-w-[200px]">
                 <input
