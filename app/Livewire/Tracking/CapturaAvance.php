@@ -196,14 +196,14 @@ class CapturaAvance extends Component
         $this->validate($rules, [
             'valores.*.required' => 'Este campo es obligatorio.',
             'valores.*.numeric' => 'Debe ser un valor numerico.',
-            'analisis.dato.required' => 'El dato (que ocurrio) es obligatorio cuando el semaforo es amarillo o rojo.',
+            'analisis.dato.required' => 'El dato (qué ocurrió) es obligatorio cuando el semáforo es amarillo o rojo.',
             'analisis.dato.min' => 'El dato debe tener al menos 5 caracteres.',
-            'analisis.causa.required' => 'La causa raiz es obligatoria cuando el semaforo es amarillo o rojo.',
+            'analisis.causa.required' => 'La causa raíz es obligatoria cuando el semáforo es amarillo o rojo.',
             'analisis.causa.min' => 'La causa debe tener al menos 5 caracteres.',
-            'analisis.accion.required' => 'La accion correctiva es obligatoria cuando el semaforo es amarillo o rojo.',
-            'analisis.accion.min' => 'La accion debe tener al menos 5 caracteres.',
-            'analisis.proyeccion.required' => 'La proyeccion es obligatoria cuando el semaforo es amarillo o rojo.',
-            'analisis.proyeccion.min' => 'La proyeccion debe tener al menos 5 caracteres.',
+            'analisis.accion.required' => 'La acción correctiva es obligatoria cuando el semáforo es amarillo o rojo.',
+            'analisis.accion.min' => 'La acción debe tener al menos 5 caracteres.',
+            'analisis.proyeccion.required' => 'La proyección es obligatoria cuando el semáforo es amarillo o rojo.',
+            'analisis.proyeccion.min' => 'La proyección debe tener al menos 5 caracteres.',
         ]);
 
         if ($this->avance->estaCongelado()) {
@@ -228,7 +228,10 @@ class CapturaAvance extends Component
         }
 
         $analisisDesviacion = null;
-        $justificacionFinal = $this->justificacion;
+        // En verde no hay desviación que justificar: limpiar el texto libre para
+        // que no quede narrativa stale de una captura previa en rojo/amarillo
+        // (visible en I-08 / detalle-indicador).
+        $justificacionFinal = null;
 
         if ($requiereAnalisis) {
             $analisisDesviacion = [
@@ -241,7 +244,7 @@ class CapturaAvance extends Component
             // Keep justificacion_final populated for backwards compatibility with
             // existing reports (e.g. I-08) that read the free-text field.
             $justificacionFinal = sprintf(
-                'Dato: %s Causa: %s Accion: %s Proyeccion: %s',
+                'Dato: %s | Causa: %s | Acción correctiva: %s | Proyección: %s',
                 $this->analisis['dato'],
                 $this->analisis['causa'],
                 $this->analisis['accion'],

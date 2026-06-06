@@ -130,6 +130,9 @@ class AnalisisDesviacionTest extends TestCase
         $this->assertEquals('El resultado fue 50% contra una meta de 100%.', $analisis['dato']);
 
         $this->assertNotEmpty($this->avance->justificacion_final);
+        $this->assertStringContainsString(' | ', $this->avance->justificacion_final);
+        $this->assertStringContainsString('Acción correctiva:', $this->avance->justificacion_final);
+        $this->assertStringContainsString('Proyección:', $this->avance->justificacion_final);
     }
 
     public function test_semaforo_verde_no_exige_analisis(): void
@@ -146,6 +149,37 @@ class AnalisisDesviacionTest extends TestCase
         $this->avance->refresh();
         $this->assertEquals('verde', $this->avance->semaforo_calculado);
         $this->assertNull($this->avance->analisis_desviacion);
+    }
+
+    public function test_recaptura_verde_limpia_justificacion_final_de_avance_previo_rojo(): void
+    {
+        // Avance previo en rojo con narrativa de desviación persistida.
+        $this->avance->update([
+            'semaforo_calculado' => 'rojo',
+            'justificacion_final' => 'Dato: previo | Causa: previa | Acción correctiva: previa | Proyección: previa',
+            'analisis_desviacion' => [
+                'dato' => 'previo',
+                'causa' => 'previa',
+                'accion' => 'previa',
+                'proyeccion' => 'previa',
+            ],
+        ]);
+        $this->avance->refresh();
+
+        $this->actingAs($this->user);
+
+        // Re-captura que resulta en verde.
+        Livewire::test(CapturaAvance::class, ['avance' => $this->avance])
+            ->set("valores.{$this->varA->id}", 100)
+            ->set("valores.{$this->varB->id}", 100)
+            ->call('calcular')
+            ->call('guardar')
+            ->assertHasNoErrors();
+
+        $this->avance->refresh();
+        $this->assertEquals('verde', $this->avance->semaforo_calculado);
+        $this->assertNull($this->avance->analisis_desviacion);
+        $this->assertNull($this->avance->justificacion_final);
     }
 
     public function test_mount_precarga_analisis_existente(): void

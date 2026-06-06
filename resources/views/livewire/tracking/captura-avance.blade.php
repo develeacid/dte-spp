@@ -144,7 +144,7 @@
             @if(in_array($semaforoCalculado, ['amarillo', 'rojo']))
                 <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                     <div class="mb-4 flex items-center justify-between">
-                        <h3 class="text-lg font-medium text-gray-900">Analisis de desviacion</h3>
+                        <h3 class="text-lg font-medium text-gray-900">Análisis de desviación</h3>
                         @unless($avance->estaCongelado() || ! $avance->estado->esEditable())
                             <button
                                 type="button"
@@ -166,17 +166,17 @@
 
                     @if($justificacionIa)
                         <p class="mb-2 text-xs text-gray-400">
-                            Borrador generado por IA pre-cargado en "Causa raiz". Revise y edite antes de guardar.
+                            Borrador generado por IA pre-cargado en "Causa raíz". Revise y edite antes de guardar.
                         </p>
                     @endif
 
                     <p class="mb-4 text-sm text-gray-500">
-                        Cuando el semaforo es amarillo o rojo es obligatorio documentar el analisis estructurado de la desviacion.
+                        Cuando el semáforo es amarillo o rojo es obligatorio documentar el análisis estructurado de la desviación.
                     </p>
 
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <label for="analisis-dato" class="block text-sm font-medium text-gray-700">Dato (que ocurrio)</label>
+                            <label for="analisis-dato" class="block text-sm font-medium text-gray-700">Dato (qué ocurrió)</label>
                             <textarea
                                 id="analisis-dato"
                                 wire:model="analisis.dato"
@@ -191,13 +191,13 @@
                         </div>
 
                         <div>
-                            <label for="analisis-causa" class="block text-sm font-medium text-gray-700">Causa raiz</label>
+                            <label for="analisis-causa" class="block text-sm font-medium text-gray-700">Causa raíz</label>
                             <textarea
                                 id="analisis-causa"
                                 wire:model="analisis.causa"
                                 rows="4"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                placeholder="Explique por que ocurrio la desviacion..."
+                                placeholder="Explique por qué ocurrió la desviación..."
                                 @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
                             ></textarea>
                             @error('analisis.causa')
@@ -206,13 +206,13 @@
                         </div>
 
                         <div>
-                            <label for="analisis-accion" class="block text-sm font-medium text-gray-700">Accion correctiva</label>
+                            <label for="analisis-accion" class="block text-sm font-medium text-gray-700">Acción correctiva</label>
                             <textarea
                                 id="analisis-accion"
                                 wire:model="analisis.accion"
                                 rows="4"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                placeholder="Indique que se hara para corregir la desviacion..."
+                                placeholder="Indique qué se hará para corregir la desviación..."
                                 @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
                             ></textarea>
                             @error('analisis.accion')
@@ -221,13 +221,13 @@
                         </div>
 
                         <div>
-                            <label for="analisis-proyeccion" class="block text-sm font-medium text-gray-700">Proyeccion</label>
+                            <label for="analisis-proyeccion" class="block text-sm font-medium text-gray-700">Proyección</label>
                             <textarea
                                 id="analisis-proyeccion"
                                 wire:model="analisis.proyeccion"
                                 rows="4"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                placeholder="Describa que se espera lograr con las acciones..."
+                                placeholder="Describa qué se espera lograr con las acciones..."
                                 @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
                             ></textarea>
                             @error('analisis.proyeccion')
