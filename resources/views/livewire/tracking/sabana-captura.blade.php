@@ -61,7 +61,7 @@
         />
 
         @if ($activeTab === 'dashboard')
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3" wire:ignore>
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 @php
                     $estadoCounts = collect($filas)->countBy('estado');
                     $estadoLabels = ['aprobado', 'en_revision', 'en_captura', 'observado', 'pendiente', 'vencido'];
