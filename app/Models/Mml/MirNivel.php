@@ -91,4 +91,9 @@ class MirNivel extends Model
     {
         return $this->belongsTo(PedLineaAccion::class);
     }
+
+    public function trazabilidad(): \App\Support\Mml\Trazabilidad
+    {
+        return \App\Support\Mml\Trazabilidad::deNivel($this);
+    }
 }

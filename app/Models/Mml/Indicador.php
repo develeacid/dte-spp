@@ -104,4 +104,9 @@ class Indicador extends Model
             'indicador_anexo_transversal'
         );
     }
+
+    public function trazabilidad(): \App\Support\Mml\Trazabilidad
+    {
+        return \App\Support\Mml\Trazabilidad::deNivel($this->mirNivel);
+    }
 }
