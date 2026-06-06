@@ -193,9 +193,11 @@ class AlineacionMirTest extends TestCase
 
     public function test_buscar_alineacion_sin_resumen_no_busca(): void
     {
+        // COMPONENTE (no FIN) para no chocar con el UNIQUE parcial FIN por MIR;
+        // el test solo necesita un nivel con resumen_narrativo vacío.
         $nivelVacio = MirNivel::create([
             'programa_presupuestario_id' => $this->programa->id,
-            'tipo_nivel' => TipoNivelMir::FIN->value,
+            'tipo_nivel' => TipoNivelMir::COMPONENTE->value,
             'resumen_narrativo' => '',
             'orden' => 2,
         ]);

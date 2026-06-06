@@ -91,6 +91,19 @@ class MirPersistenciaService
         ?TipoNivelMir $tipoNivel,
         ?int $componenteId,
     ): MirNivel {
+        // Guard: la MIR solo admite un FIN y un PROPOSITO por programa.
+        if (in_array($tipoNivel, [TipoNivelMir::FIN, TipoNivelMir::PROPOSITO], true)) {
+            $yaExiste = $programa->mirNiveles()
+                ->where('tipo_nivel', $tipoNivel->value)
+                ->exists();
+
+            if ($yaExiste) {
+                throw new \DomainException(
+                    "Ya existe un nivel {$tipoNivel->label()} para este programa; la MIR solo admite uno."
+                );
+            }
+        }
+
         return MirNivel::create([
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => $tipoNivel?->value ?? $nivelData['tipo_nivel'] ?? 'fin',
