@@ -102,4 +102,20 @@ class DataTableTest extends TestCase
 
         $this->assertStringContainsString('42', $html);
     }
+
+    #[Test]
+    public function aplica_row_class_closure_a_cada_fila(): void
+    {
+        $rows = collect([
+            (object) ['nombre' => 'X', 'estado' => 'vencido'],
+            (object) ['nombre' => 'Y', 'estado' => 'ok'],
+        ]);
+        $columns = [['key' => 'nombre', 'label' => 'Nombre']];
+        $rowClass = fn ($row) => $row->estado === 'vencido' ? 'bg-red-50' : '';
+        $html = Blade::render(
+            '<x-data.table :rows="$rows" :columns="$columns" :row-class="$rowClass" :traceable="false" />',
+            compact('rows', 'columns', 'rowClass')
+        );
+        $this->assertStringContainsString('bg-red-50', $html);
+    }
 }

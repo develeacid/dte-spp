@@ -9,6 +9,7 @@
     'traceable' => false,
     'searchPlaceholder' => 'Buscar…',
     'emptyMessage' => 'Sin registros',
+    'rowClass' => null,
 ])
 
 <div class="space-y-3">
@@ -83,7 +84,8 @@
                                 </tr>
                             @endif
                         @endif
-                        <tr>
+                        @php $cls = isset($rowClass) && is_callable($rowClass) ? ($rowClass)($row) : ''; @endphp
+                        <tr class="{{ $cls }}">
                             @if ($traceable)
                                 <td class="px-3 py-2 text-sm">
                                     @php $rowTrazabilidad = data_get($row, 'trazabilidad'); @endphp
@@ -126,7 +128,8 @@
                         </div>
                     @endif
                 @endif
-                <div class="rounded-md border border-slate-200 p-3 dark:border-slate-700">
+                @php $cls = isset($rowClass) && is_callable($rowClass) ? ($rowClass)($row) : ''; @endphp
+                <div class="rounded-md border border-slate-200 p-3 dark:border-slate-700 {{ $cls }}">
                     @php $rowTrazabilidad = $traceable ? data_get($row, 'trazabilidad') : null; @endphp
                     @if ($rowTrazabilidad)
                         <x-data.indicador-badge :trazabilidad="$rowTrazabilidad" class="mb-2" />

@@ -127,11 +127,18 @@ class SabanaCaptura extends Component
 
         $columns = $this->columnas();
 
+        $rowClass = fn ($row) => match ($row['estado'] ?? null) {
+            'vencido' => 'bg-red-50 dark:bg-red-900/20',
+            'aprobado' => 'bg-green-50 dark:bg-green-900/20',
+            default => '',
+        };
+
         return view('livewire.tracking.sabana-captura', [
             'programas' => $programas,
             'filas' => $filas,
             'rows' => $rows,
             'columns' => $columns,
+            'rowClass' => $rowClass,
         ]);
     }
 

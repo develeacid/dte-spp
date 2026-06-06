@@ -72,6 +72,7 @@
             :group-by="$groupByPrograma ? 'programa' : null"
             :per-page="$perPage"
             :traceable="true"
+            :row-class="$rowClass"
             search-placeholder="Buscar indicador..."
             empty-message="No se encontraron metas periodo con los filtros seleccionados."
         >
