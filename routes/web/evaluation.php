@@ -8,6 +8,7 @@ use App\Http\Controllers\Evaluation\DatosAbiertosController;
 use App\Http\Controllers\Evaluation\ExportController;
 use App\Http\Controllers\Evaluation\PadronShcpController;
 use App\Http\Controllers\Evaluation\PresupuestoCapituloXlsxController;
+use App\Livewire\Evaluation\AcumuladoAnual;
 use App\Livewire\Evaluation\AsmForm;
 use App\Livewire\Evaluation\AsmIndex;
 use App\Livewire\Evaluation\AsmShow;
@@ -32,6 +33,10 @@ Route::prefix('evaluacion')
         Route::middleware('can:exportar_reportes')
             ->get('/desviaciones', ReporteDesviaciones::class)
             ->name('evaluation.desviaciones');
+
+        Route::middleware('can:exportar_reportes')
+            ->get('/acumulado-anual', AcumuladoAnual::class)
+            ->name('evaluation.acumulado-anual');
 
         Route::get('/mir-publica/{id}', function (Request $request, int $id) {
             $programa = ProgramaPresupuestario::findOrFail($id);

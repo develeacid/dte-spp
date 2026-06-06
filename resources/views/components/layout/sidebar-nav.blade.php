@@ -160,6 +160,7 @@
     <x-slot:tooltip>
         <a href="{{ route('evaluation.transversal') }}" class="block py-1 hover:text-brand-light">Transversal</a>
         <a href="{{ route('evaluation.desviaciones') }}" class="block py-1 hover:text-brand-light">Desviaciones</a>
+        <a href="{{ route('evaluation.acumulado-anual') }}" class="block py-1 hover:text-brand-light">Acumulado Anual</a>
         @can('ver_asm')
         <a href="{{ route('evaluation.asms.index') }}" class="block py-1 hover:text-brand-light">ASMs</a>
         @endcan
@@ -171,6 +172,9 @@
     </x-ui.sidebar-item>
     <x-ui.sidebar-item href="{{ route('evaluation.desviaciones') }}" :active="request()->routeIs('evaluation.desviaciones')">
         Desviaciones
+    </x-ui.sidebar-item>
+    <x-ui.sidebar-item href="{{ route('evaluation.acumulado-anual') }}" :active="request()->routeIs('evaluation.acumulado-anual')">
+        Acumulado Anual
     </x-ui.sidebar-item>
     @can('ver_asm')
     <x-ui.sidebar-item href="{{ route('evaluation.asms.index') }}" :active="request()->routeIs('evaluation.asms.*')">
