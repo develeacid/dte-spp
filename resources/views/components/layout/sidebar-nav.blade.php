@@ -159,12 +159,20 @@
     </x-slot:icon>
     <x-slot:tooltip>
         <a href="{{ route('evaluation.transversal') }}" class="block py-1 hover:text-brand-light">Transversal</a>
+        @can('ver_asm')
+        <a href="{{ route('evaluation.asms.index') }}" class="block py-1 hover:text-brand-light">ASMs</a>
+        @endcan
         <a href="{{ route('evaluation.datos-abiertos.diccionario') }}" class="block py-1 hover:text-brand-light">Datos Abiertos</a>
     </x-slot:tooltip>
 
     <x-ui.sidebar-item href="{{ route('evaluation.transversal') }}" :active="request()->routeIs('evaluation.transversal')">
         Transversal
     </x-ui.sidebar-item>
+    @can('ver_asm')
+    <x-ui.sidebar-item href="{{ route('evaluation.asms.index') }}" :active="request()->routeIs('evaluation.asms.*')">
+        ASMs
+    </x-ui.sidebar-item>
+    @endcan
     <x-ui.sidebar-item href="{{ route('evaluation.datos-abiertos.diccionario') }}" :active="request()->routeIs('evaluation.datos-abiertos.*')">
         Datos Abiertos
     </x-ui.sidebar-item>
