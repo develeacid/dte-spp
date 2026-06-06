@@ -171,32 +171,6 @@
                     </div>
                 </div>
             </div>
-
-            {{-- KPIs --}}
-            @php
-                $total = collect($filas)->count();
-                $aprobados = collect($filas)->where('estado', 'aprobado')->count();
-                $vencidos = collect($filas)->where('estado', 'vencido')->count();
-                $enProceso = collect($filas)->whereIn('estado', ['pendiente', 'en_captura', 'en_revision'])->count();
-            @endphp
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                <div class="rounded-md border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
-                    <div class="text-xs text-slate-500">Total</div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $total }}</div>
-                </div>
-                <div class="rounded-md border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
-                    <div class="text-xs text-slate-500">Aprobados</div>
-                    <div class="text-2xl font-bold text-green-600">{{ $aprobados }}</div>
-                </div>
-                <div class="rounded-md border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
-                    <div class="text-xs text-slate-500">En proceso</div>
-                    <div class="text-2xl font-bold text-blue-600">{{ $enProceso }}</div>
-                </div>
-                <div class="rounded-md border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
-                    <div class="text-xs text-slate-500">Vencidos</div>
-                    <div class="text-2xl font-bold text-red-600">{{ $vencidos }}</div>
-                </div>
-            </div>
         @else
             <x-data.table
                 :rows="$rows"
@@ -208,5 +182,37 @@
                 empty-message="No se encontraron metas periodo con los filtros seleccionados."
             />
         @endif
+
+        {{-- Spacer para que el contenido final no quede tras el KPI bar fijo --}}
+        <div class="h-28"></div>
     </x-page.container>
+
+    {{-- KPI status bar fija al viewport (respeta sidebar) --}}
+    @php
+        $total = collect($filas)->count();
+        $aprobados = collect($filas)->where('estado', 'aprobado')->count();
+        $vencidos = collect($filas)->where('estado', 'vencido')->count();
+        $enProceso = collect($filas)->whereIn('estado', ['pendiente', 'en_captura', 'en_revision'])->count();
+    @endphp
+    <div class="fixed bottom-0 right-0 left-0 z-30 py-3 px-4 sm:px-6 lg:px-8 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-700"
+         :class="collapsed ? 'lg:!left-[var(--sidebar-collapsed-width)]' : 'lg:!left-[var(--sidebar-width)]'">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="rounded-md border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800">
+                <div class="text-xs text-slate-500">Total</div>
+                <div class="text-xl font-bold text-slate-900 dark:text-slate-100">{{ $total }}</div>
+            </div>
+            <div class="rounded-md border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800">
+                <div class="text-xs text-slate-500">Aprobados</div>
+                <div class="text-xl font-bold text-green-600">{{ $aprobados }}</div>
+            </div>
+            <div class="rounded-md border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800">
+                <div class="text-xs text-slate-500">En proceso</div>
+                <div class="text-xl font-bold text-blue-600">{{ $enProceso }}</div>
+            </div>
+            <div class="rounded-md border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800">
+                <div class="text-xs text-slate-500">Vencidos</div>
+                <div class="text-xl font-bold text-red-600">{{ $vencidos }}</div>
+            </div>
+        </div>
+    </div>
 </div>
