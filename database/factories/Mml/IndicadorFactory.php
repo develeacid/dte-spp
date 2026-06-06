@@ -8,6 +8,7 @@ use App\Enums\SentidoIndicador;
 use App\Enums\TipoIndicador;
 use App\Models\CatalogoUnidadMedida;
 use App\Models\Mml\Indicador;
+use App\Models\Mml\MirNivel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -27,7 +28,7 @@ class IndicadorFactory extends Factory
         );
 
         return [
-            'mir_nivel_id' => null,
+            'mir_nivel_id' => MirNivel::factory(),
             'nombre' => 'Indicador '.$this->faker->unique()->numberBetween(1, 99999),
             'formula_texto' => '(A / B) * 100',
             'tipo' => $this->faker->randomElement(TipoIndicador::cases())->value,
