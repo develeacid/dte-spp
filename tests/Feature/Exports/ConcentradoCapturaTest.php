@@ -61,8 +61,9 @@ class ConcentradoCapturaTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(ConcentradoCaptura::class)
-            ->set('fechaDesde', '2026-01-01')
-            ->set('fechaHasta', '2026-12-31')
+            ->set('alcanceTemporal', 'rango')
+            ->set('filtroFechaDesde', '2026-01-01')
+            ->set('filtroFechaHasta', '2026-12-31')
             ->assertStatus(200);
     }
 
