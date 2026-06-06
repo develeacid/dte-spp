@@ -56,12 +56,14 @@
 
             this.chart = new ApexCharts(this.$refs.chart, options);
             this.chart.render().then(() => {
-                requestAnimationFrame(() => { if (this.chart) this.chart.resize(); });
+                // Mismo mecanismo que abrir DevTools dispara: ApexCharts escucha window.resize nativamente
+                requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 250);
             });
 
             if (window.ResizeObserver) {
                 this.resizeObserver = new ResizeObserver(() => {
-                    if (this.chart) this.chart.resize();
+                    window.dispatchEvent(new Event('resize'));
                 });
                 this.resizeObserver.observe(this.$el);
             }
@@ -73,7 +75,7 @@
      }"
      x-init="init()"
      x-on:remove="destroy()"
-     {{ $attributes->merge(['class' => '']) }}
+     {{ $attributes->merge(['class' => 'w-full overflow-hidden']) }}
      style="min-height: 200px">
-    <div x-ref="chart"></div>
+    <div x-ref="chart" class="w-full"></div>
 </div>
