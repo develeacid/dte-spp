@@ -115,13 +115,13 @@ class PanelSeguimientoTest extends TestCase
         $this->actingAs($this->planeador);
 
         Livewire::test(PanelSeguimiento::class)
+            ->set('activeTab', 'tabla')
             ->assertSee('Indicador de prueba')
             ->assertDontSee('Indicador ajeno');
     }
 
     public function test_filtro_por_programa(): void
     {
-        // Create a second programa in the same team
         $programa2 = ProgramaPresupuestario::create([
             'nombre' => 'Programa Dos',
             'clave' => 'PD-002',
@@ -151,6 +151,7 @@ class PanelSeguimientoTest extends TestCase
         $this->actingAs($this->planeador);
 
         Livewire::test(PanelSeguimiento::class)
+            ->set('activeTab', 'tabla')
             ->set('filtroPrograma', $this->programa->id)
             ->assertSee('Indicador de prueba')
             ->assertDontSee('Indicador segundo programa');
@@ -161,10 +162,12 @@ class PanelSeguimientoTest extends TestCase
         $this->actingAs($this->planeador);
 
         Livewire::test(PanelSeguimiento::class)
+            ->set('activeTab', 'tabla')
             ->set('filtroEstado', EstadoAvance::EN_REVISION->value)
             ->assertSee('Indicador de prueba');
 
         Livewire::test(PanelSeguimiento::class)
+            ->set('activeTab', 'tabla')
             ->set('filtroEstado', EstadoAvance::APROBADO->value)
             ->assertDontSee('Indicador de prueba');
     }
@@ -182,13 +185,13 @@ class PanelSeguimientoTest extends TestCase
 
     public function test_estado_vacio(): void
     {
-        // Create a planeador with team but no data
         $planeador2 = User::factory()->withPersonalTeam()->create();
         $planeador2->assignRole('planeador');
 
         $this->actingAs($planeador2);
 
         Livewire::test(PanelSeguimiento::class)
+            ->set('activeTab', 'tabla')
             ->assertSee('No se encontraron indicadores');
     }
 }

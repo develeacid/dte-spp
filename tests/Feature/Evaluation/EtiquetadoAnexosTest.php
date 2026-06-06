@@ -98,6 +98,7 @@ class EtiquetadoAnexosTest extends TestCase
 
         Livewire::actingAs($this->user)
             ->test(PanelSeguimiento::class)
+            ->set('activeTab', 'tabla')
             ->assertSee('Igualdad de Género');
     }
 
@@ -106,6 +107,7 @@ class EtiquetadoAnexosTest extends TestCase
         // Ensure indicator has no anexos — should render without errors
         Livewire::actingAs($this->user)
             ->test(PanelSeguimiento::class)
+            ->set('activeTab', 'tabla')
             ->assertDontSee('Igualdad de Género')
             ->assertStatus(200);
     }
