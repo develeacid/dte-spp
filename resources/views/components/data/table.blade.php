@@ -92,8 +92,16 @@
                                 </td>
                             @endif
                             @foreach ($columns as $col)
-                                <td class="px-3 py-2 text-sm text-slate-700 dark:text-slate-300">
-                                    {{ data_get($row, $col['key']) }}
+                                <td @class([
+                                    'px-3 py-2 text-sm text-slate-700 dark:text-slate-300',
+                                    ($col['align'] ?? null) === 'center' => 'text-center',
+                                    ($col['align'] ?? null) === 'right' => 'text-right',
+                                ])>
+                                    @if (isset($col['render']) && is_callable($col['render']))
+                                        {!! ($col['render'])($row) !!}
+                                    @else
+                                        {{ data_get($row, $col['key']) }}
+                                    @endif
                                 </td>
                             @endforeach
                         </tr>
@@ -124,7 +132,13 @@
                     @foreach ($columns as $col)
                         <div class="flex justify-between py-0.5 text-sm">
                             <span class="text-slate-500">{{ $col['label'] }}:</span>
-                            <span>{{ data_get($row, $col['key']) }}</span>
+                            <span>
+                                @if (isset($col['render']) && is_callable($col['render']))
+                                    {!! ($col['render'])($row) !!}
+                                @else
+                                    {{ data_get($row, $col['key']) }}
+                                @endif
+                            </span>
                         </div>
                     @endforeach
                 </div>

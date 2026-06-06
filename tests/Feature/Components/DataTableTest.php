@@ -64,4 +64,42 @@ class DataTableTest extends TestCase
         $this->assertStringContainsString('50', $html);
         $this->assertStringContainsString('Todas', $html);
     }
+
+    #[Test]
+    public function render_closure_recibe_row_y_emite_html_sin_escapar(): void
+    {
+        $rows = collect([['nombre' => 'Alfa', 'estado' => 'ok']]);
+        $columns = [
+            ['key' => 'nombre', 'label' => 'Nombre'],
+            [
+                'key' => 'estado',
+                'label' => 'Estado',
+                'render' => fn ($row) => '<span class="badge-ok">'.$row['estado'].'</span>',
+            ],
+        ];
+
+        $html = Blade::render(
+            '<x-data.table :rows="$rows" :columns="$columns" :traceable="false" />',
+            compact('rows', 'columns')
+        );
+
+        $this->assertStringContainsString('Alfa', $html);
+        $this->assertStringContainsString('<span class="badge-ok">ok</span>', $html);
+    }
+
+    #[Test]
+    public function columna_sin_render_usa_data_get_normal(): void
+    {
+        $rows = collect([['meta' => 42]]);
+        $columns = [
+            ['key' => 'meta', 'label' => 'Meta'],
+        ];
+
+        $html = Blade::render(
+            '<x-data.table :rows="$rows" :columns="$columns" :traceable="false" />',
+            compact('rows', 'columns')
+        );
+
+        $this->assertStringContainsString('42', $html);
+    }
 }
