@@ -12,6 +12,7 @@ class RevisionMeta extends Model
 
     protected $fillable = [
         'meta_periodo_id',
+        'indicador_id',
         'valor_anterior',
         'valor_nuevo',
         'justificacion',
@@ -29,6 +30,11 @@ class RevisionMeta extends Model
     public function metaPeriodo(): BelongsTo
     {
         return $this->belongsTo(MetaPeriodo::class);
+    }
+
+    public function indicador(): BelongsTo
+    {
+        return $this->belongsTo(Indicador::class);
     }
 
     public function user(): BelongsTo
