@@ -112,6 +112,36 @@ class FollowUpsTest extends TestCase
             ->assertDontSee('Origen externo');
     }
 
+    public function test_asm_index_chip_filtro_recomendacion_visible_y_removible(): void
+    {
+        $programa = ProgramaPresupuestario::factory()->create();
+        $recomendacion = Recomendacion::factory()->create();
+
+        $vinculado = Asm::factory()->create([
+            'programa_presupuestario_id' => $programa->id,
+            'recomendacion_id' => $recomendacion->id,
+            'descripcion_aspecto' => 'ASM derivado con chip de filtro visible.',
+        ]);
+
+        $legacy = Asm::factory()->create([
+            'programa_presupuestario_id' => $programa->id,
+            'recomendacion_id' => null,
+            'descripcion_aspecto' => 'ASM legacy reaparece al quitar filtro.',
+        ]);
+
+        $user = $this->userConPermisos([SystemPermission::VER_ASM->value]);
+        $this->actingAs($user);
+
+        Livewire::test(AsmIndex::class, ['recomendacion' => $recomendacion->id])
+            ->assertSee('Filtrado por recomendación de evaluación externa')
+            ->assertSee($vinculado->descripcion_aspecto)
+            ->assertDontSee($legacy->descripcion_aspecto)
+            ->call('$set', 'recomendacion', null)
+            ->assertDontSee('Filtrado por recomendación de evaluación externa')
+            ->assertSee($vinculado->descripcion_aspecto)
+            ->assertSee($legacy->descripcion_aspecto);
+    }
+
     // ---------------------------------------------------------------------
     // 3. EvaluacionProgramaView — link a evaluaciones externas gated
     // ---------------------------------------------------------------------

@@ -42,6 +42,13 @@
             </label>
         </div>
 
+        @if ($recomendacion)
+            <div class="mb-3 inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700">
+                Filtrado por recomendación de evaluación externa
+                <button type="button" wire:click="$set('recomendacion', null)" class="font-bold hover:text-indigo-900" aria-label="Quitar filtro">&times;</button>
+            </div>
+        @endif
+
         <div class="overflow-x-auto bg-white rounded shadow">
             <table class="min-w-full text-sm">
                 <thead class="bg-gray-50 text-left text-xs uppercase text-gray-600">
