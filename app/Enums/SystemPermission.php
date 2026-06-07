@@ -32,6 +32,10 @@ enum SystemPermission: string
     case VER_ASM = 'ver_asm';
     case GESTIONAR_ASM = 'gestionar_asm';
 
+    // Evaluación — Evaluación externa
+    case VER_EVALUACION_EXTERNA = 'ver_evaluacion_externa';
+    case GESTIONAR_EVALUACION_EXTERNA = 'gestionar_evaluacion_externa';
+
     // Padrón (integración GeoBase)
     case VER_PADRON = 'ver_padron';
     case GENERAR_SNAPSHOT_PADRON = 'generar_snapshot_padron';

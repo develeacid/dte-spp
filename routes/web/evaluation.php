@@ -12,6 +12,7 @@ use App\Livewire\Evaluation\AcumuladoAnual;
 use App\Livewire\Evaluation\AsmForm;
 use App\Livewire\Evaluation\AsmIndex;
 use App\Livewire\Evaluation\AsmShow;
+use App\Livewire\Evaluation\EvaluacionExternaIndex;
 use App\Livewire\Evaluation\EvaluacionProgramaView;
 use App\Livewire\Evaluation\PanelTransversal;
 use App\Livewire\Evaluation\ReporteDesviaciones;
@@ -101,6 +102,14 @@ Route::prefix('evaluacion')
             Route::get('/{asm}', AsmShow::class)
                 ->middleware('can:ver_asm')
                 ->name('show');
+        });
+
+        Route::prefix('externas')->name('evaluation.externas.')->group(function () {
+            Route::get('/', EvaluacionExternaIndex::class)
+                ->middleware('can:ver_evaluacion_externa')
+                ->name('index');
+
+            // Rutas crear/editar/show: Tasks 3-4
         });
 
         Route::middleware('can:exportar_reportes')

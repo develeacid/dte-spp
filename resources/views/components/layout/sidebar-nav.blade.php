@@ -164,6 +164,9 @@
         @can('ver_asm')
         <a href="{{ route('evaluation.asms.index') }}" class="block py-1 hover:text-brand-light">ASMs</a>
         @endcan
+        @can('ver_evaluacion_externa')
+        <a href="{{ route('evaluation.externas.index') }}" class="block py-1 hover:text-brand-light">Evaluaciones externas</a>
+        @endcan
         <a href="{{ route('evaluation.datos-abiertos.diccionario') }}" class="block py-1 hover:text-brand-light">Datos Abiertos</a>
     </x-slot:tooltip>
 
@@ -179,6 +182,11 @@
     @can('ver_asm')
     <x-ui.sidebar-item href="{{ route('evaluation.asms.index') }}" :active="request()->routeIs('evaluation.asms.*')">
         ASMs
+    </x-ui.sidebar-item>
+    @endcan
+    @can('ver_evaluacion_externa')
+    <x-ui.sidebar-item href="{{ route('evaluation.externas.index') }}" :active="request()->routeIs('evaluation.externas.*')">
+        Evaluaciones externas
     </x-ui.sidebar-item>
     @endcan
     <x-ui.sidebar-item href="{{ route('evaluation.datos-abiertos.diccionario') }}" :active="request()->routeIs('evaluation.datos-abiertos.*')">
