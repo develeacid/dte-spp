@@ -8,6 +8,7 @@ use App\Enums\TipoFuenteMv;
 use App\Enums\TipoNivelMir;
 use App\Models\CatalogoUnidadMedida;
 use App\Models\Evaluation\AnexoTransversal;
+use App\Models\Mml\CremaValidacionMv;
 use App\Models\Mml\CremaaValidacion;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\IndicadorVariable;
@@ -372,6 +373,88 @@ class MirEditor extends Component
         }
 
         $medio->delete();
+    }
+
+    private const CREMA_MV_FIELDS = ['confiable', 'relevante', 'economico', 'monitoreable', 'asequible'];
+
+    /**
+     * Checklist CREMA del MV capturada a mano (C-072): Confiable, Relevante,
+     * Económico, Monitoreable, Asequible.
+     */
+    public function guardarCremaMv(int $medioId, array $data): void
+    {
+        $medio = $this->medioDelPrograma($medioId);
+
+        if ($medio === null) {
+            return;
+        }
+
+        $rules = [];
+        foreach (self::CREMA_MV_FIELDS as $field) {
+            $rules[$field] = 'boolean';
+            $rules[$field.'_observacion'] = 'nullable|string|max:2000';
+        }
+
+        $validated = validator($data, $rules)->validate();
+
+        CremaValidacionMv::updateOrCreate(
+            ['medio_verificacion_id' => $medioId],
+            $validated,
+        );
+    }
+
+    /**
+     * Evalúa la checklist CREMA del MV con IA (mismo pipeline LLM que la
+     * CREMAA del indicador).
+     */
+    public function validarCremaMv(int $medioId): void
+    {
+        $medio = $this->medioDelPrograma($medioId);
+
+        if ($medio === null) {
+            return;
+        }
+
+        $medio->load('indicador.mirNivel');
+
+        if (empty($medio->nombre)) {
+            return;
+        }
+
+        $promptText = view('prompts.mir.validar-crema-mv', [
+            'nombre' => $medio->nombre,
+            'fuente' => $medio->fuente,
+            'tipoFuente' => $medio->tipo_fuente ? TipoFuenteMv::tryFrom($medio->tipo_fuente)?->label() : null,
+            'organismo' => $medio->organismo,
+            'url' => $medio->url,
+            'frecuencia' => $medio->frecuencia,
+            'indicador' => $medio->indicador?->nombre,
+            'resumenNarrativo' => $medio->indicador?->mirNivel?->resumen_narrativo,
+        ])->render();
+
+        try {
+            $llm = app(LlmServiceInterface::class);
+            $result = $llm->suggest($promptText);
+            $data = json_decode($result, true);
+
+            if (! is_array($data)) {
+                return;
+            }
+
+            $upsertData = ['medio_verificacion_id' => $medioId];
+
+            foreach (self::CREMA_MV_FIELDS as $field) {
+                $upsertData[$field] = (bool) ($data[$field] ?? false);
+                $upsertData[$field.'_observacion'] = $data[$field.'_observacion'] ?? null;
+            }
+
+            CremaValidacionMv::updateOrCreate(
+                ['medio_verificacion_id' => $medioId],
+                $upsertData,
+            );
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudo validar CREMA del MV con IA.');
+        }
     }
 
     public function extraerVariables(int $indicadorId): void

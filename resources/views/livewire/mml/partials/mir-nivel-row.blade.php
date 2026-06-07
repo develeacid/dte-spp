@@ -529,6 +529,57 @@
                                     </select>
                                     @error('tipo_fuente_mv_'.$medio->id) <p class="text-xs text-red-600">{{ $message }}</p> @enderror
                                     @error('tipo_fuente') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+
+                                    {{-- CREMA del MV (C-072) --}}
+                                    <div class="flex items-center gap-2">
+                                        <button
+                                            wire:click="validarCremaMv({{ $medio->id }})"
+                                            wire:loading.attr="disabled"
+                                            wire:target="validarCremaMv({{ $medio->id }})"
+                                            class="text-xs text-purple-600 hover:text-purple-800"
+                                        >
+                                            <span wire:loading.remove wire:target="validarCremaMv({{ $medio->id }})">Validar CREMA</span>
+                                            <span wire:loading wire:target="validarCremaMv({{ $medio->id }})">Evaluando...</span>
+                                        </button>
+
+                                        @if ($medio->cremaValidacion)
+                                            @php
+                                                $cremaMv = $medio->cremaValidacion;
+                                                $letrasMv = [
+                                                    ['letra' => 'C', 'campo' => 'confiable', 'obs' => $cremaMv->confiable_observacion],
+                                                    ['letra' => 'R', 'campo' => 'relevante', 'obs' => $cremaMv->relevante_observacion],
+                                                    ['letra' => 'E', 'campo' => 'economico', 'obs' => $cremaMv->economico_observacion],
+                                                    ['letra' => 'M', 'campo' => 'monitoreable', 'obs' => $cremaMv->monitoreable_observacion],
+                                                    ['letra' => 'A', 'campo' => 'asequible', 'obs' => $cremaMv->asequible_observacion],
+                                                ];
+                                            @endphp
+                                            <div class="flex gap-0.5">
+                                                @foreach ($letrasMv as $l)
+                                                    <span
+                                                        class="inline-flex h-5 w-5 items-center justify-center rounded text-xs font-bold {{ $cremaMv->{$l['campo']} ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}"
+                                                        title="{{ $l['obs'] ?: 'Cumple' }}"
+                                                    >{{ $l['letra'] }}</span>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <div x-data="{ cremaOpen: false,
+                                        cremaMv: { confiable: @js((bool) ($medio->cremaValidacion?->confiable)), relevante: @js((bool) ($medio->cremaValidacion?->relevante)), economico: @js((bool) ($medio->cremaValidacion?->economico)), monitoreable: @js((bool) ($medio->cremaValidacion?->monitoreable)), asequible: @js((bool) ($medio->cremaValidacion?->asequible)) },
+                                        guardarCrema() { $wire.guardarCremaMv({{ $medio->id }}, this.cremaMv); } }">
+                                        <button @click="cremaOpen = !cremaOpen" type="button" class="text-xs text-gray-500 hover:text-gray-700">
+                                            <span x-show="!cremaOpen">Editar CREMA manualmente</span>
+                                            <span x-show="cremaOpen">Ocultar CREMA</span>
+                                        </button>
+                                        <div x-show="cremaOpen" x-cloak class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                                            @foreach ([['confiable', 'Confiable'], ['relevante', 'Relevante'], ['economico', 'Económico'], ['monitoreable', 'Monitoreable'], ['asequible', 'Asequible']] as [$campo, $etiqueta])
+                                                <label class="inline-flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+                                                    <input type="checkbox" x-model="cremaMv.{{ $campo }}" @change="guardarCrema()" class="h-3.5 w-3.5 rounded border-gray-300 text-purple-600" />
+                                                    {{ $etiqueta }}
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                 </div>
                                 <button wire:click="eliminarMedioVerificacion({{ $medio->id }})" class="mt-1 text-red-400 hover:text-red-600">
                                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
