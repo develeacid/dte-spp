@@ -410,6 +410,11 @@ geobase NO tiene `docker-compose.prod.yml`: corre con su **`compose.yaml` de Sai
 
 ### Deploy geobase desde cero
 
+> geobase necesita su **worker de colas en prod** (queue `webhooks` para M5 → dte-spp + default).
+> Está en `compose.prod.yaml` (override): levantar SIEMPRE con
+> `docker compose -f compose.yaml -f compose.prod.yaml up -d`.
+> Sin él, los WebhookDeliveryJob quedan encolados para siempre (síntoma: 0 deliveries en dte-spp).
+
 ```bash
 cd /var/www
 git clone -b desarrollo git@github-geobase:develeacid/geobase.git geobase
@@ -441,7 +446,14 @@ Nginx: restaurar/usar el block de `geobase.eleaciddev.cloud` → `127.0.0.1:8081
 
 1. **Token M2M** (geobase → dte-spp): en geobase `php artisan db:seed --class=SystemTokenSeeder --force` imprime/genera el token con abilities `padron:*`. Copiarlo a `/var/www/dte-spp/.env` → `GEOBASE_API_TOKEN=...` y `php artisan optimize:clear` en dte-spp.
 2. **Registrar programas en geobase** (después de seeders dte-spp): `php artisan geobase:hydrate-padron` + `php artisan geobase:hydrate-indicador-variables` en dte-spp (idempotentes).
-3. **Webhooks M5** (geobase avisa a dte-spp): en geobase `php artisan geobase:provision-webhook-subscription https://dte-spp.eleaciddev.cloud/api/webhooks/geobase <GEOBASE_WEBHOOK_SECRET de dte-spp>` (idempotente; ver runbook M5).
+3. **Webhooks M5** (geobase avisa a dte-spp): el secret compartido debe estar en el `.env` de AMBOS (`GEOBASE_WEBHOOK_SECRET`). En geobase (usa OPCIONES, no args posicionales):
+   ```bash
+   php artisan geobase:provision-webhook-subscription \
+     --name="dte-spp prod receiver" \
+     --url="https://dte-spp.eleaciddev.cloud/api/webhooks/geobase" \
+     --events="enrollment.status_changed,snapshot.generated,sync.processed"
+   ```
+   Verificar E2E: disparar una transición de enrollment y revisar `geobase_webhook_deliveries` en dte-spp.
 4. **BD pública dte-spp**: `transparencia:provision-public-db` + `migrate --path=database/migrations/public --database=pgsql_public` (sección 12).
 
 > Las URLs M2M en prod son las públicas (https) — `host.docker.internal` y `127.0.0.1` NO funcionan entre stacks.
@@ -465,3 +477,13 @@ Nginx: restaurar/usar el block de `geobase.eleaciddev.cloud` → `127.0.0.1:8081
 - Webhook M5 suscrito: geobase → `https://dte-spp.eleaciddev.cloud/api/webhooks/geobase`
 - Cert `eleaciddev.cloud` expandido con `dte-spp.eleaciddev.cloud`
 - Verificado E2E: logins ambos, análisis espacial con choropleth (34 municipios), cobertura M2M (54 beneficiarios ISM-001), dashboard geobase (1,920/2,100)
+
+## 15. IA (LLM + embeddings) en producción
+
+dte-spp usa OpenAI (`LLM_API_KEY` + `EMBEDDING_API_KEY` en .env — misma key de dev, cuenta de pruebas gratuita). Tras un `migrate:fresh`, regenerar los vectores de alineación:
+
+```bash
+docker compose -f docker-compose.prod.yml exec laravel.test php artisan app:embeddings-generate
+```
+
+Sin esto, "Buscar alineación" del MirEditor no regresa sugerencias (PED/ODS/PND con embedding NULL).
