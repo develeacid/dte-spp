@@ -36,6 +36,7 @@ class EvaluacionesAnualesPublisher extends BasePublisher
                     'semaforos_verde' => (int) ($semaforos['verde'] ?? 0),
                     'semaforos_amarillo' => (int) ($semaforos['amarillo'] ?? 0),
                     'semaforos_rojo' => (int) ($semaforos['rojo'] ?? 0),
+                    'semaforos_rojo_alto' => (int) ($semaforos['rojo_alto'] ?? 0),
                     'indicadores_total' => (int) ($e->indicadores_evaluados ?? 0),
                     'created_at' => $now,
                     'updated_at' => $now,

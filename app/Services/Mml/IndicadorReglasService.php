@@ -96,6 +96,24 @@ class IndicadorReglasService
      */
     public static function validarRangosSemaforo(Indicador $indicador, array $rangos): array
     {
+        return self::validarRangosSemaforoPrimitivos(
+            $indicador->meta !== null ? (float) $indicador->meta : null,
+            $indicador->unidadMedida?->clave,
+            $rangos,
+        );
+    }
+
+    /**
+     * Versión pura de validarRangosSemaforo (reglas B3-B6) que opera sobre
+     * primitivos en lugar de un modelo Indicador. La usan tanto la UI (vía
+     * validarRangosSemaforo, que extrae meta/clave del modelo) como el
+     * diagnóstico de import (MirDiagnosticoService), que trabaja con un DTO.
+     *
+     * @param  array<string, float|int|null>  $rangos  keys: rango_{verde,amarillo,rojo,rojo_alto}_{min,max}
+     * @return list<string>
+     */
+    public static function validarRangosSemaforoPrimitivos(?float $meta, ?string $claveUnidad, array $rangos): array
+    {
         $errores = [];
 
         $colores = [
@@ -112,8 +130,7 @@ class IndicadorReglasService
         // B3 (C-066): la meta anual debe caer dentro del rango verde.
         $verdeMin = $valor('rango_verde_min');
         $verdeMax = $valor('rango_verde_max');
-        if ($indicador->meta !== null && $verdeMin !== null && $verdeMax !== null) {
-            $meta = (float) $indicador->meta;
+        if ($meta !== null && $verdeMin !== null && $verdeMax !== null) {
             if ($meta < $verdeMin || $meta > $verdeMax) {
                 $errores[] = sprintf(
                     'La meta anual (%s) debe caer dentro del rango verde [%s, %s].',
@@ -159,7 +176,7 @@ class IndicadorReglasService
         }
 
         // B5 (C-068): con unidad Porcentaje todo límite debe estar en [0, 100].
-        if ($indicador->unidadMedida?->clave === 'PCT') {
+        if ($claveUnidad === 'PCT') {
             foreach ($colores as $prefijo) {
                 foreach (['min', 'max'] as $extremo) {
                     $campo = "{$prefijo}_{$extremo}";
