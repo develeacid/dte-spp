@@ -97,9 +97,6 @@ return [
     'sentido_descendente' => 'Un valor menor del indicador refleja un mejor desempeno. '
         .'Ejemplo: tasa de desercion, indice de mortalidad.',
 
-    'sentido_regular' => 'El desempeno optimo se alcanza cuando el indicador se mantiene '
-        .'en un valor o rango especifico, sin que mas o menos sea mejor.',
-
     // ── Arbol de problemas / objetivos ───────────────────────────────
 
     'problema_central' => 'Situacion no deseada que el programa busca atender. '

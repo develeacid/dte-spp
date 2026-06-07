@@ -48,7 +48,7 @@ class Avance extends Model
     protected $fillable = [
         'meta_periodo_id', 'indicador_id', 'resultado',
         'semaforo_calculado', 'semaforo_ajustado',
-        'justificacion_ia', 'justificacion_final',
+        'justificacion_ia', 'justificacion_final', 'analisis_desviacion',
         'estado', 'historial_observaciones', 'congelado_at', 'capturado_por',
     ];
 
@@ -58,6 +58,7 @@ class Avance extends Model
             'resultado' => 'decimal:4',
             'estado' => EstadoAvance::class,
             'historial_observaciones' => 'array',
+            'analisis_desviacion' => 'array',
             'congelado_at' => 'datetime',
         ];
     }

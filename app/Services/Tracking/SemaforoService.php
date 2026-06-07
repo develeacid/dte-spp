@@ -33,7 +33,6 @@ class SemaforoService
         return match ($sentido) {
             SentidoIndicador::ASCENDENTE => $this->rangoAscendente($resultado, $indicador),
             SentidoIndicador::DESCENDENTE => $this->rangoDescendente($resultado, $indicador),
-            SentidoIndicador::REGULAR => $this->rangoRegular($resultado, $indicador),
         };
     }
 
@@ -63,25 +62,6 @@ class SemaforoService
         return 'rojo';
     }
 
-    private function rangoRegular(float $resultado, Indicador $indicador): string
-    {
-        $verdeMin = $indicador->rango_verde_min !== null ? (float) $indicador->rango_verde_min : null;
-        $verdeMax = $indicador->rango_verde_max !== null ? (float) $indicador->rango_verde_max : null;
-
-        if ($verdeMin !== null && $verdeMax !== null && $resultado >= $verdeMin && $resultado <= $verdeMax) {
-            return 'verde';
-        }
-
-        $amarilloMin = $indicador->rango_amarillo_min !== null ? (float) $indicador->rango_amarillo_min : null;
-        $amarilloMax = $indicador->rango_amarillo_max !== null ? (float) $indicador->rango_amarillo_max : null;
-
-        if ($amarilloMin !== null && $amarilloMax !== null && $resultado >= $amarilloMin && $resultado <= $amarilloMax) {
-            return 'amarillo';
-        }
-
-        return 'rojo';
-    }
-
     private function calcularConMeta(float $resultado, ?float $metaPeriodo, SentidoIndicador $sentido): string
     {
         if ($metaPeriodo === null || $metaPeriodo == 0) {
@@ -91,7 +71,6 @@ class SemaforoService
         return match ($sentido) {
             SentidoIndicador::ASCENDENTE => $this->metaAscendente($resultado, $metaPeriodo),
             SentidoIndicador::DESCENDENTE => $this->metaDescendente($resultado, $metaPeriodo),
-            SentidoIndicador::REGULAR => $this->metaRegular($resultado, $metaPeriodo),
         };
     }
 
@@ -118,22 +97,6 @@ class SemaforoService
         }
 
         if ($resultado <= $metaPeriodo * 1.3) {
-            return 'amarillo';
-        }
-
-        return 'rojo';
-    }
-
-    private function metaRegular(float $resultado, float $metaPeriodo): string
-    {
-        $diff = abs($resultado - $metaPeriodo);
-        $tolerance = abs($metaPeriodo) * 0.1;
-
-        if ($diff <= $tolerance) {
-            return 'verde';
-        }
-
-        if ($diff <= $tolerance * 3) {
             return 'amarillo';
         }
 

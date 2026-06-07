@@ -11,7 +11,7 @@ class IndicadorVariable extends Model
     protected $table = 'indicador_variables';
 
     protected $fillable = [
-        'indicador_id', 'simbolo', 'nombre', 'descripcion',
+        'indicador_id', 'simbolo', 'nombre', 'descripcion', 'fuente',
         'comportamiento', 'unidad_medida_id', 'orden',
         'geobase_endpoint_type', 'spp_reference_id', 'geobase_filter_params', 'geobase_value_key',
     ];

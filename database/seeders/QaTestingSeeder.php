@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\EstadoAvance;
 use App\Enums\SystemRole;
 use App\Enums\TipoNivelMir;
+use App\Models\CatalogoUnidadMedida;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\Mml\MirNivel;
@@ -472,6 +473,12 @@ class QaTestingSeeder extends Seeder
 
     private function crearIndicadores(): void
     {
+        // Unidad de medida por defecto (Task 2 hará unidad_medida_id NOT NULL).
+        $unidadId = CatalogoUnidadMedida::firstOrCreate(
+            ['clave' => 'PCT'],
+            ['nombre' => 'Porcentaje']
+        )->id;
+
         // --- P1: ISM-001 ---
         $prog1 = ProgramaPresupuestario::where('clave', 'ISM-001')->first();
         $fin1 = MirNivel::where('programa_presupuestario_id', $prog1->id)->where('tipo_nivel', 'fin')->first();
@@ -488,7 +495,7 @@ class QaTestingSeeder extends Seeder
             [$acts1c1[0]->id, 'Porcentaje de solicitudes evaluadas en plazo', 'gestion', 'eficiencia', 'trimestral', 'ascendente', 90.0, null],
             [$acts1c1[1]->id, 'Número de verificaciones de instalación realizadas', 'gestion', 'eficacia', 'mensual', 'ascendente', 120.0, null],
             [$acts1c2[0]->id, 'Número de inspecciones de palenques realizadas', 'gestion', 'eficacia', 'trimestral', 'ascendente', 48.0, null],
-            [$acts1c2[1]->id, 'Índice de satisfacción de productores capacitados', 'gestion', 'calidad', 'trimestral', 'regular', 8.5, 7.2],
+            [$acts1c2[1]->id, 'Índice de satisfacción de productores capacitados', 'gestion', 'calidad', 'trimestral', 'ascendente', 8.5, 7.2],
         ];
 
         foreach ($indicadoresP1 as $ind) {
@@ -506,6 +513,8 @@ class QaTestingSeeder extends Seeder
                 array_merge([
                     'tipo' => $ind[2], 'dimension' => $ind[3], 'frecuencia' => $ind[4],
                     'sentido' => $ind[5], 'meta' => $ind[6], 'linea_base' => $ind[7],
+                    'formula_texto' => "(A / B) * 100 — {$ind[1]}",
+                    'unidad_medida_id' => $unidadId,
                     'activo_seguimiento' => true, 'orden' => 1,
                 ], $extra)
             );
@@ -535,6 +544,8 @@ class QaTestingSeeder extends Seeder
                 [
                     'tipo' => $ind[2], 'dimension' => $ind[3], 'frecuencia' => $ind[4],
                     'sentido' => $ind[5], 'meta' => $ind[6], 'linea_base' => $ind[7],
+                    'formula_texto' => "(A / B) * 100 — {$ind[1]}",
+                    'unidad_medida_id' => $unidadId,
                     'activo_seguimiento' => true, 'orden' => 1,
                 ]
             );
@@ -564,6 +575,8 @@ class QaTestingSeeder extends Seeder
                 [
                     'tipo' => $ind[2], 'dimension' => $ind[3], 'frecuencia' => $ind[4],
                     'sentido' => $ind[5], 'meta' => $ind[6], 'linea_base' => $ind[7],
+                    'formula_texto' => "(A / B) * 100 — {$ind[1]}",
+                    'unidad_medida_id' => $unidadId,
                     'activo_seguimiento' => true, 'orden' => 1,
                 ]
             );
@@ -592,6 +605,8 @@ class QaTestingSeeder extends Seeder
                 [
                     'tipo' => $ind[2], 'dimension' => $ind[3], 'frecuencia' => $ind[4],
                     'sentido' => $ind[5], 'meta' => $ind[6], 'linea_base' => $ind[7],
+                    'formula_texto' => "(A / B) * 100 — {$ind[1]}",
+                    'unidad_medida_id' => $unidadId,
                     'activo_seguimiento' => true, 'orden' => 1,
                 ]
             );

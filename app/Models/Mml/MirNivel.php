@@ -8,6 +8,8 @@ use App\Models\PedObjetivoEstrategico;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
 use App\Support\Mml\Trazabilidad;
+use Database\Factories\Mml\MirNivelFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,6 +18,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class MirNivel extends Model
 {
+    /** @use HasFactory<MirNivelFactory> */
+    use HasFactory;
+
     use LogsActivity;
 
     protected $table = 'mir_niveles';

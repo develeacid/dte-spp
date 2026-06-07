@@ -11,8 +11,10 @@ use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Tracking\Avance;
 use App\Models\User;
+use App\Services\Mml\CalendarizacionService;
 use App\Services\Tracking\CalendarioService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
@@ -34,26 +36,29 @@ class CalendarioTest extends TestCase
 
     public function test_calcular_fechas_trimestral(): void
     {
+        // Norma SHCP: la ventana de captura cierra cierre_trimestre + 30 días.
+        // Trimestre 1 de 2026 cierra el 31-mar → apertura 01-abr, cierre 30-abr.
         $result = $this->service->calcularFechas(2026, FrecuenciaMedicion::TRIMESTRAL);
         $this->assertCount(4, $result);
         $this->assertEquals('2026-04-01', $result[0]['fecha_apertura']);
-        $this->assertEquals('2026-04-15', $result[0]['fecha_cierre']);
+        $this->assertEquals('2026-04-30', $result[0]['fecha_cierre']);
         $this->assertEquals('2026-07-01', $result[1]['fecha_apertura']);
-        $this->assertEquals('2026-07-15', $result[1]['fecha_cierre']);
+        $this->assertEquals('2026-07-30', $result[1]['fecha_cierre']);
         $this->assertEquals('2026-10-01', $result[2]['fecha_apertura']);
-        $this->assertEquals('2026-10-15', $result[2]['fecha_cierre']);
+        $this->assertEquals('2026-10-30', $result[2]['fecha_cierre']);
         $this->assertEquals('2027-01-01', $result[3]['fecha_apertura']);
-        $this->assertEquals('2027-01-15', $result[3]['fecha_cierre']);
+        $this->assertEquals('2027-01-30', $result[3]['fecha_cierre']);
     }
 
     public function test_calcular_fechas_mensual(): void
     {
         $result = $this->service->calcularFechas(2026, FrecuenciaMedicion::MENSUAL);
         $this->assertCount(12, $result);
+        // Enero cierra 31-ene → apertura 01-feb, cierre 31-ene + 30d = 02-mar.
         $this->assertEquals('2026-02-01', $result[0]['fecha_apertura']);
-        $this->assertEquals('2026-02-15', $result[0]['fecha_cierre']);
+        $this->assertEquals('2026-03-02', $result[0]['fecha_cierre']);
         $this->assertEquals('2027-01-01', $result[11]['fecha_apertura']);
-        $this->assertEquals('2027-01-15', $result[11]['fecha_cierre']);
+        $this->assertEquals('2027-01-30', $result[11]['fecha_cierre']);
     }
 
     public function test_calcular_fechas_semestral(): void
@@ -61,9 +66,118 @@ class CalendarioTest extends TestCase
         $result = $this->service->calcularFechas(2026, FrecuenciaMedicion::SEMESTRAL);
         $this->assertCount(2, $result);
         $this->assertEquals('2026-07-01', $result[0]['fecha_apertura']);
-        $this->assertEquals('2026-07-15', $result[0]['fecha_cierre']);
+        $this->assertEquals('2026-07-30', $result[0]['fecha_cierre']);
         $this->assertEquals('2027-01-01', $result[1]['fecha_apertura']);
-        $this->assertEquals('2027-01-15', $result[1]['fecha_cierre']);
+        $this->assertEquals('2027-01-30', $result[1]['fecha_cierre']);
+    }
+
+    public function test_calcular_fechas_respeta_config_dias_ventana_captura(): void
+    {
+        // Override de la ventana normativa: 45 días tras el cierre del periodo.
+        // Trimestre 1 de 2026 cierra 31-mar → cierre captura 31-mar + 45d = 15-may.
+        config(['tracking.dias_ventana_captura' => 45]);
+
+        $result = $this->service->calcularFechas(2026, FrecuenciaMedicion::TRIMESTRAL);
+        $this->assertEquals('2026-04-01', $result[0]['fecha_apertura']);
+        $this->assertEquals('2026-05-15', $result[0]['fecha_cierre']);
+    }
+
+    public function test_confirmar_persiste_fechas_normativas_por_periodo(): void
+    {
+        // Integración: el flujo real del wizard (CalendarizacionService::confirmar)
+        // ahora persiste fecha_apertura/fecha_cierre por periodo según la norma.
+        $programa = ProgramaPresupuestario::create([
+            'nombre' => 'Test', 'clave' => 'PT-CAL',
+            'team_id' => $this->user->currentTeam->id,
+            'ejercicio_fiscal' => 2026,
+        ]);
+        $nivel = MirNivel::create([
+            'programa_presupuestario_id' => $programa->id,
+            'tipo_nivel' => TipoNivelMir::COMPONENTE->value,
+            'resumen_narrativo' => 'Componente trimestral', 'orden' => 1,
+            'team_id' => $this->user->currentTeam->id,
+        ]);
+        $indicador = Indicador::create([
+            'mir_nivel_id' => $nivel->id, 'nombre' => 'Tasa trimestral',
+            'tipo' => 'estrategico', 'dimension' => 'eficacia',
+            'frecuencia' => FrecuenciaMedicion::TRIMESTRAL->value, 'meta' => 100,
+            'activo_seguimiento' => true, 'orden' => 1,
+        ]);
+
+        $calendarizacion = new CalendarizacionService;
+        $calendarizacion->confirmar($programa, $calendarizacion->generar($programa), 2026);
+
+        $metas = MetaPeriodo::where('indicador_id', $indicador->id)
+            ->orderBy('periodo')->get();
+
+        $this->assertCount(4, $metas);
+
+        // Las fechas no quedan null y siguen la norma cierre_periodo + 30d.
+        $this->assertEquals('2026-04-01', $metas[0]->fecha_apertura->toDateString());
+        $this->assertEquals('2026-04-30', $metas[0]->fecha_cierre->toDateString());
+        $this->assertEquals('2027-01-01', $metas[3]->fecha_apertura->toDateString());
+        $this->assertEquals('2027-01-30', $metas[3]->fecha_cierre->toDateString());
+
+        foreach ($metas as $meta) {
+            $this->assertNotNull($meta->fecha_apertura);
+            $this->assertNotNull($meta->fecha_cierre);
+        }
+    }
+
+    public function test_confirmar_loguea_warning_cuando_periodo_no_tiene_ventana(): void
+    {
+        // Vector: indicador real trimestral (sin FK issue) pero con un periodo
+        // fuera de rango (5) en metasAjustadas. calcularFechas devuelve solo
+        // periodos 1-4 → fechas null para el 5 → warning observable + persistencia
+        // del MetaPeriodo conservada (comportamiento actual).
+        $programa = ProgramaPresupuestario::create([
+            'nombre' => 'Test', 'clave' => 'PT-WARN',
+            'team_id' => $this->user->currentTeam->id,
+            'ejercicio_fiscal' => 2026,
+        ]);
+        $nivel = MirNivel::create([
+            'programa_presupuestario_id' => $programa->id,
+            'tipo_nivel' => TipoNivelMir::COMPONENTE->value,
+            'resumen_narrativo' => 'Componente', 'orden' => 1,
+            'team_id' => $this->user->currentTeam->id,
+        ]);
+        $indicador = Indicador::create([
+            'mir_nivel_id' => $nivel->id, 'nombre' => 'Tasa',
+            'tipo' => 'estrategico', 'dimension' => 'eficacia',
+            'frecuencia' => FrecuenciaMedicion::TRIMESTRAL->value, 'meta' => 100,
+            'activo_seguimiento' => true, 'orden' => 1,
+        ]);
+
+        Log::spy();
+
+        $calendarizacion = new CalendarizacionService;
+        $calendarizacion->confirmar($programa, [
+            [
+                'indicador_id' => $indicador->id,
+                'periodos' => [
+                    ['periodo' => 5, 'meta_periodo' => 25],
+                ],
+            ],
+        ], 2026);
+
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(function (string $message, array $context) use ($indicador) {
+                return $message === 'MetaPeriodo sin ventana de captura: no abrirá vía mir:abrir-periodos'
+                    && $context['indicador_id'] === $indicador->id
+                    && $context['periodo'] === 5
+                    && $context['ejercicio'] === 2026
+                    && $context['frecuencia'] === FrecuenciaMedicion::TRIMESTRAL->value;
+            });
+
+        // El MetaPeriodo igual se persiste (comportamiento actual conservado).
+        $this->assertDatabaseHas('metas_periodo', [
+            'indicador_id' => $indicador->id,
+            'periodo' => 5,
+            'ejercicio_fiscal' => 2026,
+            'fecha_apertura' => null,
+            'fecha_cierre' => null,
+        ]);
     }
 
     public function test_abrir_periodos_crea_avances(): void

@@ -91,10 +91,23 @@ class MirPersistenciaService
         ?TipoNivelMir $tipoNivel,
         ?int $componenteId,
     ): MirNivel {
+        // Guard: la MIR solo admite un FIN y un PROPOSITO por programa.
+        if (in_array($tipoNivel, [TipoNivelMir::FIN, TipoNivelMir::PROPOSITO], true)) {
+            $yaExiste = $programa->mirNiveles()
+                ->where('tipo_nivel', $tipoNivel->value)
+                ->exists();
+
+            if ($yaExiste) {
+                throw new \DomainException(
+                    "Ya existe un nivel {$tipoNivel->label()} para este programa; la MIR solo admite uno."
+                );
+            }
+        }
+
         return MirNivel::create([
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => $tipoNivel?->value ?? $nivelData['tipo_nivel'] ?? 'fin',
-            'resumen_narrativo' => $nivelData['resumen_narrativo'] ?? null,
+            'resumen_narrativo' => $nivelData['resumen_narrativo'] ?? '',
             'supuestos' => $nivelData['supuestos'] ?? null,
             'orden' => $nivelData['orden'] ?? 0,
             'componente_id' => $componenteId,
@@ -109,13 +122,14 @@ class MirPersistenciaService
             $indicador = Indicador::create([
                 'mir_nivel_id' => $nivel->id,
                 'nombre' => $indData['nombre'] ?? 'Sin nombre',
-                'formula_texto' => $indData['formula_texto'] ?? null,
+                'formula_texto' => $indData['formula_texto'] ?? '',
                 'tipo' => $this->resolveEnum(TipoIndicador::class, $indData['tipo'] ?? '')?->value,
                 'dimension' => $this->resolveEnum(DimensionIndicador::class, $indData['dimension'] ?? '')?->value,
                 'frecuencia' => $this->resolveEnum(FrecuenciaMedicion::class, $indData['frecuencia'] ?? '')?->value,
-                'sentido' => $this->resolveEnum(SentidoIndicador::class, $indData['sentido'] ?? '')?->value,
+                'sentido' => $this->resolveEnum(SentidoIndicador::class, $indData['sentido'] ?? '')?->value ?? SentidoIndicador::ASCENDENTE->value,
                 'linea_base' => $indData['linea_base'] ?? null,
                 'meta' => $indData['meta'] ?? null,
+                'unidad_medida_id' => $indData['unidad_medida_id'] ?? null,
                 'orden' => $indData['orden'] ?? $ii,
                 'activo_seguimiento' => ! $hasCriticalGap,
             ]);

@@ -140,11 +140,11 @@
                 </div>
             </div>
 
-            {{-- Justification --}}
+            {{-- Structured deviation analysis --}}
             @if(in_array($semaforoCalculado, ['amarillo', 'rojo']))
                 <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                     <div class="mb-4 flex items-center justify-between">
-                        <h3 class="text-lg font-medium text-gray-900">Justificacion</h3>
+                        <h3 class="text-lg font-medium text-gray-900">Análisis de desviación</h3>
                         @unless($avance->estaCongelado() || ! $avance->estado->esEditable())
                             <button
                                 type="button"
@@ -166,23 +166,75 @@
 
                     @if($justificacionIa)
                         <p class="mb-2 text-xs text-gray-400">
-                            Borrador generado por IA. Revise y edite antes de guardar.
+                            Borrador generado por IA pre-cargado en "Causa raíz". Revise y edite antes de guardar.
                         </p>
                     @endif
 
-                    <p class="mb-2 text-sm text-gray-500">
-                        Es obligatorio proporcionar una justificacion cuando el semaforo es amarillo o rojo.
+                    <p class="mb-4 text-sm text-gray-500">
+                        Cuando el semáforo es amarillo o rojo es obligatorio documentar el análisis estructurado de la desviación.
                     </p>
-                    <textarea
-                        wire:model="justificacion"
-                        rows="6"
-                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        placeholder="Explique las causas del resultado y las acciones correctivas..."
-                        @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
-                    ></textarea>
-                    @error('justificacion')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
+
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label for="analisis-dato" class="block text-sm font-medium text-gray-700">Dato (qué ocurrió)</label>
+                            <textarea
+                                id="analisis-dato"
+                                wire:model="analisis.dato"
+                                rows="4"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                placeholder="Describa el resultado obtenido frente a la meta..."
+                                @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
+                            ></textarea>
+                            @error('analisis.dato')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="analisis-causa" class="block text-sm font-medium text-gray-700">Causa raíz</label>
+                            <textarea
+                                id="analisis-causa"
+                                wire:model="analisis.causa"
+                                rows="4"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                placeholder="Explique por qué ocurrió la desviación..."
+                                @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
+                            ></textarea>
+                            @error('analisis.causa')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="analisis-accion" class="block text-sm font-medium text-gray-700">Acción correctiva</label>
+                            <textarea
+                                id="analisis-accion"
+                                wire:model="analisis.accion"
+                                rows="4"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                placeholder="Indique qué se hará para corregir la desviación..."
+                                @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
+                            ></textarea>
+                            @error('analisis.accion')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="analisis-proyeccion" class="block text-sm font-medium text-gray-700">Proyección</label>
+                            <textarea
+                                id="analisis-proyeccion"
+                                wire:model="analisis.proyeccion"
+                                rows="4"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                placeholder="Describa qué se espera lograr con las acciones..."
+                                @if($avance->estaCongelado() || ! $avance->estado->esEditable()) disabled @endif
+                            ></textarea>
+                            @error('analisis.proyeccion')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
                 </div>
             @endif
 

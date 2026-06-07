@@ -8,6 +8,7 @@ use App\Models\Tracking\Avance;
 use App\Models\User;
 use App\Notifications\PeriodoAbiertoNotification;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Permission;
 
 class AbrirPeriodosCaptura extends Command
@@ -71,6 +72,20 @@ class AbrirPeriodosCaptura extends Command
         }
 
         $this->info("Periodos abiertos: {$count}");
+
+        // Defensa en profundidad: metas activas sin fecha_apertura nunca serán
+        // abiertas por este comando (el filtro requiere fecha_apertura <= now).
+        // Señalarlas para que no queden invisibles.
+        $sinVentana = MetaPeriodo::where('activo', true)
+            ->whereNull('fecha_apertura')
+            ->count();
+
+        if ($sinVentana > 0) {
+            $this->warn("Metas activas sin fecha_apertura (nunca abrirán): {$sinVentana}");
+            Log::warning('Metas activas sin fecha_apertura detectadas por mir:abrir-periodos', [
+                'count' => $sinVentana,
+            ]);
+        }
 
         return self::SUCCESS;
     }

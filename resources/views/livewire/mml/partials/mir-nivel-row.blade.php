@@ -328,19 +328,44 @@
                             </button>
                         </div>
 
+                        {{-- Año de línea base (V2-A5) --}}
+                        <div class="mt-1 flex items-center gap-2">
+                            <label class="text-xs font-medium text-gray-500">Año de línea base</label>
+                            <input
+                                type="number"
+                                min="1900"
+                                max="2999"
+                                value="{{ $indicador->linea_base_anio }}"
+                                wire:change="guardarLineaBaseAnio({{ $indicador->id }}, $event.target.value)"
+                                class="w-24 rounded border-gray-300 text-xs"
+                                placeholder="Ej: 2026"
+                            />
+                        </div>
+
                         @if ($indicador->variables->count() > 0)
                             <div class="mt-1 space-y-1">
                                 @foreach ($indicador->variables as $variable)
-                                    <div class="flex items-center gap-1" wire:key="var-{{ $variable->id }}">
-                                        <span class="w-6 text-center text-xs font-bold text-gray-700">{{ $variable->simbolo }}</span>
-                                        <input
-                                            type="text"
-                                            value="{{ $variable->nombre }}"
-                                            wire:change="guardarVariable({{ $variable->id }}, { simbolo: '{{ $variable->simbolo }}', nombre: $event.target.value })"
-                                            class="flex-1 rounded border-gray-300 text-xs"
-                                            placeholder="Nombre de variable"
-                                        />
-                                        <button wire:click="eliminarVariable({{ $variable->id }})" class="text-red-400 hover:text-red-600">
+                                    <div class="flex items-start gap-1" wire:key="var-{{ $variable->id }}"
+                                        x-data="{ varSimbolo: @js($variable->simbolo), varNombre: @js($variable->nombre ?? ''), varFuente: @js($variable->fuente ?? ''),
+                                            guardarVar() { $wire.guardarVariable({{ $variable->id }}, { simbolo: this.varSimbolo, nombre: this.varNombre, fuente: this.varFuente || null }); } }">
+                                        <span class="mt-1 w-6 text-center text-xs font-bold text-gray-700">{{ $variable->simbolo }}</span>
+                                        <div class="flex-1 space-y-1">
+                                            <input
+                                                type="text"
+                                                x-model="varNombre"
+                                                @change="guardarVar()"
+                                                class="w-full rounded border-gray-300 text-xs"
+                                                placeholder="Nombre de variable"
+                                            />
+                                            <input
+                                                type="text"
+                                                x-model="varFuente"
+                                                @change="guardarVar()"
+                                                class="w-full rounded border-gray-300 text-xs"
+                                                placeholder="Fuente (opcional)"
+                                            />
+                                        </div>
+                                        <button wire:click="eliminarVariable({{ $variable->id }})" class="mt-1 text-red-400 hover:text-red-600">
                                             <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                         </button>
                                     </div>
@@ -354,15 +379,33 @@
                     <div class="border-t border-gray-100 pt-1">
                         <span class="text-xs font-medium text-gray-500">Medios:</span>
                         @foreach ($indicador->mediosVerificacion as $medio)
-                            <div class="flex items-center gap-1 mt-1" wire:key="medio-{{ $medio->id }}">
-                                <input
-                                    type="text"
-                                    value="{{ $medio->nombre }}"
-                                    wire:change="guardarMedioVerificacion({{ $medio->id }}, $event.target.value)"
-                                    class="flex-1 rounded border-gray-300 text-xs"
-                                    placeholder="Medio de verificación"
-                                />
-                                <button wire:click="eliminarMedioVerificacion({{ $medio->id }})" class="text-red-400 hover:text-red-600">
+                            <div class="flex items-start gap-1 mt-1" wire:key="medio-{{ $medio->id }}"
+                                x-data="{ mvNombre: @js($medio->nombre ?? ''), mvOrganismo: @js($medio->organismo ?? ''), mvUrl: @js($medio->url ?? ''),
+                                    guardarMv() { $wire.guardarMedioVerificacion({{ $medio->id }}, { nombre: this.mvNombre, organismo: this.mvOrganismo || null, url: this.mvUrl || null }); } }">
+                                <div class="flex-1 space-y-1">
+                                    <input
+                                        type="text"
+                                        x-model="mvNombre"
+                                        @change="guardarMv()"
+                                        class="w-full rounded border-gray-300 text-xs"
+                                        placeholder="Medio de verificación"
+                                    />
+                                    <input
+                                        type="text"
+                                        x-model="mvOrganismo"
+                                        @change="guardarMv()"
+                                        class="w-full rounded border-gray-300 text-xs"
+                                        placeholder="Organismo (opcional)"
+                                    />
+                                    <input
+                                        type="url"
+                                        x-model="mvUrl"
+                                        @change="guardarMv()"
+                                        class="w-full rounded border-gray-300 text-xs"
+                                        placeholder="URL (opcional)"
+                                    />
+                                </div>
+                                <button wire:click="eliminarMedioVerificacion({{ $medio->id }})" class="mt-1 text-red-400 hover:text-red-600">
                                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
                             </div>

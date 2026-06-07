@@ -66,6 +66,12 @@ class ProgramaPresupuestario extends Model
             ->withTimestamps();
     }
 
+    /** UR administradora del programa (temario C-036): el team con rol pivote 'coordinadora'. */
+    public function urAdministradora(): ?Team
+    {
+        return $this->equipos()->wherePivot('rol', 'coordinadora')->first();
+    }
+
     public function arboles(): HasMany
     {
         return $this->hasMany(Arbol::class, 'programa_presupuestario_id');

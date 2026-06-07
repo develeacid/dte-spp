@@ -37,7 +37,7 @@ class MirPrellenadoService
         MirNivel::create([
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => TipoNivelMir::FIN->value,
-            'resumen_narrativo' => $finDirecto?->descripcion,
+            'resumen_narrativo' => $finDirecto?->descripcion ?? '',
             'arbol_nodo_id' => $finDirecto?->id,
             'orden' => 1,
         ]);
@@ -46,7 +46,7 @@ class MirPrellenadoService
         MirNivel::create([
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => TipoNivelMir::PROPOSITO->value,
-            'resumen_narrativo' => $objetivoCentral?->descripcion,
+            'resumen_narrativo' => $objetivoCentral?->descripcion ?? '',
             'arbol_nodo_id' => $objetivoCentral?->id,
             'orden' => 1,
         ]);
@@ -65,7 +65,7 @@ class MirPrellenadoService
                 MirNivel::create([
                     'programa_presupuestario_id' => $programa->id,
                     'tipo_nivel' => TipoNivelMir::COMPONENTE->value,
-                    'resumen_narrativo' => $medio->descripcion,
+                    'resumen_narrativo' => $medio->descripcion ?? '',
                     'arbol_nodo_id' => $medio->id,
                     'orden' => $i + 1,
                 ]);
