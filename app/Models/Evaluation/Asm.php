@@ -27,6 +27,7 @@ class Asm extends Model
     protected $fillable = [
         'programa_presupuestario_id',
         'evaluacion_id',
+        'recomendacion_id',
         'descripcion_aspecto',
         'accion_mejora',
         'tipo_plazo',
@@ -78,6 +79,11 @@ class Asm extends Model
     public function evaluacion(): BelongsTo
     {
         return $this->belongsTo(EvaluacionPrograma::class, 'evaluacion_id');
+    }
+
+    public function recomendacion(): BelongsTo
+    {
+        return $this->belongsTo(Recomendacion::class, 'recomendacion_id');
     }
 
     public function responsable(): BelongsTo
