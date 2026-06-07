@@ -24,6 +24,18 @@
 - Reportes: Sábana de Captura, Concentrado, MIR Aprobada
 - Alineación: PND → PED → ODS → Programas Derivados
 
+## Hardening MIR (sprint 2026-06-06)
+
+Invariantes endurecidos a nivel BD + app (migraciones `2026_06_06_0000XX`, backfills idempotentes safe en prod):
+
+- `mir_niveles.resumen_narrativo`, `indicadores.formula_texto` NOT NULL DEFAULT `''`; `indicadores.sentido` NOT NULL DEFAULT `'ascendente'`; `indicadores.unidad_medida_id` NOT NULL (fallback app-level al registro de catálogo `ND`/"No definida" vía hook `creating` de `Indicador`).
+- `SentidoIndicador::REGULAR` **deprecado** (extensión fuera de norma); datos legacy migrados a `ascendente`.
+- UNIQUE parcial: 1 FIN y 1 PROPOSITO por programa (`mir_niveles`), 1 problema/objetivo central por árbol (`arbol_nodos`), 1 team `rol='coordinadora'` por programa (`programa_team`). **Convención: `rol='coordinadora'` = UR administradora del temario (C-036)** — helper `ProgramaPresupuestario::urAdministradora()`.
+- **Ventana de captura normativa SHCP**: cierre del periodo + `config('tracking.dias_ventana_captura', 30)` días (`TRACKING_DIAS_VENTANA_CAPTURA`). `CalendarizacionService::confirmar()` puebla `fecha_apertura/fecha_cierre` y re-confirmar recalcula fechas; los MetaPeriodo creados antes del sprint no se recalcularon.
+- **Análisis de desviación estructurado**: captura amarillo/rojo exige `avances.analisis_desviacion` JSONB con keys `dato/causa/accion/proyeccion`; `justificacion_final` se mantiene como resumen concatenado para reportes legacy.
+- **Revisiones de meta**: cambiar metas ya calendarizadas exige justificación → audit trail en `revisiones_meta`.
+- Dataset transparencia **DS-07 Medios de Verificación** (`pub_medios_verificacion`); post-deploy re-seed: `sail artisan db:seed --class='Database\Seeders\Transparencia\DatasetsCatalogoSeeder'`.
+
 ## BD Pública (Transparencia)
 
 Tras `sail up` por primera vez (o tras `sail down -v`), aprovisionar la BD pública `spp_public` y migrar las tablas `pub_*`:
