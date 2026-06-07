@@ -88,6 +88,23 @@ class MirNivel extends Model
         return $this->hasMany(Indicador::class)->orderBy('orden');
     }
 
+    public function supuestosEstructurados(): HasMany
+    {
+        return $this->hasMany(MirSupuesto::class, 'mir_nivel_id')->orderBy('orden');
+    }
+
+    /**
+     * Texto concatenado de los supuestos estructurados, para consumidores
+     * planos (exports, prompts, snapshots). Reemplaza a la columna legacy
+     * `supuestos` (deprecada, sin lectores; drop en sprint futuro).
+     */
+    public function getSupuestosTextoAttribute(): ?string
+    {
+        $textos = $this->supuestosEstructurados->pluck('descripcion')->filter();
+
+        return $textos->isEmpty() ? null : $textos->implode('; ');
+    }
+
     public function pedObjetivoEstrategico(): BelongsTo
     {
         return $this->belongsTo(PedObjetivoEstrategico::class);
