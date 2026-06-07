@@ -31,8 +31,8 @@ class EvaluacionesAnualesPublisherTest extends TestCase
             'programa_presupuestario_id' => $programa->id,
             'ejercicio_fiscal' => 2026,
             'indice_eficacia' => 87.50,
-            'conteo_semaforos' => ['verde' => 5, 'amarillo' => 2, 'rojo' => 1],
-            'indicadores_evaluados' => 8,
+            'conteo_semaforos' => ['verde' => 5, 'amarillo' => 2, 'rojo' => 1, 'rojo_alto' => 3],
+            'indicadores_evaluados' => 11,
             'indicadores_no_evaluados' => 0,
         ]);
 
@@ -48,7 +48,29 @@ class EvaluacionesAnualesPublisherTest extends TestCase
         $this->assertSame(5, (int) $row->semaforos_verde);
         $this->assertSame(2, (int) $row->semaforos_amarillo);
         $this->assertSame(1, (int) $row->semaforos_rojo);
-        $this->assertSame(8, (int) $row->indicadores_total);
+        $this->assertSame(3, (int) $row->semaforos_rojo_alto);
+        $this->assertSame(11, (int) $row->indicadores_total);
+    }
+
+    public function test_publish_rojo_alto_default_cero_sin_conteo(): void
+    {
+        $programa = ProgramaPresupuestario::factory()->create([
+            'clave' => 'PROG-002',
+            'ejercicio_fiscal' => 2026,
+        ]);
+        EvaluacionPrograma::create([
+            'programa_presupuestario_id' => $programa->id,
+            'ejercicio_fiscal' => 2026,
+            'indice_eficacia' => 90.00,
+            'conteo_semaforos' => ['verde' => 4, 'amarillo' => 1, 'rojo' => 0],
+            'indicadores_evaluados' => 5,
+            'indicadores_no_evaluados' => 0,
+        ]);
+
+        app(EvaluacionesAnualesPublisher::class)->publish(DatasetAbierto::factory()->create());
+
+        $row = DB::connection('pgsql_public')->table('pub_evaluaciones_anuales')->first();
+        $this->assertSame(0, (int) $row->semaforos_rojo_alto);
     }
 
     public function test_code_es_ds_04(): void

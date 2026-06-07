@@ -138,6 +138,7 @@ class PanelSeguimiento extends Component
 
         $rowClass = fn ($row) => match ($row['semaforo'] ?? null) {
             'rojo' => 'bg-red-50 dark:bg-red-900/20',
+            'rojo_alto' => 'bg-purple-50 dark:bg-purple-900/20',
             'amarillo' => 'bg-yellow-50 dark:bg-yellow-900/20',
             'verde' => 'bg-green-50 dark:bg-green-900/20',
             default => '',
@@ -161,12 +162,14 @@ class PanelSeguimiento extends Component
         $verdes = $filas->where('semaforo', 'verde')->count();
         $amarillos = $filas->where('semaforo', 'amarillo')->count();
         $rojos = $filas->where('semaforo', 'rojo')->count();
+        $rojosAltos = $filas->where('semaforo', 'rojo_alto')->count();
 
         $kpis = [
             ['label' => 'Total', 'value' => $total, 'color' => 'slate'],
             ['label' => 'En verde', 'value' => $verdes, 'color' => 'green'],
             ['label' => 'En amarillo', 'value' => $amarillos, 'color' => 'yellow'],
             ['label' => 'En rojo', 'value' => $rojos, 'color' => 'red'],
+            ['label' => 'Rojo alto', 'value' => $rojosAltos, 'color' => 'purple'],
         ];
 
         return view('livewire.tracking.panel-seguimiento', [
@@ -276,9 +279,12 @@ class PanelSeguimiento extends Component
             'verde' => 'bg-green-500',
             'amarillo' => 'bg-yellow-400',
             'rojo' => 'bg-red-500',
+            'rojo_alto' => 'bg-purple-500',
             default => 'bg-gray-300',
         };
 
-        return '<span class="inline-block h-4 w-4 rounded-full '.$color.'" title="'.e(ucfirst($semaforo)).'"></span>';
+        $titulo = $semaforo === 'rojo_alto' ? 'Rojo alto' : ucfirst($semaforo);
+
+        return '<span class="inline-block h-4 w-4 rounded-full '.$color.'" title="'.e($titulo).'"></span>';
     }
 }

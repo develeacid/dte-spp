@@ -132,8 +132,15 @@
                                     'bg-green-500' => $semaforoCalculado === 'verde',
                                     'bg-yellow-500' => $semaforoCalculado === 'amarillo',
                                     'bg-red-500' => $semaforoCalculado === 'rojo',
+                                    'bg-purple-500' => $semaforoCalculado === 'rojo_alto',
                                 ])></span>
-                                <span class="text-sm font-medium capitalize text-gray-700">{{ $semaforoCalculado }}</span>
+                                <span class="text-sm font-medium text-gray-700">
+                                    @if($semaforoCalculado === 'rojo_alto')
+                                        Rojo alto — sobrecumplimiento
+                                    @else
+                                        {{ ucfirst($semaforoCalculado) }}
+                                    @endif
+                                </span>
                             </div>
                         </div>
                     @endif
@@ -141,7 +148,7 @@
             </div>
 
             {{-- Structured deviation analysis --}}
-            @if(in_array($semaforoCalculado, ['amarillo', 'rojo']))
+            @if(in_array($semaforoCalculado, ['amarillo', 'rojo', 'rojo_alto']))
                 <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                     <div class="mb-4 flex items-center justify-between">
                         <h3 class="text-lg font-medium text-gray-900">Análisis de desviación</h3>
@@ -171,7 +178,7 @@
                     @endif
 
                     <p class="mb-4 text-sm text-gray-500">
-                        Cuando el semáforo es amarillo o rojo es obligatorio documentar el análisis estructurado de la desviación.
+                        Cuando el semáforo es amarillo, rojo o rojo alto es obligatorio documentar el análisis estructurado de la desviación.
                     </p>
 
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">

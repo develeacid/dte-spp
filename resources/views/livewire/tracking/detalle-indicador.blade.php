@@ -47,7 +47,8 @@
                             'bg-green-500' => $avanceActual->semaforo_calculado === 'verde',
                             'bg-yellow-400' => $avanceActual->semaforo_calculado === 'amarillo',
                             'bg-red-500' => $avanceActual->semaforo_calculado === 'rojo',
-                            'bg-gray-300' => ! in_array($avanceActual->semaforo_calculado, ['verde', 'amarillo', 'rojo']),
+                            'bg-purple-500' => $avanceActual->semaforo_calculado === 'rojo_alto',
+                            'bg-gray-300' => ! in_array($avanceActual->semaforo_calculado, ['verde', 'amarillo', 'rojo', 'rojo_alto']),
                         ])></span>
                     </div>
                     <div>

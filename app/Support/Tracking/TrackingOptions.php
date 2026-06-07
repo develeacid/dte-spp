@@ -30,6 +30,7 @@ final class TrackingOptions
             'verde' => 'Verde',
             'amarillo' => 'Amarillo',
             'rojo' => 'Rojo',
+            'rojo_alto' => 'Rojo alto',
             'gris' => 'Sin datos',
         ];
     }

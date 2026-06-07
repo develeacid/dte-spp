@@ -59,6 +59,7 @@
             <th>Verde</th><td>{{ $evaluacion->conteo_semaforos['verde'] ?? 0 }}</td>
             <th>Amarillo</th><td>{{ $evaluacion->conteo_semaforos['amarillo'] ?? 0 }}</td>
             <th>Rojo</th><td>{{ $evaluacion->conteo_semaforos['rojo'] ?? 0 }}</td>
+            <th>Rojo alto</th><td>{{ $evaluacion->conteo_semaforos['rojo_alto'] ?? 0 }}</td>
             <th>Sin dato</th><td>{{ $evaluacion->conteo_semaforos['sin_dato'] ?? 0 }}</td>
         </tr>
     </table>

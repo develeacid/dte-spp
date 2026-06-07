@@ -342,6 +342,56 @@
                             />
                         </div>
 
+                        {{-- Semáforo (rangos) — semaforización 4 rangos --}}
+                        <div class="mt-2 border-t border-gray-100 pt-1"
+                            x-data="{
+                                sem: {
+                                    rango_verde_min: @js($indicador->rango_verde_min),
+                                    rango_verde_max: @js($indicador->rango_verde_max),
+                                    rango_amarillo_min: @js($indicador->rango_amarillo_min),
+                                    rango_amarillo_max: @js($indicador->rango_amarillo_max),
+                                    rango_rojo_min: @js($indicador->rango_rojo_min),
+                                    rango_rojo_max: @js($indicador->rango_rojo_max),
+                                    rango_rojo_alto_min: @js($indicador->rango_rojo_alto_min),
+                                    rango_rojo_alto_max: @js($indicador->rango_rojo_alto_max),
+                                },
+                                guardarSem() { $wire.guardarSemaforo({{ $indicador->id }}, { ...this.sem }); }
+                            }">
+                            <span class="text-xs font-medium text-gray-500">Semáforo (rangos)</span>
+                            <div class="mt-1 space-y-1">
+                                @php
+                                    $semFilas = [
+                                        ['etiqueta' => 'Verde', 'color' => 'text-green-700', 'min' => 'rango_verde_min', 'max' => 'rango_verde_max'],
+                                        ['etiqueta' => 'Amarillo', 'color' => 'text-yellow-700', 'min' => 'rango_amarillo_min', 'max' => 'rango_amarillo_max'],
+                                        ['etiqueta' => 'Rojo', 'color' => 'text-red-700', 'min' => 'rango_rojo_min', 'max' => 'rango_rojo_max'],
+                                        ['etiqueta' => 'Rojo alto — sobrecumplimiento', 'color' => 'text-purple-700', 'min' => 'rango_rojo_alto_min', 'max' => 'rango_rojo_alto_max'],
+                                    ];
+                                @endphp
+                                @foreach ($semFilas as $fila)
+                                    <div class="grid grid-cols-3 items-center gap-1">
+                                        <span class="text-[10px] font-medium {{ $fila['color'] }}">{{ $fila['etiqueta'] }}</span>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            x-model="sem.{{ $fila['min'] }}"
+                                            @change="guardarSem()"
+                                            class="rounded border-gray-300 text-xs"
+                                            placeholder="mín"
+                                        />
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            x-model="sem.{{ $fila['max'] }}"
+                                            @change="guardarSem()"
+                                            class="rounded border-gray-300 text-xs"
+                                            placeholder="máx"
+                                        />
+                                    </div>
+                                @endforeach
+                            </div>
+                            @error('semaforo_'.$indicador->id) <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
                         @if ($indicador->variables->count() > 0)
                             <div class="mt-1 space-y-1">
                                 @foreach ($indicador->variables as $variable)
@@ -380,8 +430,8 @@
                         <span class="text-xs font-medium text-gray-500">Medios:</span>
                         @foreach ($indicador->mediosVerificacion as $medio)
                             <div class="flex items-start gap-1 mt-1" wire:key="medio-{{ $medio->id }}"
-                                x-data="{ mvNombre: @js($medio->nombre ?? ''), mvOrganismo: @js($medio->organismo ?? ''), mvUrl: @js($medio->url ?? ''),
-                                    guardarMv() { $wire.guardarMedioVerificacion({{ $medio->id }}, { nombre: this.mvNombre, organismo: this.mvOrganismo || null, url: this.mvUrl || null }); } }">
+                                x-data="{ mvNombre: @js($medio->nombre ?? ''), mvOrganismo: @js($medio->organismo ?? ''), mvUrl: @js($medio->url ?? ''), mvFrecuencia: @js($medio->frecuencia ?? ''),
+                                    guardarMv() { $wire.guardarMedioVerificacion({{ $medio->id }}, { nombre: this.mvNombre, organismo: this.mvOrganismo || null, url: this.mvUrl || null, frecuencia: this.mvFrecuencia || null }); } }">
                                 <div class="flex-1 space-y-1">
                                     <input
                                         type="text"
@@ -404,6 +454,18 @@
                                         class="w-full rounded border-gray-300 text-xs"
                                         placeholder="URL (opcional)"
                                     />
+                                    <select
+                                        x-model="mvFrecuencia"
+                                        @change="guardarMv()"
+                                        class="w-full rounded border-gray-300 text-xs"
+                                    >
+                                        <option value="">— Frecuencia —</option>
+                                        @foreach (\App\Enums\FrecuenciaMedicion::cases() as $freq)
+                                            <option value="{{ $freq->value }}">{{ $freq->label() }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('frecuencia_mv_'.$medio->id) <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                                    @error('frecuencia') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
                                 </div>
                                 <button wire:click="eliminarMedioVerificacion({{ $medio->id }})" class="mt-1 text-red-400 hover:text-red-600">
                                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>

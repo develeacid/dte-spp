@@ -27,15 +27,16 @@
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     @php
                         $semaforoCounts = collect($filas)->countBy('semaforo');
-                        $semaforoLabels = ['verde', 'amarillo', 'rojo', 'gris'];
+                        $semaforoLabels = ['verde', 'amarillo', 'rojo', 'rojo_alto', 'gris'];
+                        $semaforoLeyendas = ['Verde', 'Amarillo', 'Rojo', 'Rojo alto', 'Gris'];
                         $semaforoSeries = collect($semaforoLabels)->map(fn ($s) => $semaforoCounts->get($s, 0))->values()->toArray();
-                        $semaforoColors = ['#22c55e', '#eab308', '#ef4444', '#9ca3af'];
+                        $semaforoColors = ['#22c55e', '#eab308', '#ef4444', '#a855f7', '#9ca3af'];
                     @endphp
                     <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
                         <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Semáforo de Indicadores</h4>
                         <div wire:key="panel-donut-semaforo-{{ md5(json_encode($semaforoSeries)) }}">
                             <x-charts.donut
-                                :labels="$semaforoLabels"
+                                :labels="$semaforoLeyendas"
                                 :series="$semaforoSeries"
                                 :colors="$semaforoColors"
                                 :height="220"

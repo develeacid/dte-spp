@@ -101,8 +101,8 @@ class CapturaAvance extends Component
 
         $this->semaforoCalculado = $semaforoService->calcular($resultado, $indicador, $metaPeriodo);
 
-        // Auto-generate AI justification when semaforo is amarillo or rojo
-        if (in_array($this->semaforoCalculado, ['amarillo', 'rojo']) && ! $this->justificacionIa) {
+        // Auto-generate AI justification when semaforo is amarillo, rojo or rojo alto
+        if (in_array($this->semaforoCalculado, ['amarillo', 'rojo', 'rojo_alto']) && ! $this->justificacionIa) {
             $this->generarJustificacionIa();
         }
     }
@@ -184,7 +184,7 @@ class CapturaAvance extends Component
             $rules["valores.{$variable->id}"] = 'required|numeric';
         }
 
-        $requiereAnalisis = in_array($this->semaforoCalculado, ['amarillo', 'rojo']);
+        $requiereAnalisis = in_array($this->semaforoCalculado, ['amarillo', 'rojo', 'rojo_alto']);
 
         if ($requiereAnalisis) {
             $rules['analisis.dato'] = 'required|string|min:5';
@@ -196,13 +196,13 @@ class CapturaAvance extends Component
         $this->validate($rules, [
             'valores.*.required' => 'Este campo es obligatorio.',
             'valores.*.numeric' => 'Debe ser un valor numerico.',
-            'analisis.dato.required' => 'El dato (qué ocurrió) es obligatorio cuando el semáforo es amarillo o rojo.',
+            'analisis.dato.required' => 'El dato (qué ocurrió) es obligatorio cuando el semáforo es amarillo, rojo o rojo alto.',
             'analisis.dato.min' => 'El dato debe tener al menos 5 caracteres.',
-            'analisis.causa.required' => 'La causa raíz es obligatoria cuando el semáforo es amarillo o rojo.',
+            'analisis.causa.required' => 'La causa raíz es obligatoria cuando el semáforo es amarillo, rojo o rojo alto.',
             'analisis.causa.min' => 'La causa debe tener al menos 5 caracteres.',
-            'analisis.accion.required' => 'La acción correctiva es obligatoria cuando el semáforo es amarillo o rojo.',
+            'analisis.accion.required' => 'La acción correctiva es obligatoria cuando el semáforo es amarillo, rojo o rojo alto.',
             'analisis.accion.min' => 'La acción debe tener al menos 5 caracteres.',
-            'analisis.proyeccion.required' => 'La proyección es obligatoria cuando el semáforo es amarillo o rojo.',
+            'analisis.proyeccion.required' => 'La proyección es obligatoria cuando el semáforo es amarillo, rojo o rojo alto.',
             'analisis.proyeccion.min' => 'La proyección debe tener al menos 5 caracteres.',
         ]);
 

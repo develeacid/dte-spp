@@ -67,6 +67,7 @@ class DashboardService
                 'verde' => $counts['verde'] ?? 0,
                 'amarillo' => $counts['amarillo'] ?? 0,
                 'rojo' => $counts['rojo'] ?? 0,
+                'rojo_alto' => $counts['rojo_alto'] ?? 0,
             ];
         });
     }
@@ -85,6 +86,7 @@ class DashboardService
                 'verde' => $counts['verde'] ?? 0,
                 'amarillo' => $counts['amarillo'] ?? 0,
                 'rojo' => $counts['rojo'] ?? 0,
+                'rojo_alto' => $counts['rojo_alto'] ?? 0,
             ];
         });
     }

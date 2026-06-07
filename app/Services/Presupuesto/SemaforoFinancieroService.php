@@ -162,6 +162,8 @@ class SemaforoFinancieroService
             return 'sin_datos';
         }
 
+        // 'rojo_alto' (sobrecumplimiento) cae deliberadamente en el bucket 0 junto
+        // con 'rojo': para el promedio físico-financiero ambos son desempeño deficiente.
         $valores = array_map(fn ($c) => match ($c) {
             'verde' => 1, 'amarillo' => 0.5, default => 0,
         }, $colores);

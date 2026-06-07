@@ -17,6 +17,7 @@
         'green' => 'text-green-600',
         'blue' => 'text-blue-600',
         'red' => 'text-red-600',
+        'purple' => 'text-purple-600',
         'amber', 'yellow' => 'text-yellow-600',
         default => 'text-slate-900 dark:text-slate-100',
     };

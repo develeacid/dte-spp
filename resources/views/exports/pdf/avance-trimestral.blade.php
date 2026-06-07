@@ -15,6 +15,7 @@
         .semaforo-verde { background-color: #c6f6d5; }
         .semaforo-amarillo { background-color: #fefcbf; }
         .semaforo-rojo { background-color: #fed7d7; }
+        .semaforo-rojo_alto { background-color: #e9d5ff; }
     </style>
 </head>
 <body>
@@ -57,7 +58,7 @@
                         <td>{{ $meta?->meta_periodo ?? 'N/A' }}</td>
                         <td>{{ $avance?->resultado ?? 'N/A' }}</td>
                         <td>{{ $porcentaje !== null ? $porcentaje . '%' : 'N/A' }}</td>
-                        <td class="semaforo-{{ $semaforo }}">{{ ucfirst($semaforo) }}</td>
+                        <td class="semaforo-{{ $semaforo }}">{{ $semaforo === 'rojo_alto' ? 'Rojo alto' : ucfirst($semaforo) }}</td>
                     </tr>
                 @endforeach
             @endforeach
