@@ -27,10 +27,16 @@ class AsmIndex extends Component
     #[Url(as: 'q', except: '')]
     public string $busqueda = '';
 
-    public function mount(?int $programaId = null): void
+    #[Url(as: 'recomendacion', except: null)]
+    public ?int $recomendacion = null;
+
+    public function mount(?int $programaId = null, ?int $recomendacion = null): void
     {
         if ($programaId !== null) {
             $this->programaId = $programaId;
+        }
+        if ($recomendacion !== null) {
+            $this->recomendacion = $recomendacion;
         }
     }
 
@@ -46,12 +52,14 @@ class AsmIndex extends Component
             ->when($this->programaId, fn ($q, $id) => $q->where('programa_presupuestario_id', $id))
             ->when($this->statusFiltro !== '', fn ($q) => $q->where('status', $this->statusFiltro))
             ->when($this->responsableId, fn ($q, $id) => $q->where('responsable_id', $id))
+            ->when($this->recomendacion, fn ($q, $id) => $q->where('recomendacion_id', $id))
             ->when($this->busqueda !== '', fn ($q) => $q->where('descripcion_aspecto', 'ilike', "%{$this->busqueda}%"))
             ->orderBy('fecha_compromiso');
 
         $countQuery = Asm::query()
             ->when($this->programaId, fn ($q, $id) => $q->where('programa_presupuestario_id', $id))
             ->when($this->responsableId, fn ($q, $id) => $q->where('responsable_id', $id))
+            ->when($this->recomendacion, fn ($q, $id) => $q->where('recomendacion_id', $id))
             ->when($this->busqueda !== '', fn ($q) => $q->where('descripcion_aspecto', 'ilike', "%{$this->busqueda}%"));
 
         $total = (clone $countQuery)->count();

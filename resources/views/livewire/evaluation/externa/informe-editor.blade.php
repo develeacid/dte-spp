@@ -113,9 +113,16 @@
                                     <div class="mt-1 flex items-center gap-2">
                                         <span class="text-xs text-gray-500">Prioridad: {{ $reco->prioridad->label() }}</span>
                                         @if($reco->asms_count > 0)
-                                            <span class="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
-                                                {{ $reco->asms_count }} ASM derivados
-                                            </span>
+                                            @can('ver_asm')
+                                                <a href="{{ route('evaluation.asms.index', ['recomendacion' => $reco->id]) }}"
+                                                   class="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800 hover:bg-purple-200">
+                                                    {{ $reco->asms_count }} ASM derivados
+                                                </a>
+                                            @else
+                                                <span class="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
+                                                    {{ $reco->asms_count }} ASM derivados
+                                                </span>
+                                            @endcan
                                         @endif
                                     </div>
                                 </div>

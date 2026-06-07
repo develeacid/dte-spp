@@ -42,6 +42,13 @@
             </label>
         </div>
 
+        @if ($recomendacion)
+            <div class="mb-3 inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700">
+                Filtrado por recomendación de evaluación externa
+                <button type="button" wire:click="$set('recomendacion', null)" class="font-bold hover:text-indigo-900" aria-label="Quitar filtro">&times;</button>
+            </div>
+        @endif
+
         <div class="overflow-x-auto bg-white rounded shadow">
             <table class="min-w-full text-sm">
                 <thead class="bg-gray-50 text-left text-xs uppercase text-gray-600">
@@ -60,7 +67,14 @@
                     @forelse($asms as $asm)
                         <tr>
                             <td class="px-3 py-2">{{ $asm->programa->clave }}</td>
-                            <td class="px-3 py-2 max-w-xs truncate">{{ $asm->descripcion_aspecto }}</td>
+                            <td class="px-3 py-2 max-w-xs">
+                                <div class="truncate">{{ $asm->descripcion_aspecto }}</div>
+                                @if($asm->recomendacion_id)
+                                    <span class="mt-1 inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                                        Origen externo
+                                    </span>
+                                @endif
+                            </td>
                             <td class="px-3 py-2">{{ $asm->responsable->name }}</td>
                             <td class="px-3 py-2">{{ $asm->fecha_compromiso->format('d/m/Y') }}</td>
                             <td class="px-3 py-2">

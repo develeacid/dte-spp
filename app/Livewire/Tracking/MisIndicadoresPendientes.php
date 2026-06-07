@@ -21,16 +21,16 @@ class MisIndicadoresPendientes extends Component
 
         $total = $avances->count();
         $urgentes = $avances->filter(fn ($a) => $a->metaPeriodo?->fecha_cierre
-            && now()->diffInDays($a->metaPeriodo->fecha_cierre, false) <= 3)->count();
+            && (int) now()->diffInDays($a->metaPeriodo->fecha_cierre, false) <= 3)->count();
         $proximos = $avances->filter(function ($a) {
             $dias = $a->metaPeriodo?->fecha_cierre
-                ? now()->diffInDays($a->metaPeriodo->fecha_cierre, false)
+                ? (int) now()->diffInDays($a->metaPeriodo->fecha_cierre, false)
                 : null;
 
             return $dias !== null && $dias > 3 && $dias <= 7;
         })->count();
         $lejanos = $avances->filter(fn ($a) => $a->metaPeriodo?->fecha_cierre
-            && now()->diffInDays($a->metaPeriodo->fecha_cierre, false) > 7)->count();
+            && (int) now()->diffInDays($a->metaPeriodo->fecha_cierre, false) > 7)->count();
 
         $kpis = [
             ['label' => 'Pendientes', 'value' => $total, 'color' => 'slate'],

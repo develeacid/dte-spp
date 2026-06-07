@@ -2,6 +2,13 @@
     <x-page.header>
         <x-slot name="title">Evaluacion del programa: {{ $resumen['clave'] }} - {{ $resumen['nombre'] }}</x-slot>
 
+        @can('ver_evaluacion_externa')
+            <a href="{{ route('evaluation.externas.index', ['programa' => $evaluacionModel->programa_presupuestario_id]) }}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Evaluaciones externas
+            </a>
+        @endcan
+
         @if($evaluacionModel->programa->hasGeoBaseLink())
             <a href="{{ route('evaluation.anexo-11', $evaluacionModel->programa) }}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">

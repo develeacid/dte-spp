@@ -12,6 +12,7 @@ use App\Models\Mml\MirNivel;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Tracking\Avance;
 use App\Models\User;
+use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -74,6 +75,29 @@ class MisIndicadoresPendientesTest extends TestCase
             ->assertSeeHtml(route('tracking.captura', $this->avance))
             ->assertSee('Capturar')
             ->assertDontSee('Captura no disponible aun');
+    }
+
+    public function test_dias_restantes_se_muestran_como_enteros_sin_decimales(): void
+    {
+        // Fijar "ahora" con fracción de día respecto a la fecha de cierre para que
+        // Carbon 3 diffInDays(..., false) devuelva un float (p. ej. -311.03...).
+        Carbon::setTestNow(Carbon::parse('2026-01-01 07:13:00'));
+
+        $metaPeriodo = $this->avance->metaPeriodo;
+        $metaPeriodo->update(['fecha_cierre' => now()->subDays(311)->toDateString()]);
+
+        try {
+            $html = Livewire::actingAs($this->user)
+                ->test(MisIndicadoresPendientes::class)
+                ->html();
+        } finally {
+            Carbon::setTestNow();
+        }
+
+        // No debe haber un patrón decimal (p. ej. "-311.03244658296 dias") en los días.
+        $this->assertDoesNotMatchRegularExpression('/-?\d+\.\d+\s*días/u', $html);
+        // Y debe mostrar el entero esperado con la tilde correcta.
+        $this->assertStringContainsString('-311 días', $html);
     }
 
     public function test_avance_de_otro_usuario_no_aparece(): void
