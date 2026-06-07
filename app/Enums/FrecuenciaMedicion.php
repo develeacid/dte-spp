@@ -27,4 +27,20 @@ enum FrecuenciaMedicion: string
     {
         return array_column(self::cases(), 'value');
     }
+
+    /**
+     * Orden de frecuencia: menor número = mide más seguido.
+     * Sirve para comparar periodicidades (validación cruzada B7).
+     */
+    public function orden(): int
+    {
+        return match ($this) {
+            self::MENSUAL => 1,
+            self::TRIMESTRAL => 2,
+            self::SEMESTRAL => 3,
+            self::ANUAL => 4,
+            self::BIANUAL => 5,
+            self::SEXENAL => 6,
+        };
+    }
 }

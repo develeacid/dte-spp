@@ -3,6 +3,7 @@
 namespace App\Livewire\Mml;
 
 use App\Contracts\LlmServiceInterface;
+use App\Enums\FrecuenciaMedicion;
 use App\Enums\TipoNivelMir;
 use App\Models\CatalogoUnidadMedida;
 use App\Models\Evaluation\AnexoTransversal;
@@ -20,6 +21,8 @@ use App\Services\Mml\IndicadorReglasService;
 use App\Services\Mml\MirLogicaValidacionService;
 use App\Services\Mml\MirPrellenadoService;
 use App\Services\Mml\MirSnapshotService;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -156,14 +159,38 @@ class MirEditor extends Component
 
     public function guardarMedioVerificacion(int $medioId, array $data): void
     {
+        $medio = MedioVerificacion::with('indicador')->findOrFail($medioId);
+
         $validated = validator($data, [
             'nombre' => 'required|string|max:255',
             'fuente' => 'nullable|string|max:255',
             'organismo' => 'nullable|string|max:255',
             'url' => 'nullable|url|max:2048',
+            'frecuencia' => ['nullable', Rule::in(FrecuenciaMedicion::values())],
         ])->validate();
 
-        MedioVerificacion::findOrFail($medioId)->update($validated);
+        // Validación cruzada B7: el MV debe publicarse al menos tan seguido como
+        // se mide el indicador. Solo aplica cuando el valor entrante es un value
+        // del enum (frecuencias legacy no-enum en BD no bloquean otros guardados).
+        $frecuenciaMv = $validated['frecuencia'] ?? null;
+        $indicador = $medio->indicador;
+
+        if ($frecuenciaMv !== null && $indicador !== null && $indicador->frecuencia !== null) {
+            $ordenMv = FrecuenciaMedicion::from($frecuenciaMv)->orden();
+            $ordenIndicador = $indicador->frecuencia->orden();
+
+            if ($ordenMv > $ordenIndicador) {
+                throw ValidationException::withMessages([
+                    'frecuencia' => sprintf(
+                        'El medio de verificación debe publicarse al menos con la misma frecuencia con la que se mide el indicador (indicador: %s, MV: %s).',
+                        $indicador->frecuencia->label(),
+                        FrecuenciaMedicion::from($frecuenciaMv)->label(),
+                    ),
+                ]);
+            }
+        }
+
+        $medio->update($validated);
     }
 
     public function eliminarMedioVerificacion(int $medioId): void

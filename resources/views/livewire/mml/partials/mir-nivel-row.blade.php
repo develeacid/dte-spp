@@ -430,8 +430,8 @@
                         <span class="text-xs font-medium text-gray-500">Medios:</span>
                         @foreach ($indicador->mediosVerificacion as $medio)
                             <div class="flex items-start gap-1 mt-1" wire:key="medio-{{ $medio->id }}"
-                                x-data="{ mvNombre: @js($medio->nombre ?? ''), mvOrganismo: @js($medio->organismo ?? ''), mvUrl: @js($medio->url ?? ''),
-                                    guardarMv() { $wire.guardarMedioVerificacion({{ $medio->id }}, { nombre: this.mvNombre, organismo: this.mvOrganismo || null, url: this.mvUrl || null }); } }">
+                                x-data="{ mvNombre: @js($medio->nombre ?? ''), mvOrganismo: @js($medio->organismo ?? ''), mvUrl: @js($medio->url ?? ''), mvFrecuencia: @js($medio->frecuencia ?? ''),
+                                    guardarMv() { $wire.guardarMedioVerificacion({{ $medio->id }}, { nombre: this.mvNombre, organismo: this.mvOrganismo || null, url: this.mvUrl || null, frecuencia: this.mvFrecuencia || null }); } }">
                                 <div class="flex-1 space-y-1">
                                     <input
                                         type="text"
@@ -454,6 +454,16 @@
                                         class="w-full rounded border-gray-300 text-xs"
                                         placeholder="URL (opcional)"
                                     />
+                                    <select
+                                        x-model="mvFrecuencia"
+                                        @change="guardarMv()"
+                                        class="w-full rounded border-gray-300 text-xs"
+                                    >
+                                        <option value="">— Frecuencia —</option>
+                                        @foreach (FrecuenciaMedicion::cases() as $freq)
+                                            <option value="{{ $freq->value }}">{{ $freq->label() }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <button wire:click="eliminarMedioVerificacion({{ $medio->id }})" class="mt-1 text-red-400 hover:text-red-600">
                                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
