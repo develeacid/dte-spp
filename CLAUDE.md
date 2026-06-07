@@ -46,6 +46,15 @@ Invariantes endurecidos a nivel BD + app (migraciones `2026_06_06_0000XX`, backf
 - Las reglas B3-B7 también son hallazgos `advertencia` en el diagnóstico de import (latentes hasta que el parser emita rangos/clave_unidad/frecuencia de MV).
 - Post-deploy: `migrate` (privada: 2 migraciones) + `migrate --path=database/migrations/public --database=pgsql_public` (columna nueva).
 
+## Evaluación Externa estructurada (sprint 2026-06-07)
+
+- Entidad **`EvaluacionExterna`** (separada del cálculo interno `EvaluacionPrograma`): tipo enum `TipoEvaluacionExterna` (diseno/procesos/consistencia_resultados/impacto/eed), evaluador, fechas, estado; varios tipos por programa+ejercicio. FK opcional al cálculo interno (scoped por programa+ejercicio).
+- **`InformeEvaluacion`** 1:1 (nace al crear la evaluación): 6 secciones del temario M10 — 4 texto (resumen ejecutivo/metodología/conclusiones/fichas) + 2 estructuradas (`Hallazgo` con severidad → `Recomendacion` con prioridad).
+- **Cadena normativa C-143**: Hallazgo → Recomendación (evaluador) → ASM (compromiso UR) vía `asms.recomendacion_id` nullable (sin backfill: legacy desvinculado es estado normal). Borrar hallazgo desvincula ASMs (nullOnDelete, confirm avisa).
+- UI: `/evaluacion/externas` (Index/Form/InformeEditor full-page). Permisos: `ver_evaluacion_externa` (todos los roles), `gestionar_evaluacion_externa` (planeador+admin, NO operador). Seeder en Fase0.
+- **C-146**: `indicadores.meta` ahora editable en MirEditor; cambiar una meta existente exige justificación → audit trail en `revisiones_meta` **generalizada** (XOR meta_periodo_id/indicador_id por CHECK constraint). Import/snapshot exentos.
+- Post-deploy: `migrate` + re-run `php artisan db:seed --class='Database\Seeders\Evaluation\EvaluacionExternaPermissionsSeeder'` (o Fase0).
+
 ## BD Pública (Transparencia)
 
 Tras `sail up` por primera vez (o tras `sail down -v`), aprovisionar la BD pública `spp_public` y migrar las tablas `pub_*`:

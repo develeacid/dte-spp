@@ -12,7 +12,10 @@ use App\Livewire\Evaluation\AcumuladoAnual;
 use App\Livewire\Evaluation\AsmForm;
 use App\Livewire\Evaluation\AsmIndex;
 use App\Livewire\Evaluation\AsmShow;
+use App\Livewire\Evaluation\EvaluacionExternaForm;
+use App\Livewire\Evaluation\EvaluacionExternaIndex;
 use App\Livewire\Evaluation\EvaluacionProgramaView;
+use App\Livewire\Evaluation\InformeEvaluacionEditor;
 use App\Livewire\Evaluation\PanelTransversal;
 use App\Livewire\Evaluation\ReporteDesviaciones;
 use App\Models\ProgramaPresupuestario;
@@ -100,6 +103,26 @@ Route::prefix('evaluacion')
 
             Route::get('/{asm}', AsmShow::class)
                 ->middleware('can:ver_asm')
+                ->name('show');
+        });
+
+        Route::prefix('externas')->name('evaluation.externas.')->group(function () {
+            Route::get('/', EvaluacionExternaIndex::class)
+                ->middleware('can:ver_evaluacion_externa')
+                ->name('index');
+
+            Route::get('/crear', EvaluacionExternaForm::class)
+                ->middleware('can:gestionar_evaluacion_externa')
+                ->name('create');
+
+            Route::get('/{evaluacionExterna}/editar', EvaluacionExternaForm::class)
+                ->middleware('can:gestionar_evaluacion_externa')
+                ->name('edit');
+
+            // ORDEN: el wildcard /{evaluacionExterna} va DESPUÉS de /crear y /{...}/editar
+            // para no capturar esas rutas literales.
+            Route::get('/{evaluacionExterna}', InformeEvaluacionEditor::class)
+                ->middleware('can:ver_evaluacion_externa')
                 ->name('show');
         });
 

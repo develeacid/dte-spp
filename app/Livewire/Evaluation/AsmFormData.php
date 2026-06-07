@@ -6,6 +6,7 @@ use App\Enums\StatusAsm;
 use App\Enums\TipoAccionAsm;
 use App\Enums\TipoPlazoAsm;
 use App\Models\Evaluation\Asm;
+use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 class AsmFormData extends Form
@@ -13,6 +14,8 @@ class AsmFormData extends Form
     public ?int $programa_presupuestario_id = null;
 
     public ?int $evaluacion_id = null;
+
+    public ?int $recomendacion_id = null;
 
     public string $descripcion_aspecto = '';
 
@@ -43,6 +46,19 @@ class AsmFormData extends Form
         return [
             'programa_presupuestario_id' => ['required', 'integer', 'exists:programa_presupuestarios,id'],
             'evaluacion_id' => ['nullable', 'integer', 'exists:evaluaciones_programa,id'],
+            'recomendacion_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('recomendaciones', 'id')->where(function ($query) {
+                    $query->whereIn('hallazgo_id', function ($sub) {
+                        $sub->select('hallazgos.id')
+                            ->from('hallazgos')
+                            ->join('informes_evaluacion', 'informes_evaluacion.id', '=', 'hallazgos.informe_evaluacion_id')
+                            ->join('evaluaciones_externas', 'evaluaciones_externas.id', '=', 'informes_evaluacion.evaluacion_externa_id')
+                            ->where('evaluaciones_externas.programa_presupuestario_id', $this->programa_presupuestario_id);
+                    });
+                }),
+            ],
             'descripcion_aspecto' => ['required', 'string', 'min:10'],
             'accion_mejora' => ['required', 'string', 'min:10'],
             'tipo_plazo' => ['required', 'in:'.implode(',', TipoPlazoAsm::values())],
@@ -67,6 +83,7 @@ class AsmFormData extends Form
     {
         $this->programa_presupuestario_id = $asm->programa_presupuestario_id;
         $this->evaluacion_id = $asm->evaluacion_id;
+        $this->recomendacion_id = $asm->recomendacion_id;
         $this->descripcion_aspecto = $asm->descripcion_aspecto;
         $this->accion_mejora = $asm->accion_mejora;
         $this->tipo_plazo = $asm->tipo_plazo->value;

@@ -342,6 +342,51 @@
                             />
                         </div>
 
+                        {{-- Meta anual (C-146) — captura con justificación obligatoria al cambiar --}}
+                        <div class="mt-2 border-t border-gray-100 pt-1"
+                            x-data="{
+                                metaInicial: @js($indicador->meta !== null ? (float) $indicador->meta : null),
+                                meta: @js($indicador->meta !== null ? (float) $indicador->meta : ''),
+                                justificacion: '',
+                                get requiereJustificacion() {
+                                    return this.metaInicial !== null
+                                        && this.meta !== '' && this.meta !== null
+                                        && Number(this.meta) !== Number(this.metaInicial);
+                                },
+                                guardarMeta() {
+                                    $wire.guardarMeta({{ $indicador->id }}, this.meta === '' ? null : this.meta, this.justificacion || null);
+                                }
+                            }">
+                            <label class="text-xs font-medium text-gray-500">Meta anual</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                x-model="meta"
+                                @change="if (!requiereJustificacion) guardarMeta()"
+                                class="mt-1 w-32 rounded border-gray-300 text-xs"
+                                placeholder="Ej: 100"
+                            />
+                            <div x-show="requiereJustificacion" x-cloak class="mt-1 space-y-1">
+                                <textarea
+                                    x-model="justificacion"
+                                    rows="2"
+                                    class="w-full rounded border-gray-300 text-xs"
+                                    placeholder="Justificación del cambio (mín. 10 caracteres)"
+                                ></textarea>
+                                <button
+                                    type="button"
+                                    @click="guardarMeta()"
+                                    class="rounded bg-blue-50 px-2 py-1 text-xs text-blue-600 hover:bg-blue-100"
+                                >
+                                    Guardar meta
+                                </button>
+                            </div>
+                            @error('meta_'.$indicador->id) <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                            @if (!empty($metaWarnings[$indicador->id]))
+                                <p class="mt-1 text-xs text-amber-600">{{ $metaWarnings[$indicador->id] }}</p>
+                            @endif
+                        </div>
+
                         {{-- Semáforo (rangos) — semaforización 4 rangos --}}
                         <div class="mt-2 border-t border-gray-100 pt-1"
                             x-data="{

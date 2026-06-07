@@ -14,7 +14,7 @@ class AsmReportService
     public function rows(): Collection
     {
         $query = Asm::query()
-            ->with(['programa:id,clave,nombre', 'responsable:id,name'])
+            ->with(['programa:id,clave,nombre', 'responsable:id,name', 'recomendacion:id,descripcion'])
             ->when(
                 $this->filters['programa_id'] ?? null,
                 fn ($q, $id) => $q->where('programa_presupuestario_id', $id),

@@ -14,7 +14,12 @@ class AsmShow extends Component
 
     public function mount(Asm $asm): void
     {
-        $this->asm = $asm->load(['programa', 'responsable', 'evaluacion']);
+        $this->asm = $asm->load([
+            'programa',
+            'responsable',
+            'evaluacion',
+            'recomendacion.hallazgo.informe.evaluacionExterna',
+        ]);
     }
 
     public function render()

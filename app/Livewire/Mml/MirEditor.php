@@ -12,6 +12,7 @@ use App\Models\Mml\Indicador;
 use App\Models\Mml\IndicadorVariable;
 use App\Models\Mml\MedioVerificacion;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\RevisionMeta;
 use App\Models\PedLineaAccion;
 use App\Models\PedObjetivoEstrategico;
 use App\Models\ProgramaPresupuestario;
@@ -21,6 +22,7 @@ use App\Services\Mml\IndicadorReglasService;
 use App\Services\Mml\MirLogicaValidacionService;
 use App\Services\Mml\MirPrellenadoService;
 use App\Services\Mml\MirSnapshotService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
@@ -50,6 +52,9 @@ class MirEditor extends Component
     public ?int $viendoVersionId = null;
 
     public ?array $snapshotData = null;
+
+    /** @var array<int, string> warning B3 keyed por indicador id */
+    public array $metaWarnings = [];
 
     public function mount(ProgramaPresupuestario $programa): void
     {
@@ -282,6 +287,97 @@ class MirEditor extends Component
         )->validate();
 
         Indicador::findOrFail($indicadorId)->update($validated);
+    }
+
+    /**
+     * Captura/edición de la meta anual del indicador con justificación
+     * obligatoria al modificarla (C-146). Regla del temario: "no bajar meta /
+     * no cambiar sin justificación". La primera definición (null → valor) y el
+     * reenvío del mismo valor NO exigen justificación ni generan audit trail.
+     */
+    public function guardarMeta(int $indicadorId, $meta, ?string $justificacion = null): void
+    {
+        $clave = "meta_{$indicadorId}";
+
+        // Limpia cualquier warning stale de este indicador en TODOS los paths
+        // (scoping, no-numérico, sin justificación, éxito).
+        unset($this->metaWarnings[$indicadorId]);
+
+        // Scoping: el indicador debe pertenecer al programa del editor.
+        $indicador = Indicador::whereHas(
+            'mirNivel',
+            fn ($q) => $q->where('programa_presupuestario_id', $this->programa->id)
+        )->find($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
+        // Normalizar meta: '' → null, numérico → float, no numérico → error.
+        if ($meta === null || $meta === '') {
+            $metaNueva = null;
+        } elseif (! is_numeric($meta)) {
+            $this->addError($clave, 'La meta debe ser un valor numérico.');
+
+            return;
+        } else {
+            $metaNueva = (float) $meta;
+        }
+
+        $metaPrevia = $indicador->meta === null ? null : (float) $indicador->meta;
+
+        $hayCambio = $metaPrevia !== null
+            && $metaNueva !== null
+            && $this->valorCambio($metaPrevia, $metaNueva);
+
+        // Cambio sobre meta ya definida → justificación obligatoria.
+        if ($hayCambio) {
+            $justificacion = $justificacion === null ? '' : trim($justificacion);
+
+            if (mb_strlen($justificacion) < 10) {
+                $this->addError($clave, 'Modificar la meta requiere una justificación de al menos 10 caracteres.');
+
+                return;
+            }
+        }
+
+        DB::transaction(function () use ($indicador, $metaNueva, $metaPrevia, $hayCambio, $justificacion) {
+            $indicador->update(['meta' => $metaNueva]);
+
+            if ($hayCambio) {
+                RevisionMeta::create([
+                    'indicador_id' => $indicador->id,
+                    'valor_anterior' => $metaPrevia,
+                    'valor_nuevo' => $metaNueva,
+                    'justificacion' => $justificacion,
+                    'user_id' => auth()->id(),
+                ]);
+            }
+        });
+
+        $this->resetErrorBag($clave);
+
+        // Advertencia B3 no bloqueante: la meta queda fuera del rango verde.
+        if ($metaNueva !== null
+            && $indicador->rango_verde_min !== null
+            && $indicador->rango_verde_max !== null) {
+            $min = (float) $indicador->rango_verde_min;
+            $max = (float) $indicador->rango_verde_max;
+
+            if ($metaNueva < $min || $metaNueva > $max) {
+                $this->metaWarnings[$indicadorId] = "La meta queda fuera del rango verde [{$min}, {$max}].";
+            }
+        }
+    }
+
+    /**
+     * Compara dos valores de meta con la precisión decimal de BD (4 decimales),
+     * mismo criterio que CalendarizacionService::valorCambio.
+     */
+    private function valorCambio(float $anterior, float $nuevo): bool
+    {
+        return number_format($anterior, 4, '.', '')
+            !== number_format($nuevo, 4, '.', '');
     }
 
     public function guardarSemaforo(int $indicadorId, array $rangos): void

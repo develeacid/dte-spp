@@ -18,6 +18,20 @@
                     </select>
                     @error('form.programa_presupuestario_id') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
                 </label>
+
+                <label class="block col-span-6">
+                    <span class="text-sm font-medium">Recomendación de origen <span class="text-gray-400">(opcional)</span></span>
+                    <select wire:model="form.recomendacion_id" class="mt-1 block w-full rounded border-gray-300" @disabled($recomendaciones->isEmpty())>
+                        <option value="">— Sin vínculo —</option>
+                        @foreach($recomendaciones as $r)
+                            <option value="{{ $r->id }}">{{ $r->etiqueta }}</option>
+                        @endforeach
+                    </select>
+                    @if($recomendaciones->isEmpty())
+                        <p class="text-xs text-gray-400">Sin recomendaciones de evaluación externa para el programa seleccionado.</p>
+                    @endif
+                    @error('form.recomendacion_id') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                </label>
             </x-forms.section>
 
             <x-forms.section title="Descripción del aspecto y acción de mejora">
