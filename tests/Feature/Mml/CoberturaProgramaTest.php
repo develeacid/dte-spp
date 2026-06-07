@@ -6,6 +6,7 @@ use App\Enums\SystemRole;
 use App\Enums\TipoNivelMir;
 use App\Livewire\Mml\CoberturaPrograma;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\MirSupuesto;
 use App\Models\Mml\PoblacionPrograma;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
@@ -175,7 +176,7 @@ class CoberturaProgramaTest extends TestCase
             'resumen_narrativo' => 'Propósito del programa',
             'orden' => 1,
         ]);
-        \App\Models\Mml\MirSupuesto::create([
+        MirSupuesto::create([
             'mir_nivel_id' => $proposito->id,
             'descripcion' => 'Las condiciones climáticas se mantienen estables',
             'orden' => 1,
@@ -186,7 +187,7 @@ class CoberturaProgramaTest extends TestCase
             'resumen_narrativo' => 'Componente C1',
             'orden' => 1,
         ]);
-        \App\Models\Mml\MirSupuesto::create([
+        MirSupuesto::create([
             'mir_nivel_id' => $componente->id,
             'descripcion' => 'Los productores asisten a capacitaciones',
             'orden' => 1,

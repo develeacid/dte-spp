@@ -8,6 +8,7 @@ use App\Enums\TipoNivelMir;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\MirSupuesto;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Tracking\Avance;
 use App\Models\User;
@@ -49,7 +50,7 @@ class JustificacionTest extends TestCase
             'resumen_narrativo' => 'Los beneficiarios incrementan su calidad de vida',
             'orden' => 1,
         ]);
-        \App\Models\Mml\MirSupuesto::create([
+        MirSupuesto::create([
             'mir_nivel_id' => $this->nivel->id,
             'descripcion' => 'Las condiciones economicas se mantienen estables. Los beneficiarios participan activamente.',
             'orden' => 1,
