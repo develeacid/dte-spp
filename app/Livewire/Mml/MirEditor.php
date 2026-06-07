@@ -64,9 +64,55 @@ class MirEditor extends Component
         (new MirPrellenadoService)->prellenar($programa);
     }
 
+    /**
+     * Resuelve un MirNivel garantizando que pertenece al programa montado.
+     * Defensa-en-profundidad contra requests Livewire crafteados con ids ajenos.
+     */
+    private function nivelDelPrograma(int $id): ?MirNivel
+    {
+        return MirNivel::where('programa_presupuestario_id', $this->programa->id)->find($id);
+    }
+
+    /**
+     * Resuelve un Indicador garantizando que su nivel pertenece al programa montado.
+     */
+    private function indicadorDelPrograma(int $id): ?Indicador
+    {
+        return Indicador::whereHas(
+            'mirNivel',
+            fn ($q) => $q->where('programa_presupuestario_id', $this->programa->id)
+        )->find($id);
+    }
+
+    /**
+     * Resuelve una IndicadorVariable garantizando que cuelga del programa montado.
+     */
+    private function variableDelPrograma(int $id): ?IndicadorVariable
+    {
+        return IndicadorVariable::whereHas(
+            'indicador.mirNivel',
+            fn ($q) => $q->where('programa_presupuestario_id', $this->programa->id)
+        )->find($id);
+    }
+
+    /**
+     * Resuelve un MedioVerificacion garantizando que cuelga del programa montado.
+     */
+    private function medioDelPrograma(int $id): ?MedioVerificacion
+    {
+        return MedioVerificacion::whereHas(
+            'indicador.mirNivel',
+            fn ($q) => $q->where('programa_presupuestario_id', $this->programa->id)
+        )->find($id);
+    }
+
     public function guardarNivel(int $nivelId, string $campo, string $valor): void
     {
-        $nivel = MirNivel::findOrFail($nivelId);
+        $nivel = $this->nivelDelPrograma($nivelId);
+
+        if ($nivel === null) {
+            return;
+        }
 
         if (in_array($campo, ['resumen_narrativo', 'supuestos'])) {
             $nivel->update([$campo => $valor]);
@@ -88,6 +134,10 @@ class MirEditor extends Component
 
     public function agregarActividad(int $componenteId): void
     {
+        if ($this->nivelDelPrograma($componenteId) === null) {
+            return;
+        }
+
         $maxOrden = MirNivel::where('componente_id', $componenteId)->max('orden') ?? 0;
 
         MirNivel::create([
@@ -100,7 +150,11 @@ class MirEditor extends Component
 
     public function eliminarNivel(int $nivelId): void
     {
-        $nivel = MirNivel::findOrFail($nivelId);
+        $nivel = $this->nivelDelPrograma($nivelId);
+
+        if ($nivel === null) {
+            return;
+        }
 
         // Only allow deleting Componente/Actividad (not Fin/Propósito)
         if (in_array($nivel->tipo_nivel, [TipoNivelMir::COMPONENTE, TipoNivelMir::ACTIVIDAD])) {
@@ -110,7 +164,12 @@ class MirEditor extends Component
 
     public function agregarIndicador(int $nivelId): void
     {
-        $nivel = MirNivel::findOrFail($nivelId);
+        $nivel = $this->nivelDelPrograma($nivelId);
+
+        if ($nivel === null) {
+            return;
+        }
+
         $reglas = IndicadorReglasService::reglasParaNivel($nivel->tipo_nivel);
         $maxOrden = $nivel->indicadores()->max('orden') ?? 0;
 
@@ -126,7 +185,12 @@ class MirEditor extends Component
 
     public function guardarIndicador(int $indicadorId, array $data): void
     {
-        $indicador = Indicador::findOrFail($indicadorId);
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
         $nivel = $indicador->mirNivel;
         $reglas = IndicadorReglasService::reglasParaNivel($nivel->tipo_nivel);
 
@@ -142,17 +206,32 @@ class MirEditor extends Component
 
     public function syncAnexosTransversales(int $indicadorId, array $anexoIds): void
     {
-        $indicador = Indicador::findOrFail($indicadorId);
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
         $indicador->anexosTransversales()->sync(array_map('intval', $anexoIds));
     }
 
     public function eliminarIndicador(int $indicadorId): void
     {
-        Indicador::findOrFail($indicadorId)->delete();
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
+        $indicador->delete();
     }
 
     public function agregarMedioVerificacion(int $indicadorId): void
     {
+        if ($this->indicadorDelPrograma($indicadorId) === null) {
+            return;
+        }
+
         $maxOrden = MedioVerificacion::where('indicador_id', $indicadorId)->max('orden') ?? 0;
 
         MedioVerificacion::create([
@@ -164,7 +243,13 @@ class MirEditor extends Component
 
     public function guardarMedioVerificacion(int $medioId, array $data): void
     {
-        $medio = MedioVerificacion::with('indicador')->findOrFail($medioId);
+        $medio = $this->medioDelPrograma($medioId);
+
+        if ($medio === null) {
+            return;
+        }
+
+        $medio->load('indicador');
 
         $validated = validator($data, [
             'nombre' => 'required|string|max:255',
@@ -200,12 +285,22 @@ class MirEditor extends Component
 
     public function eliminarMedioVerificacion(int $medioId): void
     {
-        MedioVerificacion::findOrFail($medioId)->delete();
+        $medio = $this->medioDelPrograma($medioId);
+
+        if ($medio === null) {
+            return;
+        }
+
+        $medio->delete();
     }
 
     public function extraerVariables(int $indicadorId): void
     {
-        $indicador = Indicador::findOrFail($indicadorId);
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
 
         if (empty($indicador->formula_texto)) {
             return;
@@ -243,6 +338,10 @@ class MirEditor extends Component
 
     public function agregarVariable(int $indicadorId): void
     {
+        if ($this->indicadorDelPrograma($indicadorId) === null) {
+            return;
+        }
+
         $maxOrden = IndicadorVariable::where('indicador_id', $indicadorId)->max('orden') ?? 0;
         $nextSymbol = chr(65 + $maxOrden); // A, B, C...
 
@@ -256,7 +355,11 @@ class MirEditor extends Component
 
     public function guardarVariable(int $variableId, array $data): void
     {
-        $variable = IndicadorVariable::findOrFail($variableId);
+        $variable = $this->variableDelPrograma($variableId);
+
+        if ($variable === null) {
+            return;
+        }
 
         $validated = validator($data, [
             'simbolo' => 'required|string|max:5',
@@ -271,22 +374,40 @@ class MirEditor extends Component
 
     public function eliminarVariable(int $variableId): void
     {
-        IndicadorVariable::findOrFail($variableId)->delete();
+        $variable = $this->variableDelPrograma($variableId);
+
+        if ($variable === null) {
+            return;
+        }
+
+        $variable->delete();
     }
 
     public function guardarFormulaTexto(int $indicadorId, string $formula): void
     {
-        Indicador::findOrFail($indicadorId)->update(['formula_texto' => $formula]);
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
+        $indicador->update(['formula_texto' => $formula]);
     }
 
     public function guardarLineaBaseAnio(int $indicadorId, ?string $anio): void
     {
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
         $validated = validator(
             ['linea_base_anio' => $anio === '' ? null : $anio],
             ['linea_base_anio' => 'nullable|integer|between:1900,2999']
         )->validate();
 
-        Indicador::findOrFail($indicadorId)->update($validated);
+        $indicador->update($validated);
     }
 
     /**
@@ -382,7 +503,13 @@ class MirEditor extends Component
 
     public function guardarSemaforo(int $indicadorId, array $rangos): void
     {
-        $indicador = Indicador::with('unidadMedida')->findOrFail($indicadorId);
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
+        $indicador->load('unidadMedida');
         $clave = 'semaforo_'.$indicadorId;
 
         $campos = [
@@ -429,7 +556,13 @@ class MirEditor extends Component
 
     public function sugerirFormula(int $indicadorId): void
     {
-        $indicador = Indicador::with('mirNivel')->findOrFail($indicadorId);
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
+        $indicador->load('mirNivel');
         $nivel = $indicador->mirNivel;
 
         $llm = app(LlmServiceInterface::class);
@@ -451,7 +584,11 @@ class MirEditor extends Component
 
     public function validarSintaxis(int $nivelId): void
     {
-        $nivel = MirNivel::findOrFail($nivelId);
+        $nivel = $this->nivelDelPrograma($nivelId);
+
+        if ($nivel === null) {
+            return;
+        }
 
         if (empty($nivel->resumen_narrativo)) {
             return;
@@ -477,7 +614,13 @@ class MirEditor extends Component
 
     public function validarCremaa(int $indicadorId): void
     {
-        $indicador = Indicador::with('mirNivel')->findOrFail($indicadorId);
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
+        $indicador->load('mirNivel');
 
         if (empty($indicador->nombre)) {
             return;
@@ -520,7 +663,11 @@ class MirEditor extends Component
 
     public function buscarAlineacion(int $nivelId): void
     {
-        $nivel = MirNivel::findOrFail($nivelId);
+        $nivel = $this->nivelDelPrograma($nivelId);
+
+        if ($nivel === null) {
+            return;
+        }
 
         if (empty($nivel->resumen_narrativo)) {
             return;
@@ -561,7 +708,11 @@ class MirEditor extends Component
 
     public function seleccionarAlineacion(int $nivelId, string $tipo, int $entidadId): void
     {
-        $nivel = MirNivel::findOrFail($nivelId);
+        $nivel = $this->nivelDelPrograma($nivelId);
+
+        if ($nivel === null) {
+            return;
+        }
 
         $updateData = [];
         if ($tipo === 'PedObjetivoEstrategico') {
@@ -589,7 +740,11 @@ class MirEditor extends Component
 
     public function aceptarSugerencia(int $nivelId): void
     {
-        $nivel = MirNivel::findOrFail($nivelId);
+        $nivel = $this->nivelDelPrograma($nivelId);
+
+        if ($nivel === null) {
+            return;
+        }
 
         if ($nivel->sintaxis_sugerencia) {
             $nivel->update([
@@ -604,7 +759,11 @@ class MirEditor extends Component
 
     public function asignarUrCoadyuvante(int $nivelId, ?int $teamId): void
     {
-        $nivel = MirNivel::findOrFail($nivelId);
+        $nivel = $this->nivelDelPrograma($nivelId);
+
+        if ($nivel === null) {
+            return;
+        }
 
         if (! in_array($nivel->tipo_nivel, [TipoNivelMir::COMPONENTE, TipoNivelMir::ACTIVIDAD])) {
             return;
