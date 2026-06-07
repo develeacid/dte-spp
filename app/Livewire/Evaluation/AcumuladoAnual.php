@@ -188,6 +188,9 @@ class AcumuladoAnual extends Component
 
         $umbral = (float) config('tracking.umbral_sobrecumplimiento', 130);
 
+        // Simplificación direccional: el % de cumplimiento acumulado no distingue sentido (ASCENDENTE/DESCENDENTE).
+        // El semáforo canónico por captura sí lo hace vía SemaforoService::metaDescendente; aquí se asume sentido ascendente.
+
         // Sobrecumplimiento más allá del umbral = mala planeación (rojo alto).
         if ($pct > $umbral) {
             return 'rojo_alto';

@@ -155,6 +155,45 @@ class RojoAltoRolloutTest extends TestCase
         $this->assertStringContainsString('text-purple-800', $html);
     }
 
+    private function semaforoPorCumplimiento(?float $pct): string
+    {
+        $component = new AcumuladoAnual;
+        $reflection = new \ReflectionMethod($component, 'semaforoPorCumplimiento');
+        $reflection->setAccessible(true);
+
+        return $reflection->invoke($component, $pct);
+    }
+
+    public function test_semaforo_por_cumplimiento_null_es_gris(): void
+    {
+        $this->assertEquals('gris', $this->semaforoPorCumplimiento(null));
+    }
+
+    public function test_semaforo_por_cumplimiento_130_exacto_no_es_rojo_alto(): void
+    {
+        // pct > umbral => rojo_alto; 130 == umbral default => amarillo (>110 && <=130).
+        $this->assertEquals('amarillo', $this->semaforoPorCumplimiento(130.0));
+    }
+
+    public function test_semaforo_por_cumplimiento_sobre_umbral_es_rojo_alto(): void
+    {
+        $this->assertEquals('rojo_alto', $this->semaforoPorCumplimiento(130.01));
+    }
+
+    public function test_semaforo_por_cumplimiento_50_es_rojo(): void
+    {
+        // 50 cae fuera de verde (90-110) y amarillo (70-<90) => rojo.
+        $this->assertEquals('rojo', $this->semaforoPorCumplimiento(50.0));
+    }
+
+    public function test_semaforo_por_cumplimiento_respeta_umbral_configurable(): void
+    {
+        config(['tracking.umbral_sobrecumplimiento' => 150]);
+
+        // 140 <= 150 (umbral) y > 110 => amarillo, NO rojo_alto.
+        $this->assertEquals('amarillo', $this->semaforoPorCumplimiento(140.0));
+    }
+
     public function test_fmye_pdf_export_incluye_conteo_rojo_alto(): void
     {
         $this->avance->update([
