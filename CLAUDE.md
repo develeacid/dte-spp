@@ -135,3 +135,11 @@ sail artisan transparencia:sync-public DS-01
 ```
 
 Comandos post-deploy obligatorios para N2-03b: en geobase aplicar migration de la mvw trimestral y refrescar (`php artisan migrate --force && php artisan geobase:refresh-territorial`). En dte-spp solo `migrate`. Geobase debe deployarse ANTES que dte-spp (si no, los publishers G0X reciben 404 al primer publish).
+
+## Decisiones cross-sistema resueltas (2026-06-07)
+
+Las 3 decisiones arquitectónicas abiertas del Informe de Brechas V2 quedaron resueltas:
+
+1. **C-098 ROP versionado → vive en GEOBASE** (fuente operativa del padrón). El modelo `ReglasOperacion` (versionado por ejercicio, montos autorizados, criterios de elegibilidad) se implementará en geobase como sprint M (activa F2-06 y destraba P-03/P-08 contra ROP real). dte-spp NO crea modelo ROP: la brecha V2-E8 se marca 🚫 N/A y el Sprint 7 dte-spp se cancela; cuando exista el endpoint, los reportes/jurídico de dte-spp consumen las ROP vía API geobase (token M2M existente).
+2. **C-022 Población Atendida → agregado PERSISTIDO en dte-spp** actualizado por job programado/webhook M5 (consistencia eventual). Los reportes oficiales (IAFF, Cuenta Pública) leen la cifra local estable con fecha de corte, sin depender del uptime de geobase. Implementación pendiente (candidato: dentro del sprint M "IAFF persistido" o XS propio).
+3. **C-111 Conciliación físico-financiera → vista derivada en dte-spp** (cruce partidas presupuestales locales ⋈ entregas del padrón geobase). Forma parte del sprint M "IAFF persistido + Cierre fiscal 4 fases".
