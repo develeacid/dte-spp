@@ -497,6 +497,7 @@ class QaTestingSeeder extends Seeder
             ['PEC-002', 'proposito', 1],
         ];
 
+        // Asimetría deliberada con Fase1: allá se crea desde definitions sin tocar legacy; aquí derivamos del texto recién escrito en el firstOrCreate y luego nulificamos — la fuente de verdad del texto es el array inline de este seeder.
         foreach ($niveles as $nivel) {
             $texto = $nivel->supuestos;
 
