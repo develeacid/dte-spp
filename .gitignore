@@ -30,3 +30,6 @@ Thumbs.db
 # Ad-hoc folders that landed in the working tree but are not part of the project
 .playwright-mcp/
 /grub2-themes/
+
+# Coordinación efímera entre sesiones Claude (no versionar)
+.claude/COORDINACION.md
