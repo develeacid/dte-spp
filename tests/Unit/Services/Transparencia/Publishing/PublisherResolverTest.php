@@ -30,7 +30,7 @@ class PublisherResolverTest extends TestCase
     {
         $resolver = app(PublisherResolver::class);
 
-        $expected = ['DS-01', 'DS-02', 'DS-03', 'DS-04', 'DS-05', 'DS-G01', 'DS-G02', 'DS-G03', 'DS-G04'];
+        $expected = ['DS-01', 'DS-02', 'DS-03', 'DS-04', 'DS-05', 'DS-07', 'DS-G01', 'DS-G02', 'DS-G03', 'DS-G04'];
 
         foreach ($expected as $code) {
             $this->assertInstanceOf(PublisherInterface::class, $resolver->for($code), "Falta publisher para $code");

@@ -12,13 +12,13 @@ class DatasetsCatalogoSeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_carga_10_plantillas_idempotente(): void
+    public function test_carga_11_plantillas_idempotente(): void
     {
         $this->seed(DatasetsCatalogoSeeder::class);
-        $this->assertSame(10, DatasetAbierto::plantillas()->count());
+        $this->assertSame(11, DatasetAbierto::plantillas()->count());
 
         $this->seed(DatasetsCatalogoSeeder::class);
-        $this->assertSame(10, DatasetAbierto::plantillas()->count());
+        $this->assertSame(11, DatasetAbierto::plantillas()->count());
     }
 
     public function test_dcat_metadata_base_presente_en_todas(): void
@@ -44,13 +44,13 @@ class DatasetsCatalogoSeederTest extends TestCase
         $this->assertSame($ds00Hash, $ds00After->hash_sha256);
     }
 
-    public function test_claves_son_d_s_01_a_d_s_06_y_d_s_g01_a_d_s_g04(): void
+    public function test_claves_son_d_s_01_a_d_s_07_y_d_s_g01_a_d_s_g04(): void
     {
         $this->seed(DatasetsCatalogoSeeder::class);
 
         $claves = DatasetAbierto::plantillas()->pluck('dataset_clave')->sort()->values()->all();
         $this->assertSame(
-            ['DS-01', 'DS-02', 'DS-03', 'DS-04', 'DS-05', 'DS-06', 'DS-G01', 'DS-G02', 'DS-G03', 'DS-G04'],
+            ['DS-01', 'DS-02', 'DS-03', 'DS-04', 'DS-05', 'DS-06', 'DS-07', 'DS-G01', 'DS-G02', 'DS-G03', 'DS-G04'],
             $claves
         );
     }

@@ -14,6 +14,7 @@ class PublisherResolver
         'DS-03' => AvancesTrimestralesPublisher::class,
         'DS-04' => EvaluacionesAnualesPublisher::class,
         'DS-05' => AlineacionEstrategicaPublisher::class,
+        'DS-07' => MediosVerificacionPublisher::class,
         'DS-G01' => CoberturaMunicipalPublisher::class,
         'DS-G02' => DesagregacionDemograficaPublisher::class,
         'DS-G03' => CoberturaGeograficaPublisher::class,
