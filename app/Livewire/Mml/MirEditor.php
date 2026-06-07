@@ -181,7 +181,7 @@ class MirEditor extends Component
 
             if ($ordenMv > $ordenIndicador) {
                 throw ValidationException::withMessages([
-                    'frecuencia' => sprintf(
+                    "frecuencia_mv_{$medioId}" => sprintf(
                         'El medio de verificación debe publicarse al menos con la misma frecuencia con la que se mide el indicador (indicador: %s, MV: %s).',
                         $indicador->frecuencia->label(),
                         FrecuenciaMedicion::from($frecuenciaMv)->label(),

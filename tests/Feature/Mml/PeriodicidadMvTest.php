@@ -123,9 +123,38 @@ class PeriodicidadMvTest extends TestCase
             ->call('guardarMedioVerificacion', $mv->id, [
                 'nombre' => 'MV anual', 'frecuencia' => 'anual',
             ])
-            ->assertHasErrors('frecuencia');
+            ->assertHasErrors("frecuencia_mv_{$mv->id}");
 
         $this->assertNull($mv->fresh()->frecuencia);
+    }
+
+    public function test_b7_error_usa_key_namespaced_por_mv(): void
+    {
+        $indicador = $this->indicador('trimestral');
+        $mvA = $this->mv($indicador);
+        $mvB = MedioVerificacion::create([
+            'indicador_id' => $indicador->id, 'nombre' => 'MV B', 'orden' => 2,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(MirEditor::class, ['programa' => $this->programa])
+            ->call('guardarMedioVerificacion', $mvB->id, [
+                'nombre' => 'MV anual', 'frecuencia' => 'anual',
+            ])
+            ->assertHasErrors("frecuencia_mv_{$mvB->id}")
+            ->assertHasNoErrors("frecuencia_mv_{$mvA->id}");
+    }
+
+    public function test_modo_edicion_renderiza_select_frecuencia_de_mv_sin_excepcion(): void
+    {
+        $indicador = $this->indicador('trimestral');
+        $this->mv($indicador, 'mensual');
+
+        Livewire::actingAs($this->user)
+            ->test(MirEditor::class, ['programa' => $this->programa])
+            ->set('editandoNivelId', $this->nivel->id)
+            ->assertOk()
+            ->assertSee('— Frecuencia —');
     }
 
     public function test_b7_mv_mas_frecuente_que_indicador_persiste(): void

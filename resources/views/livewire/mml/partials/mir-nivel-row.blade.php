@@ -460,10 +460,12 @@
                                         class="w-full rounded border-gray-300 text-xs"
                                     >
                                         <option value="">— Frecuencia —</option>
-                                        @foreach (FrecuenciaMedicion::cases() as $freq)
+                                        @foreach (\App\Enums\FrecuenciaMedicion::cases() as $freq)
                                             <option value="{{ $freq->value }}">{{ $freq->label() }}</option>
                                         @endforeach
                                     </select>
+                                    @error('frecuencia_mv_'.$medio->id) <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                                    @error('frecuencia') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
                                 </div>
                                 <button wire:click="eliminarMedioVerificacion({{ $medio->id }})" class="mt-1 text-red-400 hover:text-red-600">
                                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
