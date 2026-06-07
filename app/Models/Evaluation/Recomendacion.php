@@ -2,6 +2,7 @@
 
 namespace App\Models\Evaluation;
 
+use App\Enums\PrioridadRecomendacion;
 use Database\Factories\Evaluation\RecomendacionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,13 @@ class Recomendacion extends Model
         'descripcion',
         'prioridad',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'prioridad' => PrioridadRecomendacion::class,
+        ];
+    }
 
     public function hallazgo(): BelongsTo
     {

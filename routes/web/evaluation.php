@@ -15,6 +15,7 @@ use App\Livewire\Evaluation\AsmShow;
 use App\Livewire\Evaluation\EvaluacionExternaForm;
 use App\Livewire\Evaluation\EvaluacionExternaIndex;
 use App\Livewire\Evaluation\EvaluacionProgramaView;
+use App\Livewire\Evaluation\InformeEvaluacionEditor;
 use App\Livewire\Evaluation\PanelTransversal;
 use App\Livewire\Evaluation\ReporteDesviaciones;
 use App\Models\ProgramaPresupuestario;
@@ -118,7 +119,11 @@ Route::prefix('evaluacion')
                 ->middleware('can:gestionar_evaluacion_externa')
                 ->name('edit');
 
-            // Ruta show: Task 4
+            // ORDEN: el wildcard /{evaluacionExterna} va DESPUÉS de /crear y /{...}/editar
+            // para no capturar esas rutas literales.
+            Route::get('/{evaluacionExterna}', InformeEvaluacionEditor::class)
+                ->middleware('can:ver_evaluacion_externa')
+                ->name('show');
         });
 
         Route::middleware('can:exportar_reportes')

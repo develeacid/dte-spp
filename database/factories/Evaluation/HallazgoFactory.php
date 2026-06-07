@@ -2,6 +2,7 @@
 
 namespace Database\Factories\Evaluation;
 
+use App\Enums\SeveridadHallazgo;
 use App\Models\Evaluation\Hallazgo;
 use App\Models\Evaluation\InformeEvaluacion;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -16,7 +17,7 @@ class HallazgoFactory extends Factory
             'informe_evaluacion_id' => InformeEvaluacion::factory(),
             'descripcion' => $this->faker->paragraph(2),
             'evidencia_url' => $this->faker->optional()->url(),
-            'severidad' => $this->faker->randomElement(['baja', 'media', 'alta']),
+            'severidad' => $this->faker->randomElement(SeveridadHallazgo::values()),
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Database\Factories\Evaluation;
 
+use App\Enums\PrioridadRecomendacion;
 use App\Models\Evaluation\Hallazgo;
 use App\Models\Evaluation\Recomendacion;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -15,7 +16,7 @@ class RecomendacionFactory extends Factory
         return [
             'hallazgo_id' => Hallazgo::factory(),
             'descripcion' => $this->faker->paragraph(2),
-            'prioridad' => $this->faker->randomElement(['baja', 'media', 'alta']),
+            'prioridad' => $this->faker->randomElement(PrioridadRecomendacion::values()),
         ];
     }
 }

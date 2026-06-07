@@ -2,6 +2,7 @@
 
 namespace App\Models\Evaluation;
 
+use App\Enums\SeveridadHallazgo;
 use Database\Factories\Evaluation\HallazgoFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +24,13 @@ class Hallazgo extends Model
         'evidencia_url',
         'severidad',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'severidad' => SeveridadHallazgo::class,
+        ];
+    }
 
     public function informe(): BelongsTo
     {
