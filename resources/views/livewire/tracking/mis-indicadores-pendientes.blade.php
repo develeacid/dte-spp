@@ -36,7 +36,12 @@
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{{ $diasRestantes }} dias</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="text-gray-400 text-xs">Captura no disponible aun</span></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <a href="{{ route('tracking.captura', $avance) }}"
+                                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                        Capturar
+                                    </a>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
