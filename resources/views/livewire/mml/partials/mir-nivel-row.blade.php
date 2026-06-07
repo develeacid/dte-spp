@@ -343,7 +343,13 @@
                         </div>
 
                         {{-- Meta anual (C-146) — captura con justificación obligatoria al cambiar --}}
+                        {{-- wire:key depende de la meta persistida: al guardar un cambio justificado,
+                             la meta del modelo cambia y Livewire fuerza re-init del x-data, refrescando
+                             metaInicial al nuevo baseline. Sin esto, metaInicial queda stale y el
+                             siguiente cambio se compararía contra el valor viejo (solo client-side;
+                             el server es autoritativo igual). --}}
                         <div class="mt-2 border-t border-gray-100 pt-1"
+                            wire:key="meta-{{ $indicador->id }}-{{ $indicador->meta }}"
                             x-data="{
                                 metaInicial: @js($indicador->meta !== null ? (float) $indicador->meta : null),
                                 meta: @js($indicador->meta !== null ? (float) $indicador->meta : ''),

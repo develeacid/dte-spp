@@ -101,6 +101,32 @@ class MetaJustificacionTest extends TestCase
         $this->assertNull($revision->meta_periodo_id);
     }
 
+    public function test_doble_cambio_segundo_sin_justificacion_exige_justificacion(): void
+    {
+        // Refuerza el baseline del SERVER tras un cambio previo justificado.
+        // (El blade usa wire:key="meta-{id}-{meta}" para refrescar el baseline
+        //  client-side del x-data; este test prueba el lado autoritativo: server.)
+        [$programa, $indicador] = $this->crearProgramaConIndicador(meta: 100);
+
+        $this->actingAs($this->user);
+
+        $component = Livewire::test(MirEditor::class, ['programa' => $programa]);
+
+        // Primer cambio 100 -> 80 con justificación: ok.
+        $component->call('guardarMeta', $indicador->id, 80, 'Ajuste por recorte presupuestal')
+            ->assertHasNoErrors();
+        $this->assertEquals(80.0, (float) $indicador->fresh()->meta);
+
+        // Segundo cambio 80 -> 90 SIN justificación: debe exigirla contra el nuevo baseline.
+        $component->call('guardarMeta', $indicador->id, 90)
+            ->assertHasErrors("meta_{$indicador->id}");
+
+        // La meta permanece en 80 (el cambio sin justificación no se aplicó).
+        $this->assertEquals(80.0, (float) $indicador->fresh()->meta);
+        // Solo existe la revisión del primer cambio.
+        $this->assertDatabaseCount('revisiones_meta', 1);
+    }
+
     public function test_mismo_valor_no_exige_justificacion_ni_crea_revision(): void
     {
         [$programa, $indicador] = $this->crearProgramaConIndicador(meta: 100);
