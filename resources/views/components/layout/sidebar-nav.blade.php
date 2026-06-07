@@ -152,24 +152,29 @@
 @endcan
 
 {{-- Reportes --}}
-@can('exportar_reportes')
+@canany(['exportar_reportes', 'ver_asm', 'ver_evaluacion_externa'])
 <x-ui.sidebar-group label="Reportes" :active="request()->routeIs('evaluation.*') || request()->routeIs('datos-abiertos.*')">
     <x-slot:icon>
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
     </x-slot:icon>
     <x-slot:tooltip>
+        @can('exportar_reportes')
         <a href="{{ route('evaluation.transversal') }}" class="block py-1 hover:text-brand-light">Transversal</a>
         <a href="{{ route('evaluation.desviaciones') }}" class="block py-1 hover:text-brand-light">Desviaciones</a>
         <a href="{{ route('evaluation.acumulado-anual') }}" class="block py-1 hover:text-brand-light">Acumulado Anual</a>
+        @endcan
         @can('ver_asm')
         <a href="{{ route('evaluation.asms.index') }}" class="block py-1 hover:text-brand-light">ASMs</a>
         @endcan
         @can('ver_evaluacion_externa')
         <a href="{{ route('evaluation.externas.index') }}" class="block py-1 hover:text-brand-light">Evaluaciones externas</a>
         @endcan
+        @can('exportar_reportes')
         <a href="{{ route('evaluation.datos-abiertos.diccionario') }}" class="block py-1 hover:text-brand-light">Datos Abiertos</a>
+        @endcan
     </x-slot:tooltip>
 
+    @can('exportar_reportes')
     <x-ui.sidebar-item href="{{ route('evaluation.transversal') }}" :active="request()->routeIs('evaluation.transversal')">
         Transversal
     </x-ui.sidebar-item>
@@ -179,6 +184,7 @@
     <x-ui.sidebar-item href="{{ route('evaluation.acumulado-anual') }}" :active="request()->routeIs('evaluation.acumulado-anual')">
         Acumulado Anual
     </x-ui.sidebar-item>
+    @endcan
     @can('ver_asm')
     <x-ui.sidebar-item href="{{ route('evaluation.asms.index') }}" :active="request()->routeIs('evaluation.asms.*')">
         ASMs
@@ -189,11 +195,13 @@
         Evaluaciones externas
     </x-ui.sidebar-item>
     @endcan
+    @can('exportar_reportes')
     <x-ui.sidebar-item href="{{ route('evaluation.datos-abiertos.diccionario') }}" :active="request()->routeIs('evaluation.datos-abiertos.*')">
         Datos Abiertos
     </x-ui.sidebar-item>
+    @endcan
 </x-ui.sidebar-group>
-@endcan
+@endcanany
 
 {{-- Transparencia --}}
 @can('ver_datasets_abiertos')

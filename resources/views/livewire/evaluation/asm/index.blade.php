@@ -60,7 +60,14 @@
                     @forelse($asms as $asm)
                         <tr>
                             <td class="px-3 py-2">{{ $asm->programa->clave }}</td>
-                            <td class="px-3 py-2 max-w-xs truncate">{{ $asm->descripcion_aspecto }}</td>
+                            <td class="px-3 py-2 max-w-xs">
+                                <div class="truncate">{{ $asm->descripcion_aspecto }}</div>
+                                @if($asm->recomendacion_id)
+                                    <span class="mt-1 inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                                        Origen externo
+                                    </span>
+                                @endif
+                            </td>
                             <td class="px-3 py-2">{{ $asm->responsable->name }}</td>
                             <td class="px-3 py-2">{{ $asm->fecha_compromiso->format('d/m/Y') }}</td>
                             <td class="px-3 py-2">
