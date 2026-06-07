@@ -34,7 +34,7 @@ Invariantes endurecidos a nivel BD + app (migraciones `2026_06_06_0000XX`, backf
 - **Ventana de captura normativa SHCP**: cierre del periodo + `config('tracking.dias_ventana_captura', 30)` días (`TRACKING_DIAS_VENTANA_CAPTURA`). `CalendarizacionService::confirmar()` puebla `fecha_apertura/fecha_cierre` y re-confirmar recalcula fechas; los MetaPeriodo creados antes del sprint no se recalcularon.
 - **Análisis de desviación estructurado**: captura amarillo/rojo exige `avances.analisis_desviacion` JSONB con keys `dato/causa/accion/proyeccion`; `justificacion_final` se mantiene como resumen concatenado para reportes legacy.
 - **Revisiones de meta**: cambiar metas ya calendarizadas exige justificación → audit trail en `revisiones_meta`.
-- Dataset transparencia **DS-07 Medios de Verificación** (`pub_medios_verificacion`); post-deploy re-seed: `sail artisan db:seed --class='Database\Seeders\Transparencia\DatasetsCatalogoSeeder'`.
+- Dataset transparencia **DS-07 Medios de Verificación** (`pub_medios_verificacion`); post-deploy: `sail artisan migrate --path=database/migrations/public --database=pgsql_public` + re-seed `sail artisan db:seed --class='Database\Seeders\Transparencia\DatasetsCatalogoSeeder'`.
 
 ## BD Pública (Transparencia)
 
@@ -86,6 +86,7 @@ Sin worker permanente, el síntoma operacional es `geobase:hydrate-padron` reque
 - DS-03 → `pub_avances_trimestrales`
 - DS-04 → `pub_evaluaciones_anuales`
 - DS-05 → `pub_alineacion_estrategica`
+- DS-07 → `pub_medios_verificacion`
 - DS-G01 → `pub_cobertura_municipal` (vía bulk endpoint geobase, acumulado al cierre trimestre)
 - DS-G02 → `pub_desagregacion_demografica` (vía bulk endpoint geobase, buckets PP mexicana NNA/juventud/adulto/adulto_mayor)
 - DS-G03 → `pub_cobertura_geografica` (vía bulk endpoint geobase, polígono unión PostGIS)

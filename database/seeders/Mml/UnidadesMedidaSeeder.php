@@ -21,10 +21,12 @@ class UnidadesMedidaSeeder extends Seeder
             ['id' => 9, 'clave' => 'ND', 'nombre' => 'No definida'],
         ];
 
+        // Conflict target por 'clave' (UNIQUE): la migración harden_mir_fields puede haber
+        // creado 'ND' con id auto-secuencial distinto de 9; un upsert por id duplicaría la clave.
         DB::table('catalogo_unidades_medida')->upsert(
             $unidades,
-            ['id'],
-            ['clave', 'nombre']
+            ['clave'],
+            ['nombre']
         );
     }
 }
