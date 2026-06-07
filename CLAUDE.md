@@ -55,6 +55,15 @@ Invariantes endurecidos a nivel BD + app (migraciones `2026_06_06_0000XX`, backf
 - **C-146**: `indicadores.meta` ahora editable en MirEditor; cambiar una meta existente exige justificación → audit trail en `revisiones_meta` **generalizada** (XOR meta_periodo_id/indicador_id por CHECK constraint). Import/snapshot exentos.
 - Post-deploy: `migrate` + re-run `php artisan db:seed --class='Database\Seeders\Evaluation\EvaluacionExternaPermissionsSeeder'` (o Fase0).
 
+## MV CREMA + Supuestos estructurados (sprint 2026-06-07, V2-A8/B8-B10)
+
+- **`mir_supuestos`** reemplaza al texto libre `mir_niveles.supuestos`: descripción + 3 booleans de validez del temario (`es_externo/es_relevante/probabilidad_razonable`, C-075) + orden. Backfill idempotente en la migración (texto legacy → 1 supuesto con booleans false). **Columna legacy deprecada: sin lectores ni escritores** (drop en sprint futuro); todos los consumidores (Excel/PDF/snapshots/publishers DS-02/prompts IA/tab Cobertura/import) usan la relación `supuestosEstructurados()` o el accessor `MirNivel::supuestos_texto` (concatenado "; "). Snapshots restauran texto como supuesto estructurado (semántica backfill). CRUD en MirEditor (`agregar/guardar/eliminarSupuesto`) scoped al programa; badge UI Válido/Incompleto según `esValido()`.
+- **`crema_validaciones_mv`** (C-072): checklist CREMA 1:1 del MV (Confiable/Relevante/Económico/Monitoreable/**Asequible**) — análoga a la CREMAA del indicador, con captura manual + botón "Validar CREMA" vía IA (prompt `prompts/mir/validar-crema-mv`).
+- **`medios_verificacion.tipo_fuente`** (C-074): enum app-level `TipoFuenteMv` (`externa/administrativa_propia/evaluacion_externa`), NULL = legacy sin clasificar. **Regla B9 dura** (C-073): MV de FIN/PROPÓSITO exigen `tipo_fuente=externa` al guardar en MirEditor (`IndicadorReglasService::validarTipoFuenteMv`); NULL no bloquea pero genera `advertencia` en diagnóstico de import (latente, igual que B3-B7). Hallazgo B10 latente: supuestos importados sin atributos de validez.
+- DS-07 (`pub_medios_verificacion`) gana columna `tipo_fuente`.
+- Post-deploy: `migrate` (3 privadas) + `migrate --path=database/migrations/public --database=pgsql_public` (1 columna) + re-publicar DS-07 (`transparencia:sync-public DS-07`).
+- Sprint paralelo en geobase: validaciones P-01..P-08 + folio evidencia (ver CLAUDE.md de geobase).
+
 ## BD Pública (Transparencia)
 
 Tras `sail up` por primera vez (o tras `sail down -v`), aprovisionar la BD pública `spp_public` y migrar las tablas `pub_*`:
