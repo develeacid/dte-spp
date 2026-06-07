@@ -5,6 +5,7 @@ namespace App\Livewire\Evaluation;
 use App\Enums\EstadoEvaluacionExterna;
 use App\Enums\TipoEvaluacionExterna;
 use App\Models\Evaluation\EvaluacionExterna;
+use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 class EvaluacionExternaFormData extends Form
@@ -35,7 +36,13 @@ class EvaluacionExternaFormData extends Form
             'fecha_inicio' => ['nullable', 'date'],
             'fecha_fin' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
             'estado' => ['required', 'in:'.implode(',', EstadoEvaluacionExterna::values())],
-            'evaluacion_programa_id' => ['nullable', 'integer', 'exists:evaluaciones_programa,id'],
+            'evaluacion_programa_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('evaluaciones_programa', 'id')
+                    ->where('programa_presupuestario_id', $this->programa_presupuestario_id)
+                    ->where('ejercicio_fiscal', $this->ejercicio_fiscal),
+            ],
         ];
     }
 

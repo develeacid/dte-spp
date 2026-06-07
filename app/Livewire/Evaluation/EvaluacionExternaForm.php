@@ -25,6 +25,13 @@ class EvaluacionExternaForm extends Component
         }
     }
 
+    public function updated(string $property): void
+    {
+        if (in_array($property, ['form.programa_presupuestario_id', 'form.ejercicio_fiscal'], true)) {
+            $this->form->evaluacion_programa_id = null;
+        }
+    }
+
     public function save()
     {
         $data = $this->form->validate();
