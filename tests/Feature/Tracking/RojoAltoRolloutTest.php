@@ -5,6 +5,7 @@ namespace Tests\Feature\Tracking;
 use App\Enums\EstadoAvance;
 use App\Enums\SentidoIndicador;
 use App\Enums\TipoNivelMir;
+use App\Exports\Pdf\AvanceTrimestralPdfExport;
 use App\Exports\Pdf\FmyePdfExport;
 use App\Livewire\Evaluation\AcumuladoAnual;
 use App\Livewire\Tracking\CapturaAvance;
@@ -171,5 +172,21 @@ class RojoAltoRolloutTest extends TestCase
         $this->assertArrayHasKey('T1', $historico);
         $this->assertArrayHasKey('rojo_alto', $historico['T1']);
         $this->assertEquals(1, $historico['T1']['rojo_alto']);
+    }
+
+    public function test_avance_trimestral_pdf_export_rinde_rojo_alto(): void
+    {
+        $this->avance->update([
+            'resultado' => 40,
+            'semaforo_calculado' => 'rojo_alto',
+            'estado' => EstadoAvance::APROBADO->value,
+        ]);
+
+        $html = (new AvanceTrimestralPdfExport($this->programa, 2026, 1))->generateHtml();
+
+        $this->assertStringContainsString('.semaforo-rojo_alto', $html);
+        $this->assertStringContainsString('semaforo-rojo_alto', $html);
+        $this->assertStringContainsString('Rojo alto', $html);
+        $this->assertStringNotContainsString('Rojo_alto', $html);
     }
 }
