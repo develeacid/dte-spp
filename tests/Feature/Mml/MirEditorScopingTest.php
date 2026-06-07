@@ -406,4 +406,19 @@ class MirEditorScopingTest extends TestCase
 
         $this->assertSame('Medio renombrado', $a['medio']->fresh()->nombre);
     }
+
+    /**
+     * Owned-path de un creator: con un nivel PROPIO, agregarIndicador SÍ crea
+     * (count +1). Cierra el gap de los no-op tests, que pasarían igual si un
+     * guard always-return rompiera silenciosamente los creators.
+     */
+    public function test_agregar_indicador_a_nivel_del_programa_propio_crea(): void
+    {
+        $a = $this->arbol($this->programaA);
+        $antes = $a['nivel']->indicadores()->count();
+
+        $this->editor()->call('agregarIndicador', $a['nivel']->id);
+
+        $this->assertSame($antes + 1, $a['nivel']->fresh()->indicadores()->count());
+    }
 }

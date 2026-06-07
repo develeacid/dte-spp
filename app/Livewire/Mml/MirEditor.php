@@ -64,6 +64,11 @@ class MirEditor extends Component
         (new MirPrellenadoService)->prellenar($programa);
     }
 
+    // Helpers de scoping (defensa-en-profundidad). Decisión de seguridad:
+    // Miss → no-op silencioso (no 404). El editor solo opera sobre el programa
+    // montado; un id ajeno solo llega vía request crafteado, que tratamos como
+    // inerte sin revelar existencia de recursos ajenos (evita enumeración).
+
     /**
      * Resuelve un MirNivel garantizando que pertenece al programa montado.
      * Defensa-en-profundidad contra requests Livewire crafteados con ids ajenos.
@@ -425,10 +430,7 @@ class MirEditor extends Component
         unset($this->metaWarnings[$indicadorId]);
 
         // Scoping: el indicador debe pertenecer al programa del editor.
-        $indicador = Indicador::whereHas(
-            'mirNivel',
-            fn ($q) => $q->where('programa_presupuestario_id', $this->programa->id)
-        )->find($indicadorId);
+        $indicador = $this->indicadorDelPrograma($indicadorId);
 
         if ($indicador === null) {
             return;
