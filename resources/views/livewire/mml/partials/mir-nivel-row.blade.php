@@ -656,7 +656,22 @@
     <td class="px-3 py-3 align-top">
         @if(!$editando)
         {{-- READ MODE --}}
-        <p class="text-sm text-gray-800">{{ $nivel->supuestos ?: '-' }}</p>
+        @if ($nivel->supuestosEstructurados->isEmpty())
+            <p class="text-sm text-gray-800">-</p>
+        @else
+            <ul class="space-y-1">
+                @foreach ($nivel->supuestosEstructurados as $supuesto)
+                    <li class="text-sm text-gray-800 flex items-start gap-1.5" wire:key="supuesto-read-{{ $supuesto->id }}">
+                        <span>{{ $supuesto->descripcion ?: '—' }}</span>
+                        @if ($supuesto->esValido())
+                            <span class="mt-0.5 inline-flex shrink-0 items-center rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700" title="Externo, relevante y razonablemente probable">Válido</span>
+                        @else
+                            <span class="mt-0.5 inline-flex shrink-0 items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700" title="Falta marcar externo/relevante/probable">Incompleto</span>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+        @endif
         @if ($nivel->team)
             <span class="mt-1 inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700">
                 UR: {{ $nivel->team->name }}
@@ -664,12 +679,42 @@
         @endif
         @else
         {{-- EDIT MODE --}}
-        <textarea
-            wire:change="guardarNivel({{ $nivel->id }}, 'supuestos', $event.target.value)"
-            class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            rows="3"
-            placeholder="Supuestos..."
-        >{{ $nivel->supuestos }}</textarea>
+        <div class="space-y-2">
+            @foreach ($nivel->supuestosEstructurados as $supuesto)
+                <div class="rounded border border-gray-200 p-1.5" wire:key="supuesto-{{ $supuesto->id }}"
+                    x-data="{ supDesc: @js($supuesto->descripcion ?? ''), supExt: @js((bool) $supuesto->es_externo), supRel: @js((bool) $supuesto->es_relevante), supProb: @js((bool) $supuesto->probabilidad_razonable),
+                        guardarSup() { $wire.guardarSupuesto({{ $supuesto->id }}, { descripcion: this.supDesc, es_externo: this.supExt, es_relevante: this.supRel, probabilidad_razonable: this.supProb }); } }">
+                    <div class="flex items-start gap-1">
+                        <textarea
+                            x-model="supDesc"
+                            @change="guardarSup()"
+                            class="w-full rounded border-gray-300 text-xs"
+                            rows="2"
+                            placeholder="Supuesto..."
+                        ></textarea>
+                        <button wire:click="eliminarSupuesto({{ $supuesto->id }})" class="mt-1 text-red-400 hover:text-red-600">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <div class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                        <label class="inline-flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+                            <input type="checkbox" x-model="supExt" @change="guardarSup()" class="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600" />
+                            Externo
+                        </label>
+                        <label class="inline-flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+                            <input type="checkbox" x-model="supRel" @change="guardarSup()" class="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600" />
+                            Relevante
+                        </label>
+                        <label class="inline-flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+                            <input type="checkbox" x-model="supProb" @change="guardarSup()" class="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600" />
+                            Probable
+                        </label>
+                    </div>
+                    @error('descripcion') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+            @endforeach
+            <button wire:click="agregarSupuesto({{ $nivel->id }})" class="text-xs text-blue-500 hover:text-blue-700">+ Supuesto</button>
+        </div>
 
         {{-- UR Coadyuvante --}}
         @if (in_array($tipoEnum, [\App\Enums\TipoNivelMir::COMPONENTE, \App\Enums\TipoNivelMir::ACTIVIDAD]))

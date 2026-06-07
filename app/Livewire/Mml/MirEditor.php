@@ -13,6 +13,7 @@ use App\Models\Mml\Indicador;
 use App\Models\Mml\IndicadorVariable;
 use App\Models\Mml\MedioVerificacion;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\MirSupuesto;
 use App\Models\Mml\RevisionMeta;
 use App\Models\PedLineaAccion;
 use App\Models\PedObjetivoEstrategico;
@@ -120,9 +121,68 @@ class MirEditor extends Component
             return;
         }
 
-        if (in_array($campo, ['resumen_narrativo', 'supuestos'])) {
+        // 'supuestos' legacy ya no es escribible: los supuestos viven en
+        // mir_supuestos (V2-A8) vía agregar/guardar/eliminarSupuesto.
+        if (in_array($campo, ['resumen_narrativo'])) {
             $nivel->update([$campo => $valor]);
         }
+    }
+
+    /**
+     * Resuelve un MirSupuesto garantizando que cuelga del programa montado.
+     */
+    private function supuestoDelPrograma(int $id): ?MirSupuesto
+    {
+        return MirSupuesto::whereHas(
+            'mirNivel',
+            fn ($q) => $q->where('programa_presupuestario_id', $this->programa->id)
+        )->find($id);
+    }
+
+    public function agregarSupuesto(int $nivelId): void
+    {
+        $nivel = $this->nivelDelPrograma($nivelId);
+
+        if ($nivel === null) {
+            return;
+        }
+
+        $maxOrden = $nivel->supuestosEstructurados()->max('orden') ?? 0;
+
+        MirSupuesto::create([
+            'mir_nivel_id' => $nivelId,
+            'descripcion' => '',
+            'orden' => $maxOrden + 1,
+        ]);
+    }
+
+    public function guardarSupuesto(int $supuestoId, array $data): void
+    {
+        $supuesto = $this->supuestoDelPrograma($supuestoId);
+
+        if ($supuesto === null) {
+            return;
+        }
+
+        $validated = validator($data, [
+            'descripcion' => 'required|string|max:2000',
+            'es_externo' => 'boolean',
+            'es_relevante' => 'boolean',
+            'probabilidad_razonable' => 'boolean',
+        ])->validate();
+
+        $supuesto->update($validated);
+    }
+
+    public function eliminarSupuesto(int $supuestoId): void
+    {
+        $supuesto = $this->supuestoDelPrograma($supuestoId);
+
+        if ($supuesto === null) {
+            return;
+        }
+
+        $supuesto->delete();
     }
 
     public function agregarComponente(): void
@@ -873,7 +933,7 @@ class MirEditor extends Component
 
         $componentes = $this->programa->mirNiveles()
             ->where('tipo_nivel', TipoNivelMir::COMPONENTE->value)
-            ->with(['actividades.indicadores.mediosVerificacion', 'actividades.indicadores.cremaaValidacion', 'actividades.indicadores.variables', 'actividades.indicadores.anexosTransversales', 'actividades.pedObjetivoEstrategico', 'actividades.pedLineaAccion', 'actividades.team', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'indicadores.anexosTransversales', 'pedObjetivoEstrategico', 'pedLineaAccion', 'team'])
+            ->with(['actividades.indicadores.mediosVerificacion.cremaValidacion', 'actividades.indicadores.cremaaValidacion', 'actividades.indicadores.variables', 'actividades.indicadores.anexosTransversales', 'actividades.pedObjetivoEstrategico', 'actividades.pedLineaAccion', 'actividades.team', 'actividades.supuestosEstructurados', 'indicadores.mediosVerificacion.cremaValidacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'indicadores.anexosTransversales', 'pedObjetivoEstrategico', 'pedLineaAccion', 'team', 'supuestosEstructurados'])
             ->orderBy('orden')
             ->get();
 

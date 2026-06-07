@@ -179,24 +179,6 @@ class MirEditorTest extends TestCase
         $this->assertDatabaseMissing('mir_niveles', ['id' => $actividad->id]);
     }
 
-    public function test_guardar_supuestos(): void
-    {
-        $nivel = MirNivel::create([
-            'programa_presupuestario_id' => $this->programa->id,
-            'tipo_nivel' => TipoNivelMir::FIN->value,
-            'orden' => 1,
-        ]);
-
-        Livewire::actingAs($this->user)
-            ->test(MirEditor::class, ['programa' => $this->programa])
-            ->call('guardarNivel', $nivel->id, 'supuestos', 'Estabilidad económica');
-
-        $this->assertDatabaseHas('mir_niveles', [
-            'id' => $nivel->id,
-            'supuestos' => 'Estabilidad económica',
-        ]);
-    }
-
     public function test_sugerir_formula_genera_formula_para_indicador(): void
     {
         $fin = MirNivel::create([
