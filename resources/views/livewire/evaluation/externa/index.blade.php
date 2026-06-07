@@ -1,7 +1,9 @@
 <div>
     <x-page.header title="Evaluaciones externas" subtitle="Evaluaciones de programas realizadas por instancias externas">
         @can('gestionar_evaluacion_externa')
-            <x-ui.button.primary href="{{ url('/evaluacion/externas/crear') }}">Nueva evaluación</x-ui.button.primary>
+            @if(Route::has('evaluation.externas.create'))
+                <x-ui.button.primary href="{{ route('evaluation.externas.create') }}">Nueva evaluación</x-ui.button.primary>
+            @endif
         @endcan
     </x-page.header>
 
@@ -84,7 +86,9 @@
                                 {{ optional($evaluacion->fecha_fin)->format('d/m/Y') ?? '—' }}
                             </td>
                             <td class="px-3 py-2 space-x-2">
-                                <a class="text-indigo-600 text-xs" href="{{ url('/evaluacion/externas/'.$evaluacion->id) }}">Ver</a>
+                                @if(Route::has('evaluation.externas.show'))
+                                    <a class="text-indigo-600 text-xs" href="{{ route('evaluation.externas.show', $evaluacion) }}">Ver</a>
+                                @endif
                             </td>
                         </tr>
                     @empty
