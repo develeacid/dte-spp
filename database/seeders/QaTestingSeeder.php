@@ -9,12 +9,14 @@ use App\Models\CatalogoUnidadMedida;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\MirSupuesto;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Team;
 use App\Models\Tracking\Avance;
 use App\Models\User;
 use App\Services\Tracking\SemaforoService;
 use Carbon\Carbon;
+use Database\Seeders\Evaluation\EvaluacionExternaDemoSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
@@ -38,9 +40,11 @@ class QaTestingSeeder extends Seeder
 
         $this->crearUsuarios($se, $ss, $seg, $sectur);
         $this->crearProgramasYMir($se, $ss, $seg, $sectur);
+        $this->crearSupuestosEstructurados();
         $this->crearIndicadores();
         $this->crearMetaPeriodos();
         $this->crearAvances();
+        $this->crearEvaluacionExternaDemo();
         $this->generarResultadosEsperados();
 
         $this->command->info('QaTestingSeeder completado.');
@@ -471,6 +475,60 @@ class QaTestingSeeder extends Seeder
         return $programa;
     }
 
+    /**
+     * Migra los supuestos al modelo estructurado `mir_supuestos` (PR #34) y
+     * limpia la columna legacy `mir_niveles.supuestos` (deprecada, sin
+     * lectores en la UI). Idempotente: firstOrCreate por (nivel, descripción).
+     *
+     * Validez variada para demo: por defecto 3/3 (externo + relevante +
+     * razonablemente probable), pero un subconjunto determinístico queda como
+     * parcial (solo externo) para que la UI muestre ambos estados.
+     */
+    private function crearSupuestosEstructurados(): void
+    {
+        $niveles = MirNivel::whereHas('programa', fn ($q) => $q->whereIn('clave', ['ISM-001', 'PEC-002', 'FSP-003', 'DDT-004']))
+            ->orderBy('id')
+            ->get();
+
+        // Niveles que tendrán un supuesto con validez PARCIAL (solo externo)
+        // para demo. Se eligen por clave de programa + tipo + orden.
+        $parciales = [
+            ['ISM-001', 'componente', 2], // C2 "Ruta del Mezcal"
+            ['PEC-002', 'proposito', 1],
+        ];
+
+        foreach ($niveles as $nivel) {
+            $texto = $nivel->supuestos;
+
+            if (filled($texto)) {
+                $clave = $nivel->programa->clave;
+                $esParcial = collect($parciales)->contains(
+                    fn ($p) => $p[0] === $clave
+                        && $p[1] === $nivel->tipo_nivel->value
+                        && $p[2] === $nivel->orden
+                );
+
+                MirSupuesto::firstOrCreate(
+                    ['mir_nivel_id' => $nivel->id, 'descripcion' => $texto],
+                    [
+                        'es_externo' => true,
+                        'es_relevante' => ! $esParcial,
+                        'probabilidad_razonable' => ! $esParcial,
+                        'orden' => 1,
+                    ]
+                );
+            }
+
+            // Limpiar el legacy: la UI lee solo `supuestosEstructurados`.
+            if ($nivel->supuestos !== null) {
+                $nivel->forceFill(['supuestos' => null])->save();
+            }
+        }
+
+        $total = MirSupuesto::whereHas('mirNivel.programa', fn ($q) => $q->whereIn('clave', ['ISM-001', 'PEC-002', 'FSP-003', 'DDT-004']))->count();
+        $this->command->info("Supuestos estructurados creados ({$total} total).");
+    }
+
     private function crearIndicadores(): void
     {
         // Unidad de medida por defecto (Task 2 hará unidad_medida_id NOT NULL).
@@ -498,14 +556,32 @@ class QaTestingSeeder extends Seeder
             [$acts1c2[1]->id, 'Índice de satisfacción de productores capacitados', 'gestion', 'calidad', 'trimestral', 'ascendente', 8.5, 7.2],
         ];
 
+        // Demo opcional: año de la línea base (V2 hardening) en los
+        // indicadores de resultado (los que tienen linea_base capturada).
+        $indicadoresConLineaBaseAnio = [
+            'Tasa de crecimiento del PIB del sector agroindustrial',
+            'Porcentaje de variación en ventas de productores beneficiados',
+            'Número de palenques certificados como destino turístico',
+        ];
+
         foreach ($indicadoresP1 as $ind) {
             $extra = [];
+            if (in_array($ind[1], $indicadoresConLineaBaseAnio, true)) {
+                $extra['linea_base_anio'] = 2025;
+            }
             if ($ind[1] === 'Índice de satisfacción de productores capacitados') {
+                // 4 rangos contiguos válidos (B3-B6): escala de índice 0-10.
+                // rojo_min ≠ 0 (B6), bordes que se tocan son válidos (B4),
+                // la meta (8.5) cae dentro del verde (B3).
                 $extra = [
+                    'rango_rojo_min' => 0.5,
+                    'rango_rojo_max' => 6.0,
+                    'rango_amarillo_min' => 6.0,
+                    'rango_amarillo_max' => 7.5,
                     'rango_verde_min' => 7.5,
                     'rango_verde_max' => 9.5,
-                    'rango_amarillo_min' => 6.0,
-                    'rango_amarillo_max' => 10.0,
+                    'rango_rojo_alto_min' => 9.5,
+                    'rango_rojo_alto_max' => 10.0,
                 ];
             }
             Indicador::firstOrCreate(
@@ -742,12 +818,22 @@ class QaTestingSeeder extends Seeder
         // --- P1 ISM-001: V-shape narrative ("Porcentaje de subsidios otorgados...") ---
         $this->crearAvance('ISM-001', 'Porcentaje de subsidios otorgados respecto a solicitudes aprobadas', 1, 2025, 20.0, EstadoAvance::APROBADO, $operador, $semaforoService);
         $this->crearAvance('ISM-001', 'Porcentaje de subsidios otorgados respecto a solicitudes aprobadas', 2, 2025, 19.5, EstadoAvance::APROBADO, $operador, $semaforoService);
-        $this->crearAvance('ISM-001', 'Porcentaje de subsidios otorgados respecto a solicitudes aprobadas', 3, 2025, 11.7, EstadoAvance::OBSERVADO, $operador, $semaforoService, 'Sequía prolongada afectó producción de agave y demanda de subsidios disminuyó significativamente');
-        $this->crearAvance('ISM-001', 'Porcentaje de subsidios otorgados respecto a solicitudes aprobadas', 4, 2025, 16.6, EstadoAvance::EN_REVISION, $operador, $semaforoService);
+        $this->crearAvance('ISM-001', 'Porcentaje de subsidios otorgados respecto a solicitudes aprobadas', 3, 2025, 11.7, EstadoAvance::OBSERVADO, $operador, $semaforoService, 'Sequía prolongada afectó producción de agave y demanda de subsidios disminuyó significativamente', [
+            'dato' => 'Se otorgó el 55% de la meta trimestral de subsidios (11.7 de 21.25 puntos).',
+            'causa' => 'La sequía prolongada redujo la producción de agave y, con ello, la demanda de subsidios de equipamiento.',
+            'accion' => 'Se reprogramaron campañas de difusión y se flexibilizaron los plazos de solicitud para el siguiente trimestre.',
+            'proyeccion' => 'Se estima recuperar el ritmo de colocación al cierre del ejercicio si las lluvias normalizan la producción.',
+        ]);
+        $this->crearAvance('ISM-001', 'Porcentaje de subsidios otorgados respecto a solicitudes aprobadas', 4, 2025, 16.6, EstadoAvance::EN_REVISION, $operador, $semaforoService, null, [
+            'dato' => 'Se alcanzó el 78% de la meta trimestral (16.6 de 21.25 puntos).',
+            'causa' => 'Recuperación parcial de la demanda tras la reprogramación de campañas; aún por debajo de lo planeado.',
+            'accion' => 'Se reforzó el acompañamiento técnico a productores para agilizar la integración de expedientes.',
+            'proyeccion' => 'Se prevé converger a la meta anual en el primer trimestre de 2026.',
+        ]);
         $this->crearAvance('ISM-001', 'Porcentaje de subsidios otorgados respecto a solicitudes aprobadas', 1, 2026, 19.8, EstadoAvance::APROBADO, $operador, $semaforoService);
 
         // P1 other trimestral indicators — consistently green
-        foreach (['Porcentaje de solicitudes evaluadas en plazo', 'Número de inspecciones de palenques realizadas', 'Índice de satisfacción de productores capacitados'] as $indName) {
+        foreach (['Porcentaje de solicitudes evaluadas en plazo', 'Número de inspecciones de palenques realizadas'] as $indName) {
             foreach ([['q' => 1, 'y' => 2025], ['q' => 2, 'y' => 2025], ['q' => 3, 'y' => 2025], ['q' => 4, 'y' => 2025], ['q' => 1, 'y' => 2026]] as $p) {
                 $ind = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->where('clave', 'ISM-001'))->where('nombre', $indName)->first();
                 if ($ind) {
@@ -757,6 +843,21 @@ class QaTestingSeeder extends Seeder
                 }
             }
         }
+
+        // "Índice de satisfacción de productores capacitados": escala 0-10 con
+        // rangos de semáforo (rojo_alto en [9.5, 10.0]). El resultado se evalúa
+        // contra los rangos del indicador, no contra la meta trimestral. Q1-2026
+        // queda en rojo_alto (sobrecumplimiento) con su análisis de desviación.
+        $this->crearAvance('ISM-001', 'Índice de satisfacción de productores capacitados', 1, 2025, 8.4, EstadoAvance::APROBADO, $operador, $semaforoService);
+        $this->crearAvance('ISM-001', 'Índice de satisfacción de productores capacitados', 2, 2025, 8.6, EstadoAvance::APROBADO, $operador, $semaforoService);
+        $this->crearAvance('ISM-001', 'Índice de satisfacción de productores capacitados', 3, 2025, 8.8, EstadoAvance::APROBADO, $operador, $semaforoService);
+        $this->crearAvance('ISM-001', 'Índice de satisfacción de productores capacitados', 4, 2025, 9.1, EstadoAvance::APROBADO, $operador, $semaforoService);
+        $this->crearAvance('ISM-001', 'Índice de satisfacción de productores capacitados', 1, 2026, 9.8, EstadoAvance::EN_REVISION, $operador, $semaforoService, 'Resultado de satisfacción muy por encima del rango esperado; requiere validación del instrumento de medición.', [
+            'dato' => 'El índice de satisfacción alcanzó 9.8 puntos, por encima del límite superior del rango verde (9.5).',
+            'causa' => 'La muestra del último trimestre se concentró en productores con acompañamiento intensivo, sesgando el resultado al alza.',
+            'accion' => 'Se revisará el diseño muestral del instrumento para garantizar representatividad en la siguiente medición.',
+            'proyeccion' => 'Se espera que el índice se estabilice dentro del rango verde una vez corregido el sesgo de muestreo.',
+        ]);
 
         // --- P2 PEC-002: consistently green ("Porcentaje de detecciones realizadas...") ---
         $this->crearAvance('PEC-002', 'Porcentaje de detecciones realizadas respecto a la meta programada', 1, 2025, 21.5, EstadoAvance::APROBADO, $operador2, $semaforoService);
@@ -778,8 +879,18 @@ class QaTestingSeeder extends Seeder
         }
 
         // --- P3 FSP-003: ascending narrative ("Porcentaje de equipamiento entregado...") ---
-        $this->crearAvance('FSP-003', 'Porcentaje de equipamiento entregado respecto al programado', 1, 2025, 10.0, EstadoAvance::OBSERVADO, $operador, $semaforoService, 'Programa en fase inicial. Procesos de licitación retrasados.');
-        $this->crearAvance('FSP-003', 'Porcentaje de equipamiento entregado respecto al programado', 2, 2025, 13.75, EstadoAvance::OBSERVADO, $operador, $semaforoService, 'Avance insuficiente. Se requiere acelerar entregas.');
+        $this->crearAvance('FSP-003', 'Porcentaje de equipamiento entregado respecto al programado', 1, 2025, 10.0, EstadoAvance::OBSERVADO, $operador, $semaforoService, 'Programa en fase inicial. Procesos de licitación retrasados.', [
+            'dato' => 'Solo se entregó el 40% del equipamiento programado para el trimestre.',
+            'causa' => 'Los procesos de licitación se retrasaron por la fase inicial de arranque del programa.',
+            'accion' => 'Se conformó un comité de adquisiciones con sesiones quincenales para destrabar los procesos.',
+            'proyeccion' => 'Se espera recuperar el rezago a partir del tercer trimestre con las entregas acumuladas.',
+        ]);
+        $this->crearAvance('FSP-003', 'Porcentaje de equipamiento entregado respecto al programado', 2, 2025, 13.75, EstadoAvance::OBSERVADO, $operador, $semaforoService, 'Avance insuficiente. Se requiere acelerar entregas.', [
+            'dato' => 'Se alcanzó el 55% de la meta trimestral de equipamiento.',
+            'causa' => 'Persisten cuellos de botella en la distribución logística a corporaciones municipales remotas.',
+            'accion' => 'Se contrató transporte adicional y se priorizaron los municipios con mayor rezago.',
+            'proyeccion' => 'Se proyecta cerrar el ejercicio dentro del rango verde con las entregas del cuarto trimestre.',
+        ]);
         $this->crearAvance('FSP-003', 'Porcentaje de equipamiento entregado respecto al programado', 3, 2025, 18.0, EstadoAvance::EN_REVISION, $operador, $semaforoService);
         $this->crearAvance('FSP-003', 'Porcentaje de equipamiento entregado respecto al programado', 4, 2025, 22.0, EstadoAvance::APROBADO, $operador, $semaforoService);
         $this->crearAvance('FSP-003', 'Porcentaje de equipamiento entregado respecto al programado', 1, 2026, 23.75, EstadoAvance::APROBADO, $operador, $semaforoService);
@@ -797,7 +908,12 @@ class QaTestingSeeder extends Seeder
         }
 
         // --- P4 DDT-004: irregular narrative ("Porcentaje de proyectos de rehabilitación completados") ---
-        $this->crearAvance('DDT-004', 'Porcentaje de proyectos de rehabilitación completados', 1, 2025, 7.5, EstadoAvance::OBSERVADO, $operadorSectur, $semaforoService, 'Temporada baja turística. Pocos proyectos en ejecución.');
+        $this->crearAvance('DDT-004', 'Porcentaje de proyectos de rehabilitación completados', 1, 2025, 7.5, EstadoAvance::OBSERVADO, $operadorSectur, $semaforoService, 'Temporada baja turística. Pocos proyectos en ejecución.', [
+            'dato' => 'Se completó el 30% de los proyectos de rehabilitación programados para el trimestre.',
+            'causa' => 'La temporada baja turística redujo la disponibilidad de contratistas y la ejecución de obra.',
+            'accion' => 'Se adelantaron los proyectos ejecutivos para iniciar obra al comienzo de la temporada alta.',
+            'proyeccion' => 'Se espera un repunte significativo en el segundo trimestre con la entrada de temporada alta.',
+        ]);
         $this->crearAvance('DDT-004', 'Porcentaje de proyectos de rehabilitación completados', 2, 2025, 27.5, EstadoAvance::APROBADO, $operadorSectur, $semaforoService);
         // Q3-25: NO avance (will be vencido since fecha_cierre is in the past)
         $this->crearAvance('DDT-004', 'Porcentaje de proyectos de rehabilitación completados', 4, 2025, 21.25, EstadoAvance::EN_REVISION, $operadorSectur, $semaforoService);
@@ -819,6 +935,11 @@ class QaTestingSeeder extends Seeder
         $this->command->info("Avances creados ({$total} total).");
     }
 
+    private function crearEvaluacionExternaDemo(): void
+    {
+        $this->call(EvaluacionExternaDemoSeeder::class);
+    }
+
     private function crearAvance(
         string $programaClave,
         string $indicadorNombre,
@@ -829,6 +950,7 @@ class QaTestingSeeder extends Seeder
         User $capturadoPor,
         SemaforoService $semaforoService,
         ?string $observacion = null,
+        ?array $analisisDesviacion = null,
     ): void {
         $indicador = Indicador::whereHas('mirNivel.programa', fn ($q) => $q->where('clave', $programaClave))
             ->where('nombre', $indicadorNombre)->first();
@@ -871,6 +993,7 @@ class QaTestingSeeder extends Seeder
                 'estado' => $estado->value,
                 'capturado_por' => $capturadoPor->id,
                 'historial_observaciones' => $historial ?: [],
+                'analisis_desviacion' => $analisisDesviacion,
             ]
         );
     }
