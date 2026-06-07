@@ -6,6 +6,7 @@ use App\Enums\DimensionIndicador;
 use App\Enums\FrecuenciaMedicion;
 use App\Enums\TipoIndicador;
 use App\Enums\TipoNivelMir;
+use App\Models\Mml\Indicador;
 use App\Models\ProgramaPresupuestario;
 
 class IndicadorReglasService
@@ -79,6 +80,113 @@ class IndicadorReglasService
                 'resumen' => $nivel->resumen_narrativo ?? '',
             ])
             ->all();
+    }
+
+    /**
+     * Validaciones duras de los rangos de semáforo (4 colores) de un indicador.
+     * Reglas B3-B6 (C-066..C-069) del temario MIR. Función pura, sin
+     * session/auth: usable tanto desde la UI (Task 3) como desde el
+     * diagnóstico (Task 6).
+     *
+     * Cada regla SOLO aplica sobre valores presentes (null = no capturado, no
+     * genera error). Retorna lista de strings de error; vacía = válido.
+     *
+     * @param  array<string, float|int|null>  $rangos  keys: rango_{verde,amarillo,rojo,rojo_alto}_{min,max}
+     * @return list<string>
+     */
+    public static function validarRangosSemaforo(Indicador $indicador, array $rangos): array
+    {
+        $errores = [];
+
+        $colores = [
+            'verde' => 'rango_verde',
+            'amarillo' => 'rango_amarillo',
+            'rojo' => 'rango_rojo',
+            'rojo alto' => 'rango_rojo_alto',
+        ];
+
+        $valor = static fn (?string $key): ?float => isset($rangos[$key]) && $rangos[$key] !== null
+            ? (float) $rangos[$key]
+            : null;
+
+        // B3 (C-066): la meta anual debe caer dentro del rango verde.
+        $verdeMin = $valor('rango_verde_min');
+        $verdeMax = $valor('rango_verde_max');
+        if ($indicador->meta !== null && $verdeMin !== null && $verdeMax !== null) {
+            $meta = (float) $indicador->meta;
+            if ($meta < $verdeMin || $meta > $verdeMax) {
+                $errores[] = sprintf(
+                    'La meta anual (%s) debe caer dentro del rango verde [%s, %s].',
+                    self::fmt($meta),
+                    self::fmt($verdeMin),
+                    self::fmt($verdeMax),
+                );
+            }
+        }
+
+        // B4 (C-067): pre-condición min<=max por color + sin solapamiento.
+        $intervalos = [];
+        foreach ($colores as $etiqueta => $prefijo) {
+            $min = $valor("{$prefijo}_min");
+            $max = $valor("{$prefijo}_max");
+            if ($min === null || $max === null) {
+                continue;
+            }
+            if ($min > $max) {
+                $errores[] = sprintf('El rango %s tiene mínimo mayor que máximo.', $etiqueta);
+
+                continue;
+            }
+            $intervalos[$etiqueta] = [$min, $max];
+        }
+
+        $etiquetas = array_keys($intervalos);
+        for ($i = 0; $i < count($etiquetas); $i++) {
+            for ($j = $i + 1; $j < count($etiquetas); $j++) {
+                [$aMin, $aMax] = $intervalos[$etiquetas[$i]];
+                [$bMin, $bMax] = $intervalos[$etiquetas[$j]];
+                // Intersección con longitud > 0 (bordes contiguos son válidos).
+                $inicio = max($aMin, $bMin);
+                $fin = min($aMax, $bMax);
+                if ($inicio < $fin) {
+                    $errores[] = sprintf(
+                        'Los rangos %s y %s se solapan.',
+                        $etiquetas[$i],
+                        $etiquetas[$j],
+                    );
+                }
+            }
+        }
+
+        // B5 (C-068): con unidad Porcentaje todo límite debe estar en [0, 100].
+        if ($indicador->unidadMedida?->clave === 'PCT') {
+            foreach ($colores as $prefijo) {
+                foreach (['min', 'max'] as $extremo) {
+                    $campo = "{$prefijo}_{$extremo}";
+                    $v = $valor($campo);
+                    if ($v !== null && ($v < 0 || $v > 100)) {
+                        $errores[] = sprintf(
+                            'Con unidad Porcentaje los límites del semáforo deben estar entre 0 y 100 (%s=%s).',
+                            $campo,
+                            self::fmt($v),
+                        );
+                    }
+                }
+            }
+        }
+
+        // B6 (C-069): el rango rojo no puede iniciar en cero.
+        $rojoMin = $valor('rango_rojo_min');
+        if ($rojoMin !== null && $rojoMin === 0.0) {
+            $errores[] = 'El rango rojo no puede iniciar en cero (C-069).';
+        }
+
+        return $errores;
+    }
+
+    private static function fmt(float $valor): string
+    {
+        return rtrim(rtrim(number_format($valor, 4, '.', ''), '0'), '.');
     }
 
     public static function reglasParaNivel(TipoNivelMir $nivel): array
