@@ -169,18 +169,26 @@ class CoberturaProgramaTest extends TestCase
         ]);
 
         $programa = ProgramaPresupuestario::factory()->create(['padron_geobase_activo' => true]);
-        MirNivel::create([
+        $proposito = MirNivel::create([
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => TipoNivelMir::PROPOSITO,
             'resumen_narrativo' => 'Propósito del programa',
-            'supuestos' => 'Las condiciones climáticas se mantienen estables',
             'orden' => 1,
         ]);
-        MirNivel::create([
+        \App\Models\Mml\MirSupuesto::create([
+            'mir_nivel_id' => $proposito->id,
+            'descripcion' => 'Las condiciones climáticas se mantienen estables',
+            'orden' => 1,
+        ]);
+        $componente = MirNivel::create([
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => TipoNivelMir::COMPONENTE,
             'resumen_narrativo' => 'Componente C1',
-            'supuestos' => 'Los productores asisten a capacitaciones',
+            'orden' => 1,
+        ]);
+        \App\Models\Mml\MirSupuesto::create([
+            'mir_nivel_id' => $componente->id,
+            'descripcion' => 'Los productores asisten a capacitaciones',
             'orden' => 1,
         ]);
 

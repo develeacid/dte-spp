@@ -9,6 +9,7 @@ use App\Models\Mml\Indicador;
 use App\Models\Mml\IndicadorVariable;
 use App\Models\Mml\MedioVerificacion;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\MirSupuesto;
 use App\Models\Mml\MirVersion;
 use App\Models\ProgramaPresupuestario;
 
@@ -48,14 +49,14 @@ class MirSnapshotService
     private function serializarMir(ProgramaPresupuestario $programa): array
     {
         return $programa->mirNiveles()
-            ->with(['indicadores.variables', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion'])
+            ->with(['indicadores.variables', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'supuestosEstructurados'])
             ->orderBy('tipo_nivel')
             ->orderBy('orden')
             ->get()
             ->map(fn (MirNivel $nivel) => [
                 'tipo_nivel' => $nivel->tipo_nivel->value ?? $nivel->tipo_nivel,
                 'resumen_narrativo' => $nivel->resumen_narrativo,
-                'supuestos' => $nivel->supuestos,
+                'supuestos' => $nivel->supuestos_texto,
                 'orden' => $nivel->orden,
                 'arbol_nodo_id' => $nivel->arbol_nodo_id,
                 'componente_orden' => $nivel->componente_id
@@ -116,7 +117,6 @@ class MirSnapshotService
                     'programa_presupuestario_id' => $programa->id,
                     'tipo_nivel' => $nivelData['tipo_nivel'],
                     'resumen_narrativo' => $nivelData['resumen_narrativo'] ?? '',
-                    'supuestos' => $nivelData['supuestos'],
                     'orden' => $nivelData['orden'],
                     'arbol_nodo_id' => $nivelData['arbol_nodo_id'] ?? null,
                     'ped_objetivo_estrategico_id' => $nivelData['ped_objetivo_estrategico_id'] ?? null,
@@ -124,6 +124,7 @@ class MirSnapshotService
                     'ped_linea_accion_id' => $nivelData['ped_linea_accion_id'] ?? null,
                 ]);
                 $componenteMap[$nivelData['orden']] = $nivel->id;
+                $this->restaurarSupuestos($nivel, $nivelData['supuestos'] ?? null);
                 $this->restaurarIndicadores($nivel, $nivelData['indicadores'] ?? []);
             }
         }
@@ -143,7 +144,6 @@ class MirSnapshotService
                 'programa_presupuestario_id' => $programa->id,
                 'tipo_nivel' => $nivelData['tipo_nivel'],
                 'resumen_narrativo' => $nivelData['resumen_narrativo'] ?? '',
-                'supuestos' => $nivelData['supuestos'],
                 'orden' => $nivelData['orden'],
                 'componente_id' => $componenteId,
                 'arbol_nodo_id' => $nivelData['arbol_nodo_id'] ?? null,
@@ -152,8 +152,27 @@ class MirSnapshotService
                 'ped_linea_accion_id' => $nivelData['ped_linea_accion_id'] ?? null,
             ]);
 
+            $this->restaurarSupuestos($nivel, $nivelData['supuestos'] ?? null);
             $this->restaurarIndicadores($nivel, $nivelData['indicadores'] ?? []);
         }
+    }
+
+    /**
+     * Los snapshots serializan los supuestos como texto concatenado
+     * (supuestos_texto). Al restaurar, el texto se convierte en un supuesto
+     * estructurado sin validez marcada — misma semántica que el backfill V2-A8.
+     */
+    private function restaurarSupuestos(MirNivel $nivel, ?string $texto): void
+    {
+        if (empty($texto)) {
+            return;
+        }
+
+        MirSupuesto::create([
+            'mir_nivel_id' => $nivel->id,
+            'descripcion' => $texto,
+            'orden' => 1,
+        ]);
     }
 
     private function restaurarIndicadores(MirNivel $nivel, array $indicadoresData): void

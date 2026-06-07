@@ -19,7 +19,7 @@ class JustificacionService
             return null;
         }
 
-        $supuestos = $nivel->supuestos ?? null;
+        $supuestos = $nivel->supuestos_texto;
 
         // Get historical avances for context
         $historial = Avance::where('indicador_id', $indicador->id)

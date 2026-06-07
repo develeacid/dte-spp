@@ -40,7 +40,7 @@ class MirIndicadoresPublisher extends BasePublisher
                     'programa_clave' => $programa->clave,
                     'mir_nivel' => $nivel->tipo_nivel?->value ?? (string) $nivel->tipo_nivel,
                     'resumen_narrativo' => $nivel->resumen_narrativo ?? '',
-                    'supuestos' => $nivel->supuestos,
+                    'supuestos' => $nivel->supuestos_texto,
                     'indicador_nombre' => $i->nombre,
                     'formula_texto' => $i->formula_texto ?? '',
                     'medios_verificacion' => $medios !== '' ? $medios : null,

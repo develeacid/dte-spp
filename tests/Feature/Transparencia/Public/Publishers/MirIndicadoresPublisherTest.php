@@ -32,7 +32,11 @@ class MirIndicadoresPublisherTest extends TestCase
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => 'fin',
             'resumen_narrativo' => 'Resumen del Fin',
-            'supuestos' => 'Supuestos del Fin',
+        ]);
+        \App\Models\Mml\MirSupuesto::create([
+            'mir_nivel_id' => $nivel->id,
+            'descripcion' => 'Supuestos del Fin',
+            'orden' => 1,
         ]);
         Indicador::create([
             'mir_nivel_id' => $nivel->id,

@@ -146,6 +146,46 @@ class MirDiagnosticoService
                         }
                     }
                 }
+
+                // Regla B9 (C-073): MV de FIN/PROPÓSITO deben tener fuente
+                // externa. NOTA: latente hasta que el parser emita
+                // medios[].tipo_fuente.
+                $tipoNivelEnum = ! empty($nivel['tipo_nivel'])
+                    ? TipoNivelMir::tryFrom($nivel['tipo_nivel'])
+                    : null;
+                if ($tipoNivelEnum !== null) {
+                    foreach ($ind['medios'] ?? [] as $medio) {
+                        $errorB9 = IndicadorReglasService::validarTipoFuenteMv(
+                            $tipoNivelEnum,
+                            $medio['tipo_fuente'] ?? null,
+                        );
+                        if ($errorB9 !== null) {
+                            $gaps[] = $this->gap($ni, $ii, 'medios', 'advertencia', $errorB9);
+                        }
+                    }
+                }
+            }
+
+            // Regla B10 (C-075): supuestos sin los 3 atributos de validez
+            // (externo + relevante + probable). NOTA: latente hasta que el
+            // parser emita supuestos estructurados (supuestos_validez).
+            foreach ($nivel['supuestos_validez'] ?? [] as $sv) {
+                $esValido = ($sv['es_externo'] ?? false)
+                    && ($sv['es_relevante'] ?? false)
+                    && ($sv['probabilidad_razonable'] ?? false);
+
+                if (! $esValido) {
+                    $gaps[] = $this->gap(
+                        $ni,
+                        null,
+                        'supuestos',
+                        'advertencia',
+                        sprintf(
+                            'El supuesto "%s" no cumple el test de validez (externo + relevante + razonablemente probable).',
+                            mb_substr((string) ($sv['descripcion'] ?? 'sin descripción'), 0, 80),
+                        ),
+                    );
+                }
             }
         }
 

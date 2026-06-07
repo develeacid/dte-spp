@@ -337,4 +337,114 @@ class MirDiagnosticoTest extends TestCase
         $this->assertEquals(1, $conteo['advertencia']);
         $this->assertEquals(4, $conteo['total']);
     }
+
+    public function test_mv_de_fin_con_fuente_administrativa_genera_hallazgo_b9(): void
+    {
+        $data = new ImportedMirData(niveles: [
+            [
+                'tipo_nivel' => 'fin',
+                'resumen_narrativo' => 'Fin del programa',
+                'supuestos' => 'Algo',
+                'orden' => 1,
+                'indicadores' => [
+                    [
+                        'nombre' => 'Ind1',
+                        'formula_texto' => 'A/B',
+                        'tipo' => 'estrategico',
+                        'dimension' => 'eficacia',
+                        'frecuencia' => 'anual',
+                        'sentido' => 'ascendente',
+                        'linea_base' => 0,
+                        'meta' => 100,
+                        'rangos_semaforo' => null,
+                        'variables' => [],
+                        'medios' => [['nombre' => 'Registro interno', 'fuente' => null, 'frecuencia' => 'anual', 'tipo_fuente' => 'administrativa_propia']],
+                    ],
+                ],
+            ],
+        ]);
+
+        $gaps = $this->diagnostico->diagnosticar($data);
+        $b9Gaps = array_filter(
+            $gaps,
+            fn ($g) => $g['campo'] === 'medios' && $g['severidad'] === 'advertencia'
+                && str_contains($g['mensaje'], 'fuente externa')
+        );
+
+        $this->assertNotEmpty($b9Gaps);
+    }
+
+    public function test_mv_sin_tipo_fuente_no_genera_hallazgo_b9(): void
+    {
+        $data = new ImportedMirData(niveles: [
+            [
+                'tipo_nivel' => 'fin',
+                'resumen_narrativo' => 'Fin del programa',
+                'supuestos' => 'Algo',
+                'orden' => 1,
+                'indicadores' => [
+                    [
+                        'nombre' => 'Ind1',
+                        'formula_texto' => 'A/B',
+                        'tipo' => 'estrategico',
+                        'dimension' => 'eficacia',
+                        'frecuencia' => 'anual',
+                        'sentido' => 'ascendente',
+                        'linea_base' => 0,
+                        'meta' => 100,
+                        'rangos_semaforo' => null,
+                        'variables' => [],
+                        'medios' => [['nombre' => 'Informe', 'fuente' => null, 'frecuencia' => 'anual']],
+                    ],
+                ],
+            ],
+        ]);
+
+        $gaps = $this->diagnostico->diagnosticar($data);
+        $b9Gaps = array_filter(
+            $gaps,
+            fn ($g) => str_contains($g['mensaje'], 'fuente externa')
+        );
+
+        $this->assertEmpty($b9Gaps);
+    }
+
+    public function test_supuesto_sin_atributos_de_validez_genera_hallazgo_b10(): void
+    {
+        $data = new ImportedMirData(niveles: [
+            [
+                'tipo_nivel' => 'proposito',
+                'resumen_narrativo' => 'Propósito',
+                'supuestos' => 'Condiciones estables',
+                'supuestos_validez' => [
+                    ['descripcion' => 'Condiciones estables', 'es_externo' => true, 'es_relevante' => false, 'probabilidad_razonable' => true],
+                ],
+                'orden' => 1,
+                'indicadores' => [
+                    [
+                        'nombre' => 'Ind1',
+                        'formula_texto' => 'A/B',
+                        'tipo' => 'estrategico',
+                        'dimension' => 'eficacia',
+                        'frecuencia' => 'anual',
+                        'sentido' => 'ascendente',
+                        'linea_base' => 0,
+                        'meta' => 100,
+                        'rangos_semaforo' => null,
+                        'variables' => [],
+                        'medios' => [['nombre' => 'Informe', 'fuente' => null, 'frecuencia' => 'anual']],
+                    ],
+                ],
+            ],
+        ]);
+
+        $gaps = $this->diagnostico->diagnosticar($data);
+        $b10Gaps = array_filter(
+            $gaps,
+            fn ($g) => $g['campo'] === 'supuestos' && $g['severidad'] === 'advertencia'
+                && str_contains($g['mensaje'], 'test de validez')
+        );
+
+        $this->assertNotEmpty($b10Gaps);
+    }
 }

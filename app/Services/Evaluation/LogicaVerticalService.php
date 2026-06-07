@@ -77,7 +77,7 @@ class LogicaVerticalService
             }
             $result[] = [
                 'tipo' => $nivel->tipo_nivel->label(),
-                'supuestos' => $nivel->supuestos,
+                'supuestos' => $nivel->supuestos_texto,
                 'indicadores' => $indicadores,
             ];
         }

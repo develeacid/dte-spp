@@ -141,7 +141,7 @@ class EvaluacionProgramaView extends Component
                 'resultado' => $avance->resultado,
                 'meta' => $indicador->meta,
                 'justificacion' => $avance->justificacion_final,
-                'supuestos' => $indicador->mirNivel->supuestos,
+                'supuestos' => $indicador->mirNivel->supuestos_texto,
             ];
         }
 
