@@ -67,7 +67,7 @@ class PanelTransversal extends Component
                         'eje_numero' => $eje->numero,
                         'programas' => [],
                         'indices' => [],
-                        'semaforos' => ['verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'sin_dato' => 0],
+                        'semaforos' => ['verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'rojo_alto' => 0, 'sin_dato' => 0],
                     ];
                 }
 
@@ -80,7 +80,7 @@ class PanelTransversal extends Component
                 $grouped[$key]['indices'][] = (float) $eval->indice_eficacia;
 
                 $conteo = $eval->conteo_semaforos ?? [];
-                foreach (['verde', 'amarillo', 'rojo', 'sin_dato'] as $color) {
+                foreach (['verde', 'amarillo', 'rojo', 'rojo_alto', 'sin_dato'] as $color) {
                     $grouped[$key]['semaforos'][$color] += ($conteo[$color] ?? 0);
                 }
             }
@@ -149,7 +149,7 @@ class PanelTransversal extends Component
                         'ods_nombre' => $odsObj->nombre,
                         'programas' => [],
                         'indices' => [],
-                        'semaforos' => ['verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'sin_dato' => 0],
+                        'semaforos' => ['verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'rojo_alto' => 0, 'sin_dato' => 0],
                     ];
                 }
 
@@ -161,7 +161,7 @@ class PanelTransversal extends Component
                 $grouped[$key]['indices'][] = (float) $eval->indice_eficacia;
 
                 $conteo = $eval->conteo_semaforos ?? [];
-                foreach (['verde', 'amarillo', 'rojo', 'sin_dato'] as $color) {
+                foreach (['verde', 'amarillo', 'rojo', 'rojo_alto', 'sin_dato'] as $color) {
                     $grouped[$key]['semaforos'][$color] += ($conteo[$color] ?? 0);
                 }
             }
@@ -201,7 +201,7 @@ class PanelTransversal extends Component
                     'team_nombre' => $team->name,
                     'programas' => [],
                     'indices' => [],
-                    'semaforos' => ['verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'sin_dato' => 0],
+                    'semaforos' => ['verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'rojo_alto' => 0, 'sin_dato' => 0],
                 ];
             }
 
@@ -213,7 +213,7 @@ class PanelTransversal extends Component
             $grouped[$key]['indices'][] = (float) $eval->indice_eficacia;
 
             $conteo = $eval->conteo_semaforos ?? [];
-            foreach (['verde', 'amarillo', 'rojo', 'sin_dato'] as $color) {
+            foreach (['verde', 'amarillo', 'rojo', 'rojo_alto', 'sin_dato'] as $color) {
                 $grouped[$key]['semaforos'][$color] += ($conteo[$color] ?? 0);
             }
         }
@@ -265,11 +265,11 @@ class PanelTransversal extends Component
                 ->get();
 
             $indices = $evaluaciones->pluck('indice_eficacia')->map(fn ($v) => (float) $v)->toArray();
-            $semaforos = ['verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'sin_dato' => 0];
+            $semaforos = ['verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'rojo_alto' => 0, 'sin_dato' => 0];
 
             foreach ($evaluaciones as $eval) {
                 $conteo = $eval->conteo_semaforos ?? [];
-                foreach (['verde', 'amarillo', 'rojo', 'sin_dato'] as $color) {
+                foreach (['verde', 'amarillo', 'rojo', 'rojo_alto', 'sin_dato'] as $color) {
                     $semaforos[$color] += ($conteo[$color] ?? 0);
                 }
             }

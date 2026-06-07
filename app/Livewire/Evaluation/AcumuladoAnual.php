@@ -157,12 +157,14 @@ class AcumuladoAnual extends Component
         $verdes = $filas->where('semaforo', 'verde')->count();
         $amarillos = $filas->where('semaforo', 'amarillo')->count();
         $rojos = $filas->where('semaforo', 'rojo')->count();
+        $rojosAltos = $filas->where('semaforo', 'rojo_alto')->count();
 
         $kpis = [
             ['label' => 'Indicadores', 'value' => $total, 'color' => 'slate'],
             ['label' => 'En verde', 'value' => $verdes, 'color' => 'green'],
             ['label' => 'En amarillo', 'value' => $amarillos, 'color' => 'amber'],
             ['label' => 'En rojo', 'value' => $rojos, 'color' => 'red'],
+            ['label' => 'Rojo alto', 'value' => $rojosAltos, 'color' => 'purple'],
         ];
 
         return view('livewire.evaluation.acumulado-anual', [
@@ -183,10 +185,17 @@ class AcumuladoAnual extends Component
         if ($pct === null) {
             return 'gris';
         }
+
+        $umbral = (float) config('tracking.umbral_sobrecumplimiento', 130);
+
+        // Sobrecumplimiento más allá del umbral = mala planeación (rojo alto).
+        if ($pct > $umbral) {
+            return 'rojo_alto';
+        }
         if ($pct >= 90.0 && $pct <= 110.0) {
             return 'verde';
         }
-        if (($pct >= 70.0 && $pct < 90.0) || ($pct > 110.0 && $pct <= 130.0)) {
+        if (($pct >= 70.0 && $pct < 90.0) || ($pct > 110.0 && $pct <= $umbral)) {
             return 'amarillo';
         }
 
@@ -300,12 +309,14 @@ class AcumuladoAnual extends Component
             'verde' => 'bg-green-100 text-green-800',
             'amarillo' => 'bg-yellow-100 text-yellow-800',
             'rojo' => 'bg-red-100 text-red-800',
+            'rojo_alto' => 'bg-purple-100 text-purple-800',
             default => 'bg-gray-100 text-gray-700',
         };
         $etiqueta = match ($semaforo) {
             'verde' => 'Verde',
             'amarillo' => 'Amarillo',
             'rojo' => 'Rojo',
+            'rojo_alto' => 'Rojo alto',
             default => 'Sin datos',
         };
 

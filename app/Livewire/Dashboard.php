@@ -74,7 +74,7 @@ class Dashboard extends Component
             return app(DashboardService::class)->getSemaforoUsuario(auth()->id());
         }
 
-        return ['verde' => 0, 'amarillo' => 0, 'rojo' => 0];
+        return ['verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'rojo_alto' => 0];
     }
 
     #[Computed]
@@ -102,7 +102,7 @@ class Dashboard extends Component
     {
         $s = $this->semaforo;
 
-        return ($s['verde'] + $s['amarillo'] + $s['rojo']) > 0;
+        return ($s['verde'] + $s['amarillo'] + $s['rojo'] + ($s['rojo_alto'] ?? 0)) > 0;
     }
 
     #[Computed]

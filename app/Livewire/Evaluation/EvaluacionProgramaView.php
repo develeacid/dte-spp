@@ -52,7 +52,7 @@ class EvaluacionProgramaView extends Component
     public function tableroSemaforos(): array
     {
         $conteo = $this->evaluacionModel->conteo_semaforos ?? [
-            'verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'sin_dato' => 0,
+            'verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'rojo_alto' => 0, 'sin_dato' => 0,
         ];
 
         $desglose = $this->evaluacionModel->desglose_niveles ?? [];
@@ -130,7 +130,7 @@ class EvaluacionProgramaView extends Component
         foreach ($indicadores as $indicador) {
             $avance = $this->ultimoAvanceAprobado($indicador, $ejercicio);
 
-            if (! $avance || ! in_array($avance->semaforo_calculado, ['amarillo', 'rojo'])) {
+            if (! $avance || ! in_array($avance->semaforo_calculado, ['amarillo', 'rojo', 'rojo_alto'])) {
                 continue;
             }
 

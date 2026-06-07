@@ -31,6 +31,7 @@
         .semaforo-verde { background-color: #c6f6d5; }
         .semaforo-amarillo { background-color: #fefcbf; }
         .semaforo-rojo { background-color: #fed7d7; }
+        .semaforo-rojo_alto { background-color: #e9d5ff; }
 
         .indice-grande {
             font-size: 36px;
@@ -171,7 +172,7 @@
                                 <td rowspan="{{ $nivel->indicadores->count() }}">{{ $nivel->resumen_narrativo }}</td>
                             @endif
                             <td>{{ $indicador->nombre }}</td>
-                            <td class="semaforo-{{ $semaforo }}" style="text-align: center;">{{ ucfirst($semaforo) }}</td>
+                            <td class="semaforo-{{ $semaforo }}" style="text-align: center;">{{ $semaforo === 'rojo_alto' ? 'Rojo alto' : ucfirst($semaforo) }}</td>
                         </tr>
                     @endforeach
                 @endif
@@ -222,6 +223,9 @@
                 <div class="segmento semaforo-rojo" style="width: {{ max(($evaluacion->conteo_semaforos['rojo'] ?? 0) * 10, 20) }}px;">
                     {{ $evaluacion->conteo_semaforos['rojo'] ?? 0 }} Rojo
                 </div>
+                <div class="segmento semaforo-rojo_alto" style="width: {{ max(($evaluacion->conteo_semaforos['rojo_alto'] ?? 0) * 10, 20) }}px;">
+                    {{ $evaluacion->conteo_semaforos['rojo_alto'] ?? 0 }} Rojo alto
+                </div>
             </div>
         @endif
     @else
@@ -238,6 +242,7 @@
                     <th>Verde</th>
                     <th>Amarillo</th>
                     <th>Rojo</th>
+                    <th>Rojo alto</th>
                 </tr>
             </thead>
             <tbody>
@@ -247,6 +252,7 @@
                         <td class="semaforo-verde" style="text-align: center;">{{ $conteos['verde'] }}</td>
                         <td class="semaforo-amarillo" style="text-align: center;">{{ $conteos['amarillo'] }}</td>
                         <td class="semaforo-rojo" style="text-align: center;">{{ $conteos['rojo'] }}</td>
+                        <td class="semaforo-rojo_alto" style="text-align: center;">{{ $conteos['rojo_alto'] ?? 0 }}</td>
                     </tr>
                 @endforeach
             </tbody>

@@ -23,7 +23,7 @@ class IndiceEficaciaService
             ->get();
 
         $desgloseNiveles = [];
-        $conteoSemaforos = ['verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'sin_dato' => 0];
+        $conteoSemaforos = ['verde' => 0, 'amarillo' => 0, 'rojo' => 0, 'rojo_alto' => 0, 'sin_dato' => 0];
         $totalEvaluados = 0;
         $totalNoEvaluados = 0;
         $indice = 0.0;

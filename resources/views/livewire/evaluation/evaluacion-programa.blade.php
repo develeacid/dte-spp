@@ -62,11 +62,11 @@
                 {{-- Donut de semáforos --}}
                 <div wire:ignore>
                     <x-charts.donut
-                        :labels="['Verde', 'Amarillo', 'Rojo', 'Sin dato']"
-                        :series="[$tablero['conteo']['verde'] ?? 0, $tablero['conteo']['amarillo'] ?? 0, $tablero['conteo']['rojo'] ?? 0, $tablero['conteo']['sin_dato'] ?? 0]"
-                        :colors="['#22c55e', '#eab308', '#ef4444', '#9ca3af']"
+                        :labels="['Verde', 'Amarillo', 'Rojo', 'Rojo alto', 'Sin dato']"
+                        :series="[$tablero['conteo']['verde'] ?? 0, $tablero['conteo']['amarillo'] ?? 0, $tablero['conteo']['rojo'] ?? 0, $tablero['conteo']['rojo_alto'] ?? 0, $tablero['conteo']['sin_dato'] ?? 0]"
+                        :colors="['#22c55e', '#eab308', '#ef4444', '#a855f7', '#9ca3af']"
                         :height="250"
-                        centerText="{{ ($tablero['conteo']['verde'] ?? 0) + ($tablero['conteo']['amarillo'] ?? 0) + ($tablero['conteo']['rojo'] ?? 0) + ($tablero['conteo']['sin_dato'] ?? 0) }}"
+                        centerText="{{ ($tablero['conteo']['verde'] ?? 0) + ($tablero['conteo']['amarillo'] ?? 0) + ($tablero['conteo']['rojo'] ?? 0) + ($tablero['conteo']['rojo_alto'] ?? 0) + ($tablero['conteo']['sin_dato'] ?? 0) }}"
                         centerSubtext="indicadores"
                     />
                 </div>
@@ -208,11 +208,24 @@
 
                 <div class="space-y-4">
                     @foreach($desviaciones as $desv)
-                        <div class="rounded-lg border {{ $desv['semaforo'] === 'rojo' ? 'border-red-200 bg-red-50' : 'border-yellow-200 bg-yellow-50' }} p-4">
+                        @php
+                            $desvBorde = match ($desv['semaforo']) {
+                                'rojo' => 'border-red-200 bg-red-50',
+                                'rojo_alto' => 'border-purple-200 bg-purple-50',
+                                default => 'border-yellow-200 bg-yellow-50',
+                            };
+                            $desvBadge = match ($desv['semaforo']) {
+                                'rojo' => 'bg-red-100 text-red-800',
+                                'rojo_alto' => 'bg-purple-100 text-purple-800',
+                                default => 'bg-yellow-100 text-yellow-800',
+                            };
+                            $desvEtiqueta = $desv['semaforo'] === 'rojo_alto' ? 'Rojo alto' : ucfirst($desv['semaforo']);
+                        @endphp
+                        <div class="rounded-lg border {{ $desvBorde }} p-4">
                             <div class="flex items-center justify-between mb-2">
                                 <h3 class="font-medium text-gray-900">{{ $desv['indicador'] }}</h3>
-                                <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $desv['semaforo'] === 'rojo' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                    {{ ucfirst($desv['semaforo']) }}
+                                <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $desvBadge }}">
+                                    {{ $desvEtiqueta }}
                                 </span>
                             </div>
                             <div class="grid grid-cols-1 gap-2 md:grid-cols-2 text-sm">

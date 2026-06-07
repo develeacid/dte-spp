@@ -110,7 +110,7 @@
                     </div>
 
                     {{-- Semaforos --}}
-                    <div class="mb-4 grid grid-cols-4 gap-2">
+                    <div class="mb-4 grid grid-cols-5 gap-2">
                         <div class="rounded bg-green-50 p-2 text-center">
                             <span class="text-lg font-bold text-green-700">{{ $eje['semaforos']['verde'] }}</span>
                             <p class="text-xs text-green-600">Verde</p>
@@ -122,6 +122,10 @@
                         <div class="rounded bg-red-50 p-2 text-center">
                             <span class="text-lg font-bold text-red-700">{{ $eje['semaforos']['rojo'] }}</span>
                             <p class="text-xs text-red-600">Rojo</p>
+                        </div>
+                        <div class="rounded bg-purple-50 p-2 text-center">
+                            <span class="text-lg font-bold text-purple-700">{{ $eje['semaforos']['rojo_alto'] ?? 0 }}</span>
+                            <p class="text-xs text-purple-600">Rojo alto</p>
                         </div>
                         <div class="rounded bg-gray-50 p-2 text-center">
                             <span class="text-lg font-bold text-gray-700">{{ $eje['semaforos']['sin_dato'] }}</span>
@@ -184,7 +188,7 @@
                         <span class="text-2xl font-bold text-indigo-600">{{ number_format($ods['promedio_indice'], 2) }}%</span>
                     </div>
 
-                    <div class="mb-4 grid grid-cols-4 gap-2">
+                    <div class="mb-4 grid grid-cols-5 gap-2">
                         <div class="rounded bg-green-50 p-2 text-center">
                             <span class="text-lg font-bold text-green-700">{{ $ods['semaforos']['verde'] }}</span>
                             <p class="text-xs text-green-600">Verde</p>
@@ -196,6 +200,10 @@
                         <div class="rounded bg-red-50 p-2 text-center">
                             <span class="text-lg font-bold text-red-700">{{ $ods['semaforos']['rojo'] }}</span>
                             <p class="text-xs text-red-600">Rojo</p>
+                        </div>
+                        <div class="rounded bg-purple-50 p-2 text-center">
+                            <span class="text-lg font-bold text-purple-700">{{ $ods['semaforos']['rojo_alto'] ?? 0 }}</span>
+                            <p class="text-xs text-purple-600">Rojo alto</p>
                         </div>
                         <div class="rounded bg-gray-50 p-2 text-center">
                             <span class="text-lg font-bold text-gray-700">{{ $ods['semaforos']['sin_dato'] }}</span>
@@ -260,7 +268,7 @@
                         <span class="text-2xl font-bold text-indigo-600">{{ number_format($ur['promedio_indice'], 2) }}%</span>
                     </div>
 
-                    <div class="mb-4 grid grid-cols-4 gap-2">
+                    <div class="mb-4 grid grid-cols-5 gap-2">
                         <div class="rounded bg-green-50 p-2 text-center">
                             <span class="text-lg font-bold text-green-700">{{ $ur['semaforos']['verde'] }}</span>
                             <p class="text-xs text-green-600">Verde</p>
@@ -272,6 +280,10 @@
                         <div class="rounded bg-red-50 p-2 text-center">
                             <span class="text-lg font-bold text-red-700">{{ $ur['semaforos']['rojo'] }}</span>
                             <p class="text-xs text-red-600">Rojo</p>
+                        </div>
+                        <div class="rounded bg-purple-50 p-2 text-center">
+                            <span class="text-lg font-bold text-purple-700">{{ $ur['semaforos']['rojo_alto'] ?? 0 }}</span>
+                            <p class="text-xs text-purple-600">Rojo alto</p>
                         </div>
                         <div class="rounded bg-gray-50 p-2 text-center">
                             <span class="text-lg font-bold text-gray-700">{{ $ur['semaforos']['sin_dato'] }}</span>
@@ -336,7 +348,7 @@
                         <span class="text-2xl font-bold text-indigo-600">{{ number_format($anexo['promedio_indice'], 2) }}%</span>
                     </div>
 
-                    <div class="mb-4 grid grid-cols-4 gap-2">
+                    <div class="mb-4 grid grid-cols-5 gap-2">
                         <div class="rounded bg-green-50 p-2 text-center">
                             <span class="text-lg font-bold text-green-700">{{ $anexo['semaforos']['verde'] }}</span>
                             <p class="text-xs text-green-600">Verde</p>
@@ -348,6 +360,10 @@
                         <div class="rounded bg-red-50 p-2 text-center">
                             <span class="text-lg font-bold text-red-700">{{ $anexo['semaforos']['rojo'] }}</span>
                             <p class="text-xs text-red-600">Rojo</p>
+                        </div>
+                        <div class="rounded bg-purple-50 p-2 text-center">
+                            <span class="text-lg font-bold text-purple-700">{{ $anexo['semaforos']['rojo_alto'] ?? 0 }}</span>
+                            <p class="text-xs text-purple-600">Rojo alto</p>
                         </div>
                         <div class="rounded bg-gray-50 p-2 text-center">
                             <span class="text-lg font-bold text-gray-700">{{ $anexo['semaforos']['sin_dato'] }}</span>

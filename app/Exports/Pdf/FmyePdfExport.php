@@ -109,6 +109,7 @@ class FmyePdfExport
                 'verde' => $avances->where('semaforo_calculado', 'verde')->count(),
                 'amarillo' => $avances->where('semaforo_calculado', 'amarillo')->count(),
                 'rojo' => $avances->where('semaforo_calculado', 'rojo')->count(),
+                'rojo_alto' => $avances->where('semaforo_calculado', 'rojo_alto')->count(),
             ];
         }
 

@@ -6,10 +6,11 @@
 
 @php
     $dotColors = [
-        'verde'    => 'bg-green-500',
-        'amarillo' => 'bg-yellow-500',
-        'rojo'     => 'bg-red-500',
-        'gris'     => 'bg-gray-400',
+        'verde'     => 'bg-green-500',
+        'amarillo'  => 'bg-yellow-500',
+        'rojo'      => 'bg-red-500',
+        'rojo_alto' => 'bg-purple-500',
+        'gris'      => 'bg-gray-400',
     ];
 
     $dotSizes = [

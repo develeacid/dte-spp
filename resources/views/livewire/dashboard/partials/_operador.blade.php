@@ -28,8 +28,9 @@
     <div class="bg-white rounded-lg border border-gray-200 p-5 mt-6">
         <h3 class="text-sm font-semibold text-gray-700 mb-4">Semaforo de Mis Indicadores</h3>
         <x-charts.donut
-            :labels="['Verde', 'Amarillo', 'Rojo']"
-            :series="[$this->semaforo['verde'], $this->semaforo['amarillo'], $this->semaforo['rojo']]"
+            :labels="['Verde', 'Amarillo', 'Rojo', 'Rojo alto']"
+            :series="[$this->semaforo['verde'], $this->semaforo['amarillo'], $this->semaforo['rojo'], $this->semaforo['rojo_alto'] ?? 0]"
+            :colors="['#22c55e', '#eab308', '#ef4444', '#a855f7']"
         />
     </div>
 @endif

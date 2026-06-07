@@ -43,8 +43,9 @@
             <h3 class="text-sm font-semibold text-gray-700 mb-4">Semaforo Global</h3>
             @if($this->haySemaforoData)
                 <x-charts.donut
-                    :labels="['Verde', 'Amarillo', 'Rojo']"
-                    :series="[$this->semaforo['verde'], $this->semaforo['amarillo'], $this->semaforo['rojo']]"
+                    :labels="['Verde', 'Amarillo', 'Rojo', 'Rojo alto']"
+                    :series="[$this->semaforo['verde'], $this->semaforo['amarillo'], $this->semaforo['rojo'], $this->semaforo['rojo_alto'] ?? 0]"
+                    :colors="['#22c55e', '#eab308', '#ef4444', '#a855f7']"
                 />
             @else
                 <x-ui.empty-state title="Sin datos de semaforo" description="No hay avances con semaforo calculado." />

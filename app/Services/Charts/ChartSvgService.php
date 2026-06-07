@@ -9,6 +9,7 @@ class ChartSvgService
         'verde' => '#22C55E',
         'amarillo' => '#EAB308',
         'rojo' => '#EF4444',
+        'rojo_alto' => '#A855F7',
         'gris' => '#9CA3AF',
     ];
 
@@ -16,6 +17,7 @@ class ChartSvgService
         'verde' => '#BBF7D0',
         'amarillo' => '#FEF08A',
         'rojo' => '#FECACA',
+        'rojo_alto' => '#E9D5FF',
         'gris' => '#E5E7EB',
     ];
 
