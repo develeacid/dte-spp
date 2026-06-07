@@ -364,7 +364,7 @@
                                         ['etiqueta' => 'Verde', 'color' => 'text-green-700', 'min' => 'rango_verde_min', 'max' => 'rango_verde_max'],
                                         ['etiqueta' => 'Amarillo', 'color' => 'text-yellow-700', 'min' => 'rango_amarillo_min', 'max' => 'rango_amarillo_max'],
                                         ['etiqueta' => 'Rojo', 'color' => 'text-red-700', 'min' => 'rango_rojo_min', 'max' => 'rango_rojo_max'],
-                                        ['etiqueta' => 'Rojo alto — sobrecumplimiento', 'color' => 'text-red-900', 'min' => 'rango_rojo_alto_min', 'max' => 'rango_rojo_alto_max'],
+                                        ['etiqueta' => 'Rojo alto — sobrecumplimiento', 'color' => 'text-purple-700', 'min' => 'rango_rojo_alto_min', 'max' => 'rango_rojo_alto_max'],
                                     ];
                                 @endphp
                                 @foreach ($semFilas as $fila)
