@@ -257,6 +257,53 @@ class MirEditor extends Component
         Indicador::findOrFail($indicadorId)->update($validated);
     }
 
+    public function guardarSemaforo(int $indicadorId, array $rangos): void
+    {
+        $indicador = Indicador::with('unidadMedida')->findOrFail($indicadorId);
+        $clave = 'semaforo_'.$indicadorId;
+
+        $campos = [
+            'rango_verde_min', 'rango_verde_max',
+            'rango_amarillo_min', 'rango_amarillo_max',
+            'rango_rojo_min', 'rango_rojo_max',
+            'rango_rojo_alto_min', 'rango_rojo_alto_max',
+        ];
+
+        // 1. Normalizar: '' → null, numérico → float, no-numérico → error de validación.
+        $normalizados = [];
+        foreach ($campos as $campo) {
+            $valor = $rangos[$campo] ?? null;
+
+            if ($valor === null || $valor === '') {
+                $normalizados[$campo] = null;
+
+                continue;
+            }
+
+            if (! is_numeric($valor)) {
+                $this->addError($clave, 'Los rangos del semáforo deben ser valores numéricos.');
+
+                return;
+            }
+
+            $normalizados[$campo] = (float) $valor;
+        }
+
+        // 2. Validaciones duras de negocio (Task 2).
+        $errores = IndicadorReglasService::validarRangosSemaforo($indicador, $normalizados);
+
+        // 3. Si hay errores, no guarda.
+        if (! empty($errores)) {
+            $this->addError($clave, implode(' ', $errores));
+
+            return;
+        }
+
+        // 4. OK → persiste y limpia el error.
+        $indicador->update($normalizados);
+        $this->resetErrorBag($clave);
+    }
+
     public function sugerirFormula(int $indicadorId): void
     {
         $indicador = Indicador::with('mirNivel')->findOrFail($indicadorId);

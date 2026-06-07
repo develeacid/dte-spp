@@ -342,6 +342,56 @@
                             />
                         </div>
 
+                        {{-- Semáforo (rangos) — semaforización 4 rangos --}}
+                        <div class="mt-2 border-t border-gray-100 pt-1"
+                            x-data="{
+                                sem: {
+                                    rango_verde_min: @js($indicador->rango_verde_min),
+                                    rango_verde_max: @js($indicador->rango_verde_max),
+                                    rango_amarillo_min: @js($indicador->rango_amarillo_min),
+                                    rango_amarillo_max: @js($indicador->rango_amarillo_max),
+                                    rango_rojo_min: @js($indicador->rango_rojo_min),
+                                    rango_rojo_max: @js($indicador->rango_rojo_max),
+                                    rango_rojo_alto_min: @js($indicador->rango_rojo_alto_min),
+                                    rango_rojo_alto_max: @js($indicador->rango_rojo_alto_max),
+                                },
+                                guardarSem() { $wire.guardarSemaforo({{ $indicador->id }}, { ...this.sem }); }
+                            }">
+                            <span class="text-xs font-medium text-gray-500">Semáforo (rangos)</span>
+                            <div class="mt-1 space-y-1">
+                                @php
+                                    $semFilas = [
+                                        ['etiqueta' => 'Verde', 'color' => 'text-green-700', 'min' => 'rango_verde_min', 'max' => 'rango_verde_max'],
+                                        ['etiqueta' => 'Amarillo', 'color' => 'text-yellow-700', 'min' => 'rango_amarillo_min', 'max' => 'rango_amarillo_max'],
+                                        ['etiqueta' => 'Rojo', 'color' => 'text-red-700', 'min' => 'rango_rojo_min', 'max' => 'rango_rojo_max'],
+                                        ['etiqueta' => 'Rojo alto — sobrecumplimiento', 'color' => 'text-red-900', 'min' => 'rango_rojo_alto_min', 'max' => 'rango_rojo_alto_max'],
+                                    ];
+                                @endphp
+                                @foreach ($semFilas as $fila)
+                                    <div class="grid grid-cols-3 items-center gap-1">
+                                        <span class="text-[10px] font-medium {{ $fila['color'] }}">{{ $fila['etiqueta'] }}</span>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            x-model="sem.{{ $fila['min'] }}"
+                                            @change="guardarSem()"
+                                            class="rounded border-gray-300 text-xs"
+                                            placeholder="mín"
+                                        />
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            x-model="sem.{{ $fila['max'] }}"
+                                            @change="guardarSem()"
+                                            class="rounded border-gray-300 text-xs"
+                                            placeholder="máx"
+                                        />
+                                    </div>
+                                @endforeach
+                            </div>
+                            @error('semaforo_'.$indicador->id) <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
                         @if ($indicador->variables->count() > 0)
                             <div class="mt-1 space-y-1">
                                 @foreach ($indicador->variables as $variable)
