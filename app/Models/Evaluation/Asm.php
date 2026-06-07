@@ -57,6 +57,7 @@ class Asm extends Model
             ->logOnly([
                 'programa_presupuestario_id',
                 'evaluacion_id',
+                'recomendacion_id',
                 'tipo_plazo',
                 'tipo_accion',
                 'responsable_id',

@@ -4,6 +4,7 @@ namespace App\Exports\Excel;
 
 use App\Models\Evaluation\Asm;
 use App\Services\Evaluation\AsmReportService;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -45,6 +46,7 @@ class AsmExport implements FromCollection, WithHeadings, WithMapping, WithStyles
             'Semáforo',
             'Días restantes',
             'Evidencia',
+            'Recomendación de origen',
         ];
     }
 
@@ -56,7 +58,7 @@ class AsmExport implements FromCollection, WithHeadings, WithMapping, WithStyles
             return [
                 '',
                 "TOTALES — Total: {$t['total']} | Cumplidos: {$t['cumplidos']} | En proceso: {$t['en_proceso']} | Pendientes: {$t['pendientes']} | Vencidos: {$t['vencidos']}",
-                '', '', '', '', '', '', '', '', '', '', '', '',
+                '', '', '', '', '', '', '', '', '', '', '', '', '',
             ];
         }
 
@@ -79,6 +81,7 @@ class AsmExport implements FromCollection, WithHeadings, WithMapping, WithStyles
             $asm->semaforo->label(),
             $dias,
             $asm->evidencia_url ?? '',
+            $asm->recomendacion ? Str::limit($asm->recomendacion->descripcion, 120) : '—',
         ];
     }
 

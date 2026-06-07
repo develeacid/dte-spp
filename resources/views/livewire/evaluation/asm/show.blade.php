@@ -24,6 +24,31 @@
                 @if($asm->evidencia_url)
                     <div><strong>Evidencia:</strong> <a class="text-indigo-600" href="{{ $asm->evidencia_url }}" target="_blank">{{ $asm->evidencia_url }}</a></div>
                 @endif
+
+                @if($asm->recomendacion)
+                    @php($recomendacion = $asm->recomendacion)
+                    @php($hallazgo = $recomendacion->hallazgo)
+                    @php($externa = $hallazgo?->informe?->evaluacionExterna)
+                    <div class="mt-4 rounded border border-gray-200 bg-gray-50 p-3">
+                        <h3 class="text-sm font-semibold mb-2">Origen</h3>
+                        @if($hallazgo)
+                            <div class="text-xs text-gray-600">
+                                <span class="font-medium">Hallazgo:</span> {{ \Illuminate\Support\Str::limit($hallazgo->descripcion, 120) }}
+                            </div>
+                            <div class="text-xs text-gray-400 my-1">↓</div>
+                        @endif
+                        <div class="text-xs">
+                            <span class="font-medium">Recomendación:</span> {{ $recomendacion->descripcion }}
+                        </div>
+                        @if($externa)
+                            @can('ver_evaluacion_externa')
+                                <div class="mt-2">
+                                    <a class="text-indigo-600 text-xs" href="{{ route('evaluation.externas.show', $externa) }}">Ver evaluación externa</a>
+                                </div>
+                            @endcan
+                        @endif
+                    </div>
+                @endif
             </div>
 
             <div>
