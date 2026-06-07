@@ -382,8 +382,8 @@
                                 </button>
                             </div>
                             @error('meta_'.$indicador->id) <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                            @if ($metaWarning)
-                                <p class="mt-1 text-xs text-amber-600">{{ $metaWarning }}</p>
+                            @if (!empty($metaWarnings[$indicador->id]))
+                                <p class="mt-1 text-xs text-amber-600">{{ $metaWarnings[$indicador->id] }}</p>
                             @endif
                         </div>
 

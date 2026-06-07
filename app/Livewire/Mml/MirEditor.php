@@ -53,7 +53,8 @@ class MirEditor extends Component
 
     public ?array $snapshotData = null;
 
-    public ?string $metaWarning = null;
+    /** @var array<int, string> warning B3 keyed por indicador id */
+    public array $metaWarnings = [];
 
     public function mount(ProgramaPresupuestario $programa): void
     {
@@ -298,6 +299,10 @@ class MirEditor extends Component
     {
         $clave = "meta_{$indicadorId}";
 
+        // Limpia cualquier warning stale de este indicador en TODOS los paths
+        // (scoping, no-numérico, sin justificación, éxito).
+        unset($this->metaWarnings[$indicadorId]);
+
         // Scoping: el indicador debe pertenecer al programa del editor.
         $indicador = Indicador::whereHas(
             'mirNivel',
@@ -353,7 +358,6 @@ class MirEditor extends Component
         $this->resetErrorBag($clave);
 
         // Advertencia B3 no bloqueante: la meta queda fuera del rango verde.
-        $this->metaWarning = null;
         if ($metaNueva !== null
             && $indicador->rango_verde_min !== null
             && $indicador->rango_verde_max !== null) {
@@ -361,7 +365,7 @@ class MirEditor extends Component
             $max = (float) $indicador->rango_verde_max;
 
             if ($metaNueva < $min || $metaNueva > $max) {
-                $this->metaWarning = "La meta queda fuera del rango verde [{$min}, {$max}].";
+                $this->metaWarnings[$indicadorId] = "La meta queda fuera del rango verde [{$min}, {$max}].";
             }
         }
     }

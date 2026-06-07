@@ -187,7 +187,39 @@ class MetaJustificacionTest extends TestCase
         // La meta se guarda aunque quede fuera del rango verde.
         $this->assertEquals(50.0, (float) $indicador->fresh()->meta);
 
-        // Hay una advertencia presente.
-        $component->assertSet('metaWarning', fn ($v) => $v !== null && str_contains($v, '90'));
+        // Hay una advertencia presente, keyed por el id del indicador.
+        $component->assertSet('metaWarnings', fn ($v) => isset($v[$indicador->id]) && str_contains($v[$indicador->id], '90'));
+    }
+
+    public function test_advertencia_b3_aislada_por_indicador(): void
+    {
+        [$programa, $indicadorA] = $this->crearProgramaConIndicador(meta: null, extra: [
+            'rango_verde_min' => 90,
+            'rango_verde_max' => 110,
+        ]);
+
+        // Segundo indicador en el mismo nivel, también con rango verde.
+        $indicadorB = Indicador::create([
+            'mir_nivel_id' => $indicadorA->mir_nivel_id,
+            'nombre' => 'Indicador B',
+            'tipo' => 'estrategico', 'dimension' => 'eficacia',
+            'frecuencia' => FrecuenciaMedicion::TRIMESTRAL->value, 'meta' => null,
+            'activo_seguimiento' => true, 'orden' => 2,
+            'rango_verde_min' => 90, 'rango_verde_max' => 110,
+        ]);
+
+        $this->actingAs($this->user);
+
+        // Solo se cambia la meta del indicador A fuera de rango.
+        $component = Livewire::test(MirEditor::class, ['programa' => $programa])
+            ->call('guardarMeta', $indicadorA->id, 50)
+            ->assertHasNoErrors();
+
+        // El warning vive SOLO bajo el indicador del cambio; B no aparece.
+        $component->assertSet('metaWarnings', function ($v) use ($indicadorA, $indicadorB) {
+            return isset($v[$indicadorA->id])
+                && str_contains($v[$indicadorA->id], '90')
+                && ! array_key_exists($indicadorB->id, $v);
+        });
     }
 }
