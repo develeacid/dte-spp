@@ -39,12 +39,13 @@ class TrackingOptionsTest extends TestCase
     }
 
     #[Test]
-    public function semaforos_devuelve_4_valores(): void
+    public function semaforos_devuelve_5_valores(): void
     {
         $semaforos = TrackingOptions::semaforos();
 
-        $this->assertCount(4, $semaforos);
-        $this->assertSame(['verde', 'amarillo', 'rojo', 'gris'], array_keys($semaforos));
+        $this->assertCount(5, $semaforos);
+        $this->assertSame(['verde', 'amarillo', 'rojo', 'rojo_alto', 'gris'], array_keys($semaforos));
+        $this->assertSame('Rojo alto', $semaforos['rojo_alto']);
         $this->assertSame('Sin datos', $semaforos['gris']);
     }
 }

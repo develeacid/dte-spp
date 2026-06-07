@@ -36,6 +36,16 @@ Invariantes endurecidos a nivel BD + app (migraciones `2026_06_06_0000XX`, backf
 - **Revisiones de meta**: cambiar metas ya calendarizadas exige justificación → audit trail en `revisiones_meta`.
 - Dataset transparencia **DS-07 Medios de Verificación** (`pub_medios_verificacion`); post-deploy: `sail artisan migrate --path=database/migrations/public --database=pgsql_public` + re-seed `sail artisan db:seed --class='Database\Seeders\Transparencia\DatasetsCatalogoSeeder'`.
 
+## Semaforización 4 rangos (sprint 2026-06-07)
+
+- Semáforo de avances tiene **4 valores**: `verde|amarillo|rojo|rojo_alto`. `rojo_alto` = sobrecumplimiento (señal de mala planeación, norma CONEVAL); color UI **púrpura** (`bg-purple-500` / `#a855f7`).
+- Sin rangos definidos, el fallback por meta marca rojo_alto cuando cumplimiento > `config('tracking.umbral_sobrecumplimiento', 130)` % (`TRACKING_UMBRAL_SOBRECUMPLIMIENTO`; requiere valor > 100). Descendente: espejo (resultado < meta×(2−U/100)).
+- Rangos capturables en el editor MIR (sección "Semáforo (rangos)") con validaciones duras B3-B6: meta∈verde, sin solapamiento, PCT⊂[0,100], rojo_min≠0 (`IndicadorReglasService::validarRangosSemaforo`).
+- `medios_verificacion.frecuencia` normalizada al enum `FrecuenciaMedicion` (select en UI); regla B7: el MV debe publicarse al menos tan frecuentemente como se mide el indicador (`orden()` del enum).
+- `conteo_semaforos` JSONB y `pub_evaluaciones_anuales` incluyen `rojo_alto`/`semaforos_rojo_alto`. Captura amarillo/rojo/**rojo_alto** exige análisis de desviación.
+- Las reglas B3-B7 también son hallazgos `advertencia` en el diagnóstico de import (latentes hasta que el parser emita rangos/clave_unidad/frecuencia de MV).
+- Post-deploy: `migrate` (privada: 2 migraciones) + `migrate --path=database/migrations/public --database=pgsql_public` (columna nueva).
+
 ## BD Pública (Transparencia)
 
 Tras `sail up` por primera vez (o tras `sail down -v`), aprovisionar la BD pública `spp_public` y migrar las tablas `pub_*`:
