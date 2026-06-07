@@ -83,9 +83,18 @@
                             @endif
                         </div>
                         @if($puedeGestionar)
+                            @php
+                                // Suma de ASMs derivados de todas las recomendaciones del hallazgo
+                                // (asms_count viene del withCount en render()). Si > 0, el confirm
+                                // avisa que esos ASM quedarán desvinculados (nullOnDelete), no borrados.
+                                $asmsDerivados = $hallazgo->recomendaciones->sum('asms_count');
+                                $confirmEliminar = $asmsDerivados > 0
+                                    ? "¿Eliminar este hallazgo y todas sus recomendaciones? Los {$asmsDerivados} ASM derivados quedarán desvinculados."
+                                    : '¿Eliminar este hallazgo y todas sus recomendaciones?';
+                            @endphp
                             <button
                                 wire:click="eliminarHallazgo({{ $hallazgo->id }})"
-                                wire:confirm="¿Eliminar este hallazgo y todas sus recomendaciones?"
+                                wire:confirm="{{ $confirmEliminar }}"
                                 class="shrink-0 text-xs text-red-500 hover:text-red-700">
                                 Eliminar
                             </button>

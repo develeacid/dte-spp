@@ -277,6 +277,45 @@ class InformeEditorTest extends TestCase
         $this->assertDatabaseHas('hallazgos', ['id' => $hallazgo->id]);
     }
 
+    public function test_usuario_ver_only_no_puede_agregar_recomendacion(): void
+    {
+        $hallazgo = Hallazgo::factory()->create(['informe_evaluacion_id' => $this->informe->id]);
+
+        $this->actingAs($this->operador);
+
+        Livewire::test(InformeEvaluacionEditor::class, ['evaluacionExterna' => $this->externa])
+            ->set("nuevaRecomendacion.{$hallazgo->id}.descripcion", 'Recomendación con texto suficiente')
+            ->set("nuevaRecomendacion.{$hallazgo->id}.prioridad", PrioridadRecomendacion::ALTA->value)
+            ->call('agregarRecomendacion', $hallazgo->id)
+            ->assertForbidden();
+
+        $this->assertSame(0, Recomendacion::where('hallazgo_id', $hallazgo->id)->count());
+    }
+
+    public function test_usuario_ver_only_no_puede_eliminar_recomendacion(): void
+    {
+        $hallazgo = Hallazgo::factory()->create(['informe_evaluacion_id' => $this->informe->id]);
+        $reco = Recomendacion::factory()->create(['hallazgo_id' => $hallazgo->id]);
+
+        $this->actingAs($this->operador);
+
+        Livewire::test(InformeEvaluacionEditor::class, ['evaluacionExterna' => $this->externa])
+            ->call('eliminarRecomendacion', $reco->id)
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('recomendaciones', ['id' => $reco->id]);
+    }
+
+    public function test_confirm_eliminar_hallazgo_avisa_asms_desvinculados(): void
+    {
+        $hallazgo = Hallazgo::factory()->create(['informe_evaluacion_id' => $this->informe->id]);
+        $reco = Recomendacion::factory()->create(['hallazgo_id' => $hallazgo->id]);
+        Asm::factory()->create(['recomendacion_id' => $reco->id]);
+
+        Livewire::test(InformeEvaluacionEditor::class, ['evaluacionExterna' => $this->externa])
+            ->assertSee('quedarán desvinculados');
+    }
+
     public function test_contador_asms_derivados_visible(): void
     {
         $hallazgo = Hallazgo::factory()->create(['informe_evaluacion_id' => $this->informe->id]);

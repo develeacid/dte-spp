@@ -114,6 +114,14 @@ class InformeEvaluacionEditor extends Component
             return;
         }
 
+        // Decisión de diseño: NO se bloquea el borrado aunque las recomendaciones
+        // tengan ASMs derivados. Los ASM sobreviven huérfanos por la FK nullOnDelete
+        // (recomendacion_id pasa a NULL). El confirm del blade avisa al usuario cuántos
+        // ASM quedarán desvinculados antes de confirmar.
+        //
+        // El delete() explícito de recomendaciones es belt-and-suspenders del
+        // cascadeOnDelete ya definido en la migración: NO eliminar, garantiza el
+        // borrado aunque alguien afloje la FK en el futuro.
         $hallazgo->recomendaciones()->delete();
         $hallazgo->delete();
 
