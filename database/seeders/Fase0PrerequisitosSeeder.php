@@ -6,6 +6,7 @@ use App\Enums\SystemRole;
 use App\Enums\TipoUnidadResponsable;
 use App\Models\Team;
 use App\Models\User;
+use Database\Seeders\Evaluation\EvaluacionExternaPermissionsSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -28,6 +29,7 @@ class Fase0PrerequisitosSeeder extends Seeder
             PresupuestoPermissionsSeeder::class,
             JuridicoPermissionsSeeder::class,
             AsmPermissionsSeeder::class,
+            EvaluacionExternaPermissionsSeeder::class,
             PadronPermissionsSeeder::class,
             TransparenciaPermissionsSeeder::class,
         ]);
