@@ -96,6 +96,9 @@ class MirDiagnosticoService
                 // Reglas B3-B6 (C-066..C-069): validación de rangos de semáforo.
                 // Reusa la lógica pura de IndicadorReglasService sin construir un
                 // modelo Indicador (el diagnóstico opera sobre el DTO importado).
+                // NOTA: latente hasta que MirParserService poble rangos_semaforo/
+                // clave_unidad/meta (hoy siempre null → no dispara). Los tests
+                // ejercitan la regla con DTOs sintéticos.
                 if (! empty($ind['rangos_semaforo']) && is_array($ind['rangos_semaforo'])) {
                     $meta = isset($ind['meta']) && $ind['meta'] !== null ? (float) $ind['meta'] : null;
                     $claveUnidad = $ind['clave_unidad'] ?? null;
@@ -112,6 +115,7 @@ class MirDiagnosticoService
 
                 // Regla B7: la frecuencia de cada medio de verificación no debe
                 // medir menos seguido que el indicador (orden MV <= orden indicador).
+                // NOTA: latente hasta que el parser emita medios[].frecuencia.
                 $frecuenciaInd = ! empty($ind['frecuencia'])
                     ? FrecuenciaMedicion::tryFrom($ind['frecuencia'])
                     : null;
