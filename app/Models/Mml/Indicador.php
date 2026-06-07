@@ -35,6 +35,7 @@ class Indicador extends Model
         'rango_verde_min', 'rango_verde_max',
         'rango_amarillo_min', 'rango_amarillo_max',
         'rango_rojo_min', 'rango_rojo_max',
+        'rango_rojo_alto_min', 'rango_rojo_alto_max',
         'unidad_medida_id', 'orden', 'activo_seguimiento',
     ];
 
@@ -74,6 +75,7 @@ class Indicador extends Model
                 'rango_verde_min', 'rango_verde_max',
                 'rango_amarillo_min', 'rango_amarillo_max',
                 'rango_rojo_min', 'rango_rojo_max',
+                'rango_rojo_alto_min', 'rango_rojo_alto_max',
                 'unidad_medida_id', 'activo_seguimiento',
             ])
             ->logOnlyDirty()
