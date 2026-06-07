@@ -4,6 +4,7 @@ namespace App\Livewire\Mml;
 
 use App\Contracts\LlmServiceInterface;
 use App\Enums\FrecuenciaMedicion;
+use App\Enums\TipoFuenteMv;
 use App\Enums\TipoNivelMir;
 use App\Models\CatalogoUnidadMedida;
 use App\Models\Evaluation\AnexoTransversal;
@@ -254,15 +255,29 @@ class MirEditor extends Component
             return;
         }
 
-        $medio->load('indicador');
+        $medio->load('indicador.mirNivel');
 
         $validated = validator($data, [
             'nombre' => 'required|string|max:255',
             'fuente' => 'nullable|string|max:255',
+            'tipo_fuente' => ['nullable', Rule::in(TipoFuenteMv::values())],
             'organismo' => 'nullable|string|max:255',
             'url' => 'nullable|url|max:2048',
             'frecuencia' => ['nullable', Rule::in(FrecuenciaMedicion::values())],
         ])->validate();
+
+        // Validación B9 (C-073): FIN/PROPÓSITO exigen fuente externa. NULL no
+        // bloquea (legacy sin clasificar; el diagnóstico lo reporta aparte).
+        $errorB9 = IndicadorReglasService::validarTipoFuenteMv(
+            $medio->indicador->mirNivel->tipo_nivel,
+            $validated['tipo_fuente'] ?? null,
+        );
+
+        if ($errorB9 !== null) {
+            throw ValidationException::withMessages([
+                "tipo_fuente_mv_{$medioId}" => $errorB9,
+            ]);
+        }
 
         // Validación cruzada B7: el MV debe publicarse al menos tan seguido como
         // se mide el indicador. Solo aplica cuando el valor entrante es un value
