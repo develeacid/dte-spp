@@ -481,8 +481,8 @@
                         <span class="text-xs font-medium text-gray-500">Medios:</span>
                         @foreach ($indicador->mediosVerificacion as $medio)
                             <div class="flex items-start gap-1 mt-1" wire:key="medio-{{ $medio->id }}"
-                                x-data="{ mvNombre: @js($medio->nombre ?? ''), mvOrganismo: @js($medio->organismo ?? ''), mvUrl: @js($medio->url ?? ''), mvFrecuencia: @js($medio->frecuencia ?? ''),
-                                    guardarMv() { $wire.guardarMedioVerificacion({{ $medio->id }}, { nombre: this.mvNombre, organismo: this.mvOrganismo || null, url: this.mvUrl || null, frecuencia: this.mvFrecuencia || null }); } }">
+                                x-data="{ mvNombre: @js($medio->nombre ?? ''), mvOrganismo: @js($medio->organismo ?? ''), mvUrl: @js($medio->url ?? ''), mvFrecuencia: @js($medio->frecuencia ?? ''), mvTipoFuente: @js($medio->tipo_fuente ?? ''),
+                                    guardarMv() { $wire.guardarMedioVerificacion({{ $medio->id }}, { nombre: this.mvNombre, organismo: this.mvOrganismo || null, url: this.mvUrl || null, frecuencia: this.mvFrecuencia || null, tipo_fuente: this.mvTipoFuente || null }); } }">
                                 <div class="flex-1 space-y-1">
                                     <input
                                         type="text"
@@ -517,6 +517,69 @@
                                     </select>
                                     @error('frecuencia_mv_'.$medio->id) <p class="text-xs text-red-600">{{ $message }}</p> @enderror
                                     @error('frecuencia') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                                    <select
+                                        x-model="mvTipoFuente"
+                                        @change="guardarMv()"
+                                        class="w-full rounded border-gray-300 text-xs"
+                                    >
+                                        <option value="">— Tipo de fuente —</option>
+                                        @foreach (\App\Enums\TipoFuenteMv::cases() as $tf)
+                                            <option value="{{ $tf->value }}">{{ $tf->label() }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('tipo_fuente_mv_'.$medio->id) <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                                    @error('tipo_fuente') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+
+                                    {{-- CREMA del MV (C-072) --}}
+                                    <div class="flex items-center gap-2">
+                                        <button
+                                            wire:click="validarCremaMv({{ $medio->id }})"
+                                            wire:loading.attr="disabled"
+                                            wire:target="validarCremaMv({{ $medio->id }})"
+                                            class="text-xs text-purple-600 hover:text-purple-800"
+                                        >
+                                            <span wire:loading.remove wire:target="validarCremaMv({{ $medio->id }})">Validar CREMA</span>
+                                            <span wire:loading wire:target="validarCremaMv({{ $medio->id }})">Evaluando...</span>
+                                        </button>
+
+                                        @if ($medio->cremaValidacion)
+                                            @php
+                                                $cremaMv = $medio->cremaValidacion;
+                                                $letrasMv = [
+                                                    ['letra' => 'C', 'campo' => 'confiable', 'obs' => $cremaMv->confiable_observacion],
+                                                    ['letra' => 'R', 'campo' => 'relevante', 'obs' => $cremaMv->relevante_observacion],
+                                                    ['letra' => 'E', 'campo' => 'economico', 'obs' => $cremaMv->economico_observacion],
+                                                    ['letra' => 'M', 'campo' => 'monitoreable', 'obs' => $cremaMv->monitoreable_observacion],
+                                                    ['letra' => 'A', 'campo' => 'asequible', 'obs' => $cremaMv->asequible_observacion],
+                                                ];
+                                            @endphp
+                                            <div class="flex gap-0.5">
+                                                @foreach ($letrasMv as $l)
+                                                    <span
+                                                        class="inline-flex h-5 w-5 items-center justify-center rounded text-xs font-bold {{ $cremaMv->{$l['campo']} ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}"
+                                                        title="{{ $l['obs'] ?: 'Cumple' }}"
+                                                    >{{ $l['letra'] }}</span>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <div x-data="{ cremaOpen: false,
+                                        cremaMv: { confiable: @js((bool) ($medio->cremaValidacion?->confiable)), relevante: @js((bool) ($medio->cremaValidacion?->relevante)), economico: @js((bool) ($medio->cremaValidacion?->economico)), monitoreable: @js((bool) ($medio->cremaValidacion?->monitoreable)), asequible: @js((bool) ($medio->cremaValidacion?->asequible)) },
+                                        guardarCrema() { $wire.guardarCremaMv({{ $medio->id }}, this.cremaMv); } }">
+                                        <button @click="cremaOpen = !cremaOpen" type="button" class="text-xs text-gray-500 hover:text-gray-700">
+                                            <span x-show="!cremaOpen">Editar CREMA manualmente</span>
+                                            <span x-show="cremaOpen">Ocultar CREMA</span>
+                                        </button>
+                                        <div x-show="cremaOpen" x-cloak class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                                            @foreach ([['confiable', 'Confiable'], ['relevante', 'Relevante'], ['economico', 'Económico'], ['monitoreable', 'Monitoreable'], ['asequible', 'Asequible']] as [$campo, $etiqueta])
+                                                <label class="inline-flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+                                                    <input type="checkbox" x-model="cremaMv.{{ $campo }}" @change="guardarCrema()" class="h-3.5 w-3.5 rounded border-gray-300 text-purple-600" />
+                                                    {{ $etiqueta }}
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                 </div>
                                 <button wire:click="eliminarMedioVerificacion({{ $medio->id }})" class="mt-1 text-red-400 hover:text-red-600">
                                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -644,7 +707,22 @@
     <td class="px-3 py-3 align-top">
         @if(!$editando)
         {{-- READ MODE --}}
-        <p class="text-sm text-gray-800">{{ $nivel->supuestos ?: '-' }}</p>
+        @if ($nivel->supuestosEstructurados->isEmpty())
+            <p class="text-sm text-gray-800">-</p>
+        @else
+            <ul class="space-y-1">
+                @foreach ($nivel->supuestosEstructurados as $supuesto)
+                    <li class="text-sm text-gray-800 flex items-start gap-1.5" wire:key="supuesto-read-{{ $supuesto->id }}">
+                        <span>{{ $supuesto->descripcion ?: '—' }}</span>
+                        @if ($supuesto->esValido())
+                            <span class="mt-0.5 inline-flex shrink-0 items-center rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700" title="Externo, relevante y razonablemente probable">Válido</span>
+                        @else
+                            <span class="mt-0.5 inline-flex shrink-0 items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700" title="Falta marcar externo/relevante/probable">Incompleto</span>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+        @endif
         @if ($nivel->team)
             <span class="mt-1 inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700">
                 UR: {{ $nivel->team->name }}
@@ -652,12 +730,42 @@
         @endif
         @else
         {{-- EDIT MODE --}}
-        <textarea
-            wire:change="guardarNivel({{ $nivel->id }}, 'supuestos', $event.target.value)"
-            class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            rows="3"
-            placeholder="Supuestos..."
-        >{{ $nivel->supuestos }}</textarea>
+        <div class="space-y-2">
+            @foreach ($nivel->supuestosEstructurados as $supuesto)
+                <div class="rounded border border-gray-200 p-1.5" wire:key="supuesto-{{ $supuesto->id }}"
+                    x-data="{ supDesc: @js($supuesto->descripcion ?? ''), supExt: @js((bool) $supuesto->es_externo), supRel: @js((bool) $supuesto->es_relevante), supProb: @js((bool) $supuesto->probabilidad_razonable),
+                        guardarSup() { $wire.guardarSupuesto({{ $supuesto->id }}, { descripcion: this.supDesc, es_externo: this.supExt, es_relevante: this.supRel, probabilidad_razonable: this.supProb }); } }">
+                    <div class="flex items-start gap-1">
+                        <textarea
+                            x-model="supDesc"
+                            @change="guardarSup()"
+                            class="w-full rounded border-gray-300 text-xs"
+                            rows="2"
+                            placeholder="Supuesto..."
+                        ></textarea>
+                        <button wire:click="eliminarSupuesto({{ $supuesto->id }})" class="mt-1 text-red-400 hover:text-red-600">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <div class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                        <label class="inline-flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+                            <input type="checkbox" x-model="supExt" @change="guardarSup()" class="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600" />
+                            Externo
+                        </label>
+                        <label class="inline-flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+                            <input type="checkbox" x-model="supRel" @change="guardarSup()" class="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600" />
+                            Relevante
+                        </label>
+                        <label class="inline-flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+                            <input type="checkbox" x-model="supProb" @change="guardarSup()" class="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600" />
+                            Probable
+                        </label>
+                    </div>
+                    @error('descripcion') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+            @endforeach
+            <button wire:click="agregarSupuesto({{ $nivel->id }})" class="text-xs text-blue-500 hover:text-blue-700">+ Supuesto</button>
+        </div>
 
         {{-- UR Coadyuvante --}}
         @if (in_array($tipoEnum, [\App\Enums\TipoNivelMir::COMPONENTE, \App\Enums\TipoNivelMir::ACTIVIDAD]))

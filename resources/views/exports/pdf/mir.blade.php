@@ -62,7 +62,7 @@
                             @if(!$loop->last)<hr style="margin: 2px 0;">@endif
                         @endforeach
                     </td>
-                    <td>{{ $nivel->supuestos }}</td>
+                    <td>{{ $nivel->supuestos_texto }}</td>
                     <td>
                         @foreach($nivel->indicadores as $ind)
                             <div>{{ $ind->meta }}</div>

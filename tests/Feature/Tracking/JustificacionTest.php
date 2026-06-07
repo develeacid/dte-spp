@@ -8,6 +8,7 @@ use App\Enums\TipoNivelMir;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\MirSupuesto;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Tracking\Avance;
 use App\Models\User;
@@ -47,7 +48,11 @@ class JustificacionTest extends TestCase
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => TipoNivelMir::PROPOSITO->value,
             'resumen_narrativo' => 'Los beneficiarios incrementan su calidad de vida',
-            'supuestos' => 'Las condiciones economicas se mantienen estables. Los beneficiarios participan activamente.',
+            'orden' => 1,
+        ]);
+        MirSupuesto::create([
+            'mir_nivel_id' => $this->nivel->id,
+            'descripcion' => 'Las condiciones economicas se mantienen estables. Los beneficiarios participan activamente.',
             'orden' => 1,
         ]);
 
@@ -107,7 +112,7 @@ class JustificacionTest extends TestCase
 
     public function test_genera_justificacion_sin_supuestos(): void
     {
-        $this->nivel->update(['supuestos' => null]);
+        $this->nivel->supuestosEstructurados()->delete();
         $this->avance->refresh();
 
         $mock = $this->mock(LlmService::class);

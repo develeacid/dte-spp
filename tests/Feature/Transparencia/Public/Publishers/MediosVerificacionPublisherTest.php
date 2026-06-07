@@ -53,6 +53,7 @@ class MediosVerificacionPublisherTest extends TestCase
             'nombre' => 'Registro Administrativo',
             'descripcion' => 'Registro mensual de beneficiarios',
             'fuente' => 'Sistema interno',
+            'tipo_fuente' => 'administrativa_propia',
             'organismo' => 'Secretaría de Desarrollo Económico',
             'url' => 'https://datos.example.gob.mx/mv-001',
             'frecuencia' => 'mensual',
@@ -96,6 +97,7 @@ class MediosVerificacionPublisherTest extends TestCase
         $this->assertSame('Registro mensual de beneficiarios', $row->descripcion);
         $this->assertSame('Sistema interno', $row->fuente);
         $this->assertSame('Secretaría de Desarrollo Económico', $row->organismo);
+        $this->assertSame('administrativa_propia', $row->tipo_fuente);
         $this->assertSame('https://datos.example.gob.mx/mv-001', $row->url);
         $this->assertSame('mensual', $row->frecuencia);
     }

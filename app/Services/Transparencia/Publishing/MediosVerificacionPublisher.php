@@ -39,6 +39,7 @@ class MediosVerificacionPublisher extends BasePublisher
                     'mv_nombre' => $mv->nombre,
                     'descripcion' => $mv->descripcion,
                     'fuente' => $mv->fuente,
+                    'tipo_fuente' => $mv->tipo_fuente,
                     'organismo' => $mv->organismo,
                     'url' => $mv->url,
                     'frecuencia' => $mv->frecuencia,

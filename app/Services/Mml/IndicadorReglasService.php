@@ -4,6 +4,7 @@ namespace App\Services\Mml;
 
 use App\Enums\DimensionIndicador;
 use App\Enums\FrecuenciaMedicion;
+use App\Enums\TipoFuenteMv;
 use App\Enums\TipoIndicador;
 use App\Enums\TipoNivelMir;
 use App\Models\Mml\Indicador;
@@ -80,6 +81,36 @@ class IndicadorReglasService
                 'resumen' => $nivel->resumen_narrativo ?? '',
             ])
             ->all();
+    }
+
+    /**
+     * Regla B9 (C-073): los MV de indicadores de FIN y PROPÓSITO deben tener
+     * fuente externa e independiente (INEGI, CONEVAL, Estadística 911, etc.).
+     * COMPONENTES y ACTIVIDADES admiten registros administrativos propios.
+     *
+     * Función pura: usable desde la UI (MirEditor) y el diagnóstico de import.
+     * NULL/'' = sin clasificar (legacy): no bloquea, el diagnóstico lo reporta
+     * como advertencia.
+     *
+     * @return string|null Mensaje de error, o null si es válido.
+     */
+    public static function validarTipoFuenteMv(TipoNivelMir $nivel, ?string $tipoFuente): ?string
+    {
+        if ($tipoFuente === null || $tipoFuente === '') {
+            return null;
+        }
+
+        $esResultado = in_array($nivel, [TipoNivelMir::FIN, TipoNivelMir::PROPOSITO], true);
+
+        if ($esResultado && $tipoFuente !== TipoFuenteMv::EXTERNA->value) {
+            return sprintf(
+                'Los medios de verificación de %s requieren una fuente externa e independiente (INEGI, CONEVAL, etc.); se indicó "%s".',
+                $nivel === TipoNivelMir::FIN ? 'FIN' : 'PROPÓSITO',
+                TipoFuenteMv::tryFrom($tipoFuente)?->label() ?? $tipoFuente,
+            );
+        }
+
+        return null;
     }
 
     /**

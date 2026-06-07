@@ -5,13 +5,14 @@ namespace App\Models\Mml;
 use App\Enums\FrecuenciaMedicion;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class MedioVerificacion extends Model
 {
     protected $table = 'medios_verificacion';
 
     protected $fillable = [
-        'indicador_id', 'nombre', 'descripcion', 'fuente',
+        'indicador_id', 'nombre', 'descripcion', 'fuente', 'tipo_fuente',
         'organismo', 'url', 'frecuencia', 'orden',
     ];
 
@@ -25,6 +26,11 @@ class MedioVerificacion extends Model
     public function indicador(): BelongsTo
     {
         return $this->belongsTo(Indicador::class);
+    }
+
+    public function cremaValidacion(): HasOne
+    {
+        return $this->hasOne(CremaValidacionMv::class, 'medio_verificacion_id');
     }
 
     /**

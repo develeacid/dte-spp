@@ -112,14 +112,15 @@ class CoberturaPrograma extends Component
     {
         $niveles = $this->programa->mirNiveles()
             ->whereIn('tipo_nivel', [TipoNivelMir::PROPOSITO, TipoNivelMir::COMPONENTE])
+            ->with('supuestosEstructurados')
             ->orderByRaw("CASE tipo_nivel WHEN 'proposito' THEN 0 WHEN 'componente' THEN 1 ELSE 2 END")
             ->orderBy('orden')
-            ->get(['tipo_nivel', 'resumen_narrativo', 'supuestos']);
+            ->get(['id', 'tipo_nivel', 'resumen_narrativo']);
 
         $this->supuestos = $niveles->map(fn ($n) => [
             'tipo' => $n->tipo_nivel instanceof TipoNivelMir ? $n->tipo_nivel->value : (string) $n->tipo_nivel,
             'narrativa' => (string) $n->resumen_narrativo,
-            'supuestos' => $n->supuestos,
+            'supuestos' => $n->supuestos_texto,
         ])->toArray();
     }
 

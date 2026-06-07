@@ -14,6 +14,7 @@ use App\Models\Mml\Indicador;
 use App\Models\Mml\IndicadorVariable;
 use App\Models\Mml\MedioVerificacion;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\MirSupuesto;
 use App\Models\ProgramaPresupuestario;
 use Illuminate\Support\Facades\DB;
 
@@ -104,14 +105,25 @@ class MirPersistenciaService
             }
         }
 
-        return MirNivel::create([
+        $nivel = MirNivel::create([
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => $tipoNivel?->value ?? $nivelData['tipo_nivel'] ?? 'fin',
             'resumen_narrativo' => $nivelData['resumen_narrativo'] ?? '',
-            'supuestos' => $nivelData['supuestos'] ?? null,
             'orden' => $nivelData['orden'] ?? 0,
             'componente_id' => $componenteId,
         ]);
+
+        // V2-A8: el texto de supuestos del documento importado se persiste
+        // como supuesto estructurado sin validez marcada (semántica backfill).
+        if (! empty($nivelData['supuestos'])) {
+            MirSupuesto::create([
+                'mir_nivel_id' => $nivel->id,
+                'descripcion' => $nivelData['supuestos'],
+                'orden' => 1,
+            ]);
+        }
+
+        return $nivel;
     }
 
     private function crearIndicadores(MirNivel $nivel, array $indicadoresData, int $nivelIdx, array $criticalGaps): void

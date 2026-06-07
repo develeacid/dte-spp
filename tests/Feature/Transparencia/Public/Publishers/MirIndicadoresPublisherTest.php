@@ -4,6 +4,7 @@ namespace Tests\Feature\Transparencia\Public\Publishers;
 
 use App\Models\Mml\Indicador;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\MirSupuesto;
 use App\Models\ProgramaPresupuestario;
 use App\Models\Transparencia\DatasetAbierto;
 use App\Services\Transparencia\Publishing\MirIndicadoresPublisher;
@@ -32,7 +33,11 @@ class MirIndicadoresPublisherTest extends TestCase
             'programa_presupuestario_id' => $programa->id,
             'tipo_nivel' => 'fin',
             'resumen_narrativo' => 'Resumen del Fin',
-            'supuestos' => 'Supuestos del Fin',
+        ]);
+        MirSupuesto::create([
+            'mir_nivel_id' => $nivel->id,
+            'descripcion' => 'Supuestos del Fin',
+            'orden' => 1,
         ]);
         Indicador::create([
             'mir_nivel_id' => $nivel->id,

@@ -4,14 +4,17 @@ namespace App\Livewire\Mml;
 
 use App\Contracts\LlmServiceInterface;
 use App\Enums\FrecuenciaMedicion;
+use App\Enums\TipoFuenteMv;
 use App\Enums\TipoNivelMir;
 use App\Models\CatalogoUnidadMedida;
 use App\Models\Evaluation\AnexoTransversal;
 use App\Models\Mml\CremaaValidacion;
+use App\Models\Mml\CremaValidacionMv;
 use App\Models\Mml\Indicador;
 use App\Models\Mml\IndicadorVariable;
 use App\Models\Mml\MedioVerificacion;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\MirSupuesto;
 use App\Models\Mml\RevisionMeta;
 use App\Models\PedLineaAccion;
 use App\Models\PedObjetivoEstrategico;
@@ -119,9 +122,68 @@ class MirEditor extends Component
             return;
         }
 
-        if (in_array($campo, ['resumen_narrativo', 'supuestos'])) {
+        // 'supuestos' legacy ya no es escribible: los supuestos viven en
+        // mir_supuestos (V2-A8) vía agregar/guardar/eliminarSupuesto.
+        if (in_array($campo, ['resumen_narrativo'])) {
             $nivel->update([$campo => $valor]);
         }
+    }
+
+    /**
+     * Resuelve un MirSupuesto garantizando que cuelga del programa montado.
+     */
+    private function supuestoDelPrograma(int $id): ?MirSupuesto
+    {
+        return MirSupuesto::whereHas(
+            'mirNivel',
+            fn ($q) => $q->where('programa_presupuestario_id', $this->programa->id)
+        )->find($id);
+    }
+
+    public function agregarSupuesto(int $nivelId): void
+    {
+        $nivel = $this->nivelDelPrograma($nivelId);
+
+        if ($nivel === null) {
+            return;
+        }
+
+        $maxOrden = $nivel->supuestosEstructurados()->max('orden') ?? 0;
+
+        MirSupuesto::create([
+            'mir_nivel_id' => $nivelId,
+            'descripcion' => '',
+            'orden' => $maxOrden + 1,
+        ]);
+    }
+
+    public function guardarSupuesto(int $supuestoId, array $data): void
+    {
+        $supuesto = $this->supuestoDelPrograma($supuestoId);
+
+        if ($supuesto === null) {
+            return;
+        }
+
+        $validated = validator($data, [
+            'descripcion' => 'required|string|max:2000',
+            'es_externo' => 'boolean',
+            'es_relevante' => 'boolean',
+            'probabilidad_razonable' => 'boolean',
+        ])->validate();
+
+        $supuesto->update($validated);
+    }
+
+    public function eliminarSupuesto(int $supuestoId): void
+    {
+        $supuesto = $this->supuestoDelPrograma($supuestoId);
+
+        if ($supuesto === null) {
+            return;
+        }
+
+        $supuesto->delete();
     }
 
     public function agregarComponente(): void
@@ -254,15 +316,29 @@ class MirEditor extends Component
             return;
         }
 
-        $medio->load('indicador');
+        $medio->load('indicador.mirNivel');
 
         $validated = validator($data, [
             'nombre' => 'required|string|max:255',
             'fuente' => 'nullable|string|max:255',
+            'tipo_fuente' => ['nullable', Rule::in(TipoFuenteMv::values())],
             'organismo' => 'nullable|string|max:255',
             'url' => 'nullable|url|max:2048',
             'frecuencia' => ['nullable', Rule::in(FrecuenciaMedicion::values())],
         ])->validate();
+
+        // Validación B9 (C-073): FIN/PROPÓSITO exigen fuente externa. NULL no
+        // bloquea (legacy sin clasificar; el diagnóstico lo reporta aparte).
+        $errorB9 = IndicadorReglasService::validarTipoFuenteMv(
+            $medio->indicador->mirNivel->tipo_nivel,
+            $validated['tipo_fuente'] ?? null,
+        );
+
+        if ($errorB9 !== null) {
+            throw ValidationException::withMessages([
+                "tipo_fuente_mv_{$medioId}" => $errorB9,
+            ]);
+        }
 
         // Validación cruzada B7: el MV debe publicarse al menos tan seguido como
         // se mide el indicador. Solo aplica cuando el valor entrante es un value
@@ -297,6 +373,88 @@ class MirEditor extends Component
         }
 
         $medio->delete();
+    }
+
+    private const CREMA_MV_FIELDS = ['confiable', 'relevante', 'economico', 'monitoreable', 'asequible'];
+
+    /**
+     * Checklist CREMA del MV capturada a mano (C-072): Confiable, Relevante,
+     * Económico, Monitoreable, Asequible.
+     */
+    public function guardarCremaMv(int $medioId, array $data): void
+    {
+        $medio = $this->medioDelPrograma($medioId);
+
+        if ($medio === null) {
+            return;
+        }
+
+        $rules = [];
+        foreach (self::CREMA_MV_FIELDS as $field) {
+            $rules[$field] = 'boolean';
+            $rules[$field.'_observacion'] = 'nullable|string|max:2000';
+        }
+
+        $validated = validator($data, $rules)->validate();
+
+        CremaValidacionMv::updateOrCreate(
+            ['medio_verificacion_id' => $medioId],
+            $validated,
+        );
+    }
+
+    /**
+     * Evalúa la checklist CREMA del MV con IA (mismo pipeline LLM que la
+     * CREMAA del indicador).
+     */
+    public function validarCremaMv(int $medioId): void
+    {
+        $medio = $this->medioDelPrograma($medioId);
+
+        if ($medio === null) {
+            return;
+        }
+
+        $medio->load('indicador.mirNivel');
+
+        if (empty($medio->nombre)) {
+            return;
+        }
+
+        $promptText = view('prompts.mir.validar-crema-mv', [
+            'nombre' => $medio->nombre,
+            'fuente' => $medio->fuente,
+            'tipoFuente' => $medio->tipo_fuente ? TipoFuenteMv::tryFrom($medio->tipo_fuente)?->label() : null,
+            'organismo' => $medio->organismo,
+            'url' => $medio->url,
+            'frecuencia' => $medio->frecuencia,
+            'indicador' => $medio->indicador?->nombre,
+            'resumenNarrativo' => $medio->indicador?->mirNivel?->resumen_narrativo,
+        ])->render();
+
+        try {
+            $llm = app(LlmServiceInterface::class);
+            $result = $llm->suggest($promptText);
+            $data = json_decode($result, true);
+
+            if (! is_array($data)) {
+                return;
+            }
+
+            $upsertData = ['medio_verificacion_id' => $medioId];
+
+            foreach (self::CREMA_MV_FIELDS as $field) {
+                $upsertData[$field] = (bool) ($data[$field] ?? false);
+                $upsertData[$field.'_observacion'] = $data[$field.'_observacion'] ?? null;
+            }
+
+            CremaValidacionMv::updateOrCreate(
+                ['medio_verificacion_id' => $medioId],
+                $upsertData,
+            );
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudo validar CREMA del MV con IA.');
+        }
     }
 
     public function extraerVariables(int $indicadorId): void
@@ -858,7 +1016,7 @@ class MirEditor extends Component
 
         $componentes = $this->programa->mirNiveles()
             ->where('tipo_nivel', TipoNivelMir::COMPONENTE->value)
-            ->with(['actividades.indicadores.mediosVerificacion', 'actividades.indicadores.cremaaValidacion', 'actividades.indicadores.variables', 'actividades.indicadores.anexosTransversales', 'actividades.pedObjetivoEstrategico', 'actividades.pedLineaAccion', 'actividades.team', 'indicadores.mediosVerificacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'indicadores.anexosTransversales', 'pedObjetivoEstrategico', 'pedLineaAccion', 'team'])
+            ->with(['actividades.indicadores.mediosVerificacion.cremaValidacion', 'actividades.indicadores.cremaaValidacion', 'actividades.indicadores.variables', 'actividades.indicadores.anexosTransversales', 'actividades.pedObjetivoEstrategico', 'actividades.pedLineaAccion', 'actividades.team', 'actividades.supuestosEstructurados', 'indicadores.mediosVerificacion.cremaValidacion', 'indicadores.cremaaValidacion', 'indicadores.variables', 'indicadores.anexosTransversales', 'pedObjetivoEstrategico', 'pedLineaAccion', 'team', 'supuestosEstructurados'])
             ->orderBy('orden')
             ->get();
 

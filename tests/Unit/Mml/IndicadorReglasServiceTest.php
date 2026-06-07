@@ -95,4 +95,30 @@ class IndicadorReglasServiceTest extends TestCase
         $this->assertEquals(['eficacia'], $reglas['dimensiones']);
         $this->assertEquals(['anual', 'bianual', 'sexenal'], $reglas['frecuencias']);
     }
+
+    // --- Regla B9 (C-073): FIN/PROPÓSITO requieren MV de fuente externa -------
+
+    public function test_b9_fin_y_proposito_rechazan_fuente_no_externa(): void
+    {
+        $this->assertNotNull(IndicadorReglasService::validarTipoFuenteMv(TipoNivelMir::FIN, 'administrativa_propia'));
+        $this->assertNotNull(IndicadorReglasService::validarTipoFuenteMv(TipoNivelMir::PROPOSITO, 'evaluacion_externa'));
+    }
+
+    public function test_b9_fin_y_proposito_aceptan_fuente_externa(): void
+    {
+        $this->assertNull(IndicadorReglasService::validarTipoFuenteMv(TipoNivelMir::FIN, 'externa'));
+        $this->assertNull(IndicadorReglasService::validarTipoFuenteMv(TipoNivelMir::PROPOSITO, 'externa'));
+    }
+
+    public function test_b9_componente_y_actividad_aceptan_cualquier_fuente(): void
+    {
+        $this->assertNull(IndicadorReglasService::validarTipoFuenteMv(TipoNivelMir::COMPONENTE, 'administrativa_propia'));
+        $this->assertNull(IndicadorReglasService::validarTipoFuenteMv(TipoNivelMir::ACTIVIDAD, 'evaluacion_externa'));
+    }
+
+    public function test_b9_fuente_null_no_bloquea(): void
+    {
+        $this->assertNull(IndicadorReglasService::validarTipoFuenteMv(TipoNivelMir::FIN, null));
+        $this->assertNull(IndicadorReglasService::validarTipoFuenteMv(TipoNivelMir::PROPOSITO, ''));
+    }
 }
