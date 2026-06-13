@@ -7,6 +7,7 @@ use App\Livewire\Mml\ArbolObjetivosBuilder;
 use App\Livewire\Mml\ArbolProblemaBuilder;
 use App\Livewire\Mml\CalendarizarMetas;
 use App\Livewire\Mml\CierreFiscalPanel;
+use App\Livewire\Mml\ClavePresupuestalEditor;
 use App\Livewire\Mml\CoberturaPrograma;
 use App\Livewire\Mml\CompletarHuecos;
 use App\Livewire\Mml\DashboardImportaciones;
@@ -50,6 +51,10 @@ Route::prefix('mml/programas')
         Route::get('/{programa}/cierre-fiscal', CierreFiscalPanel::class)
             ->middleware('can:gestionar_cierre_fiscal')
             ->name('mml.cierre-fiscal');
+
+        Route::get('/{programa}/clave-presupuestal', ClavePresupuestalEditor::class)
+            ->middleware('can:editar_mir')
+            ->name('mml.clave-presupuestal');
     });
 
 Route::prefix('mml')
