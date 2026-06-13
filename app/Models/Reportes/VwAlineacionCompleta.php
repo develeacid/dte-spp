@@ -21,4 +21,8 @@ class VwAlineacionCompleta extends Model
     public $timestamps = false;
 
     protected $guarded = [];
+
+    protected $casts = [
+        'ods_claves' => 'array',
+    ];
 }
