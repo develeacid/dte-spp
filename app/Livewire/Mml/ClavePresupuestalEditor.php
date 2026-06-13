@@ -39,15 +39,45 @@ class ClavePresupuestalEditor extends Component
 
     public ?int $subfuncion_id = null;
 
+    // Importación: clave SEFIP completa (32) que ya está en uso.
+    public ?string $clave_sefip = null;
+
+    /** Desglose de la última segmentación (informativo, para la vista). */
+    public array $desglose = [];
+
+    /** Avisos informativos de la última segmentación. */
+    public array $avisosSegmentacion = [];
+
     public function mount(ProgramaPresupuestario $programa): void
     {
         $this->authorize('editar_mir');
 
         $this->programa = $programa;
+        $this->clave_sefip = $programa->clave_sefip;
         foreach (['grupo', 'unidad_responsable', 'unidad_ejecutora', 'programa_clave',
             'subprograma', 'proyecto', 'actividad', 'finalidad_id', 'funcion_id', 'subfuncion_id'] as $campo) {
             $this->{$campo} = $programa->{$campo};
         }
+    }
+
+    /** Segmenta la clave SEFIP pegada: rellena los 7 campos y expone el desglose + avisos (no bloquea). */
+    public function segmentarClave(): void
+    {
+        if (blank($this->clave_sefip)) {
+            $this->avisosSegmentacion = ['Pega la clave SEFIP completa antes de segmentar.'];
+            $this->desglose = [];
+
+            return;
+        }
+
+        $resultado = ClavePresupuestalService::segmentar($this->clave_sefip);
+
+        foreach ($resultado['segmentos'] as $campo => $valor) {
+            $this->{$campo} = $valor;
+        }
+
+        $this->desglose = $resultado;
+        $this->avisosSegmentacion = $resultado['avisos'];
     }
 
     public function updatedFinalidadId(): void
@@ -111,6 +141,7 @@ class ClavePresupuestalEditor extends Component
             'subprograma', 'proyecto', 'actividad', 'finalidad_id', 'funcion_id', 'subfuncion_id'] as $campo) {
             $this->programa->{$campo} = $this->{$campo};
         }
+        $this->programa->clave_sefip = filled($this->clave_sefip) ? trim($this->clave_sefip) : null;
         $this->programa->save();
 
         session()->flash('success', 'Clave presupuestal guardada.');

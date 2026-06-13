@@ -33,6 +33,56 @@ class ClavePresupuestalService
         'actividad' => 'Actividad',
     ];
 
+    /**
+     * Segmenta una clave SEFIP completa (32 caracteres) en sus 4 bloques.
+     * Parser puro e informativo: limpia separadores, corta por posiciones fijas y
+     * acumula avisos (no lanza, no bloquea — la clave ya está en uso).
+     *
+     * @return array{segmentos: array<string,?int>, informativos: array<string,?string>, avisos: array<int,string>}
+     */
+    public static function segmentar(string $clave): array
+    {
+        $limpia = preg_replace('/[\s\-]/', '', $clave);
+        $avisos = [];
+
+        if (strlen($limpia) !== 32) {
+            $avisos[] = sprintf('La clave tiene %d caracteres; se esperan 32 (cadena SEFIP completa).', strlen($limpia));
+        }
+
+        $administrativa = substr($limpia, 0, 6);
+        $programatica = substr($limpia, 6, 11);
+        $objeto = substr($limpia, 17, 6);
+        $financiamiento = substr($limpia, 23, 9);
+
+        $numericos = $administrativa.$programatica;
+        if ($numericos !== '' && ! ctype_digit($numericos)) {
+            $avisos[] = 'Los bloques Administrativa y Programática deben ser numéricos.';
+        }
+
+        $seg = static function (string $bloque, int $inicio, int $largo): ?int {
+            $trozo = substr($bloque, $inicio, $largo);
+
+            return $trozo !== '' && ctype_digit($trozo) ? (int) $trozo : null;
+        };
+
+        return [
+            'segmentos' => [
+                'grupo' => $seg($administrativa, 0, 1),
+                'unidad_responsable' => $seg($administrativa, 1, 2),
+                'unidad_ejecutora' => $seg($administrativa, 3, 3),
+                'programa_clave' => $seg($programatica, 0, 3),
+                'subprograma' => $seg($programatica, 3, 2),
+                'proyecto' => $seg($programatica, 5, 3),
+                'actividad' => $seg($programatica, 8, 3),
+            ],
+            'informativos' => [
+                'objeto_del_gasto' => $objeto !== '' ? $objeto : null,
+                'financiamiento' => $financiamiento !== '' ? $financiamiento : null,
+            ],
+            'avisos' => $avisos,
+        ];
+    }
+
     /** Devuelve un array de mensajes de error; vacío = clave válida. */
     public static function validar(ProgramaPresupuestario $programa): array
     {
