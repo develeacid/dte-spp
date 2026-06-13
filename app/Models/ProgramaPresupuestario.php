@@ -10,9 +10,11 @@ use App\Models\Juridico\ValidacionJuridicaPrograma;
 use App\Models\Mml\Alternativa;
 use App\Models\Mml\Arbol;
 use App\Models\Mml\PoblacionPrograma;
+use App\Models\Presupuesto\ClasificacionFuncional;
 use App\Models\Presupuesto\PartidaPresupuestal;
 use App\Services\GeoBase\GeoBaseClient;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,6 +36,17 @@ class ProgramaPresupuestario extends Model
         'planeacion_completada_at',
         'created_by',
         'padron_geobase_activo',
+        // Clave presupuestal canónica SEFIP/CONAC (nivel programa).
+        'grupo',
+        'unidad_responsable',
+        'unidad_ejecutora',
+        'programa_clave',
+        'subprograma',
+        'proyecto',
+        'actividad',
+        'finalidad_id',
+        'funcion_id',
+        'subfuncion_id',
     ];
 
     protected function casts(): array
@@ -75,6 +88,68 @@ class ProgramaPresupuestario extends Model
     public function arboles(): HasMany
     {
         return $this->hasMany(Arbol::class, 'programa_presupuestario_id');
+    }
+
+    // --- Clasificación Funcional CONAC (clave presupuestal canónica) ---
+
+    public function finalidad(): BelongsTo
+    {
+        return $this->belongsTo(ClasificacionFuncional::class, 'finalidad_id');
+    }
+
+    public function funcion(): BelongsTo
+    {
+        return $this->belongsTo(ClasificacionFuncional::class, 'funcion_id');
+    }
+
+    public function subfuncion(): BelongsTo
+    {
+        return $this->belongsTo(ClasificacionFuncional::class, 'subfuncion_id');
+    }
+
+    /**
+     * Campos administrativos + programáticos que componen la clave canónica nivel programa.
+     */
+    private const SEGMENTOS_CLAVE = [
+        'grupo', 'unidad_responsable', 'unidad_ejecutora',
+        'programa_clave', 'subprograma', 'proyecto', 'actividad',
+    ];
+
+    /**
+     * Clave presupuestaria canónica SEFIP (bloques Administrativa + Programática, 17 dígitos).
+     * NULL si falta algún segmento administrativo/programático.
+     */
+    protected function clavePresupuestalCanonica(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->componerClaveCanonica());
+    }
+
+    /**
+     * Composición documentada y configurable de la clave canónica.
+     * Administrativa: Grupo(1) UR(2) UE(3). Programática: Programa(3) Subprog(2) Proyecto(3) Actividad(3).
+     */
+    private function componerClaveCanonica(): ?string
+    {
+        if (! $this->claveCanonicaCompleta()) {
+            return null;
+        }
+
+        $administrativa = sprintf('%01d%02d%03d', $this->grupo, $this->unidad_responsable, $this->unidad_ejecutora);
+        $programatica = sprintf('%03d%02d%03d%03d', $this->programa_clave, $this->subprograma, $this->proyecto, $this->actividad);
+
+        return $administrativa.$programatica;
+    }
+
+    /** True cuando los 7 segmentos administrativos/programáticos están capturados (0 es válido). */
+    public function claveCanonicaCompleta(): bool
+    {
+        foreach (self::SEGMENTOS_CLAVE as $segmento) {
+            if ($this->{$segmento} === null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function arbolProblema()

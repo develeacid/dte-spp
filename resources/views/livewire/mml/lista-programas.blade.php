@@ -104,6 +104,12 @@
                                             MIR
                                         </a>
                                     @endif
+                                    @can('editar_mir')
+                                        <a href="{{ route('mml.clave-presupuestal', $programa) }}"
+                                           class="text-sky-600 hover:text-sky-800 font-medium text-sm">
+                                            Clave
+                                        </a>
+                                    @endcan
                                     @if($programa->padron_geobase_activo)
                                         @can('ver_padron')
                                             <a href="{{ route('mml.padron', $programa) }}"

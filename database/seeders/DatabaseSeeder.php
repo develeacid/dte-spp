@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Database\Seeders\Cascade\AlineacionesSeeder;
+use Database\Seeders\Cascade\ClasificacionFuncionalSeeder;
 use Database\Seeders\Cascade\PedSeeder;
 use Database\Seeders\Cascade\ProgramasDerivadosSeeder;
 use Database\Seeders\Mml\OdsSeeder;
@@ -24,6 +25,7 @@ class DatabaseSeeder extends Seeder
             OdsSeeder::class,
             PndSeeder::class,
             UnidadesMedidaSeeder::class,
+            ClasificacionFuncionalSeeder::class,
             PedSeeder::class,
             ProgramasDerivadosSeeder::class,
             AlineacionesSeeder::class,
