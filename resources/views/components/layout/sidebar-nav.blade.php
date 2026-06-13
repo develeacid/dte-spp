@@ -80,6 +80,7 @@
     <x-slot:tooltip>
         @can('ver_datos_financieros')<a href="{{ route('presupuesto.panel') }}" class="block py-1 hover:text-brand-light">Panel</a>@endcan
         @can('gestionar_presupuesto')<a href="{{ route('presupuesto.partidas') }}" class="block py-1 hover:text-brand-light">Partidas</a>@endcan
+        @can('ver_datos_financieros')<a href="{{ route('presupuesto.poa') }}" class="block py-1 hover:text-brand-light">POA</a>@endcan
         @can('exportar_cuenta_publica')<a href="{{ route('presupuesto.cuenta-publica') }}" class="block py-1 hover:text-brand-light">Cuenta Pública</a>@endcan
     </x-slot:tooltip>
 
@@ -101,6 +102,11 @@
     @can('gestionar_presupuesto')
         <x-ui.sidebar-item href="{{ route('presupuesto.importar') }}" :active="request()->routeIs('presupuesto.importar')">
             Importar
+        </x-ui.sidebar-item>
+    @endcan
+    @can('ver_datos_financieros')
+        <x-ui.sidebar-item href="{{ route('presupuesto.poa') }}" :active="request()->routeIs('presupuesto.poa')">
+            Programa Operativo Anual
         </x-ui.sidebar-item>
     @endcan
     @can('exportar_cuenta_publica')

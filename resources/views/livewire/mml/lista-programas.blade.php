@@ -110,6 +110,18 @@
                                             Clave
                                         </a>
                                     @endcan
+                                    @can('firmar_iaff')
+                                        <a href="{{ route('mml.iaff', $programa) }}"
+                                           class="text-teal-600 hover:text-teal-800 font-medium text-sm">
+                                            IAFF
+                                        </a>
+                                    @endcan
+                                    @can('gestionar_cierre_fiscal')
+                                        <a href="{{ route('mml.cierre-fiscal', $programa) }}"
+                                           class="text-rose-600 hover:text-rose-800 font-medium text-sm">
+                                            Cierre fiscal
+                                        </a>
+                                    @endcan
                                     @if($programa->padron_geobase_activo)
                                         @can('ver_padron')
                                             <a href="{{ route('mml.padron', $programa) }}"
