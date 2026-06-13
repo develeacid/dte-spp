@@ -18,6 +18,7 @@ use App\Models\Mml\IndicadorVariable;
 use App\Models\Mml\MedioVerificacion;
 use App\Models\Mml\MetaPeriodo;
 use App\Models\Mml\MirNivel;
+use App\Models\Mml\MirSupuesto;
 use App\Models\Mml\PoblacionPrograma;
 use App\Models\PedLineaAccion;
 use App\Models\PedObjetivoEstrategico;
@@ -364,11 +365,12 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             $mirNivel = MirNivel::firstOrCreate(
                 ['programa_presupuestario_id' => $programa->id, 'tipo_nivel' => $nivel['tipo'], 'orden' => $nivel['orden']],
                 [
-                    'resumen_narrativo' => $nivel['resumen'], 'supuestos' => $nivel['supuesto'],
+                    'resumen_narrativo' => $nivel['resumen'],
                     'ped_linea_accion_id' => $pedLineaId, 'team_id' => $teamId,
                 ]
             );
             $componenteIds[$nivel['orden']] = $mirNivel->id;
+            $this->crearSupuestoEstructurado($mirNivel, $nivel['supuesto'] ?? null);
             $this->crearIndicadorCompleto($mirNivel, $nivel, $programa);
         }
 
@@ -379,7 +381,7 @@ class Fase1PlaneacionMmlSeeder extends Seeder
             }
 
             $attrs = [
-                'resumen_narrativo' => $nivel['resumen'], 'supuestos' => $nivel['supuesto'],
+                'resumen_narrativo' => $nivel['resumen'],
             ];
 
             if (in_array($nivel['tipo'], [TipoNivelMir::FIN, TipoNivelMir::PROPOSITO])) {
@@ -402,8 +404,37 @@ class Fase1PlaneacionMmlSeeder extends Seeder
                 $attrs
             );
 
+            $this->crearSupuestoEstructurado($mirNivel, $nivel['supuesto'] ?? null);
             $this->crearIndicadorCompleto($mirNivel, $nivel, $programa);
         }
+    }
+
+    /**
+     * Crea el supuesto estructurado (PR #34, modelo `mir_supuestos`) a partir
+     * del texto definido en `mirDefinitions`. Ya no escribe la columna legacy
+     * `mir_niveles.supuestos` (deprecada, sin lectores en la UI).
+     *
+     * Validez variada para demo: por defecto 3/3, pero los niveles de
+     * ACTIVIDAD quedan como parcial (solo externo) para que la UI muestre
+     * ambos estados. Idempotente vía firstOrCreate por (nivel, descripción).
+     */
+    private function crearSupuestoEstructurado(MirNivel $mirNivel, ?string $texto): void
+    {
+        if (! filled($texto)) {
+            return;
+        }
+
+        $esParcial = $mirNivel->tipo_nivel === TipoNivelMir::ACTIVIDAD;
+
+        MirSupuesto::firstOrCreate(
+            ['mir_nivel_id' => $mirNivel->id, 'descripcion' => $texto],
+            [
+                'es_externo' => true,
+                'es_relevante' => ! $esParcial,
+                'probabilidad_razonable' => ! $esParcial,
+                'orden' => 1,
+            ]
+        );
     }
 
     private function crearIndicadorCompleto(MirNivel $mirNivel, array $nivelDef, ProgramaPresupuestario $programa): void
@@ -442,11 +473,26 @@ class Fase1PlaneacionMmlSeeder extends Seeder
 
         $indicador = Indicador::create($indAttrs);
 
+        // Demo opcional: año de la línea base (V2 hardening) para ISM-001.
+        if ($programa->clave === 'ISM-001' && in_array($mirNivel->tipo_nivel, [TipoNivelMir::FIN, TipoNivelMir::PROPOSITO], true)) {
+            $indicador->update(['linea_base_anio' => 2025]);
+        }
+
         // Variables
         foreach ($nivelDef['variables'] as $var) {
+            $varAttrs = ['nombre' => $var['nombre'], 'orden' => $var['orden']];
+
+            // Demo opcional: fuente de la variable para la primera variable de
+            // los niveles de resultado de ISM-001.
+            if ($programa->clave === 'ISM-001'
+                && in_array($mirNivel->tipo_nivel, [TipoNivelMir::FIN, TipoNivelMir::PROPOSITO], true)
+                && $var['orden'] === 1) {
+                $varAttrs['fuente'] = 'Sistema de Cuentas Nacionales de México, INEGI';
+            }
+
             IndicadorVariable::firstOrCreate(
                 ['indicador_id' => $indicador->id, 'simbolo' => $var['simbolo']],
-                ['nombre' => $var['nombre'], 'orden' => $var['orden']]
+                $varAttrs
             );
         }
 
@@ -476,9 +522,18 @@ class Fase1PlaneacionMmlSeeder extends Seeder
         }
 
         // Medio de verificacion
+        $mvAttrs = ['fuente' => $nivelDef['medio_fuente'], 'frecuencia' => $frecuencia->value, 'orden' => 1];
+
+        // Demo opcional: organismo y URL del MV para los niveles de resultado
+        // de ISM-001 (fuente externa e independiente, regla B9).
+        if ($programa->clave === 'ISM-001' && in_array($mirNivel->tipo_nivel, [TipoNivelMir::FIN, TipoNivelMir::PROPOSITO], true)) {
+            $mvAttrs['organismo'] = 'Instituto Nacional de Estadística y Geografía (INEGI)';
+            $mvAttrs['url'] = 'https://www.inegi.org.mx/temas/pib/';
+        }
+
         MedioVerificacion::firstOrCreate(
             ['indicador_id' => $indicador->id, 'nombre' => $nivelDef['medio_nombre']],
-            ['fuente' => $nivelDef['medio_fuente'], 'frecuencia' => $frecuencia->value, 'orden' => 1]
+            $mvAttrs
         );
 
         // CREMAA (~50%)
