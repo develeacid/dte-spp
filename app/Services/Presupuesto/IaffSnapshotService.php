@@ -6,7 +6,6 @@ use App\Models\Presupuesto\Iaff;
 use App\Models\ProgramaPresupuestario;
 use App\Models\User;
 use DomainException;
-use Illuminate\Support\Facades\DB;
 
 /**
  * D1 · Persiste el IAFF como snapshot inmutable por programa+ejercicio+trimestre.

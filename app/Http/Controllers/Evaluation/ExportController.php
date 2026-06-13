@@ -18,6 +18,7 @@ use App\Jobs\GenerarReportePdfJob;
 use App\Models\Evaluation\EvaluacionPrograma;
 use App\Models\Mml\Indicador;
 use App\Models\ProgramaPresupuestario;
+use App\Services\Presupuesto\IaffSnapshotService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -152,7 +153,7 @@ class ExportController extends Controller
             return;
         }
 
-        app(\App\Services\Presupuesto\IaffSnapshotService::class)
+        app(IaffSnapshotService::class)
             ->generar($programa, $ejercicio, $trimestre, $request->user());
     }
 
