@@ -4,8 +4,8 @@
 >
 > Fuente original (fuera del repo): `/home/eleacid/code/laravel/matrices de indicadores/` (`informe_complementariedad_v2.md`, `reporte_brechas_dte_spp_v2.md`, `reporte_brechas_geobase_v2.md`). Este doc es el **resumen ejecutable de progreso**, no reemplaza los reportes completos.
 
-**Última actualización:** 2026-06-13 (par CONAPO completo)
-**Estado global:** Informe V2 (2026-05-19) detectó **18 brechas conjuntas reales** del ecosistema en 147 conceptos del temario MIR. Sprints V2 1-4 dte-spp ✅ + geobase S1 ✅ + decisiones cross-sistema ✅ + **par CONAPO COMPLETO** (geobase #30 proveedor + dte-spp #38 consumidor, 2026-06-13). Siguiente foco: sprints M (IAFF+cierre fiscal, Clave presupuestal).
+**Última actualización:** 2026-06-13 (Sprint M IAFF+Cierre fiscal)
+**Estado global:** Informe V2 (2026-05-19) detectó **18 brechas conjuntas reales** del ecosistema en 147 conceptos del temario MIR. Sprints V2 1-4 dte-spp ✅ + geobase S1 ✅ + decisiones cross-sistema ✅ + **par CONAPO COMPLETO** (#30/#38) + **Sprint M IAFF+Cierre fiscal** (#40: V2-D1/D4/D5 ✅; D6/D7 diferidos). Siguiente foco: Clave presupuestal (Sprint 6), o diferidos D6/D7/E9, o deploy VPS.
 
 ## Leyenda
 
@@ -28,7 +28,7 @@
 | 3 | Modelo Evaluación Externa estructurado | S | ✅ | `EvaluacionExterna`, `InformeEvaluacion`, Hallazgo→Recomendación→ASM (C-143), C-146. |
 | 4 | MV CREMA + Supuestos estructurados | S | ✅ | `mir_supuestos`, `crema_validaciones_mv`, `tipo_fuente` MV (B9), V2-A8/B8-B10. |
 | — | Seeders demo V2 | XS | ✅ | PR #35 mergeado (`b3d6ad2`). Demo completo + fix B4. |
-| 5 | IAFF persistido + Cierre fiscal 4 fases + Conciliación | M | ❌ | Cuenta Pública + auditoría ASF. Incluye C-022 (Población Atendida persistida) y C-111 (conciliación, vista derivada). |
+| 5 | IAFF persistido + Cierre fiscal 4 fases + Conciliación | M | 🟡 | **Core ✅ (PR #40, 2026-06-13)**: V2-D1 (tabla `iaff` snapshot+hash+firma + hook export + UI Historial), V2-D5 (tabla `cierres_fiscales` por ejercicio + máquina 4 fases + gate IAFF-Q4 + guard CERRADO + UI panel), V2-D4 (`IaffConsolidacionService` §4). **Diferidos**: V2-D6 conciliación (acoplado: endpoint montos geobase), V2-D7 POA (`vw_poa`), e.firma certificada real. |
 | 6 | Clave presupuestal canónica + Modalidades S/U/E/B + Estructura Programática 6 niveles | M | ❌ | Compatibilidad SHCP/sistemas estatales. |
 | 7 | ROP versionado | — | 🚫 | **Decisión C-098: ROP vive en geobase.** V2-E8 dte-spp → N/A; consume vía API. |
 | 8 | Cruce CONAPO localidad + Vínculos Padrón↔MIR | S | 🟡 | **Proveedor (geobase S3) ✅ + Consumidor dte-spp ✅ (PR #38, 2026-06-13).** Hechos: V2-A1 (atendida persistida en `poblaciones_programa` + `geobase:sync-atendida`), V2-B2 (accessors cobertura/brecha), V2-F3 (4º escalón en EmbudoPoblaciones). **Pendientes del sprint**: V2-F2 → 🚫 (CONAPO localidad vive en geobase), V2-E9 (`vw_alineacion_completa`) ❌ diferido a sprint XS propio. |
@@ -60,12 +60,13 @@
 
 ## Próximos candidatos (orden sugerido)
 
-1. ~~Par CONAPO~~ ✅ COMPLETO (geobase #30 + dte-spp #38).
-2. **Sprint M dte-spp**: IAFF persistido + Cierre fiscal 4 fases + Conciliación (cierra C-022 a nivel reporte/C-111). El más impactante para auditoría ASF/Cuenta Pública.
-3. **Sprint M dte-spp**: Clave presupuestal canónica + Modalidades S/U/E/B + Estructura Programática 6 niveles.
-4. **Sprint geobase**: ROP versionado (`ReglasOperacion`) — destraba P-03/P-08; + geobase Sprint 2 (CURP regex P-06 + RENAPO).
-5. **Sprint XS dte-spp**: V2-E9 `vw_alineacion_completa` (vista materializada de alineación; diferido del par CONAPO).
-6. **Deploy VPS acumulado** de todos los sprints V2 (geobase + dte-spp).
+1. ~~Par CONAPO~~ ✅ COMPLETO (#30 + #38).
+2. ~~Sprint M IAFF + Cierre fiscal (core)~~ ✅ (#40). Quedan sus diferidos (abajo).
+3. **Sprint M dte-spp**: Clave presupuestal canónica + Modalidades S/U/E/B + Estructura Programática 6 niveles (Sprint 6). Compatibilidad SHCP.
+4. **Par conciliación (V2-D6)**: endpoint de montos en geobase + `vw_conciliacion_padron_tesoreria` en dte-spp. Acoplado (como CONAPO).
+5. **Sprint geobase**: ROP versionado (`ReglasOperacion`) — destraba P-03/P-08; + geobase Sprint 2 (CURP regex P-06 + RENAPO).
+6. **Sprints XS dte-spp**: V2-D7 POA (`vw_poa`), V2-E9 `vw_alineacion_completa`.
+7. **Deploy VPS acumulado** de todos los sprints V2 (geobase + dte-spp).
 
 ## Fuera de scope software (🚫 estructural)
 
