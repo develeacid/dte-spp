@@ -85,9 +85,36 @@
                             </div>
                         </div>
 
-                        <p class="mt-3 text-center text-[10px] text-gray-400 leading-relaxed">
-                            La Población Atendida se calculará desde el Padrón de Beneficiarios durante la operación del programa.
-                        </p>
+                        @if ($poblacion && $poblacion->atendida_cantidad !== null)
+                            {{-- Percentage between obj → atendida (cobertura) --}}
+                            <div class="flex items-center gap-1 py-0.5">
+                                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                                <span class="text-[10px] font-semibold tabular-nums text-violet-600">{{ $poblacion->cobertura_atendida }}% cobertura</span>
+                            </div>
+
+                            {{-- Atendida (real, desde el padrón) --}}
+                            <div class="w-1/2 rounded-b-xl bg-violet-100 border-2 border-violet-200 px-4 py-3 text-center min-w-0 overflow-hidden">
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-violet-500">Atendida</p>
+                                <p class="text-base sm:text-xl font-bold text-violet-800 truncate">{{ number_format($poblacion->atendida_cantidad) }} {{ $unidad_medida }}</p>
+                                <p class="text-[10px] text-violet-500">
+                                    @if ($poblacion->brecha_atendida > 0)
+                                        brecha: {{ number_format($poblacion->brecha_atendida) }} sin atender
+                                    @elseif ($poblacion->brecha_atendida < 0)
+                                        sobrecobertura: +{{ number_format(abs($poblacion->brecha_atendida)) }}
+                                    @else
+                                        objetivo alcanzado
+                                    @endif
+                                </p>
+                            </div>
+
+                            <p class="mt-3 text-center text-[10px] text-gray-400">
+                                Atendida sincronizada del Padrón · {{ $poblacion->atendida_sync_at?->format('Y-m-d H:i') }}
+                            </p>
+                        @else
+                            <p class="mt-3 text-center text-[10px] text-gray-400 leading-relaxed">
+                                La Población Atendida se calculará desde el Padrón de Beneficiarios durante la operación del programa.
+                            </p>
+                        @endif
                     </div>
                 </div>
             </div>
