@@ -38,6 +38,27 @@ class EmbudoPoblacionesTest extends TestCase
             ->assertSee('Etapa 5');
     }
 
+    public function test_carga_la_fila_del_ejercicio_fiscal_con_varias_filas(): void
+    {
+        // Año previo (no debe cargarse).
+        PoblacionPrograma::create([
+            'programa_id' => $this->programa->id, 'unidad_medida' => 'Viejo',
+            'referencia_cantidad' => 85000, 'potencial_cantidad' => 32000,
+            'objetivo_cantidad' => 8500, 'anio_ejercicio' => 2025,
+        ]);
+        // Ejercicio fiscal actual del programa (2026) — el canónico.
+        PoblacionPrograma::create([
+            'programa_id' => $this->programa->id, 'unidad_medida' => 'Productores',
+            'referencia_cantidad' => 600, 'potencial_cantidad' => 120,
+            'objetivo_cantidad' => 15, 'anio_ejercicio' => 2026,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(EmbudoPoblaciones::class, ['programa' => $this->programa])
+            ->assertSet('objetivo_cantidad', 15)
+            ->assertSet('referencia_cantidad', 600);
+    }
+
     public function test_muestra_atendida_y_cobertura_cuando_esta_sincronizada(): void
     {
         PoblacionPrograma::create([

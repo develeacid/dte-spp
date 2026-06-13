@@ -40,7 +40,12 @@ class EmbudoPoblaciones extends Component
     {
         $this->programa = $programa;
 
-        $poblacion = $programa->poblacion;
+        // La fila del ejercicio fiscal es la canónica (guardar() y render()
+        // también la usan). Un programa puede tener varias filas (una por año),
+        // así que filtramos explícitamente en vez de la relación cruda.
+        $poblacion = $programa->poblacion()
+            ->where('anio_ejercicio', $programa->ejercicio_fiscal)
+            ->first();
 
         if ($poblacion) {
             $this->unidad_medida = $poblacion->unidad_medida;
