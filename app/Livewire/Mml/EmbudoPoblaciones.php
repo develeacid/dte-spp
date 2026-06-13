@@ -93,6 +93,14 @@ class EmbudoPoblaciones extends Component
 
     public function render()
     {
-        return view('livewire.mml.embudo-poblaciones');
+        // Población persistida del ejercicio (incluye la atendida real
+        // sincronizada desde geobase vía geobase:sync-atendida).
+        $poblacion = $this->programa->poblacion()
+            ->where('anio_ejercicio', $this->programa->ejercicio_fiscal)
+            ->first();
+
+        return view('livewire.mml.embudo-poblaciones', [
+            'poblacion' => $poblacion,
+        ]);
     }
 }

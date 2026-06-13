@@ -38,6 +38,42 @@ class EmbudoPoblacionesTest extends TestCase
             ->assertSee('Etapa 5');
     }
 
+    public function test_muestra_atendida_y_cobertura_cuando_esta_sincronizada(): void
+    {
+        PoblacionPrograma::create([
+            'programa_id' => $this->programa->id,
+            'unidad_medida' => 'Personas',
+            'referencia_cantidad' => 100000,
+            'potencial_cantidad' => 50000,
+            'objetivo_cantidad' => 5000,
+            'anio_ejercicio' => 2026,
+            'atendida_cantidad' => 4000,
+            'atendida_sync_at' => now(),
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(EmbudoPoblaciones::class, ['programa' => $this->programa])
+            ->assertSee('Atendida')
+            ->assertSee('80')      // cobertura % (4000/5000)
+            ->assertSee('4,000');  // atendida formateada
+    }
+
+    public function test_muestra_placeholder_si_atendida_no_sincronizada(): void
+    {
+        PoblacionPrograma::create([
+            'programa_id' => $this->programa->id,
+            'unidad_medida' => 'Personas',
+            'referencia_cantidad' => 100000,
+            'potencial_cantidad' => 50000,
+            'objetivo_cantidad' => 5000,
+            'anio_ejercicio' => 2026,
+        ]);
+
+        Livewire::actingAs($this->user)
+            ->test(EmbudoPoblaciones::class, ['programa' => $this->programa])
+            ->assertSee('Padrón de Beneficiarios');
+    }
+
     public function test_puede_guardar_poblaciones_validas(): void
     {
         Livewire::actingAs($this->user)
