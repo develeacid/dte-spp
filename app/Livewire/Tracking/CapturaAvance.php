@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Tracking;
 
+use App\Enums\EstadoCierreFiscal;
+use App\Models\Presupuesto\CierreFiscal;
 use App\Models\Tracking\Avance;
 use App\Models\Tracking\AvanceVariable;
 use App\Services\GeoBase\GeoBaseClient;
@@ -212,6 +214,18 @@ class CapturaAvance extends Component
 
         if (! $this->avance->estado->esEditable()) {
             abort(403, 'El avance no es editable.');
+        }
+
+        // Guard de cierre fiscal: si el ejercicio del avance está CERRADO,
+        // la captura queda congelada (no se altera lo ya reportado a la ASFE).
+        $cierreCerrado = CierreFiscal::query()
+            ->where('programa_id', $this->avance->indicador->mirNivel->programa_presupuestario_id)
+            ->where('ejercicio_fiscal', $this->avance->metaPeriodo->ejercicio_fiscal)
+            ->where('estado', EstadoCierreFiscal::CERRADO->value)
+            ->exists();
+
+        if ($cierreCerrado) {
+            abort(403, 'El ejercicio fiscal está cerrado; no se admiten cambios de avance.');
         }
 
         // Save variable values

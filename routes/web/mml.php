@@ -6,11 +6,13 @@ use App\Livewire\Mml\AlineacionEstrategica;
 use App\Livewire\Mml\ArbolObjetivosBuilder;
 use App\Livewire\Mml\ArbolProblemaBuilder;
 use App\Livewire\Mml\CalendarizarMetas;
+use App\Livewire\Mml\CierreFiscalPanel;
 use App\Livewire\Mml\CoberturaPrograma;
 use App\Livewire\Mml\CompletarHuecos;
 use App\Livewire\Mml\DashboardImportaciones;
 use App\Livewire\Mml\DefinicionProblema;
 use App\Livewire\Mml\EmbudoPoblaciones;
+use App\Livewire\Mml\HistorialIaff;
 use App\Livewire\Mml\ImportarPrograma;
 use App\Livewire\Mml\ListaProgramas;
 use App\Livewire\Mml\MirEditor;
@@ -40,6 +42,14 @@ Route::prefix('mml/programas')
         Route::get('/{programa}/cobertura/mapa.png', MapaCoberturaProgramaController::class)
             ->middleware('can:ver_padron')
             ->name('mml.cobertura.mapa');
+
+        Route::get('/{programa}/iaff', HistorialIaff::class)
+            ->middleware('can:firmar_iaff')
+            ->name('mml.iaff');
+
+        Route::get('/{programa}/cierre-fiscal', CierreFiscalPanel::class)
+            ->middleware('can:gestionar_cierre_fiscal')
+            ->name('mml.cierre-fiscal');
     });
 
 Route::prefix('mml')

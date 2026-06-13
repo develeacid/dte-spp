@@ -18,6 +18,7 @@ use App\Jobs\GenerarReportePdfJob;
 use App\Models\Evaluation\EvaluacionPrograma;
 use App\Models\Mml\Indicador;
 use App\Models\ProgramaPresupuestario;
+use App\Services\Presupuesto\IaffSnapshotService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -57,12 +58,7 @@ class ExportController extends Controller
                 ProgramaPresupuestario::findOrFail($id),
                 (int) $request->input('ejercicio_fiscal', date('Y')),
             ),
-            'avance-trimestral' => new AvanceTrimestralExcelExport(
-                ProgramaPresupuestario::findOrFail($id),
-                (int) $request->input('ejercicio_fiscal', date('Y')),
-                (int) $request->input('trimestre', 1),
-                $request->user(),
-            ),
+            'avance-trimestral' => $this->avanceTrimestralExcel($request, $id),
             'evaluacion-anual' => new EvaluacionAnualExcelExport(
                 EvaluacionPrograma::findOrFail($id),
             ),
@@ -120,16 +116,45 @@ class ExportController extends Controller
         return (new FichaTecnicaPdfExport($indicador))->generate();
     }
 
+    private function avanceTrimestralExcel(Request $request, ?int $id): AvanceTrimestralExcelExport
+    {
+        $programa = ProgramaPresupuestario::findOrFail($id);
+        $ejercicio = (int) $request->input('ejercicio_fiscal', date('Y'));
+        $trimestre = (int) $request->input('trimestre', 1);
+
+        $this->persistirIaff($programa, $ejercicio, $trimestre, $request);
+
+        return new AvanceTrimestralExcelExport($programa, $ejercicio, $trimestre, $request->user());
+    }
+
     private function avanceTrimestralPdf(Request $request, ?int $id): string
     {
         $programa = ProgramaPresupuestario::findOrFail($id);
+        $ejercicio = (int) $request->input('ejercicio_fiscal', date('Y'));
+        $trimestre = (int) $request->input('trimestre', 1);
+
+        $this->persistirIaff($programa, $ejercicio, $trimestre, $request);
 
         return (new AvanceTrimestralPdfExport(
             $programa,
-            (int) $request->input('ejercicio_fiscal', date('Y')),
-            (int) $request->input('trimestre', 1),
+            $ejercicio,
+            $trimestre,
             $request->user(),
         ))->generate();
+    }
+
+    /**
+     * D1 · Persiste el snapshot IAFF al exportar el Avance Trimestral
+     * (upsert mientras no esté firmado). El usuario puede ser null en jobs.
+     */
+    private function persistirIaff(ProgramaPresupuestario $programa, int $ejercicio, int $trimestre, Request $request): void
+    {
+        if ($request->user() === null) {
+            return;
+        }
+
+        app(IaffSnapshotService::class)
+            ->generar($programa, $ejercicio, $trimestre, $request->user());
     }
 
     private function evaluacionAnualPdf(?int $id): string
