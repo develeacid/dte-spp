@@ -4,8 +4,8 @@
 >
 > Fuente original (fuera del repo): `/home/eleacid/code/laravel/matrices de indicadores/` (`informe_complementariedad_v2.md`, `reporte_brechas_dte_spp_v2.md`, `reporte_brechas_geobase_v2.md`). Este doc es el **resumen ejecutable de progreso**, no reemplaza los reportes completos.
 
-**Última actualización:** 2026-06-13
-**Estado global:** Informe V2 (2026-05-19) detectó **18 brechas conjuntas reales** del ecosistema en 147 conceptos del temario MIR. Sprints V2 1-4 dte-spp ✅ + geobase Sprint 1 ✅ + decisiones cross-sistema ✅ + **geobase Sprint 3 ✅ (lado proveedor del par CONAPO, 2026-06-13, suite 754/0)**. Pendiente del par CONAPO: lado consumo dte-spp (Sprint 8).
+**Última actualización:** 2026-06-13 (par CONAPO completo)
+**Estado global:** Informe V2 (2026-05-19) detectó **18 brechas conjuntas reales** del ecosistema en 147 conceptos del temario MIR. Sprints V2 1-4 dte-spp ✅ + geobase S1 ✅ + decisiones cross-sistema ✅ + **par CONAPO COMPLETO** (geobase #30 proveedor + dte-spp #38 consumidor, 2026-06-13). Siguiente foco: sprints M (IAFF+cierre fiscal, Clave presupuestal).
 
 ## Leyenda
 
@@ -31,7 +31,7 @@
 | 5 | IAFF persistido + Cierre fiscal 4 fases + Conciliación | M | ❌ | Cuenta Pública + auditoría ASF. Incluye C-022 (Población Atendida persistida) y C-111 (conciliación, vista derivada). |
 | 6 | Clave presupuestal canónica + Modalidades S/U/E/B + Estructura Programática 6 niveles | M | ❌ | Compatibilidad SHCP/sistemas estatales. |
 | 7 | ROP versionado | — | 🚫 | **Decisión C-098: ROP vive en geobase.** V2-E8 dte-spp → N/A; consume vía API. |
-| 8 | Cruce CONAPO localidad + Vínculos Padrón↔MIR | S | 🟡 | **Lado proveedor (geobase Sprint 3) ✅ CERRADO 2026-06-13.** Lado consumo dte-spp PENDIENTE: V2-F2, V2-A1 (Atendida persistida, consume `GET /programs/{id}/atendida-proposito`), V2-B2 (brecha desempeño), V2-F3 (vistas `vw_atendida_proposito`/`vw_evaluacion_proposito_padron`), V2-E9 (`vw_alineacion_completa`). |
+| 8 | Cruce CONAPO localidad + Vínculos Padrón↔MIR | S | 🟡 | **Proveedor (geobase S3) ✅ + Consumidor dte-spp ✅ (PR #38, 2026-06-13).** Hechos: V2-A1 (atendida persistida en `poblaciones_programa` + `geobase:sync-atendida`), V2-B2 (accessors cobertura/brecha), V2-F3 (4º escalón en EmbudoPoblaciones). **Pendientes del sprint**: V2-F2 → 🚫 (CONAPO localidad vive en geobase), V2-E9 (`vw_alineacion_completa`) ❌ diferido a sprint XS propio. |
 | 9 | Cruce PUBP federal | L | 🔒 | Requiere acuerdo SHCP/SFP federal (V2-F1). |
 
 ## GeoBase — Sprints V2
@@ -48,7 +48,7 @@
 
 | Par | dte-spp | geobase | Estado |
 |---|---|---|---|
-| **CONAPO** | V2-F2/F3/A1/B2 (consumo) | G2-02/G2-03 (proveedor) | 🟡 geobase ✅ (2026-06-13); dte-spp pendiente |
+| **CONAPO** | V2-A1/B2/F3 (consumo) ✅ | G2-02/G2-03 (proveedor) ✅ | ✅ **COMPLETO** (geobase #30 + dte-spp #38, 2026-06-13). E9 diferido aparte. |
 | **ROP** | consume API (V2-E8 🚫) | modelo `ReglasOperacion` (M, futuro) | ❌ pendiente (post-decisión C-098) |
 | **PUBP federal** | V2-F1 | G2-01 | 🔒 bloqueado institucional |
 
@@ -60,11 +60,12 @@
 
 ## Próximos candidatos (orden sugerido)
 
-1. **Terminar par CONAPO**: geobase Sprint 3 ✅ → siguiente, dte-spp Sprint 8 consumo (V2-F3/A1/B2/E9) que consume el endpoint `atendida-proposito`.
-2. **Deploy VPS acumulado** de los sprints V2 (#30-#35 dte-spp + geobase).
-3. **Sprint M dte-spp**: IAFF persistido + Cierre fiscal 4 fases (cierra C-022/C-111).
-4. **Sprint M dte-spp**: Clave presupuestal canónica.
-5. **Sprint geobase**: ROP versionado (`ReglasOperacion`) — post-CONAPO.
+1. ~~Par CONAPO~~ ✅ COMPLETO (geobase #30 + dte-spp #38).
+2. **Sprint M dte-spp**: IAFF persistido + Cierre fiscal 4 fases + Conciliación (cierra C-022 a nivel reporte/C-111). El más impactante para auditoría ASF/Cuenta Pública.
+3. **Sprint M dte-spp**: Clave presupuestal canónica + Modalidades S/U/E/B + Estructura Programática 6 niveles.
+4. **Sprint geobase**: ROP versionado (`ReglasOperacion`) — destraba P-03/P-08; + geobase Sprint 2 (CURP regex P-06 + RENAPO).
+5. **Sprint XS dte-spp**: V2-E9 `vw_alineacion_completa` (vista materializada de alineación; diferido del par CONAPO).
+6. **Deploy VPS acumulado** de todos los sprints V2 (geobase + dte-spp).
 
 ## Fuera de scope software (🚫 estructural)
 
