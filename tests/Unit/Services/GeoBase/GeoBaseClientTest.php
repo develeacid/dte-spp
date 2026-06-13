@@ -28,6 +28,32 @@ class GeoBaseClientTest extends TestCase
         $this->client = app(GeoBaseClient::class);
     }
 
+    public function test_get_atendida_proposito_builds_url_and_returns_data(): void
+    {
+        Http::fake([
+            '*/programs/7/atendida-proposito*' => Http::response([
+                'spp_program_id' => 7,
+                'ejercicio' => 2026,
+                'poblacion_atendida' => 1234,
+                'por_componente' => [
+                    ['spp_mir_nivel_id' => 1, 'atendida' => 800],
+                ],
+            ], 200),
+        ]);
+        Http::preventStrayRequests();
+
+        $result = $this->client->getAtendidaProposito(7, 2026);
+
+        $this->assertEquals(1234, $result['poblacion_atendida']);
+        $this->assertEquals(2026, $result['ejercicio']);
+
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), '/programs/7/atendida-proposito')
+                && str_contains($request->url(), 'ejercicio=2026')
+                && $request->hasHeader('Authorization', 'Bearer test-token-123');
+        });
+    }
+
     public function test_get_beneficiary_returns_data(): void
     {
         Http::fake([

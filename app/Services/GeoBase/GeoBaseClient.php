@@ -98,6 +98,18 @@ class GeoBaseClient
         return $this->get("/components/{$sppMirNivelId}/coverage");
     }
 
+    /**
+     * Población Atendida del Propósito (G2-03): beneficiarios únicos que
+     * efectivamente recibieron el apoyo en el ejercicio. Sin caché — lo
+     * consume el job geobase:sync-atendida, que requiere el dato fresco.
+     *
+     * @return array{spp_program_id:int, ejercicio:int, poblacion_atendida:int, por_componente:array}
+     */
+    public function getAtendidaProposito(int $sppProgramId, int $ejercicio): array
+    {
+        return $this->get("/programs/{$sppProgramId}/atendida-proposito", ['ejercicio' => $ejercicio]);
+    }
+
     // --- Padrón SHCP ---
     //
     // Returns the SHCP-format padron with decrypted CURP for a programa and
