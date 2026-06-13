@@ -30,6 +30,11 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->middleware('can:gestionar_presupuesto')
         ->name('presupuesto.importar');
 
+    // --- Programa Operativo Anual (vista derivada vw_poa) ---
+    Route::get('/poa', Presupuesto\ReportePoa::class)
+        ->middleware('can:ver_datos_financieros')
+        ->name('presupuesto.poa');
+
     // --- Reportes y Exportación ---
     Route::middleware('can:exportar_cuenta_publica')->group(function () {
         Route::get('/cuenta-publica', Presupuesto\CuentaPublicaView::class)
