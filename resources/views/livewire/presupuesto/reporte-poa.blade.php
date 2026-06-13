@@ -22,10 +22,14 @@
 
         @forelse ($programas as $clave => $filas)
             <div class="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
+                <div class="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3">
                     <p class="text-sm font-semibold text-gray-900">
                         <span class="font-mono text-gray-500">{{ $clave }}</span> · {{ $filas->first()->programa_nombre }}
                     </p>
+                    <a href="{{ route('presupuesto.conciliacion', $filas->first()->programa_id) }}"
+                       class="shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                        Conciliación físico-financiera →
+                    </a>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">
