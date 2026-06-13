@@ -66,6 +66,11 @@ class PartidaPresupuestal extends Model
         return $this->hasMany(MetaGastoTrimestral::class);
     }
 
+    public function modificaciones(): HasMany
+    {
+        return $this->hasMany(ModificacionPresupuestal::class, 'partida_presupuestal_id');
+    }
+
     // --- Scopes ---
 
     public function scopeParaTeam($query, int $teamId)

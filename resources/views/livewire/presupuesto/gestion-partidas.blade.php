@@ -65,6 +65,7 @@
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-center text-sm">
                                 <a href="{{ route('presupuesto.partidas.edit', $partida) }}" class="text-brand hover:text-brand-dark mr-2">Editar</a>
+                                <a href="{{ route('presupuesto.partidas.modificaciones', $partida) }}" class="text-indigo-600 hover:text-indigo-800 mr-2">Adecuaciones</a>
                                 <button wire:click="eliminar({{ $partida->id }})" wire:confirm="¿Eliminar esta partida? Los avances financieros asociados también se eliminarán." class="text-red-600 hover:text-red-800">
                                     Eliminar
                                 </button>

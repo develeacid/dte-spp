@@ -18,6 +18,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             ->name('presupuesto.partidas.create');
         Route::get('/partidas/{partida}/edit', Presupuesto\PartidaForm::class)
             ->name('presupuesto.partidas.edit');
+        Route::get('/partidas/{partida}/modificaciones', Presupuesto\ModificacionesPartida::class)
+            ->name('presupuesto.partidas.modificaciones');
     });
 
     // --- Captura de Avance Financiero ---
