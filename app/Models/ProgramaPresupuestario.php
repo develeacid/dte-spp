@@ -10,6 +10,7 @@ use App\Models\Juridico\ValidacionJuridicaPrograma;
 use App\Models\Mml\Alternativa;
 use App\Models\Mml\Arbol;
 use App\Models\Mml\PoblacionPrograma;
+use App\Models\Presupuesto\ClasificacionFuncional;
 use App\Models\Presupuesto\PartidaPresupuestal;
 use App\Services\GeoBase\GeoBaseClient;
 use Illuminate\Database\Eloquent\Builder;
@@ -34,6 +35,17 @@ class ProgramaPresupuestario extends Model
         'planeacion_completada_at',
         'created_by',
         'padron_geobase_activo',
+        // Clave presupuestal canónica SEFIP/CONAC (nivel programa).
+        'grupo',
+        'unidad_responsable',
+        'unidad_ejecutora',
+        'programa_clave',
+        'subprograma',
+        'proyecto',
+        'actividad',
+        'finalidad_id',
+        'funcion_id',
+        'subfuncion_id',
     ];
 
     protected function casts(): array
@@ -75,6 +87,23 @@ class ProgramaPresupuestario extends Model
     public function arboles(): HasMany
     {
         return $this->hasMany(Arbol::class, 'programa_presupuestario_id');
+    }
+
+    // --- Clasificación Funcional CONAC (clave presupuestal canónica) ---
+
+    public function finalidad(): BelongsTo
+    {
+        return $this->belongsTo(ClasificacionFuncional::class, 'finalidad_id');
+    }
+
+    public function funcion(): BelongsTo
+    {
+        return $this->belongsTo(ClasificacionFuncional::class, 'funcion_id');
+    }
+
+    public function subfuncion(): BelongsTo
+    {
+        return $this->belongsTo(ClasificacionFuncional::class, 'subfuncion_id');
     }
 
     public function arbolProblema()
