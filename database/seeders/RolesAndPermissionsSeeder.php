@@ -45,6 +45,8 @@ class RolesAndPermissionsSeeder extends Seeder
             SystemPermission::VER_CONCENTRADO_CAPTURA->value,
             SystemPermission::VER_DATASETS_ABIERTOS->value,
             SystemPermission::GESTIONAR_DATASET_ABIERTO->value,
+            SystemPermission::FIRMAR_IAFF->value,
+            SystemPermission::GESTIONAR_CIERRE_FISCAL->value,
         ]);
 
         $operador = Role::findOrCreate(SystemRole::OPERADOR->value, 'web');

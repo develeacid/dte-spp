@@ -45,4 +45,8 @@ enum SystemPermission: string
     case APROBAR_DATOS_ABIERTOS = 'aprobar_datos_abiertos';
     case VER_DATASETS_ABIERTOS = 'ver_datasets_abiertos';
     case GESTIONAR_DATASET_ABIERTO = 'gestionar_dataset_abierto';
+
+    // IAFF + Cierre fiscal
+    case FIRMAR_IAFF = 'firmar_iaff';
+    case GESTIONAR_CIERRE_FISCAL = 'gestionar_cierre_fiscal';
 }
