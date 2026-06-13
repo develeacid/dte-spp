@@ -110,6 +110,17 @@ class GeoBaseClient
         return $this->get("/programs/{$sppProgramId}/atendida-proposito", ['ejercicio' => $ejercicio]);
     }
 
+    /**
+     * Montos efectivamente entregados del padrón (G2-D6), para la conciliación
+     * físico-financiera (cruce tesorería local ⋈ entregas del padrón).
+     *
+     * @return array{spp_program_id:int, ejercicio:int, monto_entregado_total:string, por_componente:array}
+     */
+    public function getMontosEntregados(int $sppProgramId, int $ejercicio): array
+    {
+        return $this->get("/programs/{$sppProgramId}/montos-entregados", ['ejercicio' => $ejercicio]);
+    }
+
     // --- Padrón SHCP ---
     //
     // Returns the SHCP-format padron with decrypted CURP for a programa and

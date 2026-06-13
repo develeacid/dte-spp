@@ -32,6 +32,11 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->middleware('can:gestionar_presupuesto')
         ->name('presupuesto.importar');
 
+    // --- Conciliación físico-financiera (V2-D6: tesorería ⋈ padrón geobase) ---
+    Route::get('/conciliacion/{programa}', Presupuesto\ConciliacionPadron::class)
+        ->middleware('can:ver_datos_financieros')
+        ->name('presupuesto.conciliacion');
+
     // --- Programa Operativo Anual (vista derivada vw_poa) ---
     Route::get('/poa', Presupuesto\ReportePoa::class)
         ->middleware('can:ver_datos_financieros')
