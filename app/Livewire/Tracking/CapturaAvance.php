@@ -214,6 +214,18 @@ class CapturaAvance extends Component
             abort(403, 'El avance no es editable.');
         }
 
+        // Guard de cierre fiscal: si el ejercicio del avance está CERRADO,
+        // la captura queda congelada (no se altera lo ya reportado a la ASFE).
+        $cierreCerrado = \App\Models\Presupuesto\CierreFiscal::query()
+            ->where('programa_id', $this->avance->indicador->mirNivel->programa_presupuestario_id)
+            ->where('ejercicio_fiscal', $this->avance->metaPeriodo->ejercicio_fiscal)
+            ->where('estado', \App\Enums\EstadoCierreFiscal::CERRADO->value)
+            ->exists();
+
+        if ($cierreCerrado) {
+            abort(403, 'El ejercicio fiscal está cerrado; no se admiten cambios de avance.');
+        }
+
         // Save variable values
         foreach ($this->avance->indicador->variables as $variable) {
             AvanceVariable::updateOrCreate(
