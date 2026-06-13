@@ -124,4 +124,45 @@ class ClavePresupuestalEditorTest extends TestCase
             ->set('actividad', 1)
             ->assertSee('10100114402000001');
     }
+
+    public function test_segmentar_clave_sefip_rellena_los_siete_campos(): void
+    {
+        Livewire::actingAs($this->planeador)
+            ->test(ClavePresupuestalEditor::class, ['programa' => $this->programa])
+            ->set('clave_sefip', '10100114402000001313303AEBAA0125')
+            ->call('segmentarClave')
+            ->assertSet('grupo', 1)
+            ->assertSet('unidad_responsable', 1)
+            ->assertSet('unidad_ejecutora', 1)
+            ->assertSet('programa_clave', 144)
+            ->assertSet('subprograma', 2)
+            ->assertSet('proyecto', 0)
+            ->assertSet('actividad', 1);
+    }
+
+    public function test_guardar_persiste_la_clave_sefip_completa(): void
+    {
+        Livewire::actingAs($this->planeador)
+            ->test(ClavePresupuestalEditor::class, ['programa' => $this->programa])
+            ->set('clave_sefip', '10100114402000001313303AEBAA0125')
+            ->call('segmentarClave')
+            ->call('guardar')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('programa_presupuestarios', [
+            'id' => $this->programa->id,
+            'clave_sefip' => '10100114402000001313303AEBAA0125',
+            'programa_clave' => 144,
+        ]);
+    }
+
+    public function test_segmentar_muestra_desglose_de_objeto_y_financiamiento(): void
+    {
+        Livewire::actingAs($this->planeador)
+            ->test(ClavePresupuestalEditor::class, ['programa' => $this->programa])
+            ->set('clave_sefip', '10100114402000001313303AEBAA0125')
+            ->call('segmentarClave')
+            ->assertSee('313303')      // Objeto del Gasto
+            ->assertSee('AEBAA0125');  // Financiamiento
+    }
 }

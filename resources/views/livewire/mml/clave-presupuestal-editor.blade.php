@@ -15,6 +15,62 @@
             <div class="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{{ $message }}</div>
         @enderror
 
+        {{-- Importar clave SEFIP completa (32) ya en uso --}}
+        <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p class="text-sm font-semibold text-gray-800">Importar clave SEFIP completa</p>
+            <p class="mb-3 text-xs text-gray-500">¿El programa ya tiene su clave de 32 caracteres? Pégala para segmentarla y rellenar los campos. Validación informativa, no bloquea.</p>
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input type="text" wire:model="clave_sefip" placeholder="Ej: 10100114402000001313303AEBAA0125"
+                    class="block w-full font-mono border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm sm:flex-1" />
+                <button type="button" wire:click="segmentarClave"
+                    class="inline-flex items-center justify-center rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
+                    Segmentar
+                </button>
+            </div>
+
+            @if ($avisosSegmentacion)
+                <ul class="mt-3 space-y-1 text-xs text-amber-700">
+                    @foreach ($avisosSegmentacion as $aviso)
+                        <li>⚠ {{ $aviso }}</li>
+                    @endforeach
+                </ul>
+            @endif
+
+            @if (! empty($desglose['segmentos']))
+                <div class="mt-4 overflow-hidden rounded-lg border border-gray-100">
+                    <table class="min-w-full text-sm">
+                        <tbody class="divide-y divide-gray-100">
+                            <tr class="bg-gray-50">
+                                <td class="px-3 py-1.5 font-medium text-gray-600">Administrativa (6)</td>
+                                <td class="px-3 py-1.5 font-mono text-gray-900">
+                                    Grupo {{ $desglose['segmentos']['grupo'] ?? '—' }} ·
+                                    UR {{ $desglose['segmentos']['unidad_responsable'] ?? '—' }} ·
+                                    UE {{ $desglose['segmentos']['unidad_ejecutora'] ?? '—' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-1.5 font-medium text-gray-600">Programática (11)</td>
+                                <td class="px-3 py-1.5 font-mono text-gray-900">
+                                    Prog {{ $desglose['segmentos']['programa_clave'] ?? '—' }} ·
+                                    Subprog {{ $desglose['segmentos']['subprograma'] ?? '—' }} ·
+                                    Proy {{ $desglose['segmentos']['proyecto'] ?? '—' }} ·
+                                    Act {{ $desglose['segmentos']['actividad'] ?? '—' }}
+                                </td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-3 py-1.5 font-medium text-gray-600">Objeto del Gasto (6)</td>
+                                <td class="px-3 py-1.5 font-mono text-gray-900">{{ $desglose['informativos']['objeto_del_gasto'] ?? '—' }} <span class="text-gray-400">(nivel partida)</span></td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-1.5 font-medium text-gray-600">Financiamiento (9)</td>
+                                <td class="px-3 py-1.5 font-mono text-gray-900">{{ $desglose['informativos']['financiamiento'] ?? '—' }} <span class="text-gray-400">(nivel transacción)</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+
         {{-- Preview en vivo de la clave compuesta --}}
         <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
             <p class="text-xs uppercase tracking-wider text-indigo-400">Clave canónica (Administrativa + Programática)</p>

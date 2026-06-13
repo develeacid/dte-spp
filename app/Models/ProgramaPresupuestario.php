@@ -47,6 +47,7 @@ class ProgramaPresupuestario extends Model
         'finalidad_id',
         'funcion_id',
         'subfuncion_id',
+        'clave_sefip',
     ];
 
     protected function casts(): array
