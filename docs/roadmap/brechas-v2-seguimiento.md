@@ -31,7 +31,7 @@
 | 5 | IAFF persistido + Cierre fiscal 4 fases + Conciliación | M | 🟡 | **Core ✅ (PR #40, 2026-06-13)**: V2-D1 (tabla `iaff` snapshot+hash+firma + hook export + UI Historial), V2-D5 (tabla `cierres_fiscales` por ejercicio + máquina 4 fases + gate IAFF-Q4 + guard CERRADO + UI panel), V2-D4 (`IaffConsolidacionService` §4). **Diferidos**: V2-D6 conciliación (acoplado: endpoint montos geobase), V2-D7 POA (`vw_poa`), e.firma certificada real. |
 | 6 | Clave presupuestal canónica + Estructura Programática | M | 🟡 | **Core ✅ (PR #42, 2026-06-13)**: V2-E1 (catálogo `clasificacion_funcional` CONAC 4/28/111 seedeado + 10 campos discretos admin/programáticos en `programa_presupuestarios`), V2-E2 (accessor `clave_presupuestal_canonica` SEFIP 17 díg + editor `/{programa}/clave-presupuestal` con dropdowns CONAC encadenados), V2-E3 **reinterpretado** (jerarquía CONAC vía `ClavePresupuestalService`; **modalidades S/U/E/B descartadas — no aplican a Oaxaca**). **Diferidos**: V2-E4 (`vw_presupuesto_aprobado`), V2-E5 (`modificaciones_presupuestales`), V2-E6 (cap.4000↔ROP). |
 | 7 | ROP versionado | — | 🚫 | **Decisión C-098: ROP vive en geobase.** V2-E8 dte-spp → N/A; consume vía API. |
-| 8 | Cruce CONAPO localidad + Vínculos Padrón↔MIR | S | 🟡 | **Proveedor (geobase S3) ✅ + Consumidor dte-spp ✅ (PR #38, 2026-06-13).** Hechos: V2-A1 (atendida persistida en `poblaciones_programa` + `geobase:sync-atendida`), V2-B2 (accessors cobertura/brecha), V2-F3 (4º escalón en EmbudoPoblaciones). **Pendientes del sprint**: V2-F2 → 🚫 (CONAPO localidad vive en geobase), V2-E9 (`vw_alineacion_completa`) ❌ diferido a sprint XS propio. |
+| 8 | Cruce CONAPO localidad + Vínculos Padrón↔MIR | S | 🟡 | **Proveedor (geobase S3) ✅ + Consumidor dte-spp ✅ (PR #38, 2026-06-13).** Hechos: V2-A1 (atendida persistida en `poblaciones_programa` + `geobase:sync-atendida`), V2-B2 (accessors cobertura/brecha), V2-F3 (4º escalón en EmbudoPoblaciones). **Pendientes del sprint**: V2-F2 → 🚫 (CONAPO localidad vive en geobase), V2-E9 (`vw_alineacion_completa`) ✅ **(PR #45, 2026-06-13)** — vista 1-fila-por-Pp que resuelve PED+PD+PND+ODS; cablear DS-05 pendiente. |
 | 9 | Cruce PUBP federal | L | 🔒 | Requiere acuerdo SHCP/SFP federal (V2-F1). |
 
 ## GeoBase — Sprints V2
@@ -65,7 +65,7 @@
 3. ~~Sprint M dte-spp: Clave presupuestal canónica~~ ✅ **core** (#42). Diferidos: V2-E4 (`vw_presupuesto_aprobado`), V2-E5 (`modificaciones_presupuestales`), V2-E6 (cap.4000↔ROP) — sprint propio.
 4. **Par conciliación (V2-D6)**: endpoint de montos en geobase + `vw_conciliacion_padron_tesoreria` en dte-spp. Acoplado (como CONAPO).
 5. **Sprint geobase**: ROP versionado (`ReglasOperacion`) — destraba P-03/P-08; + geobase Sprint 2 (CURP regex P-06 + RENAPO).
-6. **Sprints XS dte-spp**: V2-D7 POA (`vw_poa`), V2-E9 `vw_alineacion_completa`.
+6. **Sprints XS dte-spp**: V2-D7 POA (`vw_poa`). ~~V2-E9 `vw_alineacion_completa`~~ ✅ (#45); pendiente cablear DS-05 a la vista.
 7. **Deploy VPS acumulado** de todos los sprints V2 (geobase + dte-spp).
 
 ## Fuera de scope software (🚫 estructural)
