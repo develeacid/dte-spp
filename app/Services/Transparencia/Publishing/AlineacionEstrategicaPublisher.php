@@ -4,6 +4,7 @@ namespace App\Services\Transparencia\Publishing;
 
 use App\Enums\TipoNivelMir;
 use App\Models\ProgramaPresupuestario;
+use App\Models\Reportes\VwAlineacionCompleta;
 use App\Models\Transparencia\DatasetAbierto;
 
 class AlineacionEstrategicaPublisher extends BasePublisher
@@ -22,33 +23,33 @@ class AlineacionEstrategicaPublisher extends BasePublisher
     {
         $now = now();
 
+        // Cadena de alineación PED→PND→ODS resuelta por la vista canónica (V2-E9),
+        // indexada por programa para llenar ods_metas/pnd_objetivo que antes quedaban NULL.
+        $alineacion = VwAlineacionCompleta::get()->keyBy('programa_id');
+
         return ProgramaPresupuestario::query()
             ->with([
                 'mirNiveles' => fn ($q) => $q->whereIn('tipo_nivel', [
                     TipoNivelMir::FIN->value,
                     TipoNivelMir::PROPOSITO->value,
                 ]),
-                'mirNiveles.pedObjetivoEstrategico.tema.eje',
-                'mirNiveles.pedLineaAccion',
             ])
             ->orderBy('id')
             ->get()
-            ->map(function ($p) use ($now) {
+            ->map(function ($p) use ($now, $alineacion) {
                 $fin = $p->mirNiveles->firstWhere('tipo_nivel', TipoNivelMir::FIN);
                 $proposito = $p->mirNiveles->firstWhere('tipo_nivel', TipoNivelMir::PROPOSITO);
 
-                $nivelConPed = $p->mirNiveles->first(fn ($n) => $n->pedObjetivoEstrategico !== null);
-                $pedObjetivo = $nivelConPed?->pedObjetivoEstrategico;
-                $pedEje = $pedObjetivo?->tema?->eje;
-                $pedLineaAccion = $nivelConPed?->pedLineaAccion;
+                $vw = $alineacion->get($p->id);
+                $odsClaves = $vw?->ods_claves ?? [];
 
                 return [
                     'programa_clave' => $p->clave,
-                    'ods_metas' => null,
-                    'pnd_objetivo' => null,
-                    'ped_eje' => $pedEje?->descripcion ?? $pedEje?->nombre ?? null,
-                    'ped_objetivo_estrategico' => $pedObjetivo?->descripcion,
-                    'ped_linea_accion' => $pedLineaAccion?->descripcion ?? $pedLineaAccion?->nombre ?? null,
+                    'ods_metas' => $odsClaves !== [] ? json_encode($odsClaves) : null,
+                    'pnd_objetivo' => $vw?->pnd_objetivos,
+                    'ped_eje' => $vw?->ped_eje,
+                    'ped_objetivo_estrategico' => $vw?->ped_objetivo_estrategico,
+                    'ped_linea_accion' => $vw?->ped_linea_accion,
                     'mir_fin_resumen' => $fin?->resumen_narrativo,
                     'mir_proposito_resumen' => $proposito?->resumen_narrativo,
                     'created_at' => $now,
