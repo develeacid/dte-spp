@@ -34,7 +34,9 @@ class MapaCoberturaProgramaController extends Controller
             'group_by' => ['municipio'],
             'aggregates' => ['total_beneficiarios'],
             'filters' => array_merge(
-                ['program_id' => $programa->id],
+                // geobase resuelve por spp_program_id (contrato M2M), no por su PK interno:
+                // así el mapa cae en el mismo programa que el panel de cobertura (getProgramCoverage).
+                ['spp_program_id' => $programa->id],
                 $dateFilters,
             ),
         ];

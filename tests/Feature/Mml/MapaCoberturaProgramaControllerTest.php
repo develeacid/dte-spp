@@ -108,7 +108,7 @@ class MapaCoberturaProgramaControllerTest extends TestCase
 
             return $body['group_by'] === ['municipio']
                 && $body['aggregates'] === ['total_beneficiarios']
-                && $body['filters']['program_id'] === $programa->id
+                && $body['filters']['spp_program_id'] === $programa->id
                 && ! isset($body['filters']['date_from']);
         });
     }
