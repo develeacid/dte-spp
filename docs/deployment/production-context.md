@@ -446,6 +446,12 @@ Nginx: restaurar/usar el block de `geobase.eleaciddev.cloud` → `127.0.0.1:8081
 
 1. **Token M2M** (geobase → dte-spp): en geobase `php artisan db:seed --class=SystemTokenSeeder --force` imprime/genera el token con abilities `padron:*`. Copiarlo a `/var/www/dte-spp/.env` → `GEOBASE_API_TOKEN=...` y `php artisan optimize:clear` en dte-spp.
 2. **Registrar programas en geobase** (después de seeders dte-spp): `php artisan geobase:hydrate-padron` + `php artisan geobase:hydrate-indicador-variables` en dte-spp (idempotentes).
+   - **Padrón demo cross-sistema** (cobertura/conciliación/atendida): `hydrate-padron` crea *cascarones* vacíos en geobase (los programas demo del `ProgramSeeder` NO tienen `spp_program_id`, así que dte-spp no ve sus enrollments). Para datos demo coherentes, en **geobase** correr el comando idempotente:
+     ```bash
+     docker compose exec -e APP_ENV=local laravel.test php artisan geobase:seed-demo-padron --ejercicio=2025
+     ```
+     (`--ejercicio` debe coincidir con el `ejercicio_fiscal` de los programas dte-spp — 2025 tras `migrate:fresh --seed`). Inyecta enrollments reusando beneficiarios demo (hereda municipio/género/etnia), asigna `team_id`, setea `monto_unitario`. Idempotente: salta programas que ya tienen padrón. Luego en dte-spp: `php artisan geobase:sync-atendida --ejercicio=2025`.
+   - **Mapa de cobertura (choropleth)**: geobase lo renderiza con Node+Playwright Chromium. El binario se instala automáticamente vía `postinstall` de `package.json` (`PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium`) en cada `npm ci`; los libs de sistema están en el `Dockerfile` (`npx playwright install-deps`). Si el mapa da 503 ("GeoBase consulta image error 500"), re-correr `npm ci` en el contenedor geobase. El filtro `spp_program_id` (PR geobase #32) hace que el mapa resuelva al mismo programa que el panel.
 3. **Webhooks M5** (geobase avisa a dte-spp): el secret compartido debe estar en el `.env` de AMBOS (`GEOBASE_WEBHOOK_SECRET`). En geobase (usa OPCIONES, no args posicionales):
    ```bash
    php artisan geobase:provision-webhook-subscription \
