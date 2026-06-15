@@ -39,6 +39,7 @@
     <x-slot:tooltip>
         @can('revisar_avance')<a href="{{ route('tracking.panel') }}" class="block py-1 hover:text-brand-light">Panel</a>@endcan
         @can('capturar_avance')<a href="{{ route('tracking.pendientes') }}" class="block py-1 hover:text-brand-light">Mis Indicadores</a>@endcan
+        @canany(['capturar_avance', 'revisar_avance', 'ver_padron'])<a href="{{ route('tracking.programas') }}" class="block py-1 hover:text-brand-light">Programas</a>@endcanany
         @can('ver_sabana_captura')<a href="{{ route('tracking.sabana-captura') }}" class="block py-1 hover:text-brand-light">Sábana de Captura</a>@endcan
         @can('ver_concentrado_captura')<a href="{{ route('tracking.concentrado-captura') }}" class="block py-1 hover:text-brand-light">Concentrado</a>@endcan
     </x-slot:tooltip>
@@ -53,6 +54,11 @@
             Mis Indicadores
         </x-ui.sidebar-item>
     @endcan
+    @canany(['capturar_avance', 'revisar_avance', 'ver_padron'])
+        <x-ui.sidebar-item href="{{ route('tracking.programas') }}" :active="request()->routeIs('tracking.programas') || request()->routeIs('tracking.dashboard-indicadores') || request()->routeIs('mml.padron') || request()->routeIs('mml.cobertura')">
+            Programas
+        </x-ui.sidebar-item>
+    @endcanany
     @can('revisar_avance')
         <x-ui.sidebar-item href="{{ route('tracking.vencidos') }}" :active="request()->routeIs('tracking.vencidos')">
             Vencidos

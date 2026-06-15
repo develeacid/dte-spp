@@ -1,15 +1,11 @@
 <div>
     <x-page.header>
         <x-slot name="title">Flujo de avance</x-slot>
-        <x-slot name="actions">
-            <a href="{{ route('tracking.captura', $avance) }}"
-               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                Ver captura
-            </a>
-        </x-slot>
     </x-page.header>
 
     <x-page.container>
+        <x-tracking.avance-nav :avance="$avance" active="revisar" />
+
         @if (session()->has('message'))
             <div class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
                 {{ session('message') }}

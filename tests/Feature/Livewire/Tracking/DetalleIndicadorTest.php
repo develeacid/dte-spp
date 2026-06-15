@@ -89,11 +89,26 @@ class DetalleIndicadorTest extends TestCase
     }
 
     #[Test]
-    public function operador_sin_permiso_revisar_avance_recibe_403(): void
+    public function operador_del_team_con_capturar_avance_puede_ver_historico(): void
     {
-        $operador = User::factory()->withPersonalTeam()->create();
+        // El operador captura avances; consultar el histórico del indicador de su
+        // propia UR (solo lectura) es parte de su flujo (A.5).
+        $operador = User::factory()->create();
         $operador->assignRole('operador');
+        $this->planeador->currentTeam->users()->attach($operador, ['role' => 'operador']);
+        $operador->switchTeam($this->planeador->currentTeam);
         $this->actingAs($operador);
+
+        Livewire::test(DetalleIndicador::class, ['indicador' => $this->indicador])
+            ->assertSee('Indicador detalle');
+    }
+
+    #[Test]
+    public function usuario_sin_capturar_ni_revisar_recibe_403(): void
+    {
+        // Sin capturar_avance ni revisar_avance no se accede al histórico.
+        $sinPermiso = User::factory()->withPersonalTeam()->create();
+        $this->actingAs($sinPermiso);
 
         $response = $this->get(route('tracking.indicador.detalle', $this->indicador));
         $response->assertStatus(403);

@@ -36,6 +36,8 @@
         @endcan
     @endif
 
+    <x-tracking.programa-nav :programa="$programa" active="padron" />
+
     @if (! $programa->padron_geobase_activo)
         @if (session('success'))
             <div class="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800 mb-4">
