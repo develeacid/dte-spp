@@ -2,6 +2,15 @@
 
 Sistema de Planeacion Programatica — Direccion Tecnica de Evaluacion.
 
+## Documentacion
+
+La documentacion integral del sistema vive en [`docs/sistema/`](docs/sistema/README.md):
+
+- **[Indice + matriz de cobertura](docs/sistema/README.md)** — punto de entrada, mapa del sistema y trazabilidad temario ↔ codigo.
+- **[Manuales por rol](docs/sistema/manuales/)** — guias operativas de dte-spp (operador, planeador, analistas, RDA, admin) y geobase.
+- **[Registro de brechas verificadas](docs/sistema/brechas/README.md)** — brechas reales del ecosistema, validadas contra el codigo.
+- **[Fuente de verdad](docs/sistema/fuente-de-verdad/)** — glosario MIR, inventario de conceptos del temario, modulos M01–M10 y la integracion geobase ⋈ dte.
+
 ## Stack
 
 - **Backend:** Laravel 12, PHP 8.2+, PostgreSQL 16
