@@ -65,9 +65,59 @@ El instrumento **no pertenece a un solo proceso**: es un formato "todo en uno" q
 - **Grano de captura.** El formato reporta por *acción individual*; el Tracking captura por *indicador × periodo*. Para conservar la trazabilidad por acción (deseable para auditoría y cobertura), considerar que cada evidencia/acción pueda registrarse como ítem y que la suma alimente el numerador, en lugar de capturar solo el agregado trimestral.
 - **Beneficios indirectos / municipios aledaños.** El concepto "municipios aledaños beneficiados" (con anexo) es cobertura *indirecta*; no tiene equivalente directo en el modelo de cobertura municipal actual — evaluar si se modela en GeoBase.
 
-## 5. Pregunta abierta — campos de texto del informe en el sistema
+## 5. Cómo solventar las "preguntas abiertas" en el informe del sistema
 
-> Cómo evitar que las preguntas abiertas del formato legacy se conviertan en texto libre sin estructura dentro del informe del sistema. Pendiente de diseñar (candidatos: plantillas guiadas con sub-campos por pregunta, rúbricas/validaciones mínimas, asistencia IA para estructurar la respuesta a partir de la evidencia). Registrar aquí la decisión cuando se tome.
+**El problema real** no es que sean campos de texto, sino que **el texto libre sin estructura no se puede agregar, comparar ni auditar** — y justo las secciones III y V (descripción, factores de éxito/inhibidores, lecciones aprendidas, impacto económico/social/político) son las de mayor valor analítico. Si se vuelcan a un único `textarea` por sección, se pierde la trazabilidad que el formato legacy sí tenía (cada pregunta era específica).
+
+Hay tres enfoques, de menor a mayor esfuerzo, **combinables**. Los tres reutilizan patrones que el sistema ya tiene implementados, así que no parten de cero.
+
+### Enfoque A — Descomponer cada "pregunta abierta" en sub-campos guiados *(recomendado, base)*
+
+En vez de un `textarea` por sección, el informe replica las preguntas concretas del formato como **campos separados** con *placeholder*, ayuda contextual y validación mínima. Ejemplo con la sección V (Sistematización):
+
+| Campo legacy (era 1 "pregunta abierta") | Sub-campo estructurado | Validación |
+| --- | --- | --- |
+| Factores de éxito | `factores_exito` | obligatorio, mín. N caracteres |
+| Factores inhibidores | `factores_inhibidores` | obligatorio, mín. N caracteres |
+| Brecha planeado vs. real | `brecha_planeado_real` | obligatorio |
+| Qué haríamos diferente | `recomendacion` | obligatorio |
+
+**Cómo se materializa en el sistema:** es exactamente el patrón del **análisis de desviación** del Tracking — `avances.analisis_desviacion` JSONB con keys fijas `dato/causa/accion/proyeccion`, cada una obligatoria con mínimo de caracteres, exigida solo cuando aplica (semáforo amarillo/rojo/rojo_alto). Se replica: una columna **JSONB con keys fijas** por sección cualitativa + reglas de validación duras (estilo B3–B7 de `IndicadorReglasService`). Sin tablas nuevas pesadas; estructura predecible y reportable.
+
+**Pros:** mayor retorno con menor esfuerzo; conserva toda la riqueza del formato legacy; elimina respuestas de una palabra y los "N/A". **Contra:** hay que acordar el set de sub-campos por sección (de ahí la conversación con analistas).
+
+### Enfoque B — Validaciones, condicionales y rúbricas suaves *(complemento de A)*
+
+- **Mínimos de longitud** y obligatoriedad **condicional** (como el análisis de desviación, que solo se exige bajo cierto semáforo): no recargar al operador cuando la pregunta no aplica.
+- **Preguntas cerradas del formato** (los "¿…? ( ) SÍ ( ) NO. Si SÍ: indique cuántos y cuáles") → `radio`/`select` que **abre un sub-campo condicional** solo cuando se responde SÍ. Esto elimina ambigüedad y normaliza el dato (p. ej. municipios aledaños).
+- **Rúbrica mínima** opcional: una checklist de "qué debe contener una buena respuesta" junto al campo, como guía editorial.
+
+**Cómo se materializa:** validaciones de FormRequest / reglas de componente Livewire + campos condicionales en Blade (el sistema ya usa este patrón en captura de avance y en el editor MIR).
+
+### Enfoque C — Asistencia IA para estructurar el borrador *(mejora posterior)*
+
+Un botón **"Estructurar informe con IA"** que, a partir de las **evidencias adjuntas + los datos cuantitativos ya capturados** (totales, beneficiarios, geo), **pre-rellena un borrador editable** de las respuestas cualitativas con la estructura correcta. El operador **edita**, no parte de cero.
+
+**Cómo se materializa:** el sistema ya tiene infraestructura de prompts IA versionados (`resources/views/prompts/...`, p. ej. `prompts/mir/validar-crema-mv`) y botones IA en producción ("Generar justificación IA" en captura, "Validar CREMA"). Se añade un prompt nuevo (`prompts/informe/estructurar-*`) con el mismo mecanismo. Ataca la causa raíz de las respuestas pobres (falta de tiempo/redacción) sin quitarle control al operador.
+
+**Pros:** sube la calidad de fondo. **Contra:** depende de A (necesita los sub-campos destino) y de monitoreo de costo/calidad IA.
+
+### Recomendación
+
+Empezar por **A + B** (mayor retorno, reutiliza un patrón ya probado: `analisis_desviacion` JSONB + validaciones duras) y dejar **C** como mejora posterior una vez estabilizado el set de sub-campos.
+
+### Preguntas para validar con los analistas (antes de fijar A)
+
+Estas definen el set de sub-campos y evitan rediseños:
+
+1. **¿Cuál es la unidad real de reporte?** ¿Una acción/evento (como el formato legacy) o el agregado trimestral del indicador? De esto depende si el informe vive ligado al avance (indicador × periodo) o como ítem por acción que suma al numerador.
+2. **¿Qué secciones del formato siguen siendo obligatorias** en el sistema y cuáles eran "por completar el Excel"? (Evitar arrastrar campos muertos como los "N/A".)
+3. **¿Qué respuestas se usan después y para qué** (reporte, evaluación, transparencia)? Solo eso justifica estructurarlas; el resto puede ser narrativa libre.
+4. **¿Las preguntas de impacto (económico/social/político) son del operador o del evaluador?** Si son de evaluación, su lugar natural es Evaluación externa (hallazgo→recomendación→ASM), no el avance.
+5. **¿Qué partes son cuantitativas disfrazadas de texto** (inversión, derrama, ahorro, asistencia)? Esas deberían ser numéricas/numerador, no texto.
+6. **"Municipios aledaños beneficiados" (cobertura indirecta):** ¿se modela en GeoBase o queda como nota? No tiene equivalente directo hoy.
+
+> **Estado:** propuesta para discusión. Registrar aquí la decisión (set de sub-campos por sección, unidad de reporte, qué va a Evaluación vs. Seguimiento) cuando se acuerde con los analistas.
 
 ---
 
