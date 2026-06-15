@@ -4,6 +4,8 @@
     </x-page.header>
 
     <x-page.container>
+        <x-tracking.avance-nav :avance="$avance" active="evidencias" />
+
         @unless($avance->estaCongelado() || ! $avance->estado->esEditable())
             <form wire:submit="guardar" class="mb-8 space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                 <h3 class="text-lg font-medium text-gray-900">Adjuntar evidencia</h3>

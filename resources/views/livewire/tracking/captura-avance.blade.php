@@ -4,6 +4,8 @@
     </x-page.header>
 
     <x-page.container>
+        <x-tracking.avance-nav :avance="$avance" active="captura" />
+
         @if (session()->has('message'))
             <div class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
                 {{ session('message') }}
