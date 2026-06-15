@@ -104,4 +104,5 @@ Insumos conceptuales transversales que sustentan los módulos y manuales:
 - [**Catálogo de diagramas**](fuente-de-verdad/catalogo_diagramas.md) — índice de diagramas del sistema (arquitectura, flujos, integraciones).
 - [**Integración geobase ↔ dte-spp**](fuente-de-verdad/integracion_geobase_dte.md) — frontera de datos, API M2M, webhooks, padrón y ROP cross-sistema.
 - [**Inventario de conceptos del temario (v2)**](fuente-de-verdad/inventario_conceptos_temario_v2.md) — los conceptos del temario MIR cruzados con su materialización en código.
+- [**Insumo legacy — Informe de acción SCCyDE**](fuente-de-verdad/insumo-informe-accion-sccyde-legacy.md) — análisis del formato pre-sistema (37 plantillas por Componente/Actividad de los Pp 121/142/172) y su mapeo a los procesos del sistema (MIR / seguimiento / padrón-cobertura / evaluación).
 - Fichas de módulo de la fuente de verdad: [modulo_01](fuente-de-verdad/modulo_01.md) … [modulo_10](fuente-de-verdad/modulo_10.md).
