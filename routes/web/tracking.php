@@ -10,6 +10,7 @@ use App\Livewire\Tracking\FlujosAvance;
 use App\Livewire\Tracking\GestionarDesbloqueos;
 use App\Livewire\Tracking\IndicadoresVencidos;
 use App\Livewire\Tracking\MisIndicadoresPendientes;
+use App\Livewire\Tracking\MisProgramas;
 use App\Livewire\Tracking\PanelSeguimiento;
 use App\Livewire\Tracking\SabanaCaptura;
 use App\Livewire\Tracking\SolicitarDesbloqueo;
@@ -24,6 +25,8 @@ Route::prefix('seguimiento')
             ->name('tracking.indicador.detalle');
         Route::get('/pendientes', MisIndicadoresPendientes::class)
             ->name('tracking.pendientes');
+        Route::get('/programas', MisProgramas::class)
+            ->name('tracking.programas');
         Route::get('/vencidos', IndicadoresVencidos::class)
             ->name('tracking.vencidos');
         Route::get('/captura/{avance}', CapturaAvance::class)

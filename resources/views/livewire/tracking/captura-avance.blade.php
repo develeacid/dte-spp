@@ -25,7 +25,14 @@
 
         {{-- Indicator info --}}
         <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 class="text-lg font-medium text-gray-900">{{ $avance->indicador->nombre }}</h3>
+            <div class="flex items-start justify-between gap-4">
+                <h3 class="text-lg font-medium text-gray-900">{{ $avance->indicador->nombre }}</h3>
+                <a href="{{ route('tracking.indicador.detalle', $avance->indicador) }}"
+                   wire:navigate
+                   class="shrink-0 whitespace-nowrap text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                    Ver histórico →
+                </a>
+            </div>
             <dl class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
                     <dt class="text-sm font-medium text-gray-500">Formula</dt>

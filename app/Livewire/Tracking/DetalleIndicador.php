@@ -13,7 +13,7 @@ class DetalleIndicador extends Component
 
     public function mount(Indicador $indicador): void
     {
-        abort_unless(auth()->user()->can('revisar_avance'), 403);
+        abort_unless(auth()->user()->canAny(['capturar_avance', 'revisar_avance']), 403);
 
         // Multi-tenant: solo se accede a indicadores del team actual
         // (ya sea programa del team, o nivel UR coadyuvante del team).

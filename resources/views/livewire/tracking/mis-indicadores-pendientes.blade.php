@@ -37,10 +37,16 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <a href="{{ route('tracking.captura', $avance) }}"
-                                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500">
-                                        Capturar
-                                    </a>
+                                    <div class="flex items-center gap-3">
+                                        <a href="{{ route('tracking.captura', $avance) }}"
+                                           class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                            Capturar
+                                        </a>
+                                        <a href="{{ route('tracking.indicador.detalle', $avance->indicador) }}"
+                                           class="text-xs font-medium text-indigo-600 hover:text-indigo-500">
+                                            Ver histórico
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

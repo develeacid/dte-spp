@@ -1,9 +1,11 @@
 <div>
     <x-page.container :breadcrumbs="[
         ['label' => 'Inicio', 'url' => route('dashboard')],
-        ['label' => 'Seguimiento', 'url' => route('tracking.panel')],
+        ['label' => 'Programas', 'url' => route('tracking.programas')],
         ['label' => 'Dashboard — ' . $programa->nombre],
     ]">
+        <x-tracking.programa-nav :programa="$programa" active="dashboard" />
+
         <div class="space-y-4">
             @php
                 $niveles = collect();

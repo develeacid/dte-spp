@@ -4,6 +4,8 @@
         subtitle="{{ $programa->clave }} — {{ $programa->nombre }}"
     />
 
+    <x-tracking.programa-nav :programa="$programa" active="cobertura" />
+
     <div class="space-y-6">
         <div class="bg-white shadow rounded p-4">
             <h3 class="text-sm font-medium text-gray-700 mb-3">Supuestos del MIR</h3>
