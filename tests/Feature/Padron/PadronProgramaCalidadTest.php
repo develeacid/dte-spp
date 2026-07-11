@@ -56,8 +56,8 @@ class PadronProgramaCalidadTest extends TestCase
 
         return Livewire::actingAs($user)
             ->test(PadronPrograma::class, ['programa' => $programa])
-            ->set('componenteSeleccionado', $componente->id)
-            ->set('modoFuente', 'vivo');
+            ->call('seleccionarComponente', $componente->id)
+            ->call('toggleFuente');
     }
 
     public function test_mapea_calidad_desde_coverage(): void
