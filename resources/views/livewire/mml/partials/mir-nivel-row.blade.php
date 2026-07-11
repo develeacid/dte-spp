@@ -350,6 +350,19 @@
                             />
                         </div>
 
+                        {{-- Valor de línea base (M05 #8/#13) --}}
+                        <div class="mt-1 flex items-center gap-2">
+                            <label class="text-xs font-medium text-gray-500">Valor de línea base</label>
+                            <input
+                                type="number"
+                                step="0.0001"
+                                value="{{ $indicador->linea_base }}"
+                                wire:change="guardarLineaBase({{ $indicador->id }}, $event.target.value)"
+                                class="w-32 rounded border-gray-300 text-xs"
+                                placeholder="Ej: 42.5"
+                            />
+                        </div>
+
                         {{-- Meta anual (C-146) — captura con justificación obligatoria al cambiar --}}
                         {{-- wire:key depende de la meta persistida: al guardar un cambio justificado,
                              la meta del modelo cambia y Livewire fuerza re-init del x-data, refrescando

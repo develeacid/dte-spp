@@ -78,4 +78,23 @@ class MirEditorCapturaTest extends TestCase
             'sentido' => 'regular',
         ])->assertHasErrors('sentido');
     }
+
+    public function test_guardar_linea_base_persiste_valor(): void
+    {
+        $indicador = $this->componenteConIndicador();
+
+        $this->editor()->call('guardarLineaBase', $indicador->id, '42.5');
+
+        $this->assertEquals(42.5, (float) $indicador->fresh()->linea_base);
+    }
+
+    public function test_guardar_linea_base_vacia_persiste_null(): void
+    {
+        $indicador = $this->componenteConIndicador();
+        $indicador->update(['linea_base' => 10]);
+
+        $this->editor()->call('guardarLineaBase', $indicador->id, '');
+
+        $this->assertNull($indicador->fresh()->linea_base);
+    }
 }

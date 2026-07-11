@@ -575,6 +575,22 @@ class MirEditor extends Component
         $indicador->update($validated);
     }
 
+    public function guardarLineaBase(int $indicadorId, ?string $valor): void
+    {
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
+        $validated = validator(
+            ['linea_base' => $valor === '' ? null : $valor],
+            ['linea_base' => 'nullable|numeric']
+        )->validate();
+
+        $indicador->update($validated);
+    }
+
     /**
      * Captura/edición de la meta anual del indicador con justificación
      * obligatoria al modificarla (C-146). Regla del temario: "no bajar meta /
