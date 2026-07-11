@@ -7,7 +7,9 @@ use App\Enums\TipoArbol;
 use App\Enums\TipoNodo;
 use App\Models\Mml\Arbol;
 use App\Models\Mml\ArbolNodo;
+use App\Models\Mml\FichaInformacionBasica;
 use App\Models\ProgramaPresupuestario;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -19,6 +21,14 @@ class DefinicionProblema extends Component
     public ProgramaPresupuestario $programa;
 
     public string $descripcion = '';
+
+    public string $magnitud = '';
+
+    public string $focalizacion = '';
+
+    public string $causasEfectos = '';
+
+    public string $bienesServicios = '';
 
     public string $sugerenciaIa = '';
 
@@ -37,6 +47,26 @@ class DefinicionProblema extends Component
                 $this->descripcion = $nodoCentral->descripcion;
             }
         }
+
+        $ficha = $programa->fichaInformacionBasica;
+        if ($ficha) {
+            $this->magnitud = $ficha->magnitud ?? '';
+            $this->focalizacion = $ficha->focalizacion ?? '';
+            $this->causasEfectos = $ficha->causas_efectos ?? '';
+            $this->bienesServicios = $ficha->bienes_servicios ?? '';
+        }
+    }
+
+    #[Computed]
+    public function completitud(): int
+    {
+        return collect([
+            $this->descripcion,
+            $this->magnitud,
+            $this->focalizacion,
+            $this->causasEfectos,
+            $this->bienesServicios,
+        ])->filter(fn ($v) => trim((string) $v) !== '')->count();
     }
 
     public function validarConIa(): void
@@ -75,6 +105,10 @@ class DefinicionProblema extends Component
     {
         $this->validate([
             'descripcion' => 'required|min:20|max:1000',
+            'magnitud' => 'nullable|string|max:2000',
+            'focalizacion' => 'nullable|string|max:2000',
+            'causasEfectos' => 'nullable|string|max:2000',
+            'bienesServicios' => 'nullable|string|max:2000',
         ]);
 
         $arbol = Arbol::firstOrCreate(
@@ -91,6 +125,16 @@ class DefinicionProblema extends Component
             ],
             [
                 'descripcion' => $this->descripcion,
+            ]
+        );
+
+        FichaInformacionBasica::updateOrCreate(
+            ['programa_presupuestario_id' => $this->programa->id],
+            [
+                'magnitud' => $this->magnitud ?: null,
+                'focalizacion' => $this->focalizacion ?: null,
+                'causas_efectos' => $this->causasEfectos ?: null,
+                'bienes_servicios' => $this->bienesServicios ?: null,
             ]
         );
 
