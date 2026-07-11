@@ -245,6 +245,7 @@
                             tipo: @js($indicador->tipo?->value ?? $reglas['tipo_default']),
                             dimension: @js($indicador->dimension?->value ?? $reglas['dimensiones'][0]),
                             frecuencia: @js($indicador->frecuencia?->value ?? $reglas['frecuencias'][0]),
+                            sentido: @js($indicador->sentido?->value ?? 'ascendente'),
                         },
                         guardar() {
                             $wire.guardarIndicador({{ $indicador->id }}, { ...this.ind });
@@ -258,7 +259,7 @@
                         placeholder="Nombre del indicador"
                     />
 
-                    <div class="grid grid-cols-3 gap-1">
+                    <div class="grid grid-cols-2 gap-1">
                         {{-- Tipo --}}
                         @if ($reglas['tipo_fijo'])
                             <span class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
@@ -289,6 +290,13 @@
                                 <option value="{{ $freq }}">
                                     {{ \App\Enums\FrecuenciaMedicion::tryFrom($freq)?->label() }}
                                 </option>
+                            @endforeach
+                        </select>
+
+                        {{-- Sentido (M05 #15/#12) --}}
+                        <select x-model="ind.sentido" @change="guardar()" class="rounded border-gray-300 text-xs">
+                            @foreach (\App\Enums\SentidoIndicador::cases() as $s)
+                                <option value="{{ $s->value }}">{{ $s->label() }}</option>
                             @endforeach
                         </select>
                     </div>

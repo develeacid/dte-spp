@@ -4,6 +4,7 @@ namespace App\Livewire\Mml;
 
 use App\Contracts\LlmServiceInterface;
 use App\Enums\FrecuenciaMedicion;
+use App\Enums\SentidoIndicador;
 use App\Enums\TipoFuenteMv;
 use App\Enums\TipoNivelMir;
 use App\Models\CatalogoUnidadMedida;
@@ -266,6 +267,7 @@ class MirEditor extends Component
             'tipo' => 'required|in:'.implode(',', $reglas['tipos']),
             'dimension' => 'required|in:'.implode(',', $reglas['dimensiones']),
             'frecuencia' => 'required|in:'.implode(',', $reglas['frecuencias']),
+            'sentido' => ['required', Rule::in(SentidoIndicador::values())],
         ])->validate();
 
         $indicador->update($validated);
