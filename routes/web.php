@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AyudaController;
 use App\Http\Controllers\OnboardingController;
 use App\Livewire\Dashboard;
 use App\Livewire\NotificationsIndex;
@@ -24,6 +25,7 @@ Route::middleware([
 ])->group(function () {
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::get('/notifications', NotificationsIndex::class)->name('notifications.index');
+    Route::get('/ayuda', AyudaController::class)->name('ayuda');
 });
 
 require __DIR__.'/web/admin.php';
