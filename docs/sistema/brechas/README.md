@@ -4,7 +4,7 @@
 
 Este documento es la fuente de verdad del estado de cobertura del temario MIR / PbR-SED frente al codigo de los sistemas `dte-spp` y `geobase`. Los veredictos provienen de una verificacion adversarial: cada afirmacion del Informe de Brechas fue contrastada con archivos, migraciones, servicios, prompts y rutas reales.
 
-> **Bitacora de cierre:** las brechas que se van resolviendo se marcan inline con `✅ RESUELTA (fecha)` en su fila de origen y se registran en la seccion **§6 Registro de brechas resueltas**. Al 2026-07-11 hay **6 brechas resueltas** (sprint "captura del editor MIR").
+> **Bitacora de cierre:** las brechas que se van resolviendo se marcan inline con `✅ RESUELTA (fecha)` en su fila de origen y se registran en la seccion **§6 Registro de brechas resueltas**. Al 2026-07-11 hay **7 brechas resueltas**: 6 del sprint "captura del editor MIR" + M07 req 20 (calidad del padron).
 
 ---
 
@@ -48,7 +48,7 @@ Este documento es la fuente de verdad del estado de cobertura del temario MIR / 
 | Modulo | Req | Brecha | Severidad | Sistema | Evidencia | Recomendacion |
 | --- | --- | --- | --- | --- | --- | --- |
 | M05 Indicadores | #15, #12 | ✅ RESUELTA (2026-07-11) — Sentido no editable en el editor MIR (Etapa 7); solo se fija por import/CompletarHuecos o queda en default ascendente | alta | dte-spp | `MirEditor.php:264-269` valida solo nombre/tipo/dimension/frecuencia, sin `sentido`; `mir-nivel-row.blade.php` no tiene control; `CompletarHuecos.php:131` si captura sentido via import; columna existe (`create_indicadores_table.php:20`) | Agregar select Ascendente/Descendente en `mir-nivel-row.blade.php` y campo `sentido` al validador de `guardarIndicador()`. El dato y el SemaforoService ya existen |
-| M07 Padron | req 20 | Indicador de calidad del padron ausente: no se calcula ni reporta el % de registros con informacion completa y verificada | alta | ambos | `PadronPrograma.php` `cargarKpis()/mapearVivo()/mapearDesagregados()` (219-289) solo exponen total + desagregados; sin % completos/verificados en geobase ni dte-spp | Agregar KPI/panel `% registros completos y verificados` en `PadronPrograma` (dte-spp) o reporte en geobase |
+| M07 Padron | req 20 | ✅ RESUELTA (2026-07-11) — Indicador de calidad del padron ausente: no se calcula ni reporta el % de registros con informacion completa y verificada | alta | ambos | `PadronPrograma.php` `cargarKpis()/mapearVivo()/mapearDesagregados()` (219-289) solo exponen total + desagregados; sin % completos/verificados en geobase ni dte-spp | Agregar KPI/panel `% registros completos y verificados` en `PadronPrograma` (dte-spp) o reporte en geobase |
 | M07 Padron | req 23 | P-03 elegibilidad ROP latente: `estaCableado(P03)=false`; requiere modelo ROP en geobase (C-098) | alta | geobase | `PadronErrorCode.php:67-73` retorna false para P03/P04/P06; docblock confirma `P-03 requiere modelo ROP (C-098)`; unica elegibilidad cableada es geografica | Decision arquitectonica documentada (C-098, sprint M pendiente). No cableado hoy = brecha real-latente |
 | M07 Padron | req 24 | P-04 duplicidad interinstitucional PUBP latente: `estaCableado(P04)=false`; sin fuente de datos PUBP | alta | geobase | `PadronErrorCode.php:71` (P03/P04/P06 => false); `DuplicateDetectionService` cubre P-02 (CURP intra-padron) pero no PUBP cross-institucional | Requiere acuerdo y fuente de datos PUBP interinstitucional. Brecha real-latente |
 | M07 Padron | req 26 | P-06 verificacion CURP en RENAPO latente: `estaCableado(P06)=false`; falta regex 18-char + adapter RENAPO (sprint F2-01) | alta | geobase | `PadronErrorCode.php:71` (P06 => false); CURP solo validado por longitud (`StoreBeneficiaryApiRequest.php:21` max:18, `StoreBeneficiaryRequest.php:28` min:10/max:18) | Decision arquitectonica documentada (sprint F2-01). Misma raiz que req 2 |
@@ -196,3 +196,19 @@ Rama `feat/captura-editor-mir`. Diseno: `docs/plans/2026-07-11-captura-editor-mi
 | M05 Indicadores | #11 | Campo Definicion del indicador inexistente | media | Migracion `indicadores.definicion` (text nullable), fillable, setter `MirEditor::guardarDefinicion()` (`max:240`), textarea en editor + renglon en ficha tecnica. |
 
 **Post-deploy:** `sail artisan migrate` (1 migracion privada, `2026_07_11_000001_add_definicion_to_indicadores`). No toca BD publica.
+
+### Indicador de calidad del padrón (2026-07-11)
+
+Ramas `feat/calidad-padron` (geobase + dte-spp). Diseño/plan:
+`geobase/docs/plans/2026-07-11-calidad-padron{-design,}.md`. Tests: geobase
+`PadronQualityServiceTest` + `ComponentCoverageTest`, dte-spp
+`PadronProgramaCalidadTest`. Verificación E2E en browser con datos reales
+(ISM-001: 0% completos / 87.5% verificados).
+
+| Modulo | Req | Brecha | Severidad | Cierre |
+| --- | --- | --- | --- | --- |
+| M07 Padron | req 20 | Indicador de calidad del padron ausente (% completos/verificados) | alta | **geobase**: `PadronQualityService` (completos por tipo física/moral vía `whereNotNull`; verificados = status aprobado/observado/finalizado) + bloque `quality` en `ComponentController::coverage`. **dte-spp**: `PadronPrograma::mapearVivo()` mapea `kpis['calidad']` + panel "Calidad del padrón" en `kpi-cards` (solo modo vivo; degrada a "—" si el campo falta). |
+
+**Definiciones normativas:** Completo — física: `curp_rfc, nombre, apellidos, fecha_nacimiento, genero, address_municipality, location`; moral: `curp_rfc, razon_social, address_municipality, location`. Verificado — enrollment `status ∈ {aprobado, observado_por_cambio_domicilio, finalizado}` (proxy mientras RENAPO/CURP real sigue bloqueado, F2-01).
+
+**Deploy:** geobase **antes** que dte-spp (degradación elegante). Sin migraciones. Sin BD pública.
