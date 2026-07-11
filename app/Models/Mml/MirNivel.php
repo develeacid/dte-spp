@@ -63,6 +63,24 @@ class MirNivel extends Model
         return $this->belongsTo(ProgramaPresupuestario::class, 'programa_presupuestario_id');
     }
 
+    /**
+     * Código jerárquico del nivel en formato del temario MIR:
+     * FIN → 'F', PROPÓSITO → 'P', COMPONENTE → 'C{orden}',
+     * ACTIVIDAD → 'A{orden_componente}.{orden}'. Reutiliza la resolución del
+     * componente padre de Trazabilidad. Cierra M03 req9 / M04 #8.
+     */
+    public function codigoMir(): string
+    {
+        $traza = Trazabilidad::deNivel($this);
+
+        return match ($this->tipo_nivel) {
+            TipoNivelMir::FIN => 'F',
+            TipoNivelMir::PROPOSITO => 'P',
+            TipoNivelMir::COMPONENTE => 'C'.$this->orden,
+            TipoNivelMir::ACTIVIDAD => 'A'.($traza->componenteOrden ?? '?').'.'.$this->orden,
+        };
+    }
+
     public function componente(): BelongsTo
     {
         return $this->belongsTo(self::class, 'componente_id');

@@ -59,22 +59,22 @@ class IndicadorReglasServiceTest extends TestCase
     public function test_frecuencias_por_nivel(): void
     {
         $this->assertEquals(
-            [FrecuenciaMedicion::ANUAL, FrecuenciaMedicion::BIANUAL, FrecuenciaMedicion::SEXENAL],
+            [FrecuenciaMedicion::ANUAL, FrecuenciaMedicion::BIANUAL, FrecuenciaMedicion::TRIANUAL, FrecuenciaMedicion::SEXENAL],
             IndicadorReglasService::frecuenciasPermitidas(TipoNivelMir::FIN)
         );
 
         $this->assertEquals(
-            [FrecuenciaMedicion::SEMESTRAL, FrecuenciaMedicion::ANUAL],
+            [FrecuenciaMedicion::SEMESTRAL, FrecuenciaMedicion::ANUAL, FrecuenciaMedicion::TRIANUAL],
             IndicadorReglasService::frecuenciasPermitidas(TipoNivelMir::PROPOSITO)
         );
 
         $this->assertEquals(
-            [FrecuenciaMedicion::TRIMESTRAL, FrecuenciaMedicion::SEMESTRAL],
+            [FrecuenciaMedicion::TRIMESTRAL, FrecuenciaMedicion::SEMESTRAL, FrecuenciaMedicion::ANUAL],
             IndicadorReglasService::frecuenciasPermitidas(TipoNivelMir::COMPONENTE)
         );
 
         $this->assertEquals(
-            [FrecuenciaMedicion::MENSUAL, FrecuenciaMedicion::TRIMESTRAL],
+            [FrecuenciaMedicion::MENSUAL, FrecuenciaMedicion::TRIMESTRAL, FrecuenciaMedicion::SEMESTRAL],
             IndicadorReglasService::frecuenciasPermitidas(TipoNivelMir::ACTIVIDAD)
         );
     }
@@ -93,7 +93,7 @@ class IndicadorReglasServiceTest extends TestCase
         $this->assertEquals('estrategico', $reglas['tipo_default']);
         $this->assertEquals(['estrategico'], $reglas['tipos']);
         $this->assertEquals(['eficacia'], $reglas['dimensiones']);
-        $this->assertEquals(['anual', 'bianual', 'sexenal'], $reglas['frecuencias']);
+        $this->assertEquals(['anual', 'bianual', 'trianual', 'sexenal'], $reglas['frecuencias']);
     }
 
     // --- Regla B9 (C-073): FIN/PROPÓSITO requieren MV de fuente externa -------

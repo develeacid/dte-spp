@@ -46,7 +46,7 @@
                     $rowClass = 'nivel-' . $nivel->tipo_nivel->value;
                 @endphp
                 <tr class="{{ $rowClass }}">
-                    <td><strong>{{ $nivel->tipo_nivel->label() }}</strong></td>
+                    <td><strong>{{ $nivel->codigoMir() }}</strong> — {{ $nivel->tipo_nivel->label() }}</td>
                     <td>{{ $nivel->resumen_narrativo }}</td>
                     <td>
                         @foreach($nivel->indicadores as $ind)

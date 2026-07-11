@@ -72,7 +72,8 @@ class PeriodicidadMvTest extends TestCase
         $this->assertSame(3, FrecuenciaMedicion::SEMESTRAL->orden());
         $this->assertSame(4, FrecuenciaMedicion::ANUAL->orden());
         $this->assertSame(5, FrecuenciaMedicion::BIANUAL->orden());
-        $this->assertSame(6, FrecuenciaMedicion::SEXENAL->orden());
+        $this->assertSame(6, FrecuenciaMedicion::TRIANUAL->orden());
+        $this->assertSame(7, FrecuenciaMedicion::SEXENAL->orden());
     }
 
     // --- Normalización (método estático + integración con migración) ----------

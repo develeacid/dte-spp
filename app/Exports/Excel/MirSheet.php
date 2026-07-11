@@ -28,6 +28,7 @@ class MirSheet implements FromCollection, WithHeadings, WithTitle
         foreach ($niveles as $nivel) {
             foreach ($nivel->indicadores as $indicador) {
                 $rows->push([
+                    'codigo' => $nivel->codigoMir(),
                     'nivel' => $nivel->tipo_nivel->label(),
                     'resumen_narrativo' => $nivel->resumen_narrativo,
                     'indicador' => $indicador->nombre,
@@ -44,6 +45,7 @@ class MirSheet implements FromCollection, WithHeadings, WithTitle
 
             if ($nivel->indicadores->isEmpty()) {
                 $rows->push([
+                    'codigo' => $nivel->codigoMir(),
                     'nivel' => $nivel->tipo_nivel->label(),
                     'resumen_narrativo' => $nivel->resumen_narrativo,
                     'indicador' => '',
@@ -65,7 +67,7 @@ class MirSheet implements FromCollection, WithHeadings, WithTitle
     public function headings(): array
     {
         return [
-            'Nivel', 'Resumen Narrativo', 'Indicador', 'Fórmula',
+            'Código', 'Nivel', 'Resumen Narrativo', 'Indicador', 'Fórmula',
             'Medios de Verificación', 'Supuestos', 'Meta', 'Línea Base',
             'Tipo', 'Dimensión', 'Frecuencia',
         ];

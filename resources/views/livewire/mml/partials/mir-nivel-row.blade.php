@@ -11,6 +11,7 @@
     <td class="px-3 py-3 align-top">
         <x-ui.tooltip :text="config('glosario.' . $tipoEnum?->value, '')" position="right">
             <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold {{ $tipoEnum?->colorClass() }} cursor-help">
+                <span class="font-mono">{{ $nivel->codigoMir() }}</span>
                 {{ $tipoEnum?->label() }}
             </span>
         </x-ui.tooltip>
@@ -245,6 +246,7 @@
                             tipo: @js($indicador->tipo?->value ?? $reglas['tipo_default']),
                             dimension: @js($indicador->dimension?->value ?? $reglas['dimensiones'][0]),
                             frecuencia: @js($indicador->frecuencia?->value ?? $reglas['frecuencias'][0]),
+                            sentido: @js($indicador->sentido?->value ?? 'ascendente'),
                         },
                         guardar() {
                             $wire.guardarIndicador({{ $indicador->id }}, { ...this.ind });
@@ -258,7 +260,17 @@
                         placeholder="Nombre del indicador"
                     />
 
-                    <div class="grid grid-cols-3 gap-1">
+                    {{-- Definición del indicador (M05 #11, máx. 240 ch) --}}
+                    <textarea
+                        wire:change="guardarDefinicion({{ $indicador->id }}, $event.target.value)"
+                        rows="2"
+                        maxlength="240"
+                        class="w-full rounded border-gray-300 text-xs"
+                        placeholder="Definición del indicador (máx. 240 caracteres)"
+                    >{{ $indicador->definicion }}</textarea>
+                    @error('definicion') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+
+                    <div class="grid grid-cols-2 gap-1">
                         {{-- Tipo --}}
                         @if ($reglas['tipo_fijo'])
                             <span class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
@@ -289,6 +301,13 @@
                                 <option value="{{ $freq }}">
                                     {{ \App\Enums\FrecuenciaMedicion::tryFrom($freq)?->label() }}
                                 </option>
+                            @endforeach
+                        </select>
+
+                        {{-- Sentido (M05 #15/#12) --}}
+                        <select x-model="ind.sentido" @change="guardar()" class="rounded border-gray-300 text-xs">
+                            @foreach (\App\Enums\SentidoIndicador::cases() as $s)
+                                <option value="{{ $s->value }}">{{ $s->label() }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -339,6 +358,19 @@
                                 wire:change="guardarLineaBaseAnio({{ $indicador->id }}, $event.target.value)"
                                 class="w-24 rounded border-gray-300 text-xs"
                                 placeholder="Ej: 2026"
+                            />
+                        </div>
+
+                        {{-- Valor de línea base (M05 #8/#13) --}}
+                        <div class="mt-1 flex items-center gap-2">
+                            <label class="text-xs font-medium text-gray-500">Valor de línea base</label>
+                            <input
+                                type="number"
+                                step="0.0001"
+                                value="{{ $indicador->linea_base }}"
+                                wire:change="guardarLineaBase({{ $indicador->id }}, $event.target.value)"
+                                class="w-32 rounded border-gray-300 text-xs"
+                                placeholder="Ej: 42.5"
                             />
                         </div>
 

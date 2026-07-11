@@ -4,6 +4,7 @@ namespace App\Livewire\Mml;
 
 use App\Contracts\LlmServiceInterface;
 use App\Enums\FrecuenciaMedicion;
+use App\Enums\SentidoIndicador;
 use App\Enums\TipoFuenteMv;
 use App\Enums\TipoNivelMir;
 use App\Models\CatalogoUnidadMedida;
@@ -266,6 +267,7 @@ class MirEditor extends Component
             'tipo' => 'required|in:'.implode(',', $reglas['tipos']),
             'dimension' => 'required|in:'.implode(',', $reglas['dimensiones']),
             'frecuencia' => 'required|in:'.implode(',', $reglas['frecuencias']),
+            'sentido' => ['required', Rule::in(SentidoIndicador::values())],
         ])->validate();
 
         $indicador->update($validated);
@@ -557,6 +559,22 @@ class MirEditor extends Component
         $indicador->update(['formula_texto' => $formula]);
     }
 
+    public function guardarDefinicion(int $indicadorId, ?string $texto): void
+    {
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
+        $validated = validator(
+            ['definicion' => $texto === '' ? null : $texto],
+            ['definicion' => 'nullable|string|max:240']
+        )->validate();
+
+        $indicador->update($validated);
+    }
+
     public function guardarLineaBaseAnio(int $indicadorId, ?string $anio): void
     {
         $indicador = $this->indicadorDelPrograma($indicadorId);
@@ -568,6 +586,22 @@ class MirEditor extends Component
         $validated = validator(
             ['linea_base_anio' => $anio === '' ? null : $anio],
             ['linea_base_anio' => 'nullable|integer|between:1900,2999']
+        )->validate();
+
+        $indicador->update($validated);
+    }
+
+    public function guardarLineaBase(int $indicadorId, ?string $valor): void
+    {
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
+        $validated = validator(
+            ['linea_base' => $valor === '' ? null : $valor],
+            ['linea_base' => 'nullable|numeric']
         )->validate();
 
         $indicador->update($validated);
