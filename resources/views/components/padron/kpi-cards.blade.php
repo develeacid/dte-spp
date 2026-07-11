@@ -2,6 +2,7 @@
 
 @php
     $total = (int) ($kpis['total'] ?? 0);
+    $calidad = $kpis['calidad'] ?? null;
     $genero = $kpis['por_genero'] ?? [];
     $femenino = (int) ($genero['femenino'] ?? 0);
     $masculino = (int) ($genero['masculino'] ?? 0);
@@ -50,3 +51,24 @@
         </p>
     </div>
 </div>
+
+{{-- Calidad del padrón (M07 req 20) — solo en modo vivo --}}
+@if ($calidad !== null)
+    <div class="mt-4 bg-white p-4 rounded-lg border border-gray-200">
+        <p class="text-xs text-gray-500 uppercase tracking-wide">Calidad del padrón</p>
+        <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <p class="text-2xl font-bold text-indigo-600">{{ $calidad['completos_pct'] }}%</p>
+                <p class="text-xs text-gray-500">
+                    Registros completos ({{ number_format($calidad['completos']) }}/{{ number_format($calidad['total_beneficiarios']) }})
+                </p>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-green-600">{{ $calidad['verificados_pct'] }}%</p>
+                <p class="text-xs text-gray-500">
+                    Registros verificados ({{ number_format($calidad['verificados']) }}/{{ number_format($calidad['total_enrollments']) }})
+                </p>
+            </div>
+        </div>
+    </div>
+@endif

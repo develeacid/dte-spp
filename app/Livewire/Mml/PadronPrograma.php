@@ -37,6 +37,7 @@ class PadronPrograma extends Component
         'por_indigena' => [],
         'por_discapacidad' => [],
         'por_pueblo' => [],
+        'calidad' => null,
     ];
 
     public ?string $errorMessage = null;
@@ -252,6 +253,8 @@ class PadronPrograma extends Component
 
     private function mapearVivo(array $coverage): array
     {
+        $q = $coverage['quality'] ?? null;
+
         return [
             'total' => (int) ($coverage['total_beneficiaries'] ?? 0),
             'por_genero' => [],
@@ -259,6 +262,14 @@ class PadronPrograma extends Component
             'por_indigena' => [],
             'por_discapacidad' => [],
             'por_pueblo' => [],
+            'calidad' => $q === null ? null : [
+                'completos' => (int) ($q['complete_records'] ?? 0),
+                'completos_pct' => (float) ($q['complete_pct'] ?? 0),
+                'verificados' => (int) ($q['verified_enrollments'] ?? 0),
+                'verificados_pct' => (float) ($q['verified_pct'] ?? 0),
+                'total_beneficiarios' => (int) ($q['total_beneficiaries'] ?? 0),
+                'total_enrollments' => (int) ($q['total_enrollments'] ?? 0),
+            ],
         ];
     }
 
@@ -273,6 +284,7 @@ class PadronPrograma extends Component
             'por_indigena' => $desagregados['por_indigena'] ?? [],
             'por_discapacidad' => $desagregados['por_discapacidad'] ?? [],
             'por_pueblo' => $desagregados['por_pueblo'] ?? [],
+            'calidad' => null,
         ];
     }
 
@@ -285,6 +297,7 @@ class PadronPrograma extends Component
             'por_indigena' => [],
             'por_discapacidad' => [],
             'por_pueblo' => [],
+            'calidad' => null,
         ];
     }
 
