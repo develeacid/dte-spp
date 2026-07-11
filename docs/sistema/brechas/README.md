@@ -4,7 +4,7 @@
 
 Este documento es la fuente de verdad del estado de cobertura del temario MIR / PbR-SED frente al codigo de los sistemas `dte-spp` y `geobase`. Los veredictos provienen de una verificacion adversarial: cada afirmacion del Informe de Brechas fue contrastada con archivos, migraciones, servicios, prompts y rutas reales.
 
-> **Bitacora de cierre:** las brechas que se van resolviendo se marcan inline con `✅ RESUELTA (fecha)` en su fila de origen y se registran en la seccion **§6 Registro de brechas resueltas**. Al 2026-07-11 hay **10 brechas resueltas**: 6 del sprint "captura del editor MIR" + M07 req 20 (calidad del padron) + M01 req 7/req 27 (pagina Ayuda) + M02 req 4 (Ficha de Informacion Basica). Nota: a partir de M01 se trabaja en **orden de requerimiento** (modulo → req), no por severidad.
+> **Bitacora de cierre:** las brechas que se van resolviendo se marcan inline con `✅ RESUELTA (fecha)` en su fila de origen y se registran en la seccion **§6 Registro de brechas resueltas**. Al 2026-07-11 hay **11 brechas resueltas**: 6 del sprint "captura del editor MIR" + M07 req 20 (calidad del padron) + M01 req 7/req 27 (pagina Ayuda) + M02 req 4 (Ficha de Informacion Basica) + M02 req 5 (Analisis de Involucrados). Nota: a partir de M01 se trabaja en **orden de requerimiento** (modulo → req), no por severidad.
 
 ---
 
@@ -58,7 +58,7 @@ Este documento es la fuente de verdad del estado de cobertura del temario MIR / 
 
 | Modulo | Req | Brecha | Severidad | Sistema | Evidencia | Recomendacion |
 | --- | --- | --- | --- | --- | --- | --- |
-| M02 Marco Logico | req 5 | Analisis de Involucrados ausente: no hay modulo, modelo ni etapa para mapear beneficiarios/ejecutores/aliados/opositores | media | dte-spp | `rg -li 'involucrad\|interesad\|stakeholder'` sobre app/ y resources/ sin resultados; el wizard MML salta de SeleccionAlternativas a EmbudoPoblaciones | Anadir entidad/etapa de involucrados entre diagnostico y alternativas que alimente MirSupuesto |
+| M02 Marco Logico | req 5 | ✅ RESUELTA (2026-07-11) — Analisis de Involucrados ausente: no hay modulo, modelo ni etapa para mapear beneficiarios/ejecutores/aliados/opositores | media | dte-spp | `rg -li 'involucrad\|interesad\|stakeholder'` sobre app/ y resources/ sin resultados; el wizard MML salta de SeleccionAlternativas a EmbudoPoblaciones | Anadir entidad/etapa de involucrados entre diagnostico y alternativas que alimente MirSupuesto |
 | M02 Marco Logico | req 28 | Teoria de Cambio ausente: no existe documento narrativo de la hipotesis causal | media | dte-spp | `rg -li 'teoria.?cambio\|theory.?of.?change'` sin resultados; no hay campo en ProgramaPresupuestario ni seccion en MirEditor | Anadir campo/artefacto narrativo de Teoria de Cambio (Fase 5) o seccion del MirEditor |
 | M02 Marco Logico | req 17 | Criterios de seleccion incompletos: el prompt evaluar-alternativa cubre 3 de 6 criterios; faltan tiempo, impacto, complementariedad; no hay matriz capturable | media | dte-spp | `evaluar-alternativa.blade.php:14-23` solo viabilidad_tecnica/institucional/presupuestal; sin tiempo, impacto, complementariedad ni campos estructurados | Extender el prompt y/o anadir matriz de criterios estructurada con las 6 dimensiones del temario |
 | M02 Marco Logico | req 4 | ✅ RESUELTA (2026-07-11) — Cinco preguntas del diagnostico no estructuradas: no existe Ficha de Informacion Basica ni formulario de las 5 preguntas | media | dte-spp | `DefinicionProblema.php` solo expone prop `descripcion` (21) + sugerencia/validacion IA; captura solo el problema central, sin magnitud/situacion/focalizacion/bienes | Anadir Ficha de Informacion Basica con las 5 preguntas estructuradas en/antes de Fase 1 |
@@ -233,3 +233,13 @@ Rama `feat/ficha-informacion-basica`. Diseño/plan: `docs/plans/2026-07-11-ficha
 | M02 Marco Lógico | req 4 | Cinco preguntas del diagnóstico no estructuradas | media | Tabla `fichas_informacion_basica` (1:1 programa) + modelo `FichaInformacionBasica`. Etapa 1 (`DefinicionProblema`) captura Q2–Q5 (magnitud/focalización/causas-efectos/bienes-servicios) vía `updateOrCreate`; Q1 reutiliza el problema central. Badge de completitud X/5. Q2–Q5 opcionales. |
 
 **Post-deploy:** `sail artisan migrate` (1 migración privada: `2026_07_11_000002_create_fichas_informacion_basica_table`). Sin BD pública. Export "documento único" queda como M03 req 19 (pendiente).
+
+### Análisis de Involucrados (2026-07-11)
+
+Rama `feat/analisis-involucrados`. Diseño/plan: `docs/plans/2026-07-11-analisis-involucrados{-design,}.md`. Test `DefinicionProblemaInvolucradosTest` (7). Verificación E2E en browser (agregar + persistencia por fila).
+
+| Modulo | Req | Brecha | Severidad | Cierre |
+| --- | --- | --- | --- | --- |
+| M02 Marco Lógico | req 5 | Análisis de Involucrados ausente | media | Tabla `involucrados` (1:N programa) + enum `InvolucradoCategoria` (beneficiario directo/indirecto, ejecutor, aliado, neutral, opositor) + modelo `Involucrado`. CRUD embebido en Etapa 1 (`DefinicionProblema`: agregar/guardar/eliminar con scoping, persistencia por fila). Campo `riesgo_asociado` prepara el enlace a Supuestos. |
+
+**Post-deploy:** `sail artisan migrate` (1 migración: `2026_07_11_000003_create_involucrados_table`). Sin BD pública. **Enlace involucrado → MirSupuesto queda como M02 req 6/29 (pendiente).**
