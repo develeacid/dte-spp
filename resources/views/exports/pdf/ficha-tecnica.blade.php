@@ -27,6 +27,7 @@
     <div class="section-title">Datos Generales</div>
     <table>
         <tr><th>Nivel MIR</th><td>{{ $nivel->tipo_nivel->label() }}</td></tr>
+        <tr><th>Código</th><td>{{ $nivel->codigoMir() }}</td></tr>
         <tr><th>Resumen Narrativo</th><td>{{ $nivel->resumen_narrativo }}</td></tr>
         <tr><th>Nombre del Indicador</th><td>{{ $indicador->nombre }}</td></tr>
         <tr><th>Fórmula</th><td>{{ $indicador->formula_texto }}</td></tr>

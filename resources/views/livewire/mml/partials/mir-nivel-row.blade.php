@@ -11,6 +11,7 @@
     <td class="px-3 py-3 align-top">
         <x-ui.tooltip :text="config('glosario.' . $tipoEnum?->value, '')" position="right">
             <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold {{ $tipoEnum?->colorClass() }} cursor-help">
+                <span class="font-mono">{{ $nivel->codigoMir() }}</span>
                 {{ $tipoEnum?->label() }}
             </span>
         </x-ui.tooltip>
