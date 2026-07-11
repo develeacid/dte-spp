@@ -3,11 +3,13 @@
 namespace App\Livewire\Mml;
 
 use App\Contracts\LlmServiceInterface;
+use App\Enums\InvolucradoCategoria;
 use App\Enums\TipoArbol;
 use App\Enums\TipoNodo;
 use App\Models\Mml\Arbol;
 use App\Models\Mml\ArbolNodo;
 use App\Models\Mml\FichaInformacionBasica;
+use App\Models\Mml\Involucrado;
 use App\Models\ProgramaPresupuestario;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -139,6 +141,52 @@ class DefinicionProblema extends Component
         );
 
         session()->flash('success', 'Problema central guardado correctamente.');
+    }
+
+    private function involucradoDelPrograma(int $id): ?Involucrado
+    {
+        return Involucrado::where('programa_presupuestario_id', $this->programa->id)->find($id);
+    }
+
+    public function agregarInvolucrado(): void
+    {
+        $maxOrden = $this->programa->involucrados()->max('orden') ?? 0;
+
+        Involucrado::create([
+            'programa_presupuestario_id' => $this->programa->id,
+            'categoria' => InvolucradoCategoria::BENEFICIARIO_DIRECTO->value,
+            'nombre' => '',
+            'orden' => $maxOrden + 1,
+        ]);
+    }
+
+    public function guardarInvolucrado(int $id, array $data): void
+    {
+        $involucrado = $this->involucradoDelPrograma($id);
+
+        if ($involucrado === null) {
+            return;
+        }
+
+        $validated = validator($data, [
+            'categoria' => 'required|in:'.implode(',', InvolucradoCategoria::values()),
+            'nombre' => 'required|string|max:255',
+            'interes_o_rol' => 'nullable|string|max:1000',
+            'riesgo_asociado' => 'nullable|string|max:1000',
+        ])->validate();
+
+        $involucrado->update($validated);
+    }
+
+    public function eliminarInvolucrado(int $id): void
+    {
+        $involucrado = $this->involucradoDelPrograma($id);
+
+        if ($involucrado === null) {
+            return;
+        }
+
+        $involucrado->delete();
     }
 
     public function render()

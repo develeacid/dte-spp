@@ -188,6 +188,11 @@ class ProgramaPresupuestario extends Model
         return $this->hasOne(Mml\FichaInformacionBasica::class);
     }
 
+    public function involucrados(): HasMany
+    {
+        return $this->hasMany(Mml\Involucrado::class)->orderBy('orden');
+    }
+
     public function partidasPresupuestales(): HasMany
     {
         return $this->hasMany(PartidaPresupuestal::class);

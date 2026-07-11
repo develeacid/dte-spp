@@ -115,6 +115,47 @@
                         </div>
                     </div>
                 </x-forms.section>
+
+                <x-forms.section
+                    title="Análisis de Involucrados"
+                    description="Mapea los actores relevantes del programa. Los riesgos que identifiques aquí alimentan los Supuestos de la MIR."
+                >
+                    <div class="col-span-6 space-y-3">
+                        @forelse ($programa->involucrados as $inv)
+                            <div class="rounded-lg border border-gray-200 p-3" wire:key="inv-{{ $inv->id }}"
+                                x-data="{
+                                    d: {
+                                        categoria: @js($inv->categoria?->value ?? 'beneficiario_directo'),
+                                        nombre: @js($inv->nombre ?? ''),
+                                        interes_o_rol: @js($inv->interes_o_rol ?? ''),
+                                        riesgo_asociado: @js($inv->riesgo_asociado ?? ''),
+                                    },
+                                    guardar() { $wire.guardarInvolucrado({{ $inv->id }}, { ...this.d }); }
+                                }">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <select x-model="d.categoria" @change="guardar()" class="rounded-lg border-gray-300 text-sm">
+                                        @foreach (\App\Enums\InvolucradoCategoria::cases() as $cat)
+                                            <option value="{{ $cat->value }}">{{ $cat->label() }}</option>
+                                        @endforeach
+                                    </select>
+                                    <input type="text" x-model="d.nombre" @change="guardar()" placeholder="Nombre del actor"
+                                        class="rounded-lg border-gray-300 text-sm" />
+                                </div>
+                                <textarea x-model="d.interes_o_rol" @change="guardar()" rows="2" placeholder="Interés o rol en el programa"
+                                    class="mt-2 block w-full rounded-lg border-gray-300 text-sm"></textarea>
+                                <textarea x-model="d.riesgo_asociado" @change="guardar()" rows="2" placeholder="Riesgo asociado (opcional) — alimenta un Supuesto"
+                                    class="mt-2 block w-full rounded-lg border-gray-300 text-sm"></textarea>
+                                <div class="mt-2 flex justify-end">
+                                    <button wire:click="eliminarInvolucrado({{ $inv->id }})" class="text-xs text-red-500 hover:text-red-700">Eliminar</button>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-sm text-gray-400">Sin involucrados registrados.</p>
+                        @endforelse
+
+                        <button wire:click="agregarInvolucrado" type="button" class="text-sm text-indigo-600 hover:text-indigo-800">+ Involucrado</button>
+                    </div>
+                </x-forms.section>
             </div>
 
             {{-- Right: AI Results Panel (Notion-style sidebar) --}}
