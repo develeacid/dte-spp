@@ -1,14 +1,18 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Livewire;
 
 use App\Models\Juridico\CatalogoOrdenamiento;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
 
-class AyudaController extends Controller
+#[Layout('layouts.app')]
+#[Title('Ayuda')]
+class Ayuda extends Component
 {
-    public function __invoke(): View
+    public function render()
     {
         $ordenamientos = CatalogoOrdenamiento::where('activo', true)
             ->orderBy('orden')
