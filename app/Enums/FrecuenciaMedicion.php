@@ -9,6 +9,7 @@ enum FrecuenciaMedicion: string
     case SEMESTRAL = 'semestral';
     case ANUAL = 'anual';
     case BIANUAL = 'bianual';
+    case TRIANUAL = 'trianual';
     case SEXENAL = 'sexenal';
 
     public function label(): string
@@ -19,6 +20,7 @@ enum FrecuenciaMedicion: string
             self::SEMESTRAL => 'Semestral',
             self::ANUAL => 'Anual',
             self::BIANUAL => 'Bianual',
+            self::TRIANUAL => 'Trianual',
             self::SEXENAL => 'Sexenal',
         };
     }
@@ -40,7 +42,8 @@ enum FrecuenciaMedicion: string
             self::SEMESTRAL => 3,
             self::ANUAL => 4,
             self::BIANUAL => 5,
-            self::SEXENAL => 6,
+            self::TRIANUAL => 6,
+            self::SEXENAL => 7,
         };
     }
 }
