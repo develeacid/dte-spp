@@ -379,6 +379,7 @@ class MirEditorScopingTest extends TestCase
             'tipo' => 'gestion',
             'dimension' => 'eficacia',
             'frecuencia' => 'trimestral',
+            'sentido' => 'ascendente',
         ]);
 
         $this->assertSame('Indicador renombrado', $a['indicador']->fresh()->nombre);

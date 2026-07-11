@@ -138,6 +138,7 @@ class ValidacionCremaaTest extends TestCase
                 'tipo' => 'estrategico',
                 'dimension' => 'eficacia',
                 'frecuencia' => 'anual',
+                'sentido' => 'ascendente',
             ]);
 
         $this->assertDatabaseHas('indicadores', [
