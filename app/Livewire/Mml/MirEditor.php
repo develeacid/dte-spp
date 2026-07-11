@@ -559,6 +559,22 @@ class MirEditor extends Component
         $indicador->update(['formula_texto' => $formula]);
     }
 
+    public function guardarDefinicion(int $indicadorId, ?string $texto): void
+    {
+        $indicador = $this->indicadorDelPrograma($indicadorId);
+
+        if ($indicador === null) {
+            return;
+        }
+
+        $validated = validator(
+            ['definicion' => $texto === '' ? null : $texto],
+            ['definicion' => 'nullable|string|max:240']
+        )->validate();
+
+        $indicador->update($validated);
+    }
+
     public function guardarLineaBaseAnio(int $indicadorId, ?string $anio): void
     {
         $indicador = $this->indicadorDelPrograma($indicadorId);

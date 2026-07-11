@@ -260,6 +260,16 @@
                         placeholder="Nombre del indicador"
                     />
 
+                    {{-- Definición del indicador (M05 #11, máx. 240 ch) --}}
+                    <textarea
+                        wire:change="guardarDefinicion({{ $indicador->id }}, $event.target.value)"
+                        rows="2"
+                        maxlength="240"
+                        class="w-full rounded border-gray-300 text-xs"
+                        placeholder="Definición del indicador (máx. 240 caracteres)"
+                    >{{ $indicador->definicion }}</textarea>
+                    @error('definicion') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+
                     <div class="grid grid-cols-2 gap-1">
                         {{-- Tipo --}}
                         @if ($reglas['tipo_fijo'])

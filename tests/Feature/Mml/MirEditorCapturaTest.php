@@ -97,4 +97,23 @@ class MirEditorCapturaTest extends TestCase
 
         $this->assertNull($indicador->fresh()->linea_base);
     }
+
+    public function test_guardar_definicion_persiste(): void
+    {
+        $indicador = $this->componenteConIndicador();
+
+        $this->editor()->call('guardarDefinicion', $indicador->id, 'Mide el avance físico del componente.');
+
+        $this->assertSame('Mide el avance físico del componente.', $indicador->fresh()->definicion);
+    }
+
+    public function test_guardar_definicion_rechaza_mas_de_240_caracteres(): void
+    {
+        $indicador = $this->componenteConIndicador();
+
+        $this->editor()->call('guardarDefinicion', $indicador->id, str_repeat('a', 241))
+            ->assertHasErrors('definicion');
+
+        $this->assertNull($indicador->fresh()->definicion);
+    }
 }

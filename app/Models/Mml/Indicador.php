@@ -30,7 +30,7 @@ class Indicador extends Model
     protected $table = 'indicadores';
 
     protected $fillable = [
-        'mir_nivel_id', 'nombre', 'formula_texto', 'tipo', 'dimension',
+        'mir_nivel_id', 'nombre', 'definicion', 'formula_texto', 'tipo', 'dimension',
         'frecuencia', 'sentido', 'linea_base', 'linea_base_anio', 'meta',
         'rango_verde_min', 'rango_verde_max',
         'rango_amarillo_min', 'rango_amarillo_max',
