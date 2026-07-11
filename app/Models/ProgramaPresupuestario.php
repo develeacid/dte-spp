@@ -183,6 +183,11 @@ class ProgramaPresupuestario extends Model
         return $this->hasOne(PoblacionPrograma::class, 'programa_id');
     }
 
+    public function fichaInformacionBasica(): HasOne
+    {
+        return $this->hasOne(Mml\FichaInformacionBasica::class);
+    }
+
     public function partidasPresupuestales(): HasMany
     {
         return $this->hasMany(PartidaPresupuestal::class);

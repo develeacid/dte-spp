@@ -73,6 +73,48 @@
                         </div>
                     </div>
                 </x-forms.section>
+
+                <x-forms.section
+                    title="Ficha de Información Básica — Diagnóstico"
+                    description="Responde las preguntas estructurantes del diagnóstico (temario SHCP/CONEVAL). Son opcionales pero sustentan la justificación del programa."
+                >
+                    <div class="col-span-6 space-y-4">
+                        <div class="flex justify-end">
+                            @php $completas = $this->completitud; @endphp
+                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $completas === 5 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700' }}">
+                                {{ $completas }}/5 preguntas respondidas
+                            </span>
+                        </div>
+
+                        <div>
+                            <label for="magnitud" class="block text-sm font-medium text-gray-700">¿De qué magnitud y naturaleza es el problema?</label>
+                            <p class="text-xs text-gray-400">Cuantifica con datos de fuentes confiables (INEGI, CONEVAL, Estadística 911…). Define la Población Potencial.</p>
+                            <textarea wire:model="magnitud" id="magnitud" rows="3" maxlength="2000"
+                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                        </div>
+
+                        <div>
+                            <label for="focalizacion" class="block text-sm font-medium text-gray-700">¿A quién afecta y cómo se puede focalizar la atención?</label>
+                            <p class="text-xs text-gray-400">Grupos más afectados y criterios de priorización. Define la Población Objetivo.</p>
+                            <textarea wire:model="focalizacion" id="focalizacion" rows="3" maxlength="2000"
+                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                        </div>
+
+                        <div>
+                            <label for="causasEfectos" class="block text-sm font-medium text-gray-700">¿Qué causa el problema y qué efectos tiene si no se atiende?</label>
+                            <p class="text-xs text-gray-400">Causas verificables (no supuestas) y consecuencias de la inacción. Insumo del Árbol de Problemas.</p>
+                            <textarea wire:model="causasEfectos" id="causasEfectos" rows="3" maxlength="2000"
+                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                        </div>
+
+                        <div>
+                            <label for="bienesServicios" class="block text-sm font-medium text-gray-700">¿Qué bienes o servicios son necesarios para resolverlo?</label>
+                            <p class="text-xs text-gray-400">Productos o servicios que la población necesita recibir (no acciones). Anticipa los Componentes.</p>
+                            <textarea wire:model="bienesServicios" id="bienesServicios" rows="3" maxlength="2000"
+                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                        </div>
+                    </div>
+                </x-forms.section>
             </div>
 
             {{-- Right: AI Results Panel (Notion-style sidebar) --}}
